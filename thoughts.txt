@@ -1,0 +1,48 @@
+LUT-ALU computer (e.g. 32-bit = K=8, word=4 bit)
+
+
+A, B
+
+ADDR
+
+f f f f f i i i
+
+Byte 1:
+ Function select: 6 bits
+ Input2 select: IMM, ADDR, PC, MEM
+Byte 2:
+ Depends on function select
+
+LUT key:
+0 0 0 0 
+[function select 6 (4) bits] [ACC value] [8 bits selected by input2 select 2 bit]
+
+
+LUT output
+8x OUT
+
+OUT_FLAGS:
+0,1 target bits (ACC, ADDR, PC, MEM)
+2 carry
+7 HALT
+
+
+LOADIMM x:
+----------
+0 0 0 0 0 0 "COPY"
+ACC
+0 0 IMM
+x
+
+
+COPY ACC, PC "JMP":
+
+0 0 0 0 1 "COPY"
+[8-bit ACC value]
+
+
+OUT:[ACC] 
+TARGET: 2
+
+
+
