@@ -1,5 +1,36 @@
+use strum_macros::{Display, EnumString};
 
-fn main() {
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+
+use pest::Parser;
+
+#[derive(Parser)]
+#[grammar = "assembly.pest"]
+pub struct AssemblyParser;
+
+// #[derive(Display, Debug, EnumString)]
+// enum SecondInput {
+//     Imm,
+//     Addr,
+//     Pc,
+//     Mem
+// }
+
+// #[derive(Display, Debug, EnumString)]
+// enum Output {
+//     Acc,
+//     Addr,
+//     Pc,
+//     Mem
+// }
+
+// enum Instruction {
+//     CopyImmTo()
+// }
+
+fn ucode() {
     println!("v2.0 raw");
 
     // let inputs = ["IMM","ADDR","PC","MEM"];
@@ -39,9 +70,16 @@ fn main() {
                         print!("80FF");
                     }
                 }
-
                 println!();
             }
         }
+    }
+}
+
+fn main() {
+    let args: Vec<_> = std::env::args().collect();
+    match args[1].as_str(){
+        "ucode" => ucode(),
+        unknown => { eprintln!("Unknown arg '{}'", unknown); }
     }
 }
