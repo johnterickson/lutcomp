@@ -3,7 +3,16 @@ LUT-ALU computer (e.g. 32-bit = K=8, word=4 bit)
 
 /*
 
-i i o o c c c c x x x x x x x x
+ // input_select = {"IMM" | "ADDR" | "PC" | "MEM"}
+// output_select = {"ACC" | "ADDR" | "PC" | "MEM"}
+// opcode = {"copy" | "copy_acc" | "add" | "add3_if_acc_0_else_1"}
+// instruction = {opcode ~ input_select ~ output_select ~ ASCII_HEX_DIGIT*}
+// comment = _{ "#" ~ (!"\n" ~ ANY)* }
+
+NEWLINE = _{ "\r" | "\n" }
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+program = { SOI ~ (ASCII_DIGIT  ~ NEWLINE)* ~ EOI }
 
 i i 0 0 LOAD
 i i 0 1 LOADHI

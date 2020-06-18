@@ -1,3 +1,7 @@
-field = { (ASCII_DIGIT | "." | "-")+ }
-record = { field ~ ("," ~ field)* }
-file = { SOI ~ (record ~ ("\r\n" | "\n"))* ~ EOI }
+input_select = _{"IMM" | "ADDR" | "PC" | "MEM"}
+output_select = _{"ACC" | "ADDR" | "PC" | "MEM"}
+opcode = _{"copy" | "copy_acc" | "add" | "add3_if_acc_0_else_1"}
+instruction = {opcode ~ input_select ~ output_select ~ (ASCII_HEX_DIGIT{2})? }
+comment = _{ "#" ~ (!"\n" ~ ANY)* }
+line = {comment | instruction}
+program = { (line  ~ ("\r\n" | "\n"))* }
