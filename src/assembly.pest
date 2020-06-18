@@ -1,10 +1,12 @@
 WHITESPACE = _{" " | "\t"}
 new_line = _{ "\r\n" | "\n"}
-input_select = {"imm" | "addr" | "pc" | "mem"}
+input_select = {"imm" | "addr" | "pc" | "mem" | "acc"}
 output_select = {"acc" | "addr" | "pc" | "mem"}
-opcode = {"copy" | "copy_acc" | "add" | "add3_if_acc_0_else_1"}
-constant = {ASCII_HEX_DIGIT*}
+opcode = {"copy" | "or" | "add" | "add3_if_acc_0_else_1" | "and" | "xor"  | "rotate"}
+hex_constant = {ASCII_HEX_DIGIT+}
+char_constant = {"'" ~ ANY ~ "'"}
+constant = {char_constant | hex_constant}
 instruction = {!"#" ~ opcode ~ input_select ~ output_select ~ constant? }
 comment = { "#" ~ (!new_line ~ ANY)* }
 line = {instruction | comment }
-program = { (line  ~ new_line)* }
+program = {SOI ~ (line? ~ new_line)*}

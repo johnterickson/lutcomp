@@ -18,9 +18,12 @@ pub struct AssemblyParser;
 #[strum(serialize_all = "lowercase")]
 enum Opcode {
     Copy = 0,
-    CopyAcc,
+    Or,
     Add,
     Add3IfAcc0Else1,
+    And,
+    Xor,
+    Rotate,
 }
 
 #[derive(Clone, Copy, Display, Debug, EnumString)]
@@ -30,6 +33,7 @@ enum InputSelect {
     Addr,
     Pc,
     Mem,
+    Acc,
 }
 
 #[derive(Clone, Copy, Display, Debug, EnumString)]
@@ -93,10 +97,32 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
             Output::from_str(output_select.as_str()).unwrap()
         };
 
-        let immediate = tokens.next().map(|constant| {
-            assert_eq!(Rule::constant, constant.as_rule());
-            u8::from_str_radix(constant.as_str(), 16).unwrap()
+        let immediate = tokens.next().map(|immediate| {
+            assert_eq!(Rule::constant, immediate.as_rule());
+            let immediate = immediate.into_inner().next().unwrap();
+            match immediate.as_rule() {
+                Rule::hex_constant => {
+                    u8::from_str_radix(immediate.as_str(), 16).unwrap()
+                },
+                Rule::char_constant => {
+                    let mut chars = immediate.as_str().chars();
+                    assert_eq!('\'', chars.next().unwrap());
+                    let c = chars.next().unwrap();
+                    assert_eq!('\'', chars.next().unwrap());
+                    assert_eq!(None, chars.next());
+                    c as u8
+                }
+                _ => panic!()
+            }
         });
+
+        assert_eq!(
+            immediate.is_some(),
+            match input {
+                InputSelect::Imm => true,
+                _ => false
+            }
+        );
 
         Instruction {
             source,
@@ -151,7 +177,7 @@ fn ucode() {
     // let inputs = ["IMM","ADDR","PC","MEM"];
     // let outputs = ["ACC", "ADDR", "PC", "MEM"];
 
-    let instructions = 16u8;
+    let instructions = 8u8;
     for i in 0..instructions {
         for in2 in 0..=255u8 {
             for acc in 0..=255u8 {
@@ -162,7 +188,7 @@ fn ucode() {
                         write("COPY", in2, false, false);
                     }
                     1 => {
-                        write("COPY_ACC", acc, false, false);
+                        write("OR", acc | in2, false, false);
                     }
                     2 => {
                         let sum = (in2 as u16) + (acc as u16);
@@ -170,8 +196,29 @@ fn ucode() {
                     }
                     3 => {
                         let sum = (in2 as u16) + (if acc == 0 { 3 } else { 1 });
-                        write("ADD3_F_ACC_0_ELSE_1", sum as u8, (sum & 0x100) != 0, false);
-                    }
+                        write("ADD3_IF_ACC_0_ELSE_1", sum as u8, (sum & 0x100) != 0, false);
+                    },
+                    4 => {
+                        write("AND", acc & in2, false, false);
+                    },
+                    5 => {
+                        write("XOR", acc ^ in2, false, false);
+                    },
+                    6 => {
+                        let left_shift = in2 as i8;
+                        if 0 < left_shift && left_shift <= 7 {
+                            let shifted = acc << left_shift;
+                            let shifted = shifted | (acc >> (8 - left_shift));
+                            write("ROTATE", shifted, false, false);
+                        } else if -7 <= left_shift && left_shift < 0 {
+                            let right_shift = -1 * left_shift;
+                            let shifted = acc >> right_shift;
+                            let shifted = shifted | (acc << (8 - right_shift));
+                            write("ROTATE", shifted, false, false);
+                        } else {
+                            write("INVALID ROTATE", 0xFF, false, true);
+                        }
+                    },
                     _ => {
                         write("UNUSED", 0xFF, false, true);
                     }
@@ -203,13 +250,30 @@ fn main() {
                 let f = File::create(path).unwrap();
                 let mut f = BufWriter::new(f);
                 writeln!(f, "v2.0 raw").unwrap();
-                for i in &instructions {
-                    writeln!(f, "# {}", &i.source).unwrap();
+
+                let write_inst = |f: &mut BufWriter<_>, i: &Instruction| {
+                    writeln!(f, "# {:?}", &i).unwrap();
                     writeln!(f, "{:01x}{:01x}{:02x}", 
                         ((i.input as usize) << 2) | (i.output as usize),
                         (i.opcode) as usize,
-                        i.immediate.unwrap_or(0xff)
-                    ).unwrap();
+                        i.immediate.unwrap_or(0xff)).unwrap();
+                };
+
+                for i in &instructions {
+                    match (i.opcode, i.input) {
+                        (Opcode::Copy, InputSelect::Acc) => {
+                            write_inst(&mut f, &Instruction {
+                                source: i.source.clone(),
+                                input: InputSelect::Imm,
+                                output: i.output,
+                                opcode: Opcode::Or,
+                                immediate: Some(0x00)
+                            });
+                        }
+                        _ => {
+                            write_inst(&mut f, i);
+                        }
+                    }
                 }
                 writeln!(f, "# eof").unwrap();
                 writeln!(f, "ffff").unwrap();

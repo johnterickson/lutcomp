@@ -1,5 +1,5 @@
 copy imm addr 00
-# 'H'
-copy imm mem 48
-# 'i'
-copy imm mem 69
+copy imm mem 'H'
+copy imm mem 'i'
+copy imm mem '!'
+copy imm mem '\n'
