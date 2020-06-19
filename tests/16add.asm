@@ -40,3 +40,4 @@ and imm acc 01
 copy imm addr 05
 add mem acc
 copy acc mem
+copy imm pc ff

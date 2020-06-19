@@ -20,10 +20,10 @@ enum Opcode {
     Copy = 0,
     Or,
     Add,
-    Add3IfAcc0Else1,
     And,
     Xor,
-    Rotate,
+    RotLeft,
+    Compare
 }
 
 #[derive(Clone, Copy, Display, Debug, EnumString)]
@@ -55,24 +55,25 @@ struct Instruction {
 }
 
 fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
-    use pest::iterators::{Pair, Pairs};
+    use pest::iterators::Pair;
 
-    {
-        fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
-            for pair in pairs {
-                if pair.as_rule() != Rule::program {
-                    for _ in 0..indent {
-                        print!(" ");
-                    }
-                    println!("{:?}: '{}'", pair.as_rule(), pair.as_str());
-                }
-                dump_tree(pair.into_inner(), indent + 1);
-            }
-        };
+    // {
+    //     use pest::iterators::{Pair, Pairs};
+    //     fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
+    //         for pair in pairs {
+    //             if pair.as_rule() != Rule::program {
+    //                 for _ in 0..indent {
+    //                     print!(" ");
+    //                 }
+    //                 println!("{:?}: '{}'", pair.as_rule(), pair.as_str());
+    //             }
+    //             dump_tree(pair.into_inner(), indent + 1);
+    //         }
+    //     };
 
-        let assembly = AssemblyParser::parse(Rule::program, input).unwrap();
-        dump_tree(assembly, 0);
-    }
+    //     let assembly = AssemblyParser::parse(Rule::program, input).unwrap();
+    //     dump_tree(assembly, 0);
+    // }
 
     fn parse_instruction(pair: Pair<Rule>) -> Instruction {
         assert_eq!(Rule::instruction, pair.as_rule());
@@ -102,7 +103,13 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
             let immediate = immediate.into_inner().next().unwrap();
             match immediate.as_rule() {
                 Rule::hex_constant => {
-                    u8::from_str_radix(immediate.as_str(), 16).unwrap()
+                    let mut chars = immediate.as_str().chars();
+                    if chars.next().unwrap() == '-' {
+                        let positive = i8::from_str_radix(immediate.as_str().trim_start_matches('-'), 16).unwrap();
+                        (-1 * positive) as u8
+                    } else {
+                        u8::from_str_radix(immediate.as_str(), 16).unwrap()
+                    }
                 },
                 Rule::char_constant => {
                     let mut chars = immediate.as_str().chars();
@@ -154,21 +161,9 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
     Ok(instructions)
 }
 
-fn write(name: &str, out: u8, carry: bool, halt: bool) {
+fn write(name: &str, out: u8) {
     println!("{}", name);
-
-    let mut flags = 0;
-    if out == 0 {
-        flags |= 0b0000_0001;
-    }
-    if carry {
-        flags |= 0b0000_0010;
-    }
-    if halt {
-        flags |= 0b1000_0000;
-    }
-
-    print!("{:02x}{:02x}", flags, out);
+    print!("{:02x}", out);
 }
 
 fn ucode() {
@@ -185,42 +180,40 @@ fn ucode() {
 
                 match i {
                     0 => {
-                        write("COPY", in2, false, false);
+                        write("COPY", in2);
                     }
                     1 => {
-                        write("OR", acc | in2, false, false);
+                        write("OR", acc | in2);
                     }
                     2 => {
-                        let sum = (in2 as u16) + (acc as u16);
-                        write("ADD", sum as u8, (sum & 0x100) != 0, false);
+                        write("ADD", acc.wrapping_add(in2));
                     }
                     3 => {
-                        let sum = (in2 as u16) + (if acc == 0 { 3 } else { 1 });
-                        write("ADD3_IF_ACC_0_ELSE_1", sum as u8, (sum & 0x100) != 0, false);
+                        write(&format!("AND {:02x} {:02x}", acc, in2), acc & in2);
                     },
                     4 => {
-                        write("AND", acc & in2, false, false);
+                        write("XOR", acc ^ in2);
                     },
                     5 => {
-                        write("XOR", acc ^ in2, false, false);
-                    },
-                    6 => {
                         let left_shift = in2 as i8;
                         if 0 < left_shift && left_shift <= 7 {
                             let shifted = acc << left_shift;
                             let shifted = shifted | (acc >> (8 - left_shift));
-                            write("ROTATE", shifted, false, false);
+                            write("ROTLEFT", shifted);
                         } else if -7 <= left_shift && left_shift < 0 {
                             let right_shift = -1 * left_shift;
                             let shifted = acc >> right_shift;
                             let shifted = shifted | (acc << (8 - right_shift));
-                            write("ROTATE", shifted, false, false);
+                            write("ROTLEFT", shifted);
                         } else {
-                            write("INVALID ROTATE", 0xFF, false, true);
+                            write("INVALID ROTLEFT", 0xFF);
                         }
                     },
+                    6 => {
+                        write("COMPARE", if acc < in2 { 0xff } else if acc == in2 { 0 } else { 1 });
+                    }
                     _ => {
-                        write("UNUSED", 0xFF, false, true);
+                        write("UNUSED", 0xFF);
                     }
                 }
                 println!();
@@ -275,8 +268,6 @@ fn main() {
                         }
                     }
                 }
-                writeln!(f, "# eof").unwrap();
-                writeln!(f, "ffff").unwrap();
             }
         }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),
