@@ -5,93 +5,128 @@ extern crate pest_derive;
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
+use std::{io::BufWriter, str::FromStr};
 
-use pest::Parser;
 use pest::error::Error;
+use pest::Parser;
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
 pub struct AssemblyParser;
 
-enum Opcode { 
-    Copy,
+#[derive(Clone, Copy, Display, Debug, EnumString)]
+#[strum(serialize_all = "lowercase")]
+enum Opcode {
+    Copy = 0,
     CopyAcc,
     Add,
     Add3IfAcc0Else1,
 }
 
-#[derive(Display, Debug, EnumString)]
-enum SecondInput {
-    Imm,
+#[derive(Clone, Copy, Display, Debug, EnumString)]
+#[strum(serialize_all = "lowercase")]
+enum InputSelect {
+    Imm = 0,
     Addr,
     Pc,
-    Mem
+    Mem,
 }
 
-#[derive(Display, Debug, EnumString)]
+#[derive(Clone, Copy, Display, Debug, EnumString)]
+#[strum(serialize_all = "lowercase")]
 enum Output {
-    Acc,
+    Acc = 0,
     Addr,
     Pc,
-    Mem
+    Mem,
 }
 
+#[derive(Debug)]
 struct Instruction {
+    source: String,
     opcode: Opcode,
-    input: SecondInput,
+    input: InputSelect,
     output: Output,
-    immediate: u8,
+    immediate: Option<u8>,
 }
 
 fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
+    use pest::iterators::{Pair, Pairs};
+
+    {
+        fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
+            for pair in pairs {
+                if pair.as_rule() != Rule::program {
+                    for _ in 0..indent {
+                        print!(" ");
+                    }
+                    println!("{:?}: '{}'", pair.as_rule(), pair.as_str());
+                }
+                dump_tree(pair.into_inner(), indent + 1);
+            }
+        };
+
+        let assembly = AssemblyParser::parse(Rule::program, input).unwrap();
+        dump_tree(assembly, 0);
+    }
+
+    fn parse_instruction(pair: Pair<Rule>) -> Instruction {
+        assert_eq!(Rule::instruction, pair.as_rule());
+        let source = pair.as_span().as_str().to_owned();
+        let mut tokens = pair.into_inner();
+
+        let opcode = {
+            let opcode = tokens.next().unwrap();
+            assert_eq!(Rule::opcode, opcode.as_rule());
+            Opcode::from_str(opcode.as_str()).unwrap()
+        };
+
+        let input = {
+            let input_select = tokens.next().unwrap();
+            assert_eq!(Rule::input_select, input_select.as_rule());
+            InputSelect::from_str(input_select.as_str()).unwrap()
+        };
+
+        let output = {
+            let output_select = tokens.next().unwrap();
+            assert_eq!(Rule::output_select, output_select.as_rule());
+            Output::from_str(output_select.as_str()).unwrap()
+        };
+
+        let immediate = tokens.next().map(|constant| {
+            assert_eq!(Rule::constant, constant.as_rule());
+            u8::from_str_radix(constant.as_str(), 16).unwrap()
+        });
+
+        Instruction {
+            source,
+            opcode,
+            input,
+            output,
+            immediate,
+        }
+    }
+
     let mut instructions = Vec::new();
-    println!("INPUT\n{}\nINPUT\n", input);
     let mut assembly = AssemblyParser::parse(Rule::program, input).unwrap();
 
-    use pest::iterators::Pairs;
-
-    fn parse_values(pairs: Pairs<Rule>) {
-        for pair in pairs {
-            println!("{:?}: '{}'", pair.as_rule(), pair.as_str().trim());
-            parse_values(pair.into_inner());
+    let assembly = assembly.next().unwrap();
+    assert_eq!(assembly.as_rule(), Rule::program);
+    let assembly = assembly.into_inner();
+    for line in assembly {
+        assert_eq!(line.as_rule(), Rule::line);
+        let line = line.into_inner().next().unwrap();
+        match line.as_rule() {
+            Rule::comment => {}
+            Rule::instruction => {
+                instructions.push(parse_instruction(line));
+            }
+            _ => panic!("Unexpected: {:?}", line.as_rule()),
         }
-        // match pair.as_rule() {
-        //     // Rule::file => {
-        //     //     for i in pair.into_inner() {
-        //     //         parse_value(i);
-        //     //     }
-        //     // }
-        //     // Rule::comment => {},
-        //     _ => {}
-        // }
     }
-    parse_values(assembly);
-
-    // for p in assembly.next().unwrap().into_inner() {
-    //     parse_value(p);
-    // }
-    // let instruction_tokens = assembly.into_inner();
-    // for i in instruction_tokens {
-    //     match i.as_rule() {
-    //         Rule::
-    //     }
-    // }
-
-    // match assembly.as_rule() {
-    //     Rule::file => {},
-    //     _ => {}
-    // }
-
-    // ...
 
     Ok(instructions)
 }
-
-
-
-// enum Instruction {
-//     CopyImmTo()
-// }
 
 fn write(name: &str, out: u8, carry: bool, halt: bool) {
     println!("{}", name);
@@ -155,12 +190,31 @@ fn main() {
     match args.get(1).map(|s| s.as_str()) {
         Some("ucode") => ucode(),
         Some("assemble") => {
-            let path = args[2].as_str();
-            let mut f = File::open(path).unwrap();
-            let mut contents = String::new();
-            f.read_to_string(&mut contents).unwrap();
-            parse_assembly_file(&contents).unwrap();
-        },
+            let instructions = {
+                let path = args[2].as_str();
+                let mut f = File::open(path).unwrap();
+                let mut contents = String::new();
+                f.read_to_string(&mut contents).unwrap();
+                parse_assembly_file(&contents).unwrap()
+            };
+            
+            {
+                let path = args[3].as_str();
+                let f = File::create(path).unwrap();
+                let mut f = BufWriter::new(f);
+                writeln!(f, "v2.0 raw").unwrap();
+                for i in &instructions {
+                    writeln!(f, "# {}", &i.source).unwrap();
+                    writeln!(f, "{:01x}{:01x}{:02x}", 
+                        ((i.input as usize) << 2) | (i.output as usize),
+                        (i.opcode) as usize,
+                        i.immediate.unwrap_or(0xff)
+                    ).unwrap();
+                }
+                writeln!(f, "# eof").unwrap();
+                writeln!(f, "ffff").unwrap();
+            }
+        }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),
         None => eprintln!("no arg provided"),
     }

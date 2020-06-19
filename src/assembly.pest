@@ -1,7 +1,10 @@
-input_select = _{"IMM" | "ADDR" | "PC" | "MEM"}
-output_select = _{"ACC" | "ADDR" | "PC" | "MEM"}
-opcode = _{"copy" | "copy_acc" | "add" | "add3_if_acc_0_else_1"}
-instruction = {opcode ~ input_select ~ output_select ~ (ASCII_HEX_DIGIT{2})? }
-comment = _{ "#" ~ (!"\n" ~ ANY)* }
-line = {comment | instruction}
-program = { (line  ~ ("\r\n" | "\n"))* }
+WHITESPACE = _{" " | "\t"}
+new_line = _{ "\r\n" | "\n"}
+input_select = {"imm" | "addr" | "pc" | "mem"}
+output_select = {"acc" | "addr" | "pc" | "mem"}
+opcode = {"copy" | "copy_acc" | "add" | "add3_if_acc_0_else_1"}
+constant = {ASCII_HEX_DIGIT*}
+instruction = {!"#" ~ opcode ~ input_select ~ output_select ~ constant? }
+comment = { "#" ~ (!new_line ~ ANY)* }
+line = {instruction | comment }
+program = { (line  ~ new_line)* }
