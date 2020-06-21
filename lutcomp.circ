@@ -94,12 +94,10 @@
     <wire from="(490,590)" to="(490,720)"/>
     <wire from="(990,510)" to="(990,520)"/>
     <wire from="(540,820)" to="(590,820)"/>
-    <wire from="(1040,700)" to="(1210,700)"/>
     <wire from="(870,270)" to="(870,280)"/>
     <wire from="(160,800)" to="(160,810)"/>
     <wire from="(320,210)" to="(320,670)"/>
     <wire from="(1030,220)" to="(1030,290)"/>
-    <wire from="(1260,310)" to="(1300,310)"/>
     <wire from="(200,200)" to="(250,200)"/>
     <wire from="(250,770)" to="(250,790)"/>
     <wire from="(820,300)" to="(820,330)"/>
@@ -121,16 +119,12 @@
     <wire from="(1230,210)" to="(1260,210)"/>
     <wire from="(460,670)" to="(600,670)"/>
     <wire from="(800,270)" to="(870,270)"/>
-    <wire from="(1300,210)" to="(1300,310)"/>
     <wire from="(990,190)" to="(1000,190)"/>
     <wire from="(830,310)" to="(840,310)"/>
     <wire from="(800,200)" to="(810,200)"/>
-    <wire from="(1270,230)" to="(1270,270)"/>
-    <wire from="(1210,270)" to="(1210,700)"/>
     <wire from="(990,230)" to="(990,280)"/>
     <wire from="(1040,590)" to="(1040,700)"/>
     <wire from="(830,310)" to="(830,360)"/>
-    <wire from="(610,610)" to="(1240,610)"/>
     <wire from="(980,550)" to="(980,560)"/>
     <wire from="(870,280)" to="(870,290)"/>
     <wire from="(900,540)" to="(960,540)"/>
@@ -153,11 +147,9 @@
     <wire from="(360,200)" to="(380,200)"/>
     <wire from="(480,200)" to="(500,200)"/>
     <wire from="(960,510)" to="(990,510)"/>
-    <wire from="(1260,650)" to="(1290,650)"/>
     <wire from="(320,210)" to="(330,210)"/>
     <wire from="(440,220)" to="(440,730)"/>
     <wire from="(680,810)" to="(680,860)"/>
-    <wire from="(470,600)" to="(1240,600)"/>
     <wire from="(740,330)" to="(820,330)"/>
     <wire from="(860,310)" to="(870,310)"/>
     <wire from="(660,230)" to="(670,230)"/>
@@ -172,7 +164,6 @@
     <wire from="(990,590)" to="(990,720)"/>
     <wire from="(250,790)" to="(490,790)"/>
     <wire from="(340,220)" to="(340,620)"/>
-    <wire from="(1260,640)" to="(1260,650)"/>
     <wire from="(870,290)" to="(870,310)"/>
     <wire from="(870,250)" to="(870,270)"/>
     <wire from="(670,230)" to="(670,380)"/>
@@ -182,7 +173,6 @@
     <wire from="(630,800)" to="(650,800)"/>
     <wire from="(730,180)" to="(750,180)"/>
     <wire from="(740,310)" to="(760,310)"/>
-    <wire from="(1210,700)" to="(1280,700)"/>
     <wire from="(610,450)" to="(610,610)"/>
     <wire from="(610,450)" to="(640,450)"/>
     <wire from="(810,220)" to="(970,220)"/>
@@ -192,7 +182,6 @@
     <wire from="(890,130)" to="(1020,130)"/>
     <wire from="(1030,290)" to="(1040,290)"/>
     <wire from="(760,260)" to="(760,310)"/>
-    <wire from="(1300,310)" to="(1300,670)"/>
     <wire from="(490,790)" to="(490,850)"/>
     <wire from="(770,270)" to="(780,270)"/>
     <wire from="(530,370)" to="(530,570)"/>
@@ -204,13 +193,10 @@
     <wire from="(660,360)" to="(720,360)"/>
     <wire from="(960,510)" to="(960,540)"/>
     <wire from="(600,440)" to="(640,440)"/>
-    <wire from="(470,580)" to="(470,600)"/>
     <wire from="(750,180)" to="(750,210)"/>
-    <wire from="(1210,270)" to="(1270,270)"/>
     <wire from="(810,200)" to="(810,220)"/>
     <wire from="(850,320)" to="(850,340)"/>
     <wire from="(660,240)" to="(660,320)"/>
-    <wire from="(1000,630)" to="(1240,630)"/>
     <wire from="(1030,290)" to="(1030,370)"/>
     <wire from="(510,570)" to="(530,570)"/>
     <wire from="(650,720)" to="(990,720)"/>
@@ -218,14 +204,11 @@
     <wire from="(630,320)" to="(660,320)"/>
     <wire from="(990,720)" to="(1020,720)"/>
     <wire from="(600,440)" to="(600,670)"/>
-    <wire from="(470,580)" to="(480,580)"/>
     <wire from="(1020,720)" to="(1280,720)"/>
     <wire from="(970,590)" to="(970,710)"/>
     <wire from="(570,290)" to="(570,800)"/>
     <wire from="(650,800)" to="(650,850)"/>
-    <wire from="(340,620)" to="(1240,620)"/>
     <wire from="(880,120)" to="(1020,120)"/>
-    <wire from="(810,200)" to="(820,200)"/>
     <wire from="(1070,210)" to="(1090,210)"/>
     <wire from="(170,800)" to="(170,860)"/>
     <wire from="(780,460)" to="(870,460)"/>
@@ -248,8 +231,6 @@
     <wire from="(890,530)" to="(930,530)"/>
     <wire from="(930,440)" to="(930,530)"/>
     <wire from="(890,510)" to="(890,530)"/>
-    <wire from="(1290,380)" to="(1290,650)"/>
-    <wire from="(670,380)" to="(1290,380)"/>
     <wire from="(910,490)" to="(1030,490)"/>
     <wire from="(910,490)" to="(910,510)"/>
     <wire from="(1030,490)" to="(1030,560)"/>
@@ -268,6 +249,118 @@
     <wire from="(900,410)" to="(900,480)"/>
     <wire from="(900,360)" to="(900,410)"/>
     <wire from="(900,410)" to="(920,410)"/>
+    <wire from="(810,200)" to="(830,200)"/>
+    <wire from="(1300,210)" to="(1300,670)"/>
+    <wire from="(640,380)" to="(670,380)"/>
+    <wire from="(470,580)" to="(480,580)"/>
+    <wire from="(470,580)" to="(470,600)"/>
+    <wire from="(1120,650)" to="(1150,650)"/>
+    <wire from="(1000,630)" to="(1100,630)"/>
+    <wire from="(670,380)" to="(1150,380)"/>
+    <wire from="(1120,640)" to="(1120,650)"/>
+    <wire from="(340,620)" to="(1100,620)"/>
+    <wire from="(470,600)" to="(1100,600)"/>
+    <wire from="(1150,380)" to="(1150,650)"/>
+    <wire from="(610,610)" to="(1100,610)"/>
+    <wire from="(1270,230)" to="(1270,700)"/>
+    <wire from="(1270,700)" to="(1280,700)"/>
+    <wire from="(1040,700)" to="(1270,700)"/>
+    <comp lib="0" loc="(540,820)" name="Constant">
+      <a name="width" val="8"/>
+      <a name="value" val="0xff"/>
+    </comp>
+    <comp lib="2" loc="(1120,640)" name="Decoder">
+      <a name="facing" val="west"/>
+      <a name="select" val="2"/>
+      <a name="disabled" val="0"/>
+      <a name="enable" val="false"/>
+    </comp>
+    <comp lib="1" loc="(770,250)" name="Controlled Buffer">
+      <a name="width" val="8"/>
+    </comp>
+    <comp lib="6" loc="(1102,293)" name="Text">
+      <a name="text" val="operand1/acc"/>
+      <a name="font" val="Dialog plain 12"/>
+    </comp>
+    <comp lib="0" loc="(720,810)" name="Pin">
+      <a name="facing" val="west"/>
+      <a name="output" val="true"/>
+      <a name="tristate" val="false"/>
+      <a name="label" val="halt"/>
+    </comp>
+    <comp loc="(870,480)" name="mmu">
+      <a name="facing" val="north"/>
+    </comp>
+    <comp lib="4" loc="(1290,210)" name="Register">
+      <a name="label" val="lut_out"/>
+    </comp>
+    <comp lib="4" loc="(410,200)" name="Register"/>
+    <comp lib="0" loc="(110,810)" name="Clock"/>
+    <comp lib="1" loc="(860,310)" name="Controlled Buffer">
+      <a name="width" val="8"/>
+    </comp>
+    <comp lib="0" loc="(1070,210)" name="Splitter">
+      <a name="facing" val="west"/>
+      <a name="fanout" val="3"/>
+      <a name="incoming" val="19"/>
+      <a name="bit1" val="0"/>
+      <a name="bit2" val="0"/>
+      <a name="bit3" val="0"/>
+      <a name="bit4" val="0"/>
+      <a name="bit5" val="0"/>
+      <a name="bit6" val="0"/>
+      <a name="bit7" val="0"/>
+      <a name="bit8" val="1"/>
+      <a name="bit9" val="1"/>
+      <a name="bit10" val="1"/>
+      <a name="bit11" val="1"/>
+      <a name="bit12" val="1"/>
+      <a name="bit13" val="1"/>
+      <a name="bit14" val="1"/>
+      <a name="bit15" val="1"/>
+      <a name="bit16" val="2"/>
+      <a name="bit17" val="2"/>
+      <a name="bit18" val="2"/>
+    </comp>
+    <comp lib="5" loc="(1020,130)" name="TTY">
+      <a name="trigger" val="falling"/>
+    </comp>
+    <comp lib="0" loc="(830,200)" name="Probe">
+      <a name="facing" val="west"/>
+    </comp>
+    <comp lib="2" loc="(260,770)" name="Decoder">
+      <a name="select" val="3"/>
+      <a name="disabled" val="0"/>
+    </comp>
+    <comp lib="0" loc="(640,380)" name="Probe"/>
+    <comp lib="6" loc="(599,384)" name="Text">
+      <a name="text" val="out sel"/>
+      <a name="font" val="Dialog plain 12"/>
+    </comp>
+    <comp lib="4" loc="(460,200)" name="Register">
+      <a name="label" val="PC"/>
+    </comp>
+    <comp lib="1" loc="(980,560)" name="OR Gate">
+      <a name="facing" val="north"/>
+    </comp>
+    <comp lib="5" loc="(680,500)" name="Keyboard"/>
+    <comp loc="(790,560)" name="key_ctrl">
+      <a name="facing" val="south"/>
+    </comp>
+    <comp lib="0" loc="(920,410)" name="Probe">
+      <a name="facing" val="west"/>
+      <a name="radix" val="16"/>
+    </comp>
+    <comp lib="6" loc="(717,163)" name="Text">
+      <a name="text" val="inst part2"/>
+      <a name="font" val="Dialog plain 12"/>
+    </comp>
+    <comp lib="1" loc="(1030,560)" name="OR Gate">
+      <a name="facing" val="north"/>
+    </comp>
+    <comp lib="4" loc="(510,570)" name="Register">
+      <a name="label" val="ACC"/>
+    </comp>
     <comp lib="0" loc="(1040,290)" name="Probe">
       <a name="facing" val="west"/>
       <a name="radix" val="16"/>
@@ -275,13 +368,10 @@
     <comp lib="1" loc="(830,290)" name="Controlled Buffer">
       <a name="width" val="8"/>
     </comp>
-    <comp lib="0" loc="(540,820)" name="Constant">
-      <a name="width" val="8"/>
-      <a name="value" val="0xff"/>
-    </comp>
     <comp lib="3" loc="(630,810)" name="Comparator"/>
-    <comp lib="1" loc="(770,250)" name="Controlled Buffer">
-      <a name="width" val="8"/>
+    <comp lib="6" loc="(992,414)" name="Text">
+      <a name="text" val="mem_data_out"/>
+      <a name="font" val="Dialog plain 12"/>
     </comp>
     <comp lib="1" loc="(990,520)" name="AND Gate">
       <a name="facing" val="north"/>
@@ -30230,59 +30320,24 @@ ff 0 252*1 4*ff 0 251*1 5*ff 0
       <a name="max" val="0x4"/>
       <a name="behavior" val="old"/>
     </comp>
-    <comp lib="0" loc="(720,810)" name="Pin">
-      <a name="facing" val="west"/>
-      <a name="output" val="true"/>
-      <a name="tristate" val="false"/>
-      <a name="label" val="halt"/>
-    </comp>
     <comp lib="0" loc="(1000,190)" name="Probe">
       <a name="facing" val="west"/>
       <a name="radix" val="16"/>
     </comp>
-    <comp loc="(870,480)" name="mmu">
-      <a name="facing" val="north"/>
+    <comp lib="6" loc="(841,182)" name="Text">
+      <a name="text" val="opcode"/>
+      <a name="font" val="Dialog plain 12"/>
     </comp>
-    <comp lib="4" loc="(1290,210)" name="Register">
-      <a name="label" val="lut_out"/>
+    <comp lib="6" loc="(603,301)" name="Text">
+      <a name="text" val="input sel"/>
+      <a name="font" val="Dialog plain 12"/>
     </comp>
-    <comp lib="4" loc="(410,200)" name="Register"/>
     <comp lib="6" loc="(569,147)" name="Text">
       <a name="text" val="instructions"/>
     </comp>
     <comp lib="2" loc="(360,200)" name="Multiplexer">
       <a name="width" val="8"/>
       <a name="enable" val="false"/>
-    </comp>
-    <comp lib="0" loc="(110,810)" name="Clock"/>
-    <comp lib="1" loc="(860,310)" name="Controlled Buffer">
-      <a name="width" val="8"/>
-    </comp>
-    <comp lib="0" loc="(1070,210)" name="Splitter">
-      <a name="facing" val="west"/>
-      <a name="fanout" val="3"/>
-      <a name="incoming" val="19"/>
-      <a name="bit1" val="0"/>
-      <a name="bit2" val="0"/>
-      <a name="bit3" val="0"/>
-      <a name="bit4" val="0"/>
-      <a name="bit5" val="0"/>
-      <a name="bit6" val="0"/>
-      <a name="bit7" val="0"/>
-      <a name="bit8" val="1"/>
-      <a name="bit9" val="1"/>
-      <a name="bit10" val="1"/>
-      <a name="bit11" val="1"/>
-      <a name="bit12" val="1"/>
-      <a name="bit13" val="1"/>
-      <a name="bit14" val="1"/>
-      <a name="bit15" val="1"/>
-      <a name="bit16" val="2"/>
-      <a name="bit17" val="2"/>
-      <a name="bit18" val="2"/>
-    </comp>
-    <comp lib="5" loc="(1020,130)" name="TTY">
-      <a name="trigger" val="falling"/>
     </comp>
     <comp lib="0" loc="(200,200)" name="Constant">
       <a name="width" val="8"/>
@@ -30296,25 +30351,12 @@ ff 0 252*1 4*ff 0 251*1 5*ff 0
       <a name="bit2" val="0"/>
       <a name="bit3" val="1"/>
     </comp>
-    <comp lib="0" loc="(730,180)" name="Probe"/>
-    <comp lib="2" loc="(260,770)" name="Decoder">
-      <a name="select" val="3"/>
-      <a name="disabled" val="0"/>
+    <comp lib="0" loc="(730,180)" name="Probe">
+      <a name="radix" val="16"/>
     </comp>
-    <comp lib="4" loc="(460,200)" name="Register">
-      <a name="label" val="PC"/>
-    </comp>
-    <comp lib="0" loc="(820,200)" name="Probe">
-      <a name="facing" val="west"/>
-    </comp>
-    <comp lib="2" loc="(1260,640)" name="Decoder">
-      <a name="facing" val="west"/>
-      <a name="select" val="2"/>
-      <a name="disabled" val="0"/>
-      <a name="enable" val="false"/>
-    </comp>
-    <comp lib="1" loc="(980,560)" name="OR Gate">
-      <a name="facing" val="north"/>
+    <comp lib="6" loc="(993,169)" name="Text">
+      <a name="text" val="operand2"/>
+      <a name="font" val="Dialog plain 12"/>
     </comp>
     <comp lib="0" loc="(640,200)" name="Splitter">
       <a name="incoming" val="16"/>
@@ -30343,37 +30385,15 @@ ff 0 252*1 4*ff 0 251*1 5*ff 0
     <comp lib="4" loc="(640,200)" name="ROM">
       <a name="dataWidth" val="16"/>
       <a name="contents">addr/data: 8 16
-1002 3081 1003 3010 1004 3080 1005 3040
-1002 c0ff 1004 c2ff 1006 3100 1003 c0ff
-1005 c2ff 1007 3100 1002 c0ff 4ff 201
-1006 c2ff 5f9 301 1007 c2ff 3100 20ff
+1001 303e 1000 c0ff 380 5f9 201 a2ff
+2002 c0ff 30ff 37f 1001 3100 62e 301
+401 201 a2ff 2002 20ff
 </a>
       <a name="Select" val="high"/>
-    </comp>
-    <comp lib="5" loc="(680,500)" name="Keyboard"/>
-    <comp lib="6" loc="(981,414)" name="Text">
-      <a name="text" val="mem_data_out"/>
-      <a name="font" val="Dialog plain 12"/>
-    </comp>
-    <comp lib="0" loc="(1260,310)" name="Probe">
-      <a name="radix" val="16"/>
-    </comp>
-    <comp loc="(790,560)" name="key_ctrl">
-      <a name="facing" val="south"/>
-    </comp>
-    <comp lib="0" loc="(920,410)" name="Probe">
-      <a name="facing" val="west"/>
-      <a name="radix" val="16"/>
-    </comp>
-    <comp lib="1" loc="(1030,560)" name="OR Gate">
-      <a name="facing" val="north"/>
     </comp>
     <comp lib="3" loc="(290,190)" name="Adder"/>
     <comp lib="6" loc="(1158,163)" name="Text">
       <a name="text" val="ALU LUT"/>
-    </comp>
-    <comp lib="4" loc="(510,570)" name="Register">
-      <a name="label" val="ACC"/>
     </comp>
     <comp lib="1" loc="(800,270)" name="Controlled Buffer">
       <a name="width" val="8"/>
