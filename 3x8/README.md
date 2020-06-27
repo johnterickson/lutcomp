@@ -46,6 +46,3 @@ instructions:
 1 1 0 ? ? ? ? ? ROT
 1 1 1 ? ? ? ? ? CMP
 ```
-
-
-https://www.digikey.com/products/en/integrated-circuits-ics/logic-flip-flops/706?k=74LS377&k=&pkeyword=74LS377&sv=0&pv69=411897&sf=0&FV=1989%7C0%2C-8%7C706%2C41%7C380371&quantity=&ColumnSort=0&page=1&pageSize=25
