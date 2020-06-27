@@ -12,14 +12,17 @@ so if opcode 0b001 is "add" then at address 0x1034 would be the byte 0x07 becaus
 
 LUT-ALU computer
 
-* 8-bit instuctions
+* 16-bit instuctions
 * 4-bit math
 * 4-bit flags
 * 24-bit addressing via 6 4-bit registers
 
 ### instruction format:
 ```
-[3 bit opcode][1 bit immediate=0/register=1][4 bits [immediate value][register index]]
+[4 bit opcode]
+[1 bit src immediate=0/register=1]
+[4 bits input2 [immediate value][register index]]
+[4 bits output register index]
 ```
 
 ### register indicies:
