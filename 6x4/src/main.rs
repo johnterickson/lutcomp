@@ -13,6 +13,7 @@ use strum::IntoEnumIterator;
 extern crate static_assertions;
 
 use std::{io::BufWriter, str::FromStr};
+use std::collections::BTreeMap;
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
@@ -23,10 +24,11 @@ pub struct AssemblyParser;
 enum Opcode {
     Copy,
     Adc,
+    Add,
     Or,
     Xor,
     And,
-    RotLeft,
+    // RotLeft,
     AddIfZero,
 }
 
@@ -43,6 +45,21 @@ enum Register {
     ExtMem,
 }
 
+#[derive(Clone, Display, Debug)]
+enum Value {
+    Constant(u8),
+    Label(String),
+}
+
+impl Value {
+    fn unwrap_constant(&self) -> u8 {
+        match self {
+            Value::Constant(c) => *c,
+            _ => panic!()
+        }
+    }
+}
+
 #[derive(Clone, Copy, Display, Debug)]
 #[strum(serialize_all = "lowercase")]
 enum Input {
@@ -50,10 +67,10 @@ enum Input {
     Reg(Register),
 }
 
-#[derive(Clone, Copy, Display, Debug)]
+#[derive(Clone, Display, Debug)]
 enum InstructionMode {
     Regs(Register, Register),
-    Imm8(u8),
+    Imm8(Value),
     Imm4(Register, u8),
 }
 
@@ -90,19 +107,19 @@ impl Instruction {
         let mut inst = 0;
         inst |= (self.opcode as InstructionInt) << 12;
         inst |= (self.output as InstructionInt) << 9;
-        match self.mode {
+        match &self.mode {
             InstructionMode::Regs(in1, in2) => {
                 inst |= 0x180;
-                inst |= (in1 as InstructionInt) << 4;
-                inst |= in2 as InstructionInt;
+                inst |= (*in1 as InstructionInt) << 4;
+                inst |= *in2 as InstructionInt;
             }
             InstructionMode::Imm8(imm) => {
-                inst |= imm as InstructionInt;
+                inst |= imm.unwrap_constant() as InstructionInt;
             }
             InstructionMode::Imm4(in1, imm) => {
                 inst |= 0x100;
-                inst |= (in1 as InstructionInt) << 4;
-                inst |= (imm & 0xF) as InstructionInt;
+                inst |= (*in1 as InstructionInt) << 4;
+                inst |= (*imm & 0xF) as InstructionInt;
             }
         }
         inst
@@ -177,10 +194,21 @@ impl Machine {
 
     fn read_reg(&self, r: Register) -> u8 {
         match r {
-            Register::Mem => self.mem[Register::Addr as usize],
+            Register::Mem => self.read_mem(self.read_reg(Register::Addr)),
             Register::ExtMem => self.ext_mem[self.ext_addr()],
             _ => self.regs[r as usize],
         }
+    }
+
+    fn read_mem(&self, addr: u8) -> u8 {
+        
+        let v = match addr {
+            0x00 => 0xFF, //unimplemented!(),
+            0x01 => 0xFF, //unimplemented!(),
+            _ => self.mem[addr as usize],
+        };
+        println!("Read ${:02x} from memory address ${:02x}", v, addr);
+        v
     }
 
     fn write_reg(&mut self, r: Register, v: u8) {
@@ -197,8 +225,9 @@ impl Machine {
     }
 
     fn write_mem(&mut self, addr: u8, v: u8) {
-        println!("Writing ${:02x} to ${:02x}", v, addr);
+        println!("Writing ${:02x} to memory address ${:02x}", v, addr);
         match addr {
+            0x00 => unimplemented!(),
             0x01 => self.tty_out(v as char),
             _ => self.mem[addr as usize] = v,
         }
@@ -242,11 +271,11 @@ impl Machine {
 
         let inst = self.rom[self.read_reg(Register::Pc) as usize].clone();
 
-        let (in1, in2) = match inst.mode {
-            InstructionMode::Imm8(in2) => (self.read_reg(Register::Acc), in2),
-            InstructionMode::Regs(in1, in2) => (self.read_reg(in1), self.read_reg(in2)),
+        let (in1, in2) = match &inst.mode {
+            InstructionMode::Imm8(in2) => (self.read_reg(Register::Acc), in2.unwrap_constant()),
+            InstructionMode::Regs(in1, in2) => (self.read_reg(*in1), self.read_reg(*in2)),
             InstructionMode::Imm4(in1, imm) => {
-                (self.read_reg(in1), (((imm << 4) as i8) >> 4) as u8)
+                (self.read_reg(*in1), (((*imm << 4) as i8) >> 4) as u8)
             }
         };
 
@@ -269,8 +298,8 @@ impl Machine {
             };
 
             let (val, flags) = self.run_alu_lut(&lut_entry);
-
-            final_val |= (val << phase_start_bit);
+            let shifted_val = val << phase_start_bit;
+            final_val |= shifted_val;
 
             for (i, f) in self.flags.iter_mut().enumerate() {
                 *f = ((flags >> i) & 0x1) == 1;
@@ -315,6 +344,8 @@ impl Machine {
     }
 }
 
+
+
 fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
     use pest::iterators::Pair;
 
@@ -336,19 +367,19 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
         dump_tree(assembly, 0);
     }
 
-    fn parse_constant(constant: Pair<Rule>) -> u8 {
+    fn parse_constant(constant: Pair<Rule>) -> Value {
         assert_eq!(Rule::constant, constant.as_rule());
         let constant = constant.into_inner().next().unwrap();
         match constant.as_rule() {
             Rule::hex_constant => {
                 let mut chars = constant.as_str().chars();
-                if chars.next().unwrap() == '-' {
+                Value::Constant(if chars.next().unwrap() == '-' {
                     let positive =
                         i8::from_str_radix(constant.as_str().trim_start_matches('-'), 16).unwrap();
                     (-1 * positive) as u8
                 } else {
                     u8::from_str_radix(constant.as_str(), 16).unwrap()
-                }
+                })
             }
             Rule::char_constant => {
                 let mut chars = constant.as_str().chars();
@@ -356,7 +387,10 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
                 let c = chars.next().unwrap();
                 assert_eq!('\'', chars.next().unwrap());
                 assert_eq!(None, chars.next());
-                c as u8
+                Value::Constant(c as u8)
+            }
+            Rule::label => {
+                Value::Label(constant.as_str().to_owned())
             }
             r => panic!("unexpexted {:?}", r),
         }
@@ -397,8 +431,8 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
                 Rule::mode2 => {
                     let mut inputs = inputs.into_inner();
                     let in1 = Register::from_str(inputs.next().unwrap().as_str()).unwrap();
-                    let constant = parse_constant(inputs.next().unwrap());
-                    InstructionMode::Imm4(in1, constant)
+                    let constant = parse_constant(inputs.next().unwrap()).unwrap_constant();
+                    InstructionMode::Imm4(in1, constant & 0xF)
                 }
                 r => panic!("unexpexted {:?}", r),
             }
@@ -413,6 +447,7 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
     }
 
     let mut instructions = Vec::new();
+    let mut labels = BTreeMap::new();
     let mut assembly = AssemblyParser::parse(Rule::program, input).unwrap();
 
     let assembly = assembly.next().unwrap();
@@ -425,13 +460,35 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
                 match line.as_rule() {
                     Rule::comment => {}
                     Rule::instruction => {
-                        instructions.push(parse_instruction(line));
+                        let i = parse_instruction(line);
+                        println!("{:?}", &i);
+                        instructions.push(i);
+                    }
+                    Rule::label => {
+                        labels.insert(line.as_str().to_owned(), instructions.len() as u8);
                     }
                     _ => panic!("Unexpected: {:?}", line.as_rule()),
                 }
             }
             Rule::EOI => {}
             r => panic!("unexpexted {:?}", r),
+        }
+    }
+
+    for i in instructions.iter_mut() {
+        if let InstructionMode::Imm8(v) = &mut i.mode {
+            *v = Value::Constant(match v {
+                Value::Constant(c) => *c,
+                Value::Label(label) => {
+                    let mut resolved = *labels
+                        .get(label.as_str())
+                        .expect(&format!("Could not find label '{}", &label));
+                    if i.output == Register::Pc {
+                        resolved -= 1;
+                    }
+                    resolved
+                }
+            });
         }
     }
 
@@ -447,49 +504,70 @@ fn ucode(print: bool) -> Vec<u8> {
     let mut lut = Vec::new();
     for op in Opcode::iter() {
         for phase in &[0, 1] {
-            for _halt in &[false, true] {
-                for zero in &[false, true] {
-                    for carry in &[false, true] {
+            for _in_halt in &[false, true] {
+                for in_zero in &[false, true] {
+                    for in_carry in &[false, true] {
                         for in1 in 0..=0xFu8 {
                             for in2 in 0..=0xFu8 {
-                                let (out_val, mut out_flags) = match op {
-                                    Opcode::Copy => (in2, 0),
+                                let mut out_carry = *in_carry;
+
+                                let (out_val, halt) = match op {
+                                    Opcode::Copy => (in2, false),
                                     Opcode::Adc => {
-                                        let sum = (in1 as u16) + (in2 as u16) + (*carry as u16);
-                                        ((sum & 0xF) as u8, ((sum >> 4) & 1) as u8)
+                                        let sum = (in1 as u16) + (in2 as u16) + (*in_carry as u16);
+                                        out_carry = ((sum >> 4) & 1) != 0;
+                                        ((sum & 0xF) as u8, false)
                                     }
-                                    Opcode::Or => (in1 | in2, 0),
-                                    Opcode::Xor => (in1 ^ in2, 0),
-                                    Opcode::And => (in1 & in2, 0),
+                                    Opcode::Add => {
+                                        let in_carry = if *phase == 0 { 0 } else { *in_carry as u8 };
+                                        let sum =  (in1 as u16) + (in2 as u16) + (in_carry as u16);
+                                        out_carry = ((sum >> 4) & 1) != 0;
+                                        ((sum & 0xF) as u8, false)
+                                    }
+                                    Opcode::Or => (in1 | in2, false),
+                                    Opcode::Xor => (in1 ^ in2, false),
+                                    Opcode::And => (in1 & in2, false),
                                     Opcode::AddIfZero => {
-                                        let sum = if *zero {
+                                        let sum = if *in_zero {
                                             (in1 as u16) + (in2 as u16)
                                         } else {
                                             in1 as u16
                                         };
-                                        ((sum & 0xF) as u8, ((sum >> 4) & 1) as u8)
+                                        out_carry = ((sum >> 4) & 1) != 0;
+                                        ((sum & 0xF) as u8, false)
                                     }
-                                    _ => (0xF, 0x4),
+                                    _ => (0xF, true),
                                 };
                                 
-                                // reset the zero flag
-                                if *phase == 0 {
-                                    out_flags |= 0x2;
+                                let out_zero = if let Opcode::AddIfZero = op  {
+                                    *in_zero
                                 } else {
-                                    out_flags |= (*zero as u8) << 1;
-                                }
+                                    // reset the zero flag
+                                    let mut out_zero = if *phase == 0 {
+                                        true
+                                    } else {
+                                        *in_zero
+                                    };
 
-                                // clear the zero flag if necessary
-                                if out_val != 0 {
-                                    out_flags &= !0x2;
-                                }
+                                    // clear the zero flag if necessary
+                                    if out_val != 0 {
+                                        out_zero = false;
+                                    }
+
+                                    out_zero
+                                };
+                                
+                                let mut out_flags = 0;
+                                if out_carry { out_flags |= 1 << (Flags::Carry as u8);}
+                                if out_zero { out_flags |= 1 << (Flags::Zero as u8);}
+                                if halt { out_flags |= 1 << (Flags::Halt as u8);}
 
                                 let lut_out = (out_flags << 4) | out_val;
                                 lut.push(lut_out);
 
                                 if print {
                                     println!("# {:04x} {} phase={} zero={} carry={} in1={:01x} in2={:01x} -> val={:01x} flags={:01x}", 
-                                        i, op, phase, zero, carry, in1, in2, out_val, out_flags);
+                                        i, op, phase, in_zero, in_carry, in1, in2, out_val, out_flags);
                                     println!("{:02x}", lut_out);
                                 }
 

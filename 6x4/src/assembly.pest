@@ -1,8 +1,11 @@
 WHITESPACE = _{" " | "\t"}
+alpha = { 'a'..'z' | 'A'..'Z' }
+digit = { '0'..'9' }
+label = { ":" ~ alpha ~ (alpha | digit | "_" )+ }
 new_line = _{ "\r\n" | "\n"}
 hex_constant = {"-"? ~ ASCII_HEX_DIGIT+}
 char_constant = {"'" ~ ANY ~ "'"}
-constant = {char_constant | hex_constant}
+constant = {char_constant | hex_constant | label}
 register = {
     "acc" | "pc" | "addr" | "mem" |
     "extaddr0" | "extaddr1" | "extaddr2" | "extmem"
@@ -10,9 +13,9 @@ register = {
 mode0 = {register ~ register}
 mode1 = {constant}
 mode2 = {register ~ constant}
-inputs = {mode2 | mode1 | mode0}
-opcode = {"copy" | "addifzero" | "adc" | "or" | "xor" | "and" | "rotleft" }
-instruction = {!"#" ~ opcode ~ register ~ inputs }
+inputs = {mode0 | mode2 | mode1}
+opcode = {"copy" | "addifzero" | "adc" | "add" | "or" | "xor" | "and" | "rotleft" }
+instruction = {!"#" ~ !":" ~ opcode ~ register ~ inputs }
 comment = { "#" ~ (!new_line ~ ANY)* }
-line = {instruction | comment }
+line = {comment | label | instruction }
 program = {SOI ~ (line? ~ new_line)* ~ EOI}
