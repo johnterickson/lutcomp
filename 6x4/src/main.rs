@@ -1,18 +1,18 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
+use pest::error::Error;
+use pest::Parser;
 
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
+use strum::IntoEnumIterator;
 
 #[macro_use]
 extern crate static_assertions;
 
 use std::{io::BufWriter, str::FromStr};
-
-use pest::error::Error;
-use pest::Parser;
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
@@ -27,10 +27,10 @@ enum Opcode {
     Xor,
     And,
     RotLeft,
-    Compare,
+    AddIfZero
 }
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumString, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PartialEq)]
 #[strum(serialize_all = "lowercase")]
 enum Register {
     Acc,
@@ -65,7 +65,7 @@ struct Instruction {
     output: Register,
 }
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumString)]
+#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString)]
 enum Flags {
     Carry,
     Zero,
@@ -148,6 +148,7 @@ impl Machine {
             Register::Mem => self.write_mem(self.read_reg(Register::Addr), v),
             Register::ExtMem => {
                 let addr = self.ext_addr();
+                println!("Writing ${:02x} to {:06x}", v, addr);
                 self.ext_mem[addr] = v;
             },
             _ => self.regs[r as usize] = v,
@@ -173,8 +174,15 @@ impl Machine {
     }
 
     fn run_step(&mut self) {
-        println!("{:?}",&self.regs);
-        let inst = &self.rom[self.read_reg(Register::Pc) as usize];
+        for r in Register::iter() {
+            print!("{}: {:02x}  ", r, self.read_reg(r));
+        }
+        for f in Flags::iter() {
+            print!("{}: {:01x}  ", f, self.flags[f as usize] as u8);
+        }
+        println!();
+
+        let inst = self.rom[self.read_reg(Register::Pc) as usize].clone();
         println!("{:?}",&inst);
 
         let (in1, in2) = match inst.mode {
@@ -191,12 +199,35 @@ impl Machine {
             Opcode::Copy => {
                 self.write_reg(out, in2);
             }
+            Opcode::Adc => {
+                let carry_in = self.flags[Flags::Carry as usize] as u16;
+                let sum = (in1 as u16) + (in2 as u16) + carry_in;
+                self.flags[Flags::Carry as usize] = (sum >> 8) > 0;
+                self.write_reg(out, (sum & 0xFF) as u8);
+            }
+            Opcode::Or => {
+                self.write_reg(out, in1 | in2);
+            }
+            Opcode::Xor => {
+                self.write_reg(out, in1 ^ in2);
+            }
+            Opcode::AddIfZero => {
+                self.write_reg(
+                    out,
+                    if self.flags[Flags::Zero as usize] { in1.wrapping_add(in2) } else { in1 }
+                );
+            }
             _ => unimplemented!(),
         }
 
-        if out != Register::Pc {
-            self.write_reg(Register::Pc, self.read_reg(Register::Pc) + 1);
+        match inst.opcode {
+            Opcode::Copy => {}
+            _ => {
+                self.flags[Flags::Zero as usize] = self.read_reg(out) == 0;
+            }
         }
+
+        self.write_reg(Register::Pc, self.read_reg(Register::Pc) + 1);
     }
 }
 
@@ -407,12 +438,15 @@ fn main() {
                 writeln!(f, "v2.0 raw").unwrap();
 
                 let write_inst = |f: &mut BufWriter<_>, i: &Instruction| {
-                    writeln!(f, "# {:?}", &i).unwrap();
+                    writeln!(f, "{:?}", &i).unwrap();
                     writeln!(f, "{:04x}", i.emit()).unwrap();
                 };
 
+                let mut pc = 0;
                 for i in &instructions {
+                    write!(f, "# {:02x} ", pc);
                     write_inst(&mut f, i);
+                    pc += 1;
                 }
 
                 println!("Simulating...");

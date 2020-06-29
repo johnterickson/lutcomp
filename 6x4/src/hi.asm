@@ -3,4 +3,4 @@ copy mem 'H'
 copy mem 'i'
 copy mem '!'
 copy mem 0a
-copy pc ff
+copy pc fe
