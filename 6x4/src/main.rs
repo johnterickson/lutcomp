@@ -18,7 +18,7 @@ use std::{io::BufWriter, str::FromStr};
 #[grammar = "assembly.pest"]
 pub struct AssemblyParser;
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumString)]
+#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 enum Opcode {
     Copy,
@@ -27,7 +27,7 @@ enum Opcode {
     Xor,
     And,
     RotLeft,
-    AddIfZero
+    AddIfZero,
 }
 
 #[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PartialEq)]
@@ -69,6 +69,7 @@ struct Instruction {
 enum Flags {
     Carry,
     Zero,
+    Halt,
 }
 
 const EXT_MEMORY_ADDR_BITS: usize = 24;
@@ -108,23 +109,63 @@ impl Instruction {
     }
 }
 
+extern crate packed_struct;
+#[macro_use]
+extern crate packed_struct_codegen;
+
+use packed_struct::prelude::*;
+
+#[derive(Debug, PackedStruct)]
+#[packed_struct(size_bytes="2", endian="msb", bit_numbering = "lsb0")]
+pub struct LutEntry {
+    #[packed_field(bits = "12..=15", ty = "enum")]
+    op: Opcode,
+    #[packed_field(bits = "11")]
+    phase: Integer<u8, packed_bits::Bits1>,
+    #[packed_field(bits = "10")]
+    halt: bool,
+    #[packed_field(bits = "9")]
+    zero: bool,
+    #[packed_field(bits = "8")]
+    carry: bool,
+    #[packed_field(bits = "4..=7")]
+    in1: Integer<u8, packed_bits::Bits4>,
+    #[packed_field(bits = "0..=3")]
+    in2: Integer<u8, packed_bits::Bits4>,
+}
+
+// bitfield! {
+//     struct LutEntry(u16);
+//     impl Debug;
+//     u8;
+//     get_op2, set_op2 : 3, 0;
+//     get_op1, set_op1 : 7, 4;
+//     get_carry, set_carry: 8, 8;
+//     get_zero, set_zero: 9, 9;
+//     get_halt, set_halt: 10, 10;
+//     get_phase, set_phase: 11, 11;
+//     get_op, set_op: 15, 12;
+// }
+
 #[derive(Debug)]
 struct Machine {
-    ext_mem: Vec<u8>,//[u8; MEMORY_SIZE],
-    mem: Vec<u8>, //[u8; 256],
+    lut: Vec<u8>,
+    ext_mem: Vec<u8>, //[u8; MEMORY_SIZE],
+    mem: Vec<u8>,     //[u8; 256],
     regs: [u8; REGISTER_MAX_COUNT],
-    flags: [bool; 2],
+    flags: [bool; FLAGS_COUNT],
     rom: Vec<Instruction>,
 }
 
 impl Machine {
-    fn new(rom: Vec<Instruction>) -> Machine {
+    fn new(rom: Vec<Instruction>, lut: Vec<u8>) -> Machine {
         Machine {
+            lut,
             ext_mem: vec![0u8; MEMORY_SIZE],
             mem: vec![0u8; 256],
             regs: [0u8; REGISTER_MAX_COUNT],
-            flags: [false; 2],
-            rom
+            flags: [false; FLAGS_COUNT],
+            rom,
         }
     }
 
@@ -150,7 +191,7 @@ impl Machine {
                 let addr = self.ext_addr();
                 println!("Writing ${:02x} to {:06x}", v, addr);
                 self.ext_mem[addr] = v;
-            },
+            }
             _ => self.regs[r as usize] = v,
         }
     }
@@ -164,16 +205,33 @@ impl Machine {
     }
 
     fn tty_out(&mut self, c: char) {
+        // eprintln!("\tTTY: {}", c);
         eprint!("{}", c);
     }
 
+    fn get_flag(&self, f: Flags) -> bool {
+        self.flags[f as usize]
+    }
+
     fn run(&mut self) {
-        while self.read_reg(Register::Pc) != 0xFF {
+        while self.read_reg(Register::Pc) != 0xFF && !self.flags[Flags::Halt as usize] {
             self.run_step();
         }
     }
 
+    fn run_alu_lut(&mut self, lut_entry: &LutEntry) -> (u8, u8) {
+        let lut_entry_index = u16::from_be_bytes(lut_entry.pack());
+
+        let lut_out = self.lut[lut_entry_index as usize];
+
+        let ret = (lut_out & 0xF, (lut_out >> 4) & 0x7);
+
+        println!("{:?}=={:04x} -> {:01x},{:01x}", lut_entry, lut_entry_index, ret.0, ret.1);
+        ret
+    }
+
     fn run_step(&mut self) {
+        println!("Start instruction...");
         for r in Register::iter() {
             print!("{}: {:02x}  ", r, self.read_reg(r));
         }
@@ -183,7 +241,6 @@ impl Machine {
         println!();
 
         let inst = self.rom[self.read_reg(Register::Pc) as usize].clone();
-        println!("{:?}",&inst);
 
         let (in1, in2) = match inst.mode {
             InstructionMode::Imm8(in2) => (self.read_reg(Register::Acc), in2),
@@ -195,37 +252,64 @@ impl Machine {
 
         let out = inst.output as Register;
 
-        match inst.opcode {
-            Opcode::Copy => {
-                self.write_reg(out, in2);
+        println!("{:?} ({:02x},{:02x}) -> {}", &inst, in1, in2, out);
+
+        let mut final_val = 0;
+        for phase in 0..=1u8 {
+            let phase_start_bit = phase * 4;
+
+            let lut_entry = LutEntry {
+                op: inst.opcode,
+                phase: phase.into(),
+                halt: self.get_flag(Flags::Halt),
+                zero: self.get_flag(Flags::Zero),
+                carry: self.get_flag(Flags::Carry),
+                in1: ((in1 >> phase_start_bit) & 0xF).into(),
+                in2: ((in2 >> phase_start_bit) & 0xF).into(),
+            };
+
+            let (val, flags) = self.run_alu_lut(&lut_entry);
+
+            final_val |= (val << phase_start_bit);
+
+            for (i, f) in self.flags.iter_mut().enumerate() {
+                *f = ((flags >> i) & 0x1) == 1;
             }
-            Opcode::Adc => {
-                let carry_in = self.flags[Flags::Carry as usize] as u16;
-                let sum = (in1 as u16) + (in2 as u16) + carry_in;
-                self.flags[Flags::Carry as usize] = (sum >> 8) > 0;
-                self.write_reg(out, (sum & 0xFF) as u8);
-            }
-            Opcode::Or => {
-                self.write_reg(out, in1 | in2);
-            }
-            Opcode::Xor => {
-                self.write_reg(out, in1 ^ in2);
-            }
-            Opcode::AddIfZero => {
-                self.write_reg(
-                    out,
-                    if self.flags[Flags::Zero as usize] { in1.wrapping_add(in2) } else { in1 }
-                );
-            }
-            _ => unimplemented!(),
         }
 
-        match inst.opcode {
-            Opcode::Copy => {}
-            _ => {
-                self.flags[Flags::Zero as usize] = self.read_reg(out) == 0;
-            }
-        }
+        self.write_reg(out, final_val);
+
+        // match inst.opcode {
+        //     Opcode::Copy => {
+        //         self.write_reg(out, in2);
+        //     }
+        //     Opcode::Adc => {
+        //         let carry_in = self.flags[Flags::Carry as usize] as u16;
+        //         let sum = (in1 as u16) + (in2 as u16) + carry_in;
+        //         self.flags[Flags::Carry as usize] = (sum >> 8) > 0;
+        //         self.write_reg(out, (sum & 0xFF) as u8);
+        //     }
+        //     Opcode::Or => {
+        //         self.write_reg(out, in1 | in2);
+        //     }
+        //     Opcode::Xor => {
+        //         self.write_reg(out, in1 ^ in2);
+        //     }
+        //     Opcode::AddIfZero => {
+        //         self.write_reg(
+        //             out,
+        //             if self.flags[Flags::Zero as usize] { in1.wrapping_add(in2) } else { in1 }
+        //         );
+        //     }
+        //     _ => unimplemented!(),
+        // }
+
+        // match inst.opcode {
+        //     Opcode::Copy => {}
+        //     _ => {
+        //         self.flags[Flags::Zero as usize] = self.read_reg(out) == 0;
+        //     }
+        // }
 
         self.write_reg(Register::Pc, self.read_reg(Register::Pc) + 1);
     }
@@ -286,7 +370,7 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
         let opcode = {
             let opcode = tokens.next().unwrap();
             assert_eq!(Rule::opcode, opcode.as_rule());
-            Opcode::from_str(opcode.as_str()).unwrap()
+            std::str::FromStr::from_str(opcode.as_str()).unwrap()
         };
 
         let output = {
@@ -354,66 +438,90 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
     Ok(instructions)
 }
 
-// fn write(name: &str, out: u8) {
-//     println!("{}", name);
-//     print!("{:02x}", out);
-// }
+fn ucode(print: bool) -> Vec<u8> {
+    if print {
+        println!("v2.0 raw");
+    }
 
-// fn ucode() {
-//     println!("v2.0 raw");
+    let mut i: u16  = 0;
+    let mut lut = Vec::new();
+    for op in Opcode::iter() {
+        for phase in &[0, 1] {
+            for _halt in &[false, true] {
+                for zero in &[false, true] {
+                    for carry in &[false, true] {
+                        for in1 in 0..=0xFu8 {
+                            for in2 in 0..=0xFu8 {
+                                let (out_val, mut out_flags) = match op {
+                                    Opcode::Copy => (in2, 0),
+                                    Opcode::Adc => {
+                                        let sum = (in1 as u16) + (in2 as u16) + (*carry as u16);
+                                        ((sum & 0xF) as u8, ((sum >> 4) & 1) as u8)
+                                    }
+                                    Opcode::Or => (in1 | in2, 0),
+                                    Opcode::Xor => (in1 ^ in2, 0),
+                                    Opcode::And => (in1 & in2, 0),
+                                    Opcode::AddIfZero => {
+                                        let sum = if *zero {
+                                            (in1 as u16) + (in2 as u16)
+                                        } else {
+                                            in1 as u16
+                                        };
+                                        ((sum & 0xF) as u8, ((sum >> 4) & 1) as u8)
+                                    }
+                                    _ => (0xF, 0x4),
+                                };
+                                
+                                // reset the zero flag
+                                if *phase == 0 {
+                                    out_flags |= 0x2;
+                                } else {
+                                    out_flags |= (*zero as u8) << 1;
+                                }
 
-//     // let inputs = ["IMM","ADDR","PC","MEM"];
-//     // let outputs = ["ACC", "ADDR", "PC", "MEM"];
+                                // clear the zero flag if necessary
+                                if out_val != 0 {
+                                    out_flags &= !0x2;
+                                }
 
-//     let instructions = 8u8;
-//     for i in 0..instructions {
-//         for in2 in 0..=255u8 {
-//             for acc in 0..=255u8 {
-//                 print!("# {:01x}{:02x}{:02x} ", i, in2, acc);
+                                let lut_out = (out_flags << 4) | out_val;
+                                lut.push(lut_out);
 
-//                 match i {
-//                     0 => {
-//                         write("COPY", in2);
-//                     }
-//                     1 => {
-//                         write("OR", acc | in2);
-//                     }
-//                     2 => {
-//                         write("ADD", acc.wrapping_add(in2));
-//                     }
-//                     3 => {
-//                         write(&format!("AND {:02x} {:02x}", acc, in2), acc & in2);
-//                     },
-//                     4 => {
-//                         write("XOR", acc ^ in2);
-//                     },
-//                     5 => {
-//                         let left_shift = in2 as i8;
-//                         if 0 < left_shift && left_shift <= 7 {
-//                             let shifted = acc << left_shift;
-//                             let shifted = shifted | (acc >> (8 - left_shift));
-//                             write("ROTLEFT", shifted);
-//                         } else if -7 <= left_shift && left_shift < 0 {
-//                             let right_shift = -1 * left_shift;
-//                             let shifted = acc >> right_shift;
-//                             let shifted = shifted | (acc << (8 - right_shift));
-//                             write("ROTLEFT", shifted);
-//                         } else {
-//                             write("INVALID ROTLEFT", 0xFF);
-//                         }
-//                     },
-//                     6 => {
-//                         write("COMPARE", if acc < in2 { 0xff } else if acc == in2 { 0 } else { 1 });
-//                     }
-//                     _ => {
-//                         write("UNUSED", 0xFF);
-//                     }
-//                 }
-//                 println!();
-//             }
-//         }
-//     }
-// }
+                                if print {
+                                    println!("# {:04x} {} phase={} zero={} carry={} in1={:01x} in2={:01x} -> val={:01x} flags={:01x}", 
+                                        i, op, phase, zero, carry, in1, in2, out_val, out_flags);
+                                    println!("{:02x}", lut_out);
+                                }
+
+                                i += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 5 => {
+    //     let left_shift = in2 as i8;
+    //     if 0 < left_shift && left_shift <= 7 {
+    //         let shifted = acc << left_shift;
+    //         let shifted = shifted | (acc >> (8 - left_shift));
+    //         write("ROTLEFT", shifted);
+    //     } else if -7 <= left_shift && left_shift < 0 {
+    //         let right_shift = -1 * left_shift;
+    //         let shifted = acc >> right_shift;
+    //         let shifted = shifted | (acc << (8 - right_shift));
+    //         write("ROTLEFT", shifted);
+    //     } else {
+    //         write("INVALID ROTLEFT", 0xFF);
+    //     }
+    // },
+    // 6 => {
+    //     write("COMPARE", if acc < in2 { 0xff } else if acc == in2 { 0 } else { 1 });
+    // }
+    lut
+}
 
 fn main() {
     use std::fs::File;
@@ -421,7 +529,9 @@ fn main() {
 
     let args: Vec<_> = std::env::args().collect();
     match args.get(1).map(|s| s.as_str()) {
-        // Some("ucode") => ucode(),
+        Some("ucode") => {
+            ucode(true);
+        }
         Some("assemble") => {
             let instructions = {
                 let path = args[2].as_str();
@@ -444,13 +554,14 @@ fn main() {
 
                 let mut pc = 0;
                 for i in &instructions {
-                    write!(f, "# {:02x} ", pc);
+                    write!(f, "# {:02x} ", pc).unwrap();
                     write_inst(&mut f, i);
                     pc += 1;
                 }
 
                 println!("Simulating...");
-                let mut m = Machine::new(instructions);
+                let lut = ucode(false);
+                let mut m = Machine::new(instructions, lut);
                 m.run();
             }
         }
