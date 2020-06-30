@@ -467,6 +467,60 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
                     Rule::label => {
                         labels.insert(line.as_str().to_owned(), instructions.len() as u8);
                     }
+                    Rule::pseudo_call => {
+                        let source = line.as_str().to_owned();
+                        let label = line.into_inner().next().unwrap();
+                        assert_eq!(label.as_rule(), Rule::label);
+
+                        let insts = [
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Addr,
+                                mode: InstructionMode::Imm8(Value::Constant(0xff))
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Add,
+                                output: Register::Mem,
+                                mode: InstructionMode::Imm4(
+                                    Register::Mem,
+                                    0xF
+                                )
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Or,
+                                output: Register::Addr,
+                                mode: InstructionMode::Imm4(
+                                    Register::Mem,
+                                    0
+                                )
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Add,
+                                output: Register::Mem,
+                                mode: InstructionMode::Imm4(
+                                    Register::Pc,
+                                    1
+                                )
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Pc,
+                                mode: InstructionMode::Imm8(
+                                    Value::Label(label.as_str().to_owned())
+                                )
+                            }
+                        ];
+
+                        for i in &insts {
+                            println!("{:?}", &i);
+                            instructions.push(i.clone());
+                        }
+                    }
                     _ => panic!("Unexpected: {:?}", line.as_rule()),
                 }
             }
