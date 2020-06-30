@@ -1,9 +1,13 @@
 #set up stack pointer
 copy addr ff
-copy mem ff
+copy mem fe
+copy addr fe
+copy mem fe
+# call
 copy acc 7
 !call :print_hex
-copy pc fe
+#copy pc fe
+!return
 :print_hex
 copy addr 't'
 or mem acc 0
@@ -20,11 +24,4 @@ copy acc '0'
 add acc acc mem
 copy addr 01
 or mem acc 0
-#!return
-copy addr ff
-or addr mem 0
-# read return address
-or acc mem 0
-# fix stack pointer
-add mem mem 1
-or pc acc 0
+!return

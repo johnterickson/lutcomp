@@ -30,6 +30,8 @@ enum Opcode {
     And,
     // RotLeft,
     AddIfZero,
+    MulLo,
+    MulHi,
 }
 
 #[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PartialEq)]
@@ -207,7 +209,7 @@ impl Machine {
             0x01 => 0xFF, //unimplemented!(),
             _ => self.mem[addr as usize],
         };
-        println!("Read ${:02x} from memory address ${:02x}", v, addr);
+        // println!("Read ${:02x} from memory address ${:02x}", v, addr);
         v
     }
 
@@ -307,39 +309,6 @@ impl Machine {
         }
 
         self.write_reg(out, final_val);
-
-        // match inst.opcode {
-        //     Opcode::Copy => {
-        //         self.write_reg(out, in2);
-        //     }
-        //     Opcode::Adc => {
-        //         let carry_in = self.flags[Flags::Carry as usize] as u16;
-        //         let sum = (in1 as u16) + (in2 as u16) + carry_in;
-        //         self.flags[Flags::Carry as usize] = (sum >> 8) > 0;
-        //         self.write_reg(out, (sum & 0xFF) as u8);
-        //     }
-        //     Opcode::Or => {
-        //         self.write_reg(out, in1 | in2);
-        //     }
-        //     Opcode::Xor => {
-        //         self.write_reg(out, in1 ^ in2);
-        //     }
-        //     Opcode::AddIfZero => {
-        //         self.write_reg(
-        //             out,
-        //             if self.flags[Flags::Zero as usize] { in1.wrapping_add(in2) } else { in1 }
-        //         );
-        //     }
-        //     _ => unimplemented!(),
-        // }
-
-        // match inst.opcode {
-        //     Opcode::Copy => {}
-        //     _ => {
-        //         self.flags[Flags::Zero as usize] = self.read_reg(out) == 0;
-        //     }
-        // }
-
         self.write_reg(Register::Pc, self.read_reg(Register::Pc) + 1);
     }
 }
@@ -349,23 +318,23 @@ impl Machine {
 fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
     use pest::iterators::Pair;
 
-    {
-        use pest::iterators::Pairs;
-        fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
-            for pair in pairs {
-                if pair.as_rule() != Rule::program {
-                    for _ in 0..indent {
-                        print!(" ");
-                    }
-                    println!("{:?}: '{}'", pair.as_rule(), pair.as_str());
-                }
-                dump_tree(pair.into_inner(), indent + 1);
-            }
-        };
+    // {
+    //     use pest::iterators::Pairs;
+    //     fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
+    //         for pair in pairs {
+    //             if pair.as_rule() != Rule::program {
+    //                 for _ in 0..indent {
+    //                     print!(" ");
+    //                 }
+    //                 println!("{:?}: '{}'", pair.as_rule(), pair.as_str());
+    //             }
+    //             dump_tree(pair.into_inner(), indent + 1);
+    //         }
+    //     };
 
-        let assembly = AssemblyParser::parse(Rule::program, input).unwrap();
-        dump_tree(assembly, 0);
-    }
+    //     let assembly = AssemblyParser::parse(Rule::program, input).unwrap();
+    //     dump_tree(assembly, 0);
+    // }
 
     fn parse_constant(constant: Pair<Rule>) -> Value {
         assert_eq!(Rule::constant, constant.as_rule());
@@ -483,37 +452,73 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
                                 source: source.clone(),
                                 opcode: Opcode::Add,
                                 output: Register::Mem,
-                                mode: InstructionMode::Imm4(
-                                    Register::Mem,
-                                    0xF
-                                )
+                                mode: InstructionMode::Imm4(Register::Mem, 0xF)
                             },
                             Instruction {
                                 source: source.clone(),
                                 opcode: Opcode::Or,
                                 output: Register::Addr,
-                                mode: InstructionMode::Imm4(
-                                    Register::Mem,
-                                    0
-                                )
+                                mode: InstructionMode::Imm4(Register::Mem, 0)
                             },
                             Instruction {
                                 source: source.clone(),
                                 opcode: Opcode::Add,
                                 output: Register::Mem,
-                                mode: InstructionMode::Imm4(
-                                    Register::Pc,
-                                    1
-                                )
+                                mode: InstructionMode::Imm4(Register::Pc, 1)
                             },
                             Instruction {
                                 source: source.clone(),
                                 opcode: Opcode::Copy,
                                 output: Register::Pc,
-                                mode: InstructionMode::Imm8(
-                                    Value::Label(label.as_str().to_owned())
-                                )
+                                mode: InstructionMode::Imm8(Value::Label(label.as_str().to_owned()))
                             }
+                        ];
+
+                        for i in &insts {
+                            println!("{:?}", &i);
+                            instructions.push(i.clone());
+                        }
+                    }
+                    Rule::pseudo_return => {
+                        let source = line.as_str().to_owned();
+
+                        let insts = [
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Addr,
+                                mode: InstructionMode::Imm8(Value::Constant(0xff))
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Or,
+                                output: Register::Addr,
+                                mode: InstructionMode::Imm4(Register::Mem, 0)
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Or,
+                                output: Register::Acc,
+                                mode: InstructionMode::Imm4(Register::Mem, 0)
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Addr,
+                                mode: InstructionMode::Imm8(Value::Constant(0xff))
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Add,
+                                output: Register::Mem,
+                                mode: InstructionMode::Imm4(Register::Mem, 1)
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Or,
+                                output: Register::Pc,
+                                mode: InstructionMode::Imm4(Register::Acc, 0)
+                            },
                         ];
 
                         for i in &insts {
