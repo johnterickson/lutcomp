@@ -526,6 +526,41 @@ fn parse_assembly_file(input: &str) -> Result<Vec<Instruction>, Error<Rule>> {
                             instructions.push(i.clone());
                         }
                     }
+                    Rule::pseudo_initstack => {
+                        let source = line.as_str().to_owned();
+
+                        let insts = [
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Addr,
+                                mode: InstructionMode::Imm8(Value::Constant(0xff))
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Mem,
+                                mode: InstructionMode::Imm8(Value::Constant(0xfe))
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Addr,
+                                mode: InstructionMode::Imm8(Value::Constant(0xfe))
+                            },
+                            Instruction {
+                                source: source.clone(),
+                                opcode: Opcode::Copy,
+                                output: Register::Mem,
+                                mode: InstructionMode::Imm8(Value::Constant(0xfe))
+                            },
+                        ];
+
+                        for i in &insts {
+                            println!("{:?}", &i);
+                            instructions.push(i.clone());
+                        }
+                    }
                     _ => panic!("Unexpected: {:?}", line.as_rule()),
                 }
             }

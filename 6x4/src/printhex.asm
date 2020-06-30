@@ -1,8 +1,4 @@
-#set up stack pointer
-copy addr ff
-copy mem fe
-copy addr fe
-copy mem fe
+!init_stack
 # call
 copy acc 7
 !call :print_hex
