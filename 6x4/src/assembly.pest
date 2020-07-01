@@ -7,8 +7,8 @@ hex_constant = {"-"? ~ ASCII_HEX_DIGIT+}
 char_constant = {"'" ~ ANY ~ "'"}
 constant = {char_constant | hex_constant | label}
 register = {
-    "acc" | "pc" | "addr" | "mem" |
-    "extaddr0" | "extaddr1" | "extaddr2" | "extmem"
+    "acc0" | "acc1" | "pc0" | "pc1" | "addr0" | "addr1" | "mem0" | "mem1"
+    "extaddr0" | "extaddr1" | "extaddr2" | "extaddr3" | "extaddr4" | "extaddr5" | "extmem0" | "extmem1"
 }
 mode0 = {register ~ register}
 mode1 = {constant}

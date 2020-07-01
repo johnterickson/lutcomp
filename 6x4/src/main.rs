@@ -28,7 +28,6 @@ enum Opcode {
     Or,
     Xor,
     And,
-    // RotLeft,
     AddIfZero,
     MulLo,
     MulHi,
@@ -37,14 +36,22 @@ enum Opcode {
 #[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PartialEq)]
 #[strum(serialize_all = "lowercase")]
 enum Register {
-    Acc,
-    Pc,
-    Addr,
-    Mem,
+    Acc0,
+    Acc1,
+    Pc0,
+    Pc1,
+    Addr0,
+    Addr1,
+    Mem0,
+    Mem1,
     ExtAddr0,
     ExtAddr1,
     ExtAddr2,
-    ExtMem,
+    ExtAddr3,
+    ExtAddr4,
+    ExtAddr5,
+    ExtMem0,
+    ExtMem1,
 }
 
 #[derive(Clone, Display, Debug)]
