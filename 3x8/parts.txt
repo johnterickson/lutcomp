@@ -1,0 +1,56 @@
+Note: 74LS and 74HC are incompatible - stick to LS & HCT
+
+Registers:
+----------
+
+CD74HCT299E
+Universal Shift Register 8-Bit 20-PDIP	
+https://www.digikey.com/products/en?keywords=296-33146-5-ND%09
+https://www.ti.com/lit/ds/symlink/cd74hc299.pdf?HQS=TI-null-null-digikeymode-df-pf-null-wwe&ts=1593966574726
+
+
+SN74HCT377N
+Flip Flop 1 Element D-Type 8 Bit Positive Edge 20-DIP (0.300", 7.62mm)
+https://www.digikey.com/product-detail/en/texas-instruments/SN74HCT377N/296-8417-5-ND/376829
+https://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=http%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fsn74hct377
+
+CD74HCT374E
+Flip Flop 1 Element D-Type 8 Bit Positive Edge 20-DIP (0.300", 7.62mm)	
+https://www.digikey.com/product-detail/en/texas-instruments/CD74HCT374E/296-2115-5-ND/38536
+https://www.ti.com/lit/ds/symlink/cd74hct374.pdf?HQS=TI-null-null-digikeymode-df-pf-null-wwe&ts=1593966859501
+
+
+ROM:
+----
+SST39SF040-70-4C-PHE
+FLASH Memory IC 4Mb (512K x 8) Parallel  70ns 32-PDIP
+https://www.digikey.com/products/en?keywords=SST39SF040-70-4C-PHE
+http://ww1.microchip.com/downloads/en/DeviceDoc/20005022C.pdf
+
+
+RAM:
+----
+https://www.digikey.com/product-detail/en/alliance-memory-inc/AS6C4008-55PCN/1450-1027-ND/4234586
+https://www.alliancememory.com/wp-content/uploads/pdf/AS6C4008.pdf
+
+
+Decoder:
+--------
+SN74HCT138N
+Decoder/Demultiplexer 1 x 3:8 16-PDIP
+https://www.digikey.com/product-detail/en/texas-instruments/SN74HCT138N/296-1608-5-ND/277254
+
+
+Adder:
+------
+CD74HCT283E
+Binary Full Adder with Fast Carry IC 16-PDIP
+https://www.digikey.com/product-detail/en/texas-instruments/CD74HCT283E/296-33143-5-ND/38488
+https://www.ti.com/lit/ds/symlink/cd74hc283.pdf?HQS=TI-null-null-digikeymode-df-pf-null-wwe&ts=1593968382645
+
+Counter:
+--------
+CD74HCT40103E
+Counter IC Binary Counter 1 Element 8 Bit Positive Edge 16-PDIP
+https://www.digikey.com/product-detail/en/texas-instruments/CD74HCT40103E/296-2159-5-ND/38561
+

@@ -6,36 +6,50 @@ I'm currently looking at making a dumb computer that minimizes the numbers of wi
 
 My thought is that the painstaking part of making a physcial homebrew computer is the ALU
 So instead, i would just get a big ROM and program it with the answers
-address: `[3 bits opcode][4 bits flags][4 bits operand1][4 bits operand2]`
-so if opcode 0b001 is "add" then at address 0x1034 would be the byte 0x07 because 3+4=7
+address: `[3 bits opcode][8 bits operand1][8 bits operand2]`
+so if opcode `0b001` is "add" then at address `0x10304` would be the byte `0x07` because 3+4=7
 
 
 LUT-ALU computer
 
 * 16-bit instuctions
-* 4-bit math
-* 4-bit flags
-* 24-bit addressing via 6 4-bit registers
+* 8-bit logic (via )
+* (carry flag?)
+* 24-bit addressing RAM/ROM via 3 8-bit extADRR[0..=2] registers
+* 8-bit addressing uRAM via 1 8-bit register uADDR
 
 ### instruction format:
 ```
-[3 bit opcode][1 bit immediate=0/register=1][4 bits [immediate value][register index]]
+[4 bit opcode]
+[1 bit src immediate=1/register=0]
+[2 bits input2 register index]
+[2 bits output register index]
 ```
 
-### register indicies:
+### input2 indicies:
 | index | name |
 | ----: | :--- |
-| 0..=5 | ADDR0 .. ADDR5 |
-| 6 | X |
+| 0 | IMM |
+| 1 | uPC |
+| 2 | uADDR |
+| 3 | uMEM |
+
+### extended register indicies:
+
+| 3 | X |
 | 7 | Y |
 | 8..=d | PC0 .. PC5 |
-| e | ? |
+| e | uPC |
 | f | MEMORY |
 
-
+| reg/imm bit | input 2 | out register | 
+| --- | --- | --- |
+|  0  | register indexed by bits 2,3 | register indexed by bits 0,1 |
+|  1  | immediate in bits 0-3 | ACC |
 
 instructions:
 ```
+x x x 1 [ immediate ] 
 0 0 0 ? ? ? ? ? LOAD IMM/[REG] -> X
 0 0 1 0 ? ? ? ? (available) 
 0 0 1 1 ? ? ? ? STORE X -> [REG]
@@ -45,4 +59,72 @@ instructions:
 1 0 1 ? ? ? ? ? AND
 1 1 0 ? ? ? ? ? ROT
 1 1 1 ? ? ? ? ? CMP
+```
+
+```
+// emulate 'add rd, rx, ry'
+
+rd_addr: $90
+rx_addr: $91
+ry_addr: $92
+
+// grab d
+copy addr, $80
+copy acc, mem
+// multiply by 4 to get address in memory
+rotl acc, 2
+copy addr, rd_addr
+copy mem, acc
+
+// grab x
+copy addr, $81
+copy acc, mem
+// multiply by 4 to get address in memory
+rotl acc, 2
+copy addr, rx_addr
+copy mem, acc
+
+// grab y
+copy addr, $82
+copy acc, mem
+// multiply by 4 to get address in memory
+rotl acc, 2
+copy addr, ry_addr
+copy mem, acc
+
+
+copy addr, rx_addr
+// get address of LSB of rx
+copy addr, mem
+// read LSB of rx
+copy acc, mem
+
+copy addr, ry_addr
+copy addr, mem
+adc acc, mem
+
+copy addr, rd_addr
+copy addr, mem
+copy mem, acc
+
+
+
+// store at t0=$90
+copy addr, $90 
+copy mem, acc
+
+// grab y
+copy addr, $82
+copy acc, mem
+// multiply by 4 to get address in memory
+rotl acc, 2
+copy addr, acc
+// read LSB of ry
+copy acc, mem
+// add LSB of rx
+copy addr, $90 
+adc acc, mem
+// store at t0=$90 = rx[0] + ry[1]
+copy mem, acc
+
 ```
