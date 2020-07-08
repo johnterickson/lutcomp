@@ -104,13 +104,11 @@ impl Instruction {
                 0b00
             }
             InstructionMode::Regs(in1, in2) => {
-                inst |= 0x180;
                 inst |= (*in1 as InstructionInt) << 4;
                 inst |= *in2 as InstructionInt;
                 0b01
             }
             InstructionMode::Imm4(in1, imm) => {
-                inst |= 0x100;
                 inst |= (*in1 as InstructionInt) << 4;
                 inst |= (*imm & 0xF) as InstructionInt;
                 0b10
@@ -139,19 +137,6 @@ pub struct LutEntry {
     #[packed_field(bits = "0..=7")]
     in2: u8,
 }
-
-// bitfield! {
-//     struct LutEntry(u16);
-//     impl Debug;
-//     u8;
-//     get_op2, set_op2 : 3, 0;
-//     get_op1, set_op1 : 7, 4;
-//     get_carry, set_carry: 8, 8;
-//     get_zero, set_zero: 9, 9;
-//     get_halt, set_halt: 10, 10;
-//     get_phase, set_phase: 11, 11;
-//     get_op, set_op: 15, 12;
-// }
 
 #[derive(Debug)]
 struct Machine {

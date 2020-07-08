@@ -18,12 +18,33 @@ LUT-ALU computer
 * 24-bit addressing RAM/ROM via 3 8-bit extADRR[0..=2] registers
 * 8-bit addressing uRAM via 1 8-bit register uADDR
 
+### stages:
+0: Load IR0, (M0_IMM, M2_IMM)?
+1: Load IR1
+2: Load IN1
+3: Load IN2
+4: Load OUT
+5: Bump PC
+
 ### instruction format:
 ```
-[4 bit opcode]
-[1 bit src immediate=1/register=0]
-[2 bits input2 register index]
-[2 bits output register index]
+[3 bit opcode]
+[2 bit mode]
+[3 bits output register index]
+
+mode 00: (in1 == ACC)
+[8 bits in2 immediate]
+
+mode 01:
+[1 bit reserved]
+[3 bits in1 register index]
+[1 bit reserved]
+[3 bits in2 register index]
+
+mode 10:
+[1 bit reserved]
+[3 bits in1 register index]
+[4 bits in2 immediate]
 ```
 
 ### input2 indicies:

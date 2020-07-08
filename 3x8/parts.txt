@@ -54,3 +54,7 @@ CD74HCT40103E
 Counter IC Binary Counter 1 Element 8 Bit Positive Edge 16-PDIP
 https://www.digikey.com/product-detail/en/texas-instruments/CD74HCT40103E/296-2159-5-ND/38561
 
+SN74LS593N
+Counter IC Binary Counter 1 Element 8 Bit Positive Edge 20-PDIP
+https://www.digikey.com/product-detail/en/texas-instruments/SN74LS593N/296-3719-5-ND/377750
+also http://pdf.datasheetcatalog.com/datasheet/SGSThomsonMicroelectronics/mXtwrtw.pdf
