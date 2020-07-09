@@ -143,7 +143,6 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
     <wire from="(930,380)" to="(950,380)"/>
     <wire from="(930,380)" to="(930,1100)"/>
     <wire from="(900,1100)" to="(930,1100)"/>
-    <wire from="(950,430)" to="(950,1110)"/>
     <wire from="(900,1110)" to="(950,1110)"/>
     <wire from="(1670,430)" to="(1700,430)"/>
     <wire from="(1730,440)" to="(1750,440)"/>
@@ -156,7 +155,6 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
     <wire from="(1690,450)" to="(1700,450)"/>
     <wire from="(1680,440)" to="(1700,440)"/>
     <wire from="(1680,440)" to="(1680,1120)"/>
-    <wire from="(900,1120)" to="(1680,1120)"/>
     <wire from="(1630,1440)" to="(1690,1440)"/>
     <wire from="(1040,390)" to="(1060,390)"/>
     <wire from="(1030,380)" to="(1030,470)"/>
@@ -171,7 +169,6 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
     <wire from="(1750,330)" to="(1750,440)"/>
     <wire from="(1030,330)" to="(1030,380)"/>
     <wire from="(920,930)" to="(960,930)"/>
-    <wire from="(960,850)" to="(960,930)"/>
     <wire from="(560,330)" to="(1030,330)"/>
     <wire from="(560,330)" to="(560,400)"/>
     <wire from="(510,390)" to="(510,400)"/>
@@ -184,20 +181,14 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
     <wire from="(740,380)" to="(750,380)"/>
     <wire from="(740,380)" to="(740,400)"/>
     <wire from="(920,940)" to="(970,940)"/>
-    <wire from="(970,840)" to="(970,940)"/>
     <wire from="(900,1150)" to="(980,1150)"/>
-    <wire from="(980,830)" to="(980,1150)"/>
     <wire from="(250,280)" to="(260,280)"/>
     <wire from="(280,280)" to="(360,280)"/>
     <wire from="(360,280)" to="(360,430)"/>
     <wire from="(360,430)" to="(470,430)"/>
     <wire from="(420,370)" to="(470,370)"/>
-    <wire from="(440,380)" to="(440,850)"/>
     <wire from="(440,380)" to="(470,380)"/>
-    <wire from="(440,850)" to="(960,850)"/>
     <wire from="(450,420)" to="(470,420)"/>
-    <wire from="(460,450)" to="(460,830)"/>
-    <wire from="(460,830)" to="(980,830)"/>
     <wire from="(460,450)" to="(470,450)"/>
     <wire from="(420,440)" to="(470,440)"/>
     <wire from="(420,440)" to="(420,460)"/>
@@ -236,24 +227,15 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
     <wire from="(1400,330)" to="(1470,330)"/>
     <wire from="(360,430)" to="(360,1080)"/>
     <wire from="(320,1070)" to="(320,1140)"/>
-    <wire from="(1020,430)" to="(1020,980)"/>
     <wire from="(1010,430)" to="(1020,430)"/>
     <wire from="(1110,370)" to="(1140,370)"/>
     <wire from="(1110,370)" to="(1110,390)"/>
     <wire from="(1110,390)" to="(1470,390)"/>
     <wire from="(1090,390)" to="(1110,390)"/>
-    <wire from="(840,1040)" to="(850,1040)"/>
-    <wire from="(840,1060)" to="(880,1060)"/>
-    <wire from="(880,960)" to="(880,1060)"/>
     <wire from="(450,420)" to="(450,620)"/>
-    <wire from="(450,640)" to="(450,840)"/>
-    <wire from="(450,840)" to="(970,840)"/>
     <wire from="(320,1070)" to="(440,1070)"/>
     <wire from="(570,1010)" to="(570,1060)"/>
     <wire from="(560,1010)" to="(570,1010)"/>
-    <wire from="(510,980)" to="(510,1000)"/>
-    <wire from="(510,980)" to="(1020,980)"/>
-    <wire from="(510,1000)" to="(530,1000)"/>
     <wire from="(510,1020)" to="(510,1030)"/>
     <wire from="(510,1020)" to="(530,1020)"/>
     <wire from="(490,1010)" to="(530,1010)"/>
@@ -285,34 +267,59 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
     <wire from="(1320,670)" to="(1340,670)"/>
     <wire from="(1340,670)" to="(1360,670)"/>
     <wire from="(1420,650)" to="(1420,1140)"/>
-    <wire from="(900,1140)" to="(1420,1140)"/>
     <wire from="(900,1160)" to="(1040,1160)"/>
     <wire from="(900,1170)" to="(1090,1170)"/>
     <wire from="(280,1260)" to="(870,1260)"/>
     <wire from="(280,1140)" to="(280,1260)"/>
     <wire from="(850,1270)" to="(880,1270)"/>
-    <wire from="(850,1040)" to="(850,1270)"/>
     <wire from="(880,1260)" to="(880,1270)"/>
     <wire from="(900,1250)" to="(920,1250)"/>
     <wire from="(920,1250)" to="(920,1280)"/>
     <wire from="(360,1280)" to="(920,1280)"/>
     <wire from="(360,1100)" to="(360,1280)"/>
+    <wire from="(950,430)" to="(950,1110)"/>
+    <wire from="(460,450)" to="(460,720)"/>
+    <wire from="(450,640)" to="(450,730)"/>
+    <wire from="(440,380)" to="(440,740)"/>
+    <wire from="(440,740)" to="(960,740)"/>
+    <wire from="(460,720)" to="(980,720)"/>
+    <wire from="(450,730)" to="(970,730)"/>
+    <wire from="(960,740)" to="(960,930)"/>
+    <wire from="(980,720)" to="(980,1150)"/>
+    <wire from="(970,730)" to="(970,940)"/>
+    <wire from="(1020,430)" to="(1020,800)"/>
+    <wire from="(500,800)" to="(500,1000)"/>
+    <wire from="(500,1000)" to="(530,1000)"/>
+    <wire from="(500,800)" to="(1020,800)"/>
+    <wire from="(900,1140)" to="(1420,1140)"/>
+    <wire from="(900,1120)" to="(1680,1120)"/>
+    <wire from="(840,1050)" to="(850,1050)"/>
+    <wire from="(850,1050)" to="(850,1270)"/>
+    <wire from="(840,1060)" to="(880,1060)"/>
+    <wire from="(880,1040)" to="(880,1060)"/>
     <comp lib="5" loc="(1690,1450)" name="TTY">
       <a name="trigger" val="falling"/>
     </comp>
     <comp lib="0" loc="(1050,410)" name="Ground"/>
     <comp lib="0" loc="(820,1060)" name="Splitter">
+      <a name="fanout" val="2"/>
       <a name="incoming" val="8"/>
       <a name="appear" val="center"/>
       <a name="bit1" val="0"/>
       <a name="bit2" val="0"/>
       <a name="bit3" val="0"/>
-      <a name="bit4" val="2"/>
-      <a name="bit5" val="2"/>
-      <a name="bit6" val="2"/>
-      <a name="bit7" val="3"/>
+      <a name="bit4" val="1"/>
+      <a name="bit5" val="1"/>
+      <a name="bit6" val="1"/>
+      <a name="bit7" val="1"/>
     </comp>
+    <comp lib="1" loc="(920,1020)" name="NOT Gate"/>
     <comp lib="1" loc="(920,920)" name="NOT Gate"/>
+    <comp lib="2" loc="(880,1040)" name="Decoder">
+      <a name="select" val="4"/>
+      <a name="disabled" val="0"/>
+      <a name="enable" val="false"/>
+    </comp>
     <comp lib="0" loc="(640,1130)" name="Probe">
       <a name="facing" val="west"/>
     </comp>
@@ -347,9 +354,11 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
 </a>
       <a name="Select" val="high"/>
     </comp>
+    <comp lib="1" loc="(920,970)" name="NOT Gate"/>
     <comp lib="0" loc="(750,380)" name="Probe">
       <a name="facing" val="west"/>
     </comp>
+    <comp lib="1" loc="(920,1000)" name="NOT Gate"/>
     <comp lib="1" loc="(920,940)" name="NOT Gate"/>
     <comp lib="1" loc="(920,900)" name="NOT Gate"/>
     <comp lib="0" loc="(420,460)" name="Ground"/>
@@ -377,6 +386,7 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
       <a name="bit17" val="2"/>
       <a name="bit18" val="2"/>
     </comp>
+    <comp lib="1" loc="(920,1030)" name="NOT Gate"/>
     <comp loc="(1150,500)" name="74HCT299">
       <a name="label" val="TMP"/>
     </comp>
@@ -405,11 +415,6 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
       <a name="label" val="IRH"/>
     </comp>
     <comp lib="0" loc="(510,1030)" name="Ground"/>
-    <comp lib="2" loc="(880,960)" name="Decoder">
-      <a name="select" val="3"/>
-      <a name="disabled" val="0"/>
-      <a name="enable" val="false"/>
-    </comp>
     <comp loc="(1770,1590)" name="key_ctrl">
       <a name="facing" val="south"/>
     </comp>
@@ -467,6 +472,7 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
       <a name="disabled" val="0"/>
     </comp>
     <comp lib="1" loc="(920,890)" name="NOT Gate"/>
+    <comp lib="1" loc="(920,990)" name="NOT Gate"/>
     <comp loc="(1090,390)" name="74HCT374">
       <a name="label" val="ACC"/>
     </comp>
@@ -478,10 +484,13 @@ This file is intended to be loaded by Logisim http://logisim.altervista.org
       <a name="tristate" val="false"/>
       <a name="label" val="RESET"/>
     </comp>
+    <comp lib="1" loc="(920,1010)" name="NOT Gate"/>
     <comp lib="1" loc="(310,1140)" name="NOT Gate"/>
+    <comp lib="1" loc="(920,980)" name="NOT Gate"/>
     <comp loc="(500,400)" name="74LS593">
-      <a name="label" val="PC"/>
+      <a name="label" val="PC0"/>
     </comp>
+    <comp lib="1" loc="(920,960)" name="NOT Gate"/>
     <comp lib="0" loc="(610,1060)" name="Splitter">
       <a name="facing" val="west"/>
       <a name="fanout" val="2"/>
