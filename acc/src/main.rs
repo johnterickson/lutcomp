@@ -34,7 +34,7 @@ enum ShiftMode {
 )]
 #[strum(serialize_all = "lowercase")]
 enum Opcode {
-    Copy = 0,
+    LoadImm = 0,
     Add = 1,
     Or = 2,
     Xor = 3,
@@ -158,7 +158,7 @@ pub struct LutEntry {
 fn alu() {
     println!("v2.0 raw");
 
-    for encoded_entry in 50000u32..=0x7FFFF {
+    for encoded_entry in 0u32..=0x7FFFF {
         let bytes = encoded_entry.to_le_bytes();
         assert_eq!(0, bytes[3]);
         let bytes = [bytes[2], bytes[1], bytes[0]];
@@ -167,7 +167,7 @@ fn alu() {
         assert_eq!(0, *entry.unused);
 
         let out = match entry.op {
-            Opcode::Copy => entry.in2,
+            Opcode::LoadImm => entry.in2,
             Opcode::Add => entry.in1.wrapping_add(entry.in2),
             Opcode::Or => entry.in1 | entry.in2,
             Opcode::Xor => entry.in1 ^ entry.in2,
@@ -220,7 +220,7 @@ fn alu() {
             Opcode::Multiply => entry.in1.wrapping_mul(entry.in2),
         };
 
-        println!("# {:02x}", out);
+        println!("{:02x}", out);
     }
 }
 
@@ -266,7 +266,7 @@ enum OutputLevel {
     Reserved15 = 15,
 }
 
-const MAX_UOPS: usize = 63;
+const MAX_UOPS: usize = 64;
 
 struct MicroOp {
     out: OutputLevel,
@@ -304,12 +304,16 @@ fn ucode() {
     };
 
     // let mut uops = Vec::new();
-    for encoded_inst in 0u16..=(1 << 13) {
-        let bytes: &[u8; 2] = &encoded_inst.to_le_bytes();
+    for encoded_inst in 0u16..(1 << 13) {
+        let bytes: &[u8; 2] = &encoded_inst.to_be_bytes();
         let inst = MicroEntry::unpack(bytes).expect(&format!(
             "Could not decode {:02x}={:?}.",
             encoded_inst, bytes
         ));
+
+        let base_address = encoded_inst as usize * MAX_UOPS;
+
+        println!("# @{:04x} {:?} {:?}", base_address, &inst, & bytes);
 
         let mode = InstructionModeDiscriminants::iter()
             .nth(*inst.mode as usize)
@@ -322,8 +326,6 @@ fn ucode() {
         }
 
         let mut uop_count = 0;
-
-        println!("# {:?}", &inst);
 
         println!("# common prelude");
         for u in &[
@@ -377,7 +379,6 @@ fn ucode() {
                 }
             }
             InstructionModeDiscriminants::Regs => {
-                assert_eq!(2, *inst.mode);
                 let mode1 = PackedInstructionMode1::unpack(&[inst.mode_specific]).unwrap();
                 let in1_level = mode1.in1_reg.to_output_level();
                 if mode1.in1_indirect {
@@ -470,14 +471,23 @@ pub struct AssemblyParser;
 #[derive(Clone, Display, Debug)]
 enum Value {
     Constant(u8),
-    Label(String),
+    Label(String, Option<u8>),
 }
 
 impl Value {
+    fn resolve(&mut self, labels: &BTreeMap<String,u8>) {
+        match self {
+            Value::Constant(_) => {},
+            Value::Label(label, resolved_value) => {
+                *resolved_value = Some(*labels.get(label).expect(&format!("Could not find label '{}'", label)));
+            }
+        }
+    }
     fn unwrap_constant(&self) -> u8 {
         match self {
             Value::Constant(c) => *c,
-            _ => panic!(),
+            Value::Label(label, resolved_value) => 
+                resolved_value.expect(&format!("Label '{}' has not been resolved", label))
         }
     }
 }
@@ -490,6 +500,15 @@ struct AssemblyInstruction {
 }
 
 impl AssemblyInstruction {
+    fn resolve(&mut self, labels: &BTreeMap<String,u8>) {
+        match &mut self.mode {
+            InstructionMode::Regs(_,_,_) => {}
+            InstructionMode::Imm8(_, in2) => in2.resolve(labels),
+            InstructionMode::Imm4(_, _, in2) => in2.resolve(labels),
+            InstructionMode::MemOutImm4(_, _, in2) => in2.resolve(labels),
+        }
+    }
+
     fn emit(&self) -> Instruction {
         let (out_reg, mode, mode_specific) = match &self.mode {
             InstructionMode::Regs(out_reg, in1, in2) => {
@@ -617,16 +636,21 @@ fn assemble() {
                 assert_eq!(None, chars.next());
                 Value::Constant(c as u8)
             }
-            Rule::label => Value::Label(constant.as_str().to_owned()),
+            Rule::label => Value::Label(constant.as_str().to_owned(), None),
             r => panic!("unexpexted {:?}", r),
         }
     }
 
-    let mut instructions = Vec::new();
+    enum SourceLine {
+        Instruction(AssemblyInstruction),
+        Comment(String),
+    }
+
+    let mut lines = Vec::new();
     let mut labels = BTreeMap::new();
 
-    labels.insert("tty", 0);
-    labels.insert("halt", 0xfe);
+    labels.insert(":tty".to_owned(), 0);
+    labels.insert(":halt".to_owned(), 0xfe);
 
     let mut assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
     let assembly = assembly.next().unwrap();
@@ -689,15 +713,33 @@ fn assemble() {
                 };
 
                 println!("# {:?}", &inst);
-                println!("{:04x}", u16::from_le_bytes(inst.emit().pack()));
-                instructions.push(inst);
+                lines.push(SourceLine::Instruction(inst));
             }
             Rule::label => {
-                labels.insert(line.as_str().to_owned(), instructions.len() as u8);
+                labels.insert(line.as_str().to_owned(), lines.len() as u8);
+                lines.push(SourceLine::Comment(line.as_str().to_owned()));
             }
-            Rule::comment => {}
+            Rule::comment => {
+                lines.push(SourceLine::Comment(line.as_str().to_owned()));
+            }
             Rule::EOI => {}
             r => panic!("Unexpected: {:?}", r),
+        }
+    }
+
+    for line in lines.as_mut_slice() {
+        match line {
+            SourceLine::Comment(comment) => {
+                println!("# {}", &comment);
+            }
+            SourceLine::Instruction(i) => {
+                i.resolve(&labels);
+                let packed = i.emit();
+                println!("# {:?}", &i);
+                println!("# {:?}", &packed);
+                let bytes = packed.pack();
+                println!("{:02x} {:02x}", bytes[1], bytes[0]);
+            }
         }
     }
 }

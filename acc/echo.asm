@@ -1,18 +1,19 @@
-# set c to tty_in
-xor c c c
-or c :tty
+# set c to tty
+loadimm c :tty
 :start
 # copy *tty to a
 or a &c $0
-# copy to b
+# save a copy in b
 or b a $0
-and c $80
-## begin !skip_if_zero
-#equals acc imm $00
-#add pc pc
-## end !skip_if_zero
-#copy pc imm :halt
-#copy acc memimm $ff
-#and acc imm $7f
-#copy memimm acc $00
-#copy pc imm :start
+and a $80
+# begin !skip_if_zero
+equals a $00
+add pc a pc
+# end !skip_if_zero
+loadimm pc :halt
+# restore copy to a
+or a b $0
+and a $7f
+# output to tty
+or &c a $0
+loadimm pc :start
