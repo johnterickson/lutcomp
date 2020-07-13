@@ -1,0 +1,31 @@
+WHITESPACE = _{" " | "\t"}
+alpha = _{ 'a'..'z' | 'A'..'Z' }
+digit = { '0'..'9' }
+label = { ":" ~ alpha ~ (alpha | digit | "_" )+ }
+new_line = _{ "\r\n" | "\n"}
+
+hex_constant = {"-"? ~ ASCII_HEX_DIGIT+}
+char_constant = {"'" ~ ANY ~ "'"}
+constant = _{char_constant | "$" ~ hex_constant | label}
+
+register = { "a" | "b" | "c" | "pc" }
+deref_register = {"&" ~ register}
+direct_register = {!"&" ~ register}
+maybe_deref_register = _{ deref_register | direct_register}
+mode_imm8 = {!"&" ~ register ~ constant}
+mode_imm4 = {!"&" ~ register ~ maybe_deref_register ~ constant}
+mode_regs = {!"&" ~ register ~ maybe_deref_register ~ maybe_deref_register}
+mode_memoutimm4 = {"&" ~ register ~ maybe_deref_register ~ constant}
+args = _{mode_imm8 | mode_imm4 | mode_regs | mode_memoutimm4}
+
+opcode = {"add" | "or" | "xor" | "and" | "shift" | "equals" | "multiply" }
+
+pseudo_call = { "!call" ~ label}
+pseudo_return = { "!return" }
+pseudo_initstack = { "!init_stack" }
+
+instruction = {!"#" ~ !":" ~ opcode ~ args }
+comment = { "#" ~ (!new_line ~ ANY)* }
+line = _{pseudo_initstack | pseudo_call | pseudo_return | comment | label | instruction }
+
+program = {SOI ~ (line? ~ new_line)* ~ EOI}

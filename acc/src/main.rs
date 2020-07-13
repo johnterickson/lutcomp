@@ -1,3 +1,9 @@
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+use pest::error::Error;
+use pest::Parser;
+
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
@@ -9,9 +15,23 @@ extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
 use std::collections::BTreeMap;
-use std::{io::BufWriter, str::FromStr};
+use std::{
+    io::{BufWriter, Read},
+    str::FromStr,
+};
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PartialEq, PrimitiveEnum_u8)]
+#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PartialEq)]
+#[strum(serialize_all = "lowercase")]
+enum ShiftMode {
+    Rotate = 0,
+    Logical = 1,
+    Arithmetic = 2,
+    Reserved3 = 3,
+}
+
+#[derive(
+    Clone, Copy, Display, Debug, PartialEq, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8,
+)]
 #[strum(serialize_all = "lowercase")]
 enum Opcode {
     Copy = 0,
@@ -19,47 +39,111 @@ enum Opcode {
     Or = 2,
     Xor = 3,
     And = 4,
-    Rotate  = 5,
-    AddIfZero = 6,
+    Shift = 5,
+    Equals = 6,
+    Multiply = 7,
+}
+
+#[derive(
+    Clone, Copy, Display, Debug, PartialEq, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8,
+)]
+#[strum(serialize_all = "lowercase")]
+enum Register {
+    A = 0,
+    B = 1,
+    C = 2,
+    Pc = 3,
+    Reserved4 = 4,
+    Reserved5 = 5,
+    Reserved6 = 6,
     Reserved7 = 7,
 }
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8)]
-#[strum(serialize_all = "lowercase")]
-enum SecondInputSelect {
-    Reserved0 = 0,
-    Imm = 1,
-    MemImm = 2,
-    MemMemImm = 3,
+impl Register {
+    fn to_output_level(&self) -> OutputLevel {
+        match self {
+            Register::A => OutputLevel::A,
+            Register::B => OutputLevel::B,
+            Register::C => OutputLevel::C,
+            Register::Pc => OutputLevel::Pc,
+            _ => OutputLevel::Tmp,
+        }
+    }
+
+    fn to_load_edge(&self) -> LoadEdge {
+        match self {
+            Register::A => LoadEdge::A,
+            Register::B => LoadEdge::B,
+            Register::C => LoadEdge::C,
+            Register::Pc => LoadEdge::Pc,
+            _ => LoadEdge::Tmp,
+        }
+    }
 }
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8)]
-#[strum(serialize_all = "lowercase")]
-enum OutputSelect {
-    Acc = 0,
-    Reserved1 = 1,
-    MemImm = 2,
-    MemMemImm = 3,
+#[derive(Clone, Display, Debug, EnumDiscriminants)]
+enum MaybeDirect<T> {
+    Value(T),
+    Address(T),
+}
+
+impl<T: Copy> MaybeDirect<T> {
+    fn split(&self) -> (bool, T) {
+        match self {
+            MaybeDirect::Value(r) => (false, *r),
+            MaybeDirect::Address(r) => (true, *r),
+        }
+    }
+}
+
+#[derive(Clone, Display, Debug, EnumDiscriminants)]
+#[strum_discriminants(derive(Display, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8))]
+enum InstructionMode {
+    Imm8(Register, Value),
+    Regs(Register, MaybeDirect<Register>, MaybeDirect<Register>),
+    Imm4(Register, MaybeDirect<Register>, Value),
+    MemOutImm4(Register, MaybeDirect<Register>, Value),
 }
 
 #[derive(Debug, PackedStruct)]
-#[packed_struct(size_bytes="1", endian="lsb", bit_numbering = "msb0")]
+#[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
+pub struct PackedInstructionMode1 {
+    #[packed_field(bits = "0..=2", ty = "enum")]
+    in1_reg: Register,
+    #[packed_field(bits = "3")]
+    in1_indirect: bool,
+    #[packed_field(bits = "4..=6", ty = "enum")]
+    in2_reg: Register,
+    #[packed_field(bits = "7")]
+    in2_indirect: bool,
+}
+
+#[derive(Debug, PackedStruct)]
+#[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
+pub struct PackedInstructionMode2or3 {
+    #[packed_field(bits = "0..=3")]
+    imm: Integer<u8, packed_bits::Bits4>,
+    #[packed_field(bits = "4..=6", ty = "enum")]
+    in1_reg: Register,
+    #[packed_field(bits = "7")]
+    in1_indirect: bool,
+}
+
+#[derive(Debug, PackedStruct)]
+#[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
 pub struct Instruction {
-
-    #[packed_field(bits = "5..=7", ty = "enum")]
+    #[packed_field(bits = "0..=7")]
+    mode_specific: u8,
+    #[packed_field(bits = "8..=10", ty = "enum")]
+    out_reg: Register,
+    #[packed_field(bits = "11..=12", ty = "enum")]
+    mode: InstructionModeDiscriminants,
+    #[packed_field(bits = "13..=15", ty = "enum")]
     op: Opcode,
-    #[packed_field(bits = "3..=4", ty = "enum")]
-    out: OutputSelect,
-    #[packed_field(bits = "1..=2", ty = "enum")]
-    in2: SecondInputSelect,
-    #[packed_field(bits = "0")]
-    reserved: bool
 }
 
-
-
 #[derive(Debug, PackedStruct)]
-#[packed_struct(endian="lsb", bit_numbering = "msb0")]
+#[packed_struct(size_bytes = "3", endian = "lsb", bit_numbering = "lsb0")]
 pub struct LutEntry {
     #[packed_field(bits = "0..=7")]
     in2: u8,
@@ -74,10 +158,10 @@ pub struct LutEntry {
 fn alu() {
     println!("v2.0 raw");
 
-    for encoded_entry in 0u32..=0x7FFFF {
+    for encoded_entry in 50000u32..=0x7FFFF {
         let bytes = encoded_entry.to_le_bytes();
         assert_eq!(0, bytes[3]);
-        let bytes = [bytes[0], bytes[1], bytes[2]];
+        let bytes = [bytes[2], bytes[1], bytes[0]];
         let entry = LutEntry::unpack(&bytes).unwrap();
         println!("# {:05x} {:?} {:?}", encoded_entry, &bytes, &entry);
         assert_eq!(0, *entry.unused);
@@ -88,18 +172,52 @@ fn alu() {
             Opcode::Or => entry.in1 | entry.in2,
             Opcode::Xor => entry.in1 ^ entry.in2,
             Opcode::And => entry.in1 & entry.in2,
-            Opcode::Rotate => {
-                let _mode = (entry.in2 >> 6) & 0b11;
+            Opcode::Shift => {
+                let mode = (entry.in2 >> 6) & 0b11;
+                let mode: ShiftMode = ShiftMode::iter().nth(mode as usize).unwrap();
                 let amount = (((entry.in2 & 0xf) << 4) as i8) >> 4;
-                if amount >= 0 {
-                    (entry.in1 << amount) | (entry.in1 >> (8-amount))
+                println!("# rotate mode:{} amount:0d{}", mode, amount);
+                let abs_amount = amount.abs();
+                if abs_amount >= 8 {
+                    0xFF
+                } else if amount == 0 {
+                    entry.in1
                 } else {
-                    let amount = (-1 *(amount as i16)) as u8;
-                    (entry.in1 >> amount) | (entry.in1 << (8-amount))
+                    match mode {
+                        ShiftMode::Rotate => {
+                            if amount > 0 {
+                                (entry.in1 << abs_amount) | (entry.in1 >> (8 - abs_amount))
+                            } else {
+                                (entry.in1 >> abs_amount) | (entry.in1 << (8 - abs_amount))
+                            }
+                        }
+                        ShiftMode::Arithmetic => {
+                            if amount > 0 {
+                                entry.in1 << abs_amount
+                            } else {
+                                entry.in1 >> abs_amount
+                            }
+                        }
+                        ShiftMode::Logical => {
+                            let signed = entry.in1 as i8;
+                            (if amount > 0 {
+                                signed << abs_amount
+                            } else {
+                                signed >> abs_amount
+                            }) as u8
+                        }
+                        ShiftMode::Reserved3 => 0xFF,
+                    }
                 }
-            },
-            Opcode::AddIfZero => 0,
-            Opcode::Reserved7 => 0,
+            }
+            Opcode::Equals => {
+                if entry.in1 == entry.in2 {
+                    1u8
+                } else {
+                    0u8
+                }
+            }
+            Opcode::Multiply => entry.in1.wrapping_mul(entry.in2),
         };
 
         println!("# {:02x}", out);
@@ -109,36 +227,46 @@ fn alu() {
 #[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString)]
 #[strum(serialize_all = "lowercase")]
 enum LoadEdge {
-    Irl,
-    Irh,
-    Alu,
-    Tmp,
-    Ram,
-    Pc,
-    Acc,
-    Addr,
-    Reserved9,
-    Reserved0,
-    ReservedA,
-    ReservedB,
-    ReservedC,
-    ReservedD,
-    ReservedE,
-    Next,
+    Irl = 0,
+    Irh = 1,
+    Alu = 2,
+    Tmp = 3,
+    Ram = 4,
+    Pc = 5,
+    In1 = 6,
+    Addr = 7,
+    A = 8,
+    B = 9,
+    C = 10,
+    ULo = 11,
+    Reserved12 = 12,
+    TTYin = 13,
+    TTYout = 14,
+    Next = 15,
 }
 
 #[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString)]
 #[strum(serialize_all = "lowercase")]
 enum OutputLevel {
-    Irl,
-    PcInc,
-    Alu,
-    Tmp,
-    Ram,
-    Pc,
+    Irl = 0,
+    PcInc = 1,
+    Alu = 2,
+    Tmp = 3,
+    Ram = 4,
+    Pc = 5,
+    Reserved6 = 6,
+    Reserved7 = 7,
+    A = 8,
+    B = 9,
+    C = 10,
+    Reserved11 = 11,
+    Reserved12 = 12,
+    TTYin = 13,
+    Reserved14 = 14,
+    Reserved15 = 15,
 }
 
-const MAX_UOPS: usize = 128;
+const MAX_UOPS: usize = 63;
 
 struct MicroOp {
     out: OutputLevel,
@@ -156,6 +284,17 @@ impl MicroOp {
     }
 }
 
+#[derive(Debug, PackedStruct)]
+#[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
+pub struct MicroEntry {
+    #[packed_field(bits = "0..=7")]
+    mode_specific: u8,
+    #[packed_field(bits = "8..=10", ty = "enum")]
+    out_reg: Register,
+    #[packed_field(bits = "11..=12")]
+    mode: Integer<u8, packed_bits::Bits2>,
+}
+
 fn ucode() {
     println!("v2.0 raw");
 
@@ -164,11 +303,24 @@ fn ucode() {
         load: LoadEdge::Next,
     };
 
-
     // let mut uops = Vec::new();
-    for encoded_inst in 0..=0xFF {
-        let inst = Instruction::unpack(&[encoded_inst as u8])
-            .expect(&format!("Could not decode {:02x}.", encoded_inst));
+    for encoded_inst in 0u16..=(1 << 13) {
+        let bytes: &[u8; 2] = &encoded_inst.to_le_bytes();
+        let inst = MicroEntry::unpack(bytes).expect(&format!(
+            "Could not decode {:02x}={:?}.",
+            encoded_inst, bytes
+        ));
+
+        let mode = InstructionModeDiscriminants::iter()
+            .nth(*inst.mode as usize)
+            .unwrap();
+        match mode {
+            InstructionModeDiscriminants::Imm8 => assert_eq!(0, *inst.mode),
+            InstructionModeDiscriminants::Regs => assert_eq!(1, *inst.mode),
+            InstructionModeDiscriminants::Imm4 => assert_eq!(2, *inst.mode),
+            InstructionModeDiscriminants::MemOutImm4 => assert_eq!(3, *inst.mode),
+        }
+
         let mut uop_count = 0;
 
         println!("# {:?}", &inst);
@@ -193,47 +345,72 @@ fn ucode() {
         }
 
         println!("# prep second input and drive alu");
-        let in_ops : &[MicroOp] = match inst.in2 {
-            SecondInputSelect::Reserved0 => { &[] }
-            SecondInputSelect::Imm => {
-                &[
-                    MicroOp {
-                        out: OutputLevel::Irl,
-                        load: LoadEdge::Alu,
-                    }
-                ]
+        let mut in_ops = Vec::new();
+        match mode {
+            InstructionModeDiscriminants::Imm8 => {
+                in_ops.push(MicroOp {
+                    out: OutputLevel::A,
+                    load: LoadEdge::In1,
+                });
+                in_ops.push(MicroOp {
+                    out: OutputLevel::Irl,
+                    load: LoadEdge::Alu,
+                });
             }
-            SecondInputSelect::MemImm => {
-                &[
-                    MicroOp {
-                        out: OutputLevel::Irl,
+            InstructionModeDiscriminants::Imm4 | InstructionModeDiscriminants::MemOutImm4 => {
+                let mode2 = PackedInstructionMode2or3::unpack(&[inst.mode_specific]).unwrap();
+                let in1_level = mode2.in1_reg.to_output_level();
+                if mode2.in1_indirect {
+                    in_ops.push(MicroOp {
+                        out: in1_level,
                         load: LoadEdge::Addr,
-                    },
-                    MicroOp {
+                    });
+                    in_ops.push(MicroOp {
                         out: OutputLevel::Ram,
-                        load: LoadEdge::Alu,
-                    }
-                ]
+                        load: LoadEdge::In1,
+                    });
+                } else {
+                    in_ops.push(MicroOp {
+                        out: in1_level,
+                        load: LoadEdge::In1,
+                    });
+                }
             }
-            SecondInputSelect::MemMemImm => {
-                &[
-                    MicroOp {
-                        out: OutputLevel::Irl,
+            InstructionModeDiscriminants::Regs => {
+                assert_eq!(2, *inst.mode);
+                let mode1 = PackedInstructionMode1::unpack(&[inst.mode_specific]).unwrap();
+                let in1_level = mode1.in1_reg.to_output_level();
+                if mode1.in1_indirect {
+                    in_ops.push(MicroOp {
+                        out: in1_level,
                         load: LoadEdge::Addr,
-                    },
-                    MicroOp {
+                    });
+                    in_ops.push(MicroOp {
                         out: OutputLevel::Ram,
-                        load: LoadEdge::Tmp,
-                    },
-                    MicroOp {
-                        out: OutputLevel::Tmp,
+                        load: LoadEdge::In1,
+                    });
+                } else {
+                    in_ops.push(MicroOp {
+                        out: in1_level,
+                        load: LoadEdge::In1,
+                    });
+                }
+                let in2_level = mode1.in2_reg.to_output_level();
+                if mode1.in2_indirect {
+                    in_ops.push(MicroOp {
+                        out: in2_level,
                         load: LoadEdge::Addr,
-                    },
-                    MicroOp {
+                    });
+                    in_ops.push(MicroOp {
                         out: OutputLevel::Ram,
                         load: LoadEdge::Alu,
-                    }
-                ]
+                    });
+                } else {
+                    in_ops.push(MicroOp {
+                        out: in2_level,
+                        load: LoadEdge::Alu,
+                    });
+                }
             }
         };
         for u in in_ops {
@@ -242,54 +419,29 @@ fn ucode() {
         }
 
         println!("# store output");
-        let out_ops : &[MicroOp] = match inst.out {
-            OutputSelect::Acc => {
-                &[
-                    MicroOp {
-                        out: OutputLevel::Alu,
-                        load: LoadEdge::Acc
-                    }
-                ]
+        let mut out_ops = Vec::new();
+        match mode {
+            InstructionModeDiscriminants::MemOutImm4 => {
+                out_ops.push(MicroOp {
+                    out: inst.out_reg.to_output_level(),
+                    load: LoadEdge::Addr,
+                });
+                out_ops.push(MicroOp {
+                    out: OutputLevel::Alu,
+                    load: LoadEdge::Ram,
+                });
             }
-            OutputSelect::Reserved1 => { &[] }
-            OutputSelect::MemImm => {
-                &[
-                    MicroOp {
-                        out: OutputLevel::Irl,
-                        load: LoadEdge::Addr
-                    },
-                    MicroOp {
-                        out: OutputLevel::Alu,
-                        load: LoadEdge::Ram
-                    }
-                ]
-            },
-            OutputSelect::MemMemImm => {
-                &[
-                    MicroOp {
-                        out: OutputLevel::Irl,
-                        load: LoadEdge::Addr,
-                    },
-                    MicroOp {
-                        out: OutputLevel::Ram,
-                        load: LoadEdge::Tmp,
-                    },
-                    MicroOp {
-                        out: OutputLevel::Tmp,
-                        load: LoadEdge::Addr,
-                    },
-                    MicroOp {
-                        out: OutputLevel::Alu,
-                        load: LoadEdge::Ram,
-                    }
-                ]
+            _ => {
+                out_ops.push(MicroOp {
+                    out: OutputLevel::Alu,
+                    load: inst.out_reg.to_load_edge(),
+                });
             }
         };
         for u in out_ops {
             u.print();
             uop_count += 1;
         }
-
 
         println!("# common exit");
         for u in &[
@@ -311,14 +463,260 @@ fn ucode() {
     }
 }
 
+#[derive(Parser)]
+#[grammar = "assembly.pest"]
+pub struct AssemblyParser;
+
+#[derive(Clone, Display, Debug)]
+enum Value {
+    Constant(u8),
+    Label(String),
+}
+
+impl Value {
+    fn unwrap_constant(&self) -> u8 {
+        match self {
+            Value::Constant(c) => *c,
+            _ => panic!(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct AssemblyInstruction {
+    source: String,
+    opcode: Opcode,
+    mode: InstructionMode,
+}
+
+impl AssemblyInstruction {
+    fn emit(&self) -> Instruction {
+        let (out_reg, mode, mode_specific) = match &self.mode {
+            InstructionMode::Regs(out_reg, in1, in2) => {
+                let (in1_indirect, in1_reg) = in1.split();
+                let (in2_indirect, in2_reg) = in2.split();
+                (
+                    out_reg,
+                    InstructionModeDiscriminants::Regs,
+                    PackedInstructionMode1 {
+                        in1_indirect,
+                        in1_reg,
+                        in2_indirect,
+                        in2_reg,
+                    }
+                    .pack()[0],
+                )
+            }
+            InstructionMode::Imm8(out_reg, in2) => (
+                out_reg,
+                InstructionModeDiscriminants::Imm8,
+                in2.unwrap_constant(),
+            ),
+            InstructionMode::Imm4(out_reg, in1, in2) => {
+                let (in1_indirect, in1_reg) = in1.split();
+
+                (
+                    out_reg,
+                    InstructionModeDiscriminants::Imm4,
+                    PackedInstructionMode2or3 {
+                        in1_indirect,
+                        in1_reg,
+                        imm: in2.unwrap_constant().into(),
+                    }
+                    .pack()[0],
+                )
+            }
+            InstructionMode::MemOutImm4(out_reg, in1, in2) => {
+                let (in1_indirect, in1_reg) = in1.split();
+
+                (
+                    out_reg,
+                    InstructionModeDiscriminants::MemOutImm4,
+                    PackedInstructionMode2or3 {
+                        in1_indirect,
+                        in1_reg,
+                        imm: in2.unwrap_constant().into(),
+                    }
+                    .pack()[0],
+                )
+            }
+        };
+
+        Instruction {
+            op: self.opcode,
+            mode: mode,
+            mode_specific,
+            out_reg: *out_reg,
+        }
+    }
+}
+
+fn assemble() {
+    let input = {
+        let mut input = String::new();
+        std::io::stdin().lock().read_to_string(&mut input).unwrap();
+        input
+    };
+
+    use pest::iterators::Pair;
+
+    println!("v2.0 raw");
+
+    {
+        use pest::iterators::Pairs;
+        fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
+            for pair in pairs {
+                if pair.as_rule() != Rule::program {
+                    print!("# ");
+                    for _ in 0..indent {
+                        print!(" ");
+                    }
+                    println!("{:?}: '{}'", pair.as_rule(), pair.as_str());
+                }
+                dump_tree(pair.into_inner(), indent + 1);
+            }
+        };
+
+        let assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
+        dump_tree(assembly, 0);
+    }
+
+    fn parse_maybe_direct(maybe: Pair<Rule>) -> MaybeDirect<Register> {
+        match maybe.as_rule() {
+            Rule::deref_register => {
+                let mut register = maybe.into_inner();
+                let reg = std::str::FromStr::from_str(register.next().unwrap().as_str()).unwrap();
+                MaybeDirect::Address(reg)
+            }
+            Rule::direct_register => {
+                let mut register = maybe.into_inner();
+                let reg = std::str::FromStr::from_str(register.next().unwrap().as_str()).unwrap();
+                MaybeDirect::Value(reg)
+            }
+            r => panic!("unexpexted {:?}", r),
+        }
+    }
+
+    fn parse_constant(constant: Pair<Rule>) -> Value {
+        match constant.as_rule() {
+            Rule::hex_constant => {
+                let mut chars = constant.as_str().chars();
+                Value::Constant(if chars.next().unwrap() == '-' {
+                    let positive =
+                        i8::from_str_radix(constant.as_str().trim_start_matches('-'), 16).unwrap();
+                    (-1 * positive) as u8
+                } else {
+                    u8::from_str_radix(constant.as_str(), 16).unwrap()
+                })
+            }
+            Rule::char_constant => {
+                let mut chars = constant.as_str().chars();
+                assert_eq!('\'', chars.next().unwrap());
+                let c = chars.next().unwrap();
+                assert_eq!('\'', chars.next().unwrap());
+                assert_eq!(None, chars.next());
+                Value::Constant(c as u8)
+            }
+            Rule::label => Value::Label(constant.as_str().to_owned()),
+            r => panic!("unexpexted {:?}", r),
+        }
+    }
+
+    let mut instructions = Vec::new();
+    let mut labels = BTreeMap::new();
+
+    labels.insert("tty", 0);
+    labels.insert("halt", 0xfe);
+
+    let mut assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
+    let assembly = assembly.next().unwrap();
+    let assembly = assembly.into_inner();
+    for line in assembly {
+        match line.as_rule() {
+            Rule::instruction => {
+                let instruction = line;
+                let source = instruction.as_span().as_str().to_owned();
+                let mut tokens = instruction.into_inner();
+
+                let opcode: Opcode = {
+                    let opcode = tokens.next().unwrap();
+                    assert_eq!(Rule::opcode, opcode.as_rule());
+                    std::str::FromStr::from_str(opcode.as_str()).unwrap()
+                };
+
+                let mode = {
+                    let inputs = tokens.next().unwrap();
+                    match inputs.as_rule() {
+                        Rule::mode_imm8 => {
+                            let mut args = inputs.into_inner();
+                            let out =
+                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
+                            let in2 = parse_constant(args.next().unwrap());
+                            InstructionMode::Imm8(out, in2)
+                        }
+                        Rule::mode_regs => {
+                            let mut args = inputs.into_inner();
+                            let out =
+                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
+                            let in1 = parse_maybe_direct(args.next().unwrap());
+                            let in2 = parse_maybe_direct(args.next().unwrap());
+                            InstructionMode::Regs(out, in1, in2)
+                        }
+                        Rule::mode_imm4 => {
+                            let mut args = inputs.into_inner();
+                            let out =
+                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
+                            let in1 = parse_maybe_direct(args.next().unwrap());
+                            let in2 = parse_constant(args.next().unwrap());
+                            InstructionMode::Imm4(out, in1, in2)
+                        }
+                        Rule::mode_memoutimm4 => {
+                            let mut args = inputs.into_inner();
+                            let out =
+                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
+                            let in1 = parse_maybe_direct(args.next().unwrap());
+                            let in2 = parse_constant(args.next().unwrap());
+                            InstructionMode::MemOutImm4(out, in1, in2)
+                        }
+                        r => panic!("Unexpected: {:?}", r),
+                    }
+                };
+
+                let inst = AssemblyInstruction {
+                    source,
+                    opcode,
+                    mode,
+                };
+
+                println!("# {:?}", &inst);
+                println!("{:04x}", u16::from_le_bytes(inst.emit().pack()));
+                instructions.push(inst);
+            }
+            Rule::label => {
+                labels.insert(line.as_str().to_owned(), instructions.len() as u8);
+            }
+            Rule::comment => {}
+            Rule::EOI => {}
+            r => panic!("Unexpected: {:?}", r),
+        }
+    }
+}
+
 fn main() {
     use std::fs::File;
     use std::io::prelude::*;
 
     let args: Vec<_> = std::env::args().collect();
     match args.get(1).map(|s| s.as_str()) {
-        Some("ucode") => { ucode(); }
-        Some("alu") => { alu(); }
+        Some("ucode") => {
+            ucode();
+        }
+        Some("alu") => {
+            alu();
+        }
+        Some("assemble") => {
+            assemble();
+        }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),
         None => eprintln!("no arg provided"),
     }
