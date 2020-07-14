@@ -75,7 +75,7 @@ impl Register {
             Register::A => LoadEdge::A,
             Register::B => LoadEdge::B,
             Register::C => LoadEdge::C,
-            Register::Pc => LoadEdge::Pc,
+            Register::Pc => panic!(),
             _ => LoadEdge::Tmp,
         }
     }
@@ -102,12 +102,12 @@ enum InstructionMode {
     Imm8(Register, Value),
     Regs(Register, MaybeDirect<Register>, MaybeDirect<Register>),
     Imm4(Register, MaybeDirect<Register>, Value),
-    MemOutImm4(Register, MaybeDirect<Register>, Value),
+    MemOutRegs(Register, MaybeDirect<Register>, MaybeDirect<Register>),
 }
 
 #[derive(Debug, PackedStruct)]
 #[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
-pub struct PackedInstructionMode1 {
+pub struct PackedInstructionMode1or3 {
     #[packed_field(bits = "0..=2", ty = "enum")]
     in1_reg: Register,
     #[packed_field(bits = "3")]
@@ -120,7 +120,7 @@ pub struct PackedInstructionMode1 {
 
 #[derive(Debug, PackedStruct)]
 #[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
-pub struct PackedInstructionMode2or3 {
+pub struct PackedInstructionMode2 {
     #[packed_field(bits = "0..=3")]
     imm: Integer<u8, packed_bits::Bits4>,
     #[packed_field(bits = "4..=6", ty = "enum")]
@@ -232,14 +232,14 @@ enum LoadEdge {
     Alu = 2,
     Tmp = 3,
     Ram = 4,
-    Pc = 5,
+    PcR = 5,
     In1 = 6,
     Addr = 7,
     A = 8,
     B = 9,
     C = 10,
     ULo = 11,
-    Reserved12 = 12,
+    PcClk = 12,
     TTYin = 13,
     TTYout = 14,
     Next = 15,
@@ -249,12 +249,12 @@ enum LoadEdge {
 #[strum(serialize_all = "lowercase")]
 enum OutputLevel {
     Irl = 0,
-    PcInc = 1,
+    Reserved1 = 1,
     Alu = 2,
     Tmp = 3,
     Ram = 4,
-    Pc = 5,
-    Reserved6 = 6,
+    PcR = 5,
+    Pc = 6,
     Reserved7 = 7,
     A = 8,
     B = 9,
@@ -268,6 +268,7 @@ enum OutputLevel {
 
 const MAX_UOPS: usize = 64;
 
+#[derive(Clone, Copy, Debug)]
 struct MicroOp {
     out: OutputLevel,
     load: LoadEdge,
@@ -298,9 +299,14 @@ pub struct MicroEntry {
 fn ucode() {
     println!("v2.0 raw");
 
-    let filler = MicroOp {
+    let next = MicroOp {
         out: OutputLevel::Tmp,
         load: LoadEdge::Next,
+    };
+
+    let noop = MicroOp {
+        out: OutputLevel::Tmp,
+        load: LoadEdge::Tmp,
     };
 
     // let mut uops = Vec::new();
@@ -313,17 +319,20 @@ fn ucode() {
 
         let base_address = encoded_inst as usize * MAX_UOPS;
 
-        println!("# @{:04x} {:?} {:?}", base_address, &inst, & bytes);
+        println!("# @{:04x} {:?} {:?}", base_address, &inst, &bytes);
 
         let mode = InstructionModeDiscriminants::iter()
             .nth(*inst.mode as usize)
             .unwrap();
-        match mode {
-            InstructionModeDiscriminants::Imm8 => assert_eq!(0, *inst.mode),
-            InstructionModeDiscriminants::Regs => assert_eq!(1, *inst.mode),
-            InstructionModeDiscriminants::Imm4 => assert_eq!(2, *inst.mode),
-            InstructionModeDiscriminants::MemOutImm4 => assert_eq!(3, *inst.mode),
-        }
+        assert_eq!(
+            *inst.mode,
+            match mode {
+                InstructionModeDiscriminants::Imm8 => 0,
+                InstructionModeDiscriminants::Regs => 1,
+                InstructionModeDiscriminants::Imm4 => 2,
+                InstructionModeDiscriminants::MemOutRegs => 3,
+            }
+        );
 
         let mut uop_count = 0;
 
@@ -334,8 +343,12 @@ fn ucode() {
                 load: LoadEdge::Irl,
             },
             MicroOp {
-                out: OutputLevel::PcInc,
-                load: LoadEdge::Tmp,
+                out: OutputLevel::Irl,
+                load: LoadEdge::ULo,
+            },
+            MicroOp {
+                out: OutputLevel::Tmp,
+                load: LoadEdge::PcClk,
             },
             MicroOp {
                 out: OutputLevel::Pc,
@@ -359,58 +372,125 @@ fn ucode() {
                     load: LoadEdge::Alu,
                 });
             }
-            InstructionModeDiscriminants::Imm4 | InstructionModeDiscriminants::MemOutImm4 => {
-                let mode2 = PackedInstructionMode2or3::unpack(&[inst.mode_specific]).unwrap();
+            InstructionModeDiscriminants::Imm4 => {
+                let mode2 = PackedInstructionMode2::unpack(&[inst.mode_specific]).unwrap();
                 let in1_level = mode2.in1_reg.to_output_level();
                 if mode2.in1_indirect {
                     in_ops.push(MicroOp {
                         out: in1_level,
-                        load: LoadEdge::Addr,
+                        load: LoadEdge::ULo,
                     });
+
+                    if inst.mode_specific == 0 {
+                        in_ops.push(MicroOp {
+                            out: OutputLevel::TTYin,
+                            load: LoadEdge::In1,
+                        });
+                        in_ops.push(noop);
+                    } else {
+                        in_ops.push(MicroOp {
+                            out: in1_level,
+                            load: LoadEdge::Addr,
+                        });
+                        in_ops.push(MicroOp {
+                            out: OutputLevel::Ram,
+                            load: LoadEdge::In1,
+                        });
+                    }
+
                     in_ops.push(MicroOp {
-                        out: OutputLevel::Ram,
-                        load: LoadEdge::In1,
+                        out: OutputLevel::Irl,
+                        load: LoadEdge::ULo,
                     });
                 } else {
                     in_ops.push(MicroOp {
                         out: in1_level,
                         load: LoadEdge::In1,
                     });
+                    in_ops.push(noop);
+                    in_ops.push(noop);
+                    in_ops.push(noop);
                 }
             }
-            InstructionModeDiscriminants::Regs => {
-                let mode1 = PackedInstructionMode1::unpack(&[inst.mode_specific]).unwrap();
-                let in1_level = mode1.in1_reg.to_output_level();
-                if mode1.in1_indirect {
-                    in_ops.push(MicroOp {
-                        out: in1_level,
-                        load: LoadEdge::Addr,
-                    });
-                    in_ops.push(MicroOp {
-                        out: OutputLevel::Ram,
-                        load: LoadEdge::In1,
-                    });
-                } else {
-                    in_ops.push(MicroOp {
-                        out: in1_level,
-                        load: LoadEdge::In1,
-                    });
+            InstructionModeDiscriminants::Regs | InstructionModeDiscriminants::MemOutRegs => {
+                let mode1 = PackedInstructionMode1or3::unpack(&[inst.mode_specific]).unwrap();
+                {
+                    let in1_level = mode1.in1_reg.to_output_level();
+                    if mode1.in1_indirect {
+                        in_ops.push(MicroOp {
+                            out: in1_level,
+                            load: LoadEdge::ULo,
+                        });
+
+                        if inst.mode_specific == 0 {
+                            in_ops.push(MicroOp {
+                                out: OutputLevel::TTYin,
+                                load: LoadEdge::In1,
+                            });
+                            in_ops.push(noop);
+                        } else {
+                            in_ops.push(MicroOp {
+                                out: in1_level,
+                                load: LoadEdge::Addr,
+                            });
+                            in_ops.push(MicroOp {
+                                out: OutputLevel::Ram,
+                                load: LoadEdge::In1,
+                            });
+                        }
+
+                        in_ops.push(MicroOp {
+                            out: OutputLevel::Irl,
+                            load: LoadEdge::ULo,
+                        });
+                    } else {
+                        in_ops.push(MicroOp {
+                            out: in1_level,
+                            load: LoadEdge::In1,
+                        });
+                        in_ops.push(noop);
+                        in_ops.push(noop);
+                        in_ops.push(noop);
+                    }
                 }
-                let in2_level = mode1.in2_reg.to_output_level();
-                if mode1.in2_indirect {
-                    in_ops.push(MicroOp {
-                        out: in2_level,
-                        load: LoadEdge::Addr,
-                    });
-                    in_ops.push(MicroOp {
-                        out: OutputLevel::Ram,
-                        load: LoadEdge::Alu,
-                    });
-                } else {
-                    in_ops.push(MicroOp {
-                        out: in2_level,
-                        load: LoadEdge::Alu,
-                    });
+                {
+                    let in2_level = mode1.in2_reg.to_output_level();
+                    if mode1.in1_indirect {
+                        in_ops.push(MicroOp {
+                            out: in2_level,
+                            load: LoadEdge::ULo,
+                        });
+
+                        if inst.mode_specific == 0 {
+                            in_ops.push(MicroOp {
+                                out: OutputLevel::TTYin,
+                                load: LoadEdge::In1,
+                            });
+                            in_ops.push(noop);
+                        } else {
+                            in_ops.push(MicroOp {
+                                out: in2_level,
+                                load: LoadEdge::Addr,
+                            });
+                            in_ops.push(MicroOp {
+                                out: OutputLevel::Ram,
+                                load: LoadEdge::In1,
+                            });
+                        }
+
+                        in_ops.push(MicroOp {
+                            out: OutputLevel::Irl,
+                            load: LoadEdge::ULo,
+                        });
+                    } else {
+                        in_ops.push(MicroOp {
+                            out: in2_level,
+                            load: LoadEdge::In1,
+                        });
+                        in_ops.push(noop);
+                        in_ops.push(noop);
+                        in_ops.push(noop);
+                    }
                 }
             }
         };
@@ -422,21 +502,47 @@ fn ucode() {
         println!("# store output");
         let mut out_ops = Vec::new();
         match mode {
-            InstructionModeDiscriminants::MemOutImm4 => {
+            InstructionModeDiscriminants::MemOutRegs => {
                 out_ops.push(MicroOp {
                     out: inst.out_reg.to_output_level(),
-                    load: LoadEdge::Addr,
+                    load: LoadEdge::ULo,
                 });
-                out_ops.push(MicroOp {
-                    out: OutputLevel::Alu,
-                    load: LoadEdge::Ram,
-                });
+
+                if inst.mode_specific == 0 {
+                    out_ops.push(MicroOp {
+                        out: OutputLevel::Alu,
+                        load: LoadEdge::TTYout,
+                    });
+                    out_ops.push(noop);
+                } else {
+                    out_ops.push(MicroOp {
+                        out: inst.out_reg.to_output_level(),
+                        load: LoadEdge::Addr,
+                    });
+                    out_ops.push(MicroOp {
+                        out: OutputLevel::Alu,
+                        load: LoadEdge::Ram,
+                    });
+                }
             }
             _ => {
-                out_ops.push(MicroOp {
-                    out: OutputLevel::Alu,
-                    load: inst.out_reg.to_load_edge(),
-                });
+                if inst.out_reg == Register::Pc {
+                    out_ops.push(MicroOp {
+                        out: OutputLevel::Alu,
+                        load: LoadEdge::PcR,
+                    });
+                    out_ops.push(MicroOp {
+                        out: OutputLevel::PcR,
+                        load: LoadEdge::PcClk,
+                    });
+                } else {
+                    out_ops.push(MicroOp {
+                        out: OutputLevel::Alu,
+                        load: inst.out_reg.to_load_edge(),
+                    });
+                    out_ops.push(noop);
+                }
+                
             }
         };
         for u in out_ops {
@@ -447,8 +553,8 @@ fn ucode() {
         println!("# common exit");
         for u in &[
             MicroOp {
-                out: OutputLevel::PcInc,
-                load: LoadEdge::Tmp,
+                out: OutputLevel::Tmp,
+                load: LoadEdge::PcClk,
             },
             MicroOp {
                 out: OutputLevel::Tmp,
@@ -460,7 +566,18 @@ fn ucode() {
         }
 
         assert!(uop_count < MAX_UOPS);
-        println!("{}*{:02x}", MAX_UOPS - uop_count, filler.emit());
+
+        assert_eq!(
+            uop_count,
+            match mode {
+                InstructionModeDiscriminants::Imm8 => 10,
+                InstructionModeDiscriminants::Regs => 16,
+                InstructionModeDiscriminants::Imm4 => 12,
+                InstructionModeDiscriminants::MemOutRegs => 17,
+            }
+        );
+
+        println!("{}*{:02x}", MAX_UOPS - uop_count, next.emit());
     }
 }
 
@@ -475,19 +592,24 @@ enum Value {
 }
 
 impl Value {
-    fn resolve(&mut self, labels: &BTreeMap<String,u8>) {
+    fn resolve(&mut self, labels: &BTreeMap<String, u8>) {
         match self {
-            Value::Constant(_) => {},
+            Value::Constant(_) => {}
             Value::Label(label, resolved_value) => {
-                *resolved_value = Some(*labels.get(label).expect(&format!("Could not find label '{}'", label)));
+                *resolved_value = Some(
+                    *labels
+                        .get(label)
+                        .expect(&format!("Could not find label '{}'", label)),
+                );
             }
         }
     }
     fn unwrap_constant(&self) -> u8 {
         match self {
             Value::Constant(c) => *c,
-            Value::Label(label, resolved_value) => 
+            Value::Label(label, resolved_value) => {
                 resolved_value.expect(&format!("Label '{}' has not been resolved", label))
+            }
         }
     }
 }
@@ -500,12 +622,12 @@ struct AssemblyInstruction {
 }
 
 impl AssemblyInstruction {
-    fn resolve(&mut self, labels: &BTreeMap<String,u8>) {
+    fn resolve(&mut self, labels: &BTreeMap<String, u8>) {
         match &mut self.mode {
-            InstructionMode::Regs(_,_,_) => {}
+            InstructionMode::Regs(_, _, _) => {}
             InstructionMode::Imm8(_, in2) => in2.resolve(labels),
             InstructionMode::Imm4(_, _, in2) => in2.resolve(labels),
-            InstructionMode::MemOutImm4(_, _, in2) => in2.resolve(labels),
+            InstructionMode::MemOutRegs(_, _, _) => {}
         }
     }
 
@@ -517,7 +639,7 @@ impl AssemblyInstruction {
                 (
                     out_reg,
                     InstructionModeDiscriminants::Regs,
-                    PackedInstructionMode1 {
+                    PackedInstructionMode1or3 {
                         in1_indirect,
                         in1_reg,
                         in2_indirect,
@@ -537,7 +659,7 @@ impl AssemblyInstruction {
                 (
                     out_reg,
                     InstructionModeDiscriminants::Imm4,
-                    PackedInstructionMode2or3 {
+                    PackedInstructionMode2 {
                         in1_indirect,
                         in1_reg,
                         imm: in2.unwrap_constant().into(),
@@ -545,16 +667,17 @@ impl AssemblyInstruction {
                     .pack()[0],
                 )
             }
-            InstructionMode::MemOutImm4(out_reg, in1, in2) => {
+            InstructionMode::MemOutRegs(out_reg, in1, in2) => {
                 let (in1_indirect, in1_reg) = in1.split();
-
+                let (in2_indirect, in2_reg) = in2.split();
                 (
                     out_reg,
-                    InstructionModeDiscriminants::MemOutImm4,
-                    PackedInstructionMode2or3 {
+                    InstructionModeDiscriminants::MemOutRegs,
+                    PackedInstructionMode1or3 {
                         in1_indirect,
                         in1_reg,
-                        imm: in2.unwrap_constant().into(),
+                        in2_indirect,
+                        in2_reg,
                     }
                     .pack()[0],
                 )
@@ -650,7 +773,7 @@ fn assemble() {
     let mut labels = BTreeMap::new();
 
     labels.insert(":tty".to_owned(), 0);
-    labels.insert(":halt".to_owned(), 0xfe);
+    labels.insert(":halt".to_owned(), 0xff);
 
     let mut assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
     let assembly = assembly.next().unwrap();
@@ -694,13 +817,13 @@ fn assemble() {
                             let in2 = parse_constant(args.next().unwrap());
                             InstructionMode::Imm4(out, in1, in2)
                         }
-                        Rule::mode_memoutimm4 => {
+                        Rule::mode_memoutregs => {
                             let mut args = inputs.into_inner();
                             let out =
                                 std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
                             let in1 = parse_maybe_direct(args.next().unwrap());
-                            let in2 = parse_constant(args.next().unwrap());
-                            InstructionMode::MemOutImm4(out, in1, in2)
+                            let in2 = parse_maybe_direct(args.next().unwrap());
+                            InstructionMode::MemOutRegs(out, in1, in2)
                         }
                         r => panic!("Unexpected: {:?}", r),
                     }
@@ -727,6 +850,7 @@ fn assemble() {
         }
     }
 
+    let mut pc = 0;
     for line in lines.as_mut_slice() {
         match line {
             SourceLine::Comment(comment) => {
@@ -735,10 +859,11 @@ fn assemble() {
             SourceLine::Instruction(i) => {
                 i.resolve(&labels);
                 let packed = i.emit();
-                println!("# {:?}", &i);
-                println!("# {:?}", &packed);
+                println!("# {:02x} {:?}", pc, &i);
+                println!("# {:02x} {:?}", pc, &packed);
                 let bytes = packed.pack();
                 println!("{:02x} {:02x}", bytes[1], bytes[0]);
+                pc += 2;
             }
         }
     }

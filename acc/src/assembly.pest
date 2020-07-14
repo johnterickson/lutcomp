@@ -15,8 +15,8 @@ maybe_deref_register = _{ deref_register | direct_register}
 mode_imm8 = {!"&" ~ register ~ constant}
 mode_imm4 = {!"&" ~ register ~ maybe_deref_register ~ constant}
 mode_regs = {!"&" ~ register ~ maybe_deref_register ~ maybe_deref_register}
-mode_memoutimm4 = {"&" ~ register ~ maybe_deref_register ~ constant}
-args = _{mode_imm8 | mode_imm4 | mode_regs | mode_memoutimm4}
+mode_memoutregs = {"&" ~ register ~ maybe_deref_register ~ maybe_deref_register}
+args = _{mode_imm8 | mode_imm4 | mode_regs | mode_memoutregs}
 
 opcode = {"loadimm" | "add" | "or" | "xor" | "and" | "shift" | "equals" | "multiply" }
 
