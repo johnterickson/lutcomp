@@ -64,8 +64,8 @@ opcodes:
 | ALU    |  2   |   2    |
 | TMP    |  3   |   3    |
 | RAM    |  4   |   4    |
-| PCR    |  5   |   5    |
-| PC     |      |   6    |
+| PCR    | 5 RCK|   5 CLOAD#     |
+| PC     |      |   6 G# |
 | PCCLK  |  12  |        |
 | IN1    |  6   |        |
 | ADDR   |  7   |        |

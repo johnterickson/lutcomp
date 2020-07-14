@@ -239,7 +239,7 @@ enum LoadEdge {
     B = 9,
     C = 10,
     ULo = 11,
-    PcClk = 12,
+    PcInc = 12,
     TTYin = 13,
     TTYout = 14,
     Next = 15,
@@ -348,7 +348,7 @@ fn ucode() {
             },
             MicroOp {
                 out: OutputLevel::Tmp,
-                load: LoadEdge::PcClk,
+                load: LoadEdge::PcInc,
             },
             MicroOp {
                 out: OutputLevel::Pc,
@@ -533,7 +533,7 @@ fn ucode() {
                     });
                     out_ops.push(MicroOp {
                         out: OutputLevel::PcR,
-                        load: LoadEdge::PcClk,
+                        load: LoadEdge::Tmp,
                     });
                 } else {
                     out_ops.push(MicroOp {
@@ -554,7 +554,7 @@ fn ucode() {
         for u in &[
             MicroOp {
                 out: OutputLevel::Tmp,
-                load: LoadEdge::PcClk,
+                load: LoadEdge::PcInc,
             },
             MicroOp {
                 out: OutputLevel::Tmp,
