@@ -77,3 +77,10 @@ opcodes:
 | ttyin  |  13  |   13   |
 | ttyout |  14  |        |
 | next   |  15  |        |
+
+# Registers:
+"a" direct/indirect 
+"b" direct/indirect 
+"c" direct/indirect 
+"pc"  direct
+"serial"  direct  

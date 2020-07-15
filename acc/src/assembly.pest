@@ -8,7 +8,7 @@ hex_constant = {"-"? ~ ASCII_HEX_DIGIT+}
 char_constant = {"'" ~ ANY ~ "'"}
 constant = _{char_constant | "$" ~ hex_constant | label}
 
-register = { "a" | "b" | "c" | "pc" }
+register = { "a" | "b" | "c" | "pc" | "serialin" | "serialout" }
 deref_register = {"&" ~ register}
 direct_register = {!"&" ~ register}
 maybe_deref_register = _{ deref_register | direct_register}

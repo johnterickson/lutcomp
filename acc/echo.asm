@@ -1,19 +1,18 @@
-# set c to tty
-loadimm c :tty
 :start
-# read *tty to a
-or a &c &c
-# save a copy in b
-or b a a
+# read *tty to b
+or b serialin serialin
+or a b b
 and a $80
 # begin !skip_if_zero
-equals a $00
+equals a $80
+multiply a $02
+add a $01
 add pc a pc
 # end !skip_if_zero
 loadimm pc :halt
-# restore copy to a
+or serialin b b
 or a b b
 and a $7f
 # output to tty
-or &c a $0
+or serialout a a
 loadimm pc :start

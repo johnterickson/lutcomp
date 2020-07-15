@@ -53,8 +53,8 @@ enum Register {
     B = 1,
     C = 2,
     Pc = 3,
-    Reserved4 = 4,
-    Reserved5 = 5,
+    SerialIn = 4,
+    SerialOut = 5,
     Reserved6 = 6,
     Reserved7 = 7,
 }
@@ -66,7 +66,10 @@ impl Register {
             Register::B => OutputLevel::B,
             Register::C => OutputLevel::C,
             Register::Pc => OutputLevel::Pc,
-            _ => OutputLevel::Tmp,
+            Register::SerialIn => OutputLevel::TTYin,
+            Register::SerialOut => OutputLevel::Halt,
+            Register::Reserved6 => OutputLevel::Halt,
+            Register::Reserved7 => OutputLevel::Halt,
         }
     }
 
@@ -76,7 +79,9 @@ impl Register {
             Register::B => LoadEdge::B,
             Register::C => LoadEdge::C,
             Register::Pc => panic!(),
-            _ => LoadEdge::Tmp,
+            Register::SerialIn => LoadEdge::TTYin,
+            Register::SerialOut => LoadEdge::TTYout,
+            _ => unimplemented!(),
         }
     }
 }
@@ -263,7 +268,7 @@ enum OutputLevel {
     Reserved12 = 12,
     TTYin = 13,
     Reserved14 = 14,
-    Reserved15 = 15,
+    Halt = 15,
 }
 
 const MAX_UOPS: usize = 64;
@@ -299,13 +304,8 @@ pub struct MicroEntry {
 fn ucode() {
     println!("v2.0 raw");
 
-    let next = MicroOp {
-        out: OutputLevel::Tmp,
-        load: LoadEdge::Next,
-    };
-
-    let noop = MicroOp {
-        out: OutputLevel::Tmp,
+    let halt = MicroOp {
+        out: OutputLevel::Halt,
         load: LoadEdge::Tmp,
     };
 
@@ -343,10 +343,6 @@ fn ucode() {
                 load: LoadEdge::Irl,
             },
             MicroOp {
-                out: OutputLevel::Irl,
-                load: LoadEdge::ULo,
-            },
-            MicroOp {
                 out: OutputLevel::Tmp,
                 load: LoadEdge::PcInc,
             },
@@ -378,39 +374,20 @@ fn ucode() {
                 if mode2.in1_indirect {
                     in_ops.push(MicroOp {
                         out: in1_level,
-                        load: LoadEdge::ULo,
+                        load: LoadEdge::Addr,
                     });
-
-                    if inst.mode_specific == 0 {
-                        in_ops.push(MicroOp {
-                            out: OutputLevel::TTYin,
-                            load: LoadEdge::In1,
-                        });
-                        in_ops.push(noop);
-                    } else {
-                        in_ops.push(MicroOp {
-                            out: in1_level,
-                            load: LoadEdge::Addr,
-                        });
-                        in_ops.push(MicroOp {
-                            out: OutputLevel::Ram,
-                            load: LoadEdge::In1,
-                        });
-                    }
-
                     in_ops.push(MicroOp {
-                        out: OutputLevel::Irl,
-                        load: LoadEdge::ULo,
+                        out: OutputLevel::Ram,
+                        load: LoadEdge::In1,
                     });
                 } else {
                     in_ops.push(MicroOp {
                         out: in1_level,
                         load: LoadEdge::In1,
                     });
-                    in_ops.push(noop);
-                    in_ops.push(noop);
-                    in_ops.push(noop);
                 }
+
+                in_ops.push(halt);//todo
             }
             InstructionModeDiscriminants::Regs | InstructionModeDiscriminants::MemOutRegs => {
                 let mode1 = PackedInstructionMode1or3::unpack(&[inst.mode_specific]).unwrap();
@@ -419,38 +396,17 @@ fn ucode() {
                     if mode1.in1_indirect {
                         in_ops.push(MicroOp {
                             out: in1_level,
-                            load: LoadEdge::ULo,
+                            load: LoadEdge::Addr,
                         });
-
-                        if inst.mode_specific == 0 {
-                            in_ops.push(MicroOp {
-                                out: OutputLevel::TTYin,
-                                load: LoadEdge::In1,
-                            });
-                            in_ops.push(noop);
-                        } else {
-                            in_ops.push(MicroOp {
-                                out: in1_level,
-                                load: LoadEdge::Addr,
-                            });
-                            in_ops.push(MicroOp {
-                                out: OutputLevel::Ram,
-                                load: LoadEdge::In1,
-                            });
-                        }
-
                         in_ops.push(MicroOp {
-                            out: OutputLevel::Irl,
-                            load: LoadEdge::ULo,
+                            out: OutputLevel::Ram,
+                            load: LoadEdge::In1,
                         });
                     } else {
                         in_ops.push(MicroOp {
                             out: in1_level,
                             load: LoadEdge::In1,
                         });
-                        in_ops.push(noop);
-                        in_ops.push(noop);
-                        in_ops.push(noop);
                     }
                 }
                 {
@@ -458,38 +414,17 @@ fn ucode() {
                     if mode1.in1_indirect {
                         in_ops.push(MicroOp {
                             out: in2_level,
-                            load: LoadEdge::ULo,
+                            load: LoadEdge::Addr,
                         });
-
-                        if inst.mode_specific == 0 {
-                            in_ops.push(MicroOp {
-                                out: OutputLevel::TTYin,
-                                load: LoadEdge::In1,
-                            });
-                            in_ops.push(noop);
-                        } else {
-                            in_ops.push(MicroOp {
-                                out: in2_level,
-                                load: LoadEdge::Addr,
-                            });
-                            in_ops.push(MicroOp {
-                                out: OutputLevel::Ram,
-                                load: LoadEdge::In1,
-                            });
-                        }
-
                         in_ops.push(MicroOp {
-                            out: OutputLevel::Irl,
-                            load: LoadEdge::ULo,
+                            out: OutputLevel::Ram,
+                            load: LoadEdge::Alu,
                         });
                     } else {
                         in_ops.push(MicroOp {
                             out: in2_level,
-                            load: LoadEdge::In1,
+                            load: LoadEdge::Alu,
                         });
-                        in_ops.push(noop);
-                        in_ops.push(noop);
-                        in_ops.push(noop);
                     }
                 }
             }
@@ -505,44 +440,39 @@ fn ucode() {
             InstructionModeDiscriminants::MemOutRegs => {
                 out_ops.push(MicroOp {
                     out: inst.out_reg.to_output_level(),
-                    load: LoadEdge::ULo,
+                    load: LoadEdge::Addr,
                 });
-
-                if inst.mode_specific == 0 {
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::Alu,
-                        load: LoadEdge::TTYout,
-                    });
-                    out_ops.push(noop);
-                } else {
-                    out_ops.push(MicroOp {
-                        out: inst.out_reg.to_output_level(),
-                        load: LoadEdge::Addr,
-                    });
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::Alu,
-                        load: LoadEdge::Ram,
-                    });
-                }
+                out_ops.push(MicroOp {
+                    out: OutputLevel::Alu,
+                    load: LoadEdge::Ram,
+                });
             }
             _ => {
-                if inst.out_reg == Register::Pc {
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::Alu,
-                        load: LoadEdge::PcR,
-                    });
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::PcR,
-                        load: LoadEdge::Tmp,
-                    });
-                } else {
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::Alu,
-                        load: inst.out_reg.to_load_edge(),
-                    });
-                    out_ops.push(noop);
+                match inst.out_reg {
+                    Register::Pc => {
+                        out_ops.push(MicroOp {
+                            out: OutputLevel::Alu,
+                            load: LoadEdge::PcR,
+                        });
+                        out_ops.push(MicroOp {
+                            out: OutputLevel::PcR,
+                            load: LoadEdge::Tmp,
+                        });
+                    }
+                    Register::Reserved6 | Register::Reserved7 => {
+                        out_ops.push(halt);
+                    }
+                    r => {
+                        out_ops.push(MicroOp {
+                            out: OutputLevel::Alu,
+                            load: r.to_load_edge(),
+                        });
+                        out_ops.push(MicroOp {
+                            out: OutputLevel::Tmp,
+                            load: LoadEdge::PcInc,
+                        });
+                    }
                 }
-                
             }
         };
         for u in out_ops {
@@ -554,10 +484,6 @@ fn ucode() {
         for u in &[
             MicroOp {
                 out: OutputLevel::Tmp,
-                load: LoadEdge::PcInc,
-            },
-            MicroOp {
-                out: OutputLevel::Tmp,
                 load: LoadEdge::Next,
             },
         ] {
@@ -567,17 +493,7 @@ fn ucode() {
 
         assert!(uop_count < MAX_UOPS);
 
-        assert_eq!(
-            uop_count,
-            match mode {
-                InstructionModeDiscriminants::Imm8 => 10,
-                InstructionModeDiscriminants::Regs => 16,
-                InstructionModeDiscriminants::Imm4 => 12,
-                InstructionModeDiscriminants::MemOutRegs => 17,
-            }
-        );
-
-        println!("{}*{:02x}", MAX_UOPS - uop_count, next.emit());
+        println!("{}*{:02x}", MAX_UOPS - uop_count, halt.emit());
     }
 }
 
