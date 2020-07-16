@@ -73,7 +73,6 @@ opcodes:
 | A      |  8   |   8    |
 | B      |  9   |   9    |
 | C      |  10  |   10   |
-| uLO    |  11  |        |
 | ttyin  |  13  |   13   |
 | ttyout |  14  |        |
 | next   |  15  |        |
@@ -84,3 +83,35 @@ opcodes:
 "c" direct/indirect 
 "pc"  direct
 "serial"  direct  
+
+# Thoughts on optimizing ALU:
+---------
+# Most operations can be split in half:
+8-bit XOR 8-bit == 4-bit XOR 4-bit | 4-bit XOR 4-bit
+This would save *lots* of space... but it would mean more registers...
+Can we make it *mostly* 8-bit but with a *mostly* 4-bit ALU?
+
+Could even do add with carry flag
+Shifts: 
+4-bit value, 4-bit shift => (8-bit result)
+Multiplication is four 8-bit with 16-bit adds
+ab *cd = bd + 16ad + 16bc + 256ac
+
+e.g. alu lookup
+0000*: Parallel, independent 4-bit operations e.g. ADD, AND, OR, XOR, COPY, ...
+[3 bit opcode]
+[4 flags]
+[4 bit in1]
+[4 bit in2]
+
+001*: two output e.g. shift, rotate
+[1 bit lo/hi result]
+[3 bit opcode]
+[4 flags]
+[4 bit in1]
+[4 bit in2]
+
+010*
+
+Most operations are symmetrical:
+x XOR y == y XOR x

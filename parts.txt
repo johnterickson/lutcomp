@@ -39,7 +39,8 @@ Decoder:
 SN74HCT138N
 Decoder/Demultiplexer 1 x 3:8 16-PDIP
 https://www.digikey.com/product-detail/en/texas-instruments/SN74HCT138N/296-1608-5-ND/277254
-
+138N - selected is high - others are low
+238N - selected is low - others are high
 
 Adder:
 ------

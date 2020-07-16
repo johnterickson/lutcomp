@@ -20,12 +20,14 @@ args = _{mode_imm8 | mode_imm4 | mode_regs | mode_memoutregs}
 
 opcode = {"loadimm" | "add" | "or" | "xor" | "and" | "shift" | "equals" | "multiply" }
 
-pseudo_call = { "!call" ~ label}
-pseudo_return = { "!return" }
-pseudo_initstack = { "!init_stack" }
+// pseudo_call = { "!call" ~ label}
+// pseudo_return = { "!return" }
+// pseudo_initstack = { "!init_stack" }
+pseudo_skip_if_zero = { "!skip_if_zero" }
+pseudo_copy = { "!copy" ~ register ~ maybe_deref_register}
 
 instruction = {!"#" ~ !":" ~ opcode ~ args }
 comment = { "#" ~ (!new_line ~ ANY)* }
-line = _{ pseudo_initstack | pseudo_call | pseudo_return | comment | label | instruction }
+line = _{ pseudo_skip_if_zero | pseudo_copy | comment | label | instruction }
 
 program = {SOI ~ (line? ~ new_line)* ~ EOI}
