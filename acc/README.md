@@ -62,7 +62,6 @@ opcodes:
 | IRL    |  0   |   0    |
 | IRH    |  1   |        |
 | ALU    |  2   |   2    |
-| TMP    |  3   |   3    |
 | RAM    |  4   |   4    |
 | PCR    | 5 RCK|   5 CLOAD#     |
 | PC     |      |   6 G# |
