@@ -59,3 +59,9 @@ SN74LS593N
 Counter IC Binary Counter 1 Element 8 Bit Positive Edge 20-PDIP
 https://www.digikey.com/product-detail/en/texas-instruments/SN74LS593N/296-3719-5-ND/377750
 also http://pdf.datasheetcatalog.com/datasheet/SGSThomsonMicroelectronics/mXtwrtw.pdf
+
+Inverter:
+---------
+SN74HCT14N
+Inverter IC 6 Channel Schmitt Trigger 14-PDIP
+https://www.digikey.com/product-detail/en/texas-instruments/SN74HCT14N/296-8394-5-ND/376852

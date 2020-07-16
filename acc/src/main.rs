@@ -248,7 +248,7 @@ enum LoadEdge {
     Irl = 0,
     Irh = 1,
     Alu = 2,
-    Tmp = 3,
+    Reserved3 = 3,
     Ram = 4,
     PcR = 5,
     In1 = 6,
@@ -269,7 +269,7 @@ enum OutputLevel {
     Irl = 0,
     PcClkEn = 1,
     Alu = 2,
-    Tmp = 3,
+    Noop = 3,
     Ram = 4,
     Reserved5 = 5,
     Pc = 6,
@@ -319,7 +319,7 @@ fn ucode() {
 
     let halt = MicroOp {
         out: OutputLevel::Halt,
-        load: LoadEdge::Tmp,
+        load: LoadEdge::Next,
     };
 
     // let mut uops = Vec::new();
@@ -467,7 +467,7 @@ fn ucode() {
                         load: LoadEdge::PcR,
                     });
                     out_ops.push(MicroOp {
-                        out: OutputLevel::Tmp,
+                        out: OutputLevel::Noop,
                         load: LoadEdge::PcFromPcr,
                     });
                 }
@@ -493,7 +493,7 @@ fn ucode() {
 
         println!("# common exit");
         for u in &[MicroOp {
-            out: OutputLevel::Tmp,
+            out: OutputLevel::Noop,
             load: LoadEdge::Next,
         }] {
             u.print();
