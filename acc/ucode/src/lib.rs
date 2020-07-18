@@ -28,7 +28,7 @@ enum LoadEdge {
     PcClk = 12,
     TTYin = 13,
     TTYout = 14,
-    Next = 15,
+    Reserved15 = 15,
 }
 
 #[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString)]
@@ -48,7 +48,7 @@ enum OutputLevel {
     Reserved11 = 11,
     Reserved12 = 12,
     TTYin = 13,
-    Reserved14 = 14,
+    Next = 14,
     Halt = 15,
 }
 
@@ -77,7 +77,7 @@ fn to_load_edge(r: &Register) -> LoadEdge {
     }
 }
 
-const MAX_UOPS: usize = 64;
+const MAX_UOPS: usize = 32;
 
 #[derive(Clone, Copy, Debug)]
 struct MicroOp {
@@ -86,13 +86,13 @@ struct MicroOp {
 }
 
 impl MicroOp {
-    fn emit(&self) -> u8 {
-        ((self.out as u8) << 4) | (self.load as u8)
+    fn emit(&self) -> (u8,u8) {
+        (self.out as u8, self.load as u8)
     }
 
     fn print(&self) {
         println!("# OUT {:?}, LOAD {:?}", self.out, self.load);
-        println!("{:02x}", self.emit());
+        println!("{:02x} {:02x}", self.emit().0, self.emit().1);
     }
 }
 
@@ -112,7 +112,7 @@ pub fn ucode() {
 
     let halt = MicroOp {
         out: OutputLevel::Halt,
-        load: LoadEdge::Noop,
+        load: LoadEdge::Next,
     };
 
     // let mut uops = Vec::new();
@@ -123,7 +123,7 @@ pub fn ucode() {
             encoded_inst, bytes
         ));
 
-        let base_address = encoded_inst as usize * MAX_UOPS;
+        let base_address = encoded_inst as usize * MAX_UOPS * 2;
 
         println!("# @{:04x} {:?} {:?}", base_address, &inst, &bytes);
 
@@ -286,7 +286,7 @@ pub fn ucode() {
 
         println!("# common exit");
         for u in &[MicroOp {
-            out: OutputLevel::Noop,
+            out: OutputLevel::Next,
             load: LoadEdge::Next,
         }] {
             u.print();
@@ -295,6 +295,8 @@ pub fn ucode() {
 
         assert!(uop_count < MAX_UOPS);
 
-        println!("{}*{:02x}", MAX_UOPS - uop_count, halt.emit());
+        let halt = halt.emit();
+        assert_eq!(halt.0, halt.1);
+        println!("{}*{:02x}", 2*(MAX_UOPS - uop_count), halt.0);
     }
 }

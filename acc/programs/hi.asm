@@ -1,8 +1,8 @@
 # set c to tty
 loadimm a 'H'
-or serialout a $0
+!copy serialout a
 loadimm a 'i'
-or serialout a $0
+!copy serialout a
 loadimm a $a
-or serialout a $0
+!copy serialout a
 loadimm pc :halt
