@@ -10,7 +10,7 @@ use packed_struct::prelude::*;
 
 use common::*;
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString)]
+#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 enum LoadEdge {
     Irl = 0,
@@ -31,7 +31,7 @@ enum LoadEdge {
     Reserved15 = 15,
 }
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString)]
+#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 enum OutputLevel {
     Irl = 0,
@@ -86,7 +86,7 @@ struct MicroOp {
 }
 
 impl MicroOp {
-    fn emit(&self) -> (u8,u8) {
+    fn emit(&self) -> (u8, u8) {
         (self.out as u8, self.load as u8)
     }
 
@@ -112,7 +112,7 @@ pub fn ucode() {
 
     let halt = MicroOp {
         out: OutputLevel::Halt,
-        load: LoadEdge::Next,
+        load: LoadEdge::Noop,
     };
 
     // let mut uops = Vec::new();
@@ -287,7 +287,7 @@ pub fn ucode() {
         println!("# common exit");
         for u in &[MicroOp {
             out: OutputLevel::Next,
-            load: LoadEdge::Next,
+            load: LoadEdge::iter().nth(OutputLevel::Next as usize).unwrap(),
         }] {
             u.print();
             uop_count += 1;
@@ -297,6 +297,6 @@ pub fn ucode() {
 
         let halt = halt.emit();
         assert_eq!(halt.0, halt.1);
-        println!("{}*{:02x}", 2*(MAX_UOPS - uop_count), halt.0);
+        println!("{}*{:02x}", 2 * (MAX_UOPS - uop_count), halt.0);
     }
 }
