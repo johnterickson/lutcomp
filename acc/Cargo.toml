@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "alu", 
-    "app",
-    "assemble",
+#    "alu", 
+#    "app",
+#    "assemble",
     "common",
     "ucode"
     ]

@@ -44,6 +44,7 @@ bit 2: negative
 # uComputer
 
 ## ucode instruction
+```
 2 byte instructions
 byte 0:
       bits 0-2: data bus output select bits
@@ -53,7 +54,7 @@ byte 0:
 byte 1:
       bits 0-3: data bus load select bits
       bits 4-7: sign-extended
-
+```
 ## ucode address
 ```
 7 bits 0-6 for uPC
@@ -75,21 +76,21 @@ byte 1:
 | Index  | Output | Load (*_CP) |
 | -----  | ---- | -----  |
 | 0    |  Next   |   PC_INC    |
-| 1    |  Halt   | PC       |
-| 2    |  IMM   |   PCR    |
-| 3    |  ALU   |    ALU   |
-| 4    |  MEM   |   MEM    |
-| 5    |  TTYIN   |   TTYIN    |
-| 6    |  X   |   X    |
-| 7    |  Y   |   Y    |
-| 8    |     |    ADDR0   |
-| 9    |     |   ADDR1    |
-| 10/a    |     |   ADDR2    |
-| 11/b    |     |   TTYOUT    |
-| 12/c    |     |   IN1    |
-| 13/d    |     |   IR0    |
-| 14/e    |     |   FLAGS   |
-| 15/f    |     |   ?    |
+| 1    |  Halt   | IR0       |
+| 2    |  IMM    |   IN1    |
+| 3    |  ALU    |    ALU   |
+| 4    |  MEM    |   MEM    |
+| 5    |  TTYIN  |   TTYIN    |
+| 6    |  PC   |   PCR    |
+| 7    |     |     FLAGS  |
+| 8    |   W  |   W    |
+| 9    |    X |    X   |
+| 10/a    |  Y   |   Y    |
+| 11/b    |  Z   |    Z   |
+| 12/c    |     |   ADDR0    |
+| 13/d    |     |    ADDR1   |
+| 14/e    |     |  ADDR2    |
+| 15/f    |     |   TTYOUT    |
 
 
  
@@ -127,8 +128,8 @@ Most operations are symmetrical:
 x XOR y == y XOR x
 
 
-acc <- acc ^ *80000000
-----------------------
+### acc <- acc ^ *80000000
+```
 out pc, out mem, *, load ir0, *
 *, out imm, *, load a2, sx(-4)
 *, out imm, *, load a1, sx(0)
@@ -152,9 +153,10 @@ out addr, out mem, xor, load alu, *
 *, out z, *, load in1, *
 out addr, out mem, xor, load alu, *
 *, out alu, *, load z, *
+```
 
-r1 <- r2 ^ r3
-----------------------
+### r1 <- r2 ^ r3
+```
 out pc, out mem, *, load ir0, *
 
 *, out imm, *, load a2, sx(-8)
@@ -168,9 +170,10 @@ out addr, out mem, xor, load alu, *
 *, out imm, *, load a0, sx(4) // r1
 out addr, out alu, *, load mem, *
 /
+```
 
-r1 <- r2 + r3
-----------------------
+### r1 <- r2 + r3
+```
 out pc, out mem, *, load ir0, *
 
 *, out imm, *, load a2, sx(-8)
@@ -195,12 +198,4 @@ out addr, out mem, addlo, load alu, *
 *, out alu, *, load x, *
 *, out imm, *, load a0, sx(4+i) // r1[0]
 *, out x, *, load mem, *
-
-
-
-
-*, out alu, *, load x, *
-out addr, out mem, addhi, load alu, *
-out addr, out alu, *, load mem, *
-/
-
+```

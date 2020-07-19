@@ -9,89 +9,129 @@ extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
 use common::*;
+use std::cell::RefCell;
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8)]
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
-enum LoadEdge {
-    Irl = 0,
-    Irh = 1,
-    Alu = 2,
-    Noop = 3,
-    Ram = 4,
-    PcR = 5,
-    In1 = 6,
-    Addr = 7,
-    A = 8,
-    B = 9,
-    C = 10,
-    PcFromPcr = 11,
-    PcClk = 12,
-    TTYin = 13,
-    TTYout = 14,
-    Reserved15 = 15,
+enum DataBusLoadEdge {
+    PcInc = 0,
+    IR0 = 1,
+    In1 = 2,
+    Alu = 3,
+    Mem = 4,
+    TtyIn = 5,
+    PcR = 6,
+    Flags = 7,
+    W = 8,
+    X = 9,
+    Y = 10,
+    Z = 11,
+    Addr0 = 12,
+    Addr1 = 13,
+    Addr2 = 14,
+    TtyOut = 15,
 }
 
-#[derive(Clone, Copy, Display, Debug, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8)]
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
-enum OutputLevel {
-    Irl = 0,
-    PcClkEn = 1,
-    Alu = 2,
-    Noop = 3,
-    Ram = 4,
-    Reserved5 = 5,
+enum AddressBusOutputLevel {
+    Addr = 0,
+    Pc = 1,
+}
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+#[strum(serialize_all = "lowercase")]
+enum DataBusOutputLevel {
+    Next = 0,
+    Halt = 1,
+    Imm = 2,
+    Alu = 3,
+    Mem = 4,
+    TtyIn = 5,
     Pc = 6,
     Reserved7 = 7,
-    A = 8,
-    B = 9,
-    C = 10,
-    Reserved11 = 11,
-    Reserved12 = 12,
-    TTYin = 13,
-    Next = 14,
-    Halt = 15,
+    W = 8,
+    X = 9,
+    Y = 10,
+    Z = 11,
 }
 
-fn to_output_level(r: &Register) -> OutputLevel {
-    match r {
-        Register::A => OutputLevel::A,
-        Register::B => OutputLevel::B,
-        Register::C => OutputLevel::C,
-        Register::Pc => OutputLevel::Pc,
-        Register::SerialIn => OutputLevel::TTYin,
-        Register::SerialOut => OutputLevel::Halt,
-        Register::Reserved6 => OutputLevel::Halt,
-        Register::Reserved7 => OutputLevel::Halt,
-    }
-}
+// fn to_output_level(r: &Register) -> OutputLevel {
+//     match r {
+//         Register::A => OutputLevel::A,
+//         Register::B => OutputLevel::B,
+//         Register::C => OutputLevel::C,
+//         Register::Pc => OutputLevel::Pc,
+//         Register::SerialIn => OutputLevel::TTYin,
+//         Register::SerialOut => OutputLevel::Halt,
+//         Register::Reserved6 => OutputLevel::Halt,
+//         Register::Reserved7 => OutputLevel::Halt,
+//     }
+// }
 
-fn to_load_edge(r: &Register) -> LoadEdge {
-    match r {
-        Register::A => LoadEdge::A,
-        Register::B => LoadEdge::B,
-        Register::C => LoadEdge::C,
-        Register::Pc => panic!(),
-        Register::SerialIn => LoadEdge::TTYin,
-        Register::SerialOut => LoadEdge::TTYout,
-        _ => unimplemented!(),
-    }
-}
+// fn to_load_edge(r: &Register) -> LoadEdge {
+//     match r {
+//         Register::A => LoadEdge::A,
+//         Register::B => LoadEdge::B,
+//         Register::C => LoadEdge::C,
+//         Register::Pc => panic!(),
+//         Register::SerialIn => LoadEdge::TTYin,
+//         Register::SerialOut => LoadEdge::TTYout,
+//         _ => unimplemented!(),
+//     }
+// }
 
-const MAX_UOPS: usize = 32;
+const MAX_UOP_BYTES: usize = 128;
+const MAX_UOPS: usize = MAX_UOP_BYTES / 2;
 
 #[derive(Clone, Copy, Debug)]
-struct MicroOp {
-    out: OutputLevel,
-    load: LoadEdge,
+#[derive(PackedStruct)]
+#[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
+pub struct MicroOp {
+    #[packed_field(bits = "0..=2", ty = "enum")]
+    data_bus_out: DataBusOutputLevel,
+    #[packed_field(bits = "3")]
+    reserved3: bool,
+    #[packed_field(bits = "4..=6", ty = "enum")]
+    alu_opcode: AluOpcode,
+    #[packed_field(bits = "7", ty = "enum")]
+    address_bus_out: AddressBusOutputLevel,
+    #[packed_field(bits = "8..=11", ty = "enum")]
+    data_bus_load: DataBusLoadEdge,
+    #[packed_field(bits = "12..=15")]
+    immediate: Integer<i8, packed_bits::Bits4>,
 }
 
 impl MicroOp {
+    fn new(
+        address_bus_out: Option<AddressBusOutputLevel>,
+        data_out: DataBusOutputLevel,
+        alu_opcode: Option<AluOpcode>,
+        data_bus_load: DataBusLoadEdge,
+        immediate: Option<i8>,
+    ) -> MicroOp {
+        MicroOp {
+            data_bus_out: data_out,
+            reserved3: false,
+            alu_opcode: alu_opcode.unwrap_or(AluOpcode::AddLo),
+            address_bus_out: address_bus_out.unwrap_or(AddressBusOutputLevel::Addr),
+            data_bus_load,
+            immediate: immediate.unwrap_or_default().into(),
+        }
+    }
+
     fn emit(&self) -> (u8, u8) {
-        (self.out as u8, self.load as u8)
+        let bytes = self.pack();
+        (bytes[0], bytes[1])
     }
 
     fn print(&self) {
-        println!("# OUT {:?}, LOAD {:?}", self.out, self.load);
         println!("{:02x} {:02x}", self.emit().0, self.emit().1);
     }
 }
@@ -100,199 +140,118 @@ impl MicroOp {
 #[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
 pub struct MicroEntry {
     #[packed_field(bits = "0..=7")]
-    mode_specific: u8,
-    #[packed_field(bits = "8..=10", ty = "enum")]
-    out_reg: Register,
-    #[packed_field(bits = "11..=12")]
-    mode: Integer<u8, packed_bits::Bits2>,
+    instruction: u8,
+    #[packed_field(bits = "8..=11")]
+    flags: Integer<u8, packed_bits::Bits4>,
 }
 
 pub fn ucode() {
     println!("v2.0 raw");
 
-    let halt = MicroOp {
-        out: OutputLevel::Halt,
-        load: LoadEdge::Noop,
-    };
+    let halt = MicroOp::new(
+        None,
+        DataBusOutputLevel::Halt,
+        None,
+        DataBusLoadEdge::IR0, //same value as Halt
+        None,
+    );
+
+    let pc_inc = MicroOp::new(
+        None,
+        DataBusOutputLevel::Imm,
+        None,
+        DataBusLoadEdge::PcInc,
+        None,
+    );
 
     // let mut uops = Vec::new();
-    for encoded_inst in 0u16..(1 << 13) {
+    for encoded_inst in 0u16..(1 << 12) {
         let bytes: &[u8; 2] = &encoded_inst.to_be_bytes();
         let inst = MicroEntry::unpack(bytes).expect(&format!(
             "Could not decode {:02x}={:?}.",
             encoded_inst, bytes
         ));
 
+        let flags = Flags::from_bits_truncate(*inst.flags);
+        let opcode = Opcode::iter().nth(inst.instruction as usize);
+
         let base_address = encoded_inst as usize * MAX_UOPS * 2;
 
-        println!("# @{:04x} {:?} {:?}", base_address, &inst, &bytes);
+        let inc_pc = RefCell::new(true);
+        let uop_count = RefCell::new(0);
 
-        let mode = InstructionModeDiscriminants::iter()
-            .nth(*inst.mode as usize)
-            .unwrap();
-        assert_eq!(
-            *inst.mode,
-            match mode {
-                InstructionModeDiscriminants::Imm8 => 0,
-                InstructionModeDiscriminants::Regs => 1,
-                InstructionModeDiscriminants::Imm4 => 2,
-                InstructionModeDiscriminants::MemOutRegs => 3,
-            }
-        );
+        let add_op = |u: MicroOp| {
+            println!(
+                "# @{:04x} [{:?}] {:?} {:?}",
+                base_address, &flags, &opcode, &u
+            );
+            u.print();
+            *uop_count.borrow_mut() += 1;
+        };
 
-        let mut uop_count = 0;
+        let jmp_abs = || {
+            add_op(pc_inc);
+            add_op(MicroOp::new(
+                Some(AddressBusOutputLevel::Pc),
+                DataBusOutputLevel::Mem,
+                None,
+                DataBusLoadEdge::Addr0,
+                None,
+            ));
+            add_op(pc_inc);
+            add_op(MicroOp::new(
+                Some(AddressBusOutputLevel::Pc),
+                DataBusOutputLevel::Mem,
+                None,
+                DataBusLoadEdge::Addr1,
+                None,
+            ));
+            add_op(pc_inc);
+            add_op(MicroOp::new(
+                Some(AddressBusOutputLevel::Pc),
+                DataBusOutputLevel::Mem,
+                None,
+                DataBusLoadEdge::Addr2,
+                None,
+            ));
+            add_op(MicroOp::new(
+                Some(AddressBusOutputLevel::Addr),
+                DataBusOutputLevel::Pc,
+                None,
+                DataBusLoadEdge::PcR,
+                None,
+            ));
+
+            *inc_pc.borrow_mut() = false;
+        };
 
         println!("# common prelude");
-        for u in &[
-            MicroOp {
-                out: OutputLevel::Pc,
-                load: LoadEdge::Irl,
-            },
-            MicroOp {
-                out: OutputLevel::PcClkEn,
-                load: LoadEdge::PcClk,
-            },
-            MicroOp {
-                out: OutputLevel::Pc,
-                load: LoadEdge::Irh,
-            },
-        ] {
-            u.print();
-            uop_count += 1;
-        }
+        add_op(MicroOp::new(
+            Some(AddressBusOutputLevel::Pc),
+            DataBusOutputLevel::Mem,
+            None,
+            DataBusLoadEdge::IR0,
+            None,
+        ));
 
-        println!("# prep second input and drive alu");
-        let mut in_ops = Vec::new();
-        match mode {
-            InstructionModeDiscriminants::Imm8 => {
-                in_ops.push(MicroOp {
-                    out: OutputLevel::A,
-                    load: LoadEdge::In1,
-                });
-                in_ops.push(MicroOp {
-                    out: OutputLevel::Irl,
-                    load: LoadEdge::Alu,
-                });
+        match opcode {
+            Some(Opcode::Jmp) => {
+                jmp_abs();
             }
-            InstructionModeDiscriminants::Imm4 => {
-                let mode2 = PackedInstructionMode2::unpack(&[inst.mode_specific]).unwrap();
-                let in1_level = to_output_level(&mode2.in1_reg);
-                if mode2.in1_indirect {
-                    in_ops.push(MicroOp {
-                        out: in1_level,
-                        load: LoadEdge::Addr,
-                    });
-                    in_ops.push(MicroOp {
-                        out: OutputLevel::Ram,
-                        load: LoadEdge::In1,
-                    });
-                } else {
-                    in_ops.push(MicroOp {
-                        out: in1_level,
-                        load: LoadEdge::In1,
-                    });
-                }
-
-                in_ops.push(halt); //todo
-            }
-            InstructionModeDiscriminants::Regs | InstructionModeDiscriminants::MemOutRegs => {
-                let mode1 = PackedInstructionMode1or3::unpack(&[inst.mode_specific]).unwrap();
-                {
-                    let in1_level = to_output_level(&mode1.in1_reg);
-                    if mode1.in1_indirect {
-                        in_ops.push(MicroOp {
-                            out: in1_level,
-                            load: LoadEdge::Addr,
-                        });
-                        in_ops.push(MicroOp {
-                            out: OutputLevel::Ram,
-                            load: LoadEdge::In1,
-                        });
-                    } else {
-                        in_ops.push(MicroOp {
-                            out: in1_level,
-                            load: LoadEdge::In1,
-                        });
-                    }
-                }
-                {
-                    let in2_level = to_output_level(&mode1.in2_reg);
-                    if mode1.in1_indirect {
-                        in_ops.push(MicroOp {
-                            out: in2_level,
-                            load: LoadEdge::Addr,
-                        });
-                        in_ops.push(MicroOp {
-                            out: OutputLevel::Ram,
-                            load: LoadEdge::Alu,
-                        });
-                    } else {
-                        in_ops.push(MicroOp {
-                            out: in2_level,
-                            load: LoadEdge::Alu,
-                        });
-                    }
+            Some(Opcode::Jz) => {
+                if flags.contains(Flags::ZERO) {
+                    jmp_abs();
                 }
             }
-        };
-        for u in in_ops {
-            u.print();
-            uop_count += 1;
+            _ => {}
         }
 
-        println!("# store output");
-        let mut out_ops = Vec::new();
-        match mode {
-            InstructionModeDiscriminants::MemOutRegs => {
-                out_ops.push(MicroOp {
-                    out: to_output_level(&inst.out_reg),
-                    load: LoadEdge::Addr,
-                });
-                out_ops.push(MicroOp {
-                    out: OutputLevel::Alu,
-                    load: LoadEdge::Ram,
-                });
-            }
-            _ => match inst.out_reg {
-                Register::Pc => {
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::Alu,
-                        load: LoadEdge::PcR,
-                    });
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::Noop,
-                        load: LoadEdge::PcFromPcr,
-                    });
-                }
-                Register::Reserved6 | Register::Reserved7 => {
-                    out_ops.push(halt);
-                }
-                r => {
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::Alu,
-                        load: to_load_edge(&r),
-                    });
-                    out_ops.push(MicroOp {
-                        out: OutputLevel::PcClkEn,
-                        load: LoadEdge::PcClk,
-                    });
-                }
-            },
-        };
-        for u in out_ops {
-            u.print();
-            uop_count += 1;
+        if *inc_pc.borrow() {
+            println!("# common exit");
+            add_op(pc_inc);
         }
 
-        println!("# common exit");
-        for u in &[MicroOp {
-            out: OutputLevel::Next,
-            load: LoadEdge::iter().nth(OutputLevel::Next as usize).unwrap(),
-        }] {
-            u.print();
-            uop_count += 1;
-        }
-
+        let uop_count = *uop_count.borrow();
         assert!(uop_count < MAX_UOPS);
 
         let halt = halt.emit();

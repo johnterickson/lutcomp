@@ -8,9 +8,20 @@ extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 use std::collections::BTreeMap;
 
-#[derive(
-    Clone, Copy, Display, Debug, PartialEq, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8,
-)]
+#[macro_use]
+extern crate bitflags;
+
+bitflags! {
+    pub struct Flags: u8 {
+        const CARRY = 0b0001;
+        const ZERO = 0b0010;
+        const NEG = 0b0100;
+    }
+}
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 pub enum ShiftMode {
     Rotate = 0,
@@ -19,24 +30,23 @@ pub enum ShiftMode {
     Reserved3 = 3,
 }
 
-#[derive(
-    Clone, Copy, Display, Debug, PartialEq, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8,
-)]
-#[strum(serialize_all = "lowercase")]
-pub enum Opcode {
-    LoadImm = 0,
-    Add = 1,
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+pub enum AluOpcode {
+    AddLo = 0,
+    AddHi = 1,
     Or = 2,
     Xor = 3,
     And = 4,
-    Shift = 5,
-    Equals = 6,
-    Multiply = 7,
+    Special = 5,
+    MultiplyLo = 6,
+    MultiplyHi = 7,
 }
 
-#[derive(
-    Clone, Copy, Display, Debug, PartialEq, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8,
-)]
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 pub enum Register {
     A = 0,
@@ -131,21 +141,28 @@ pub struct PackedInstructionMode2 {
 pub struct ShiftArgs {
     #[packed_field(bits = "0..=3")]
     pub amount: Integer<i8, packed_bits::Bits4>,
-    #[packed_field(bits = "4..=5")]
-    pub reserved: Integer<u8, packed_bits::Bits2>,
-    #[packed_field(bits = "6..=7", ty = "enum")]
-    pub mode: ShiftMode,
+    #[packed_field(bits = "4..=5", ty = "enum")]
+    pub reserved: ShiftMode,
 }
 
-#[derive(Debug, PackedStruct)]
-#[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
-pub struct Instruction {
-    #[packed_field(bits = "0..=7")]
-    pub mode_specific: u8,
-    #[packed_field(bits = "8..=10", ty = "enum")]
-    pub out_reg: Register,
-    #[packed_field(bits = "11..=12", ty = "enum")]
-    pub mode: InstructionModeDiscriminants,
-    #[packed_field(bits = "13..=15", ty = "enum")]
-    pub op: Opcode,
+// #[derive(Debug, PackedStruct)]
+// #[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
+// pub struct Instruction {
+//     #[packed_field(bits = "0..=7")]
+//     pub mode_specific: u8,
+//     #[packed_field(bits = "8..=10", ty = "enum")]
+//     pub out_reg: Register,
+//     #[packed_field(bits = "11..=12", ty = "enum")]
+//     pub mode: InstructionModeDiscriminants,
+//     #[packed_field(bits = "13..=15", ty = "enum")]
+//     pub op: Opcode,
+// }
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+#[strum(serialize_all = "lowercase")]
+pub enum Opcode {
+    Jmp = 0,
+    Jz = 1,
 }
