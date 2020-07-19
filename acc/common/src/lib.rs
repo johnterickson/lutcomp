@@ -142,8 +142,29 @@ pub struct ShiftArgs {
     #[packed_field(bits = "0..=3")]
     pub amount: Integer<i8, packed_bits::Bits4>,
     #[packed_field(bits = "4..=5", ty = "enum")]
-    pub reserved: ShiftMode,
+    pub mode: ShiftMode,
 }
+
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+pub enum SpecialOpcode {
+    Shift = 0,
+    Reserved1 = 1,
+    Reserved2 = 2,
+    Reserved3 = 3,
+}
+
+#[derive(Debug, PackedStruct)]
+#[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
+pub struct SpecialArgs {
+    #[packed_field(bits = "0..=5")]
+    pub mode_args: Integer<u8, packed_bits::Bits6>,
+    #[packed_field(bits = "6..=7", ty = "enum")]
+    pub op: SpecialOpcode,
+}
+
 
 // #[derive(Debug, PackedStruct)]
 // #[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]

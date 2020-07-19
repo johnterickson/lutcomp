@@ -15,7 +15,7 @@ pub struct LutEntry {
     #[packed_field(bits = "8..=15")]
     in1: u8,
     #[packed_field(bits = "16..=18", ty = "enum")]
-    op: Opcode,
+    op: AluOpcode,
     #[packed_field(bits = "19..=23")]
     unused: Integer<u8, packed_bits::Bits5>,
 }
@@ -32,56 +32,70 @@ pub fn alu() {
         assert_eq!(0, *entry.unused);
 
         let out = match entry.op {
-            Opcode::LoadImm => entry.in2,
-            Opcode::Add => entry.in1.wrapping_add(entry.in2),
-            Opcode::Or => entry.in1 | entry.in2,
-            Opcode::Xor => entry.in1 ^ entry.in2,
-            Opcode::And => entry.in1 & entry.in2,
-            Opcode::Shift => {
-                let args = ShiftArgs::unpack(&[entry.in2]).unwrap();
-                println!("# rotate mode:{:?}", &args);
-                let amount = *args.amount;
-                let abs_amount = amount.abs();
-                if abs_amount >= 8 {
-                    0xFF
-                } else if abs_amount == 0 {
-                    entry.in1
-                } else {
-                    match args.mode {
-                        ShiftMode::Rotate => {
-                            if amount > 0 {
-                                (entry.in1 << abs_amount) | (entry.in1 >> (8 - abs_amount))
-                            } else {
-                                (entry.in1 >> abs_amount) | (entry.in1 << (8 - abs_amount))
+            AluOpcode::AddLo => entry.in1.wrapping_add(entry.in2),
+            AluOpcode::AddHi => {
+                let sum = (entry.in1 as u16) + (entry.in2 as u16);
+
+                let mut flags = Flags::from_bits_truncate(0);
+                if sum > 0xFF {
+                    flags.insert(Flags::CARRY);
+                }
+                if sum == 0 {
+                    flags.insert(Flags::ZERO);
+                }
+                if sum & 0x80 == 0x80 {
+                    flags.insert(Flags::NEG);
+                }
+                flags.bits()
+            }
+            AluOpcode::Or => entry.in1 | entry.in2,
+            AluOpcode::Xor => entry.in1 ^ entry.in2,
+            AluOpcode::And => entry.in1 & entry.in2,
+            AluOpcode::Special => {
+                let special_mode = SpecialArgs::unpack(&[entry.in2]).unwrap();
+                match special_mode.op {
+                    SpecialOpcode::Shift => {
+                        let args = ShiftArgs::unpack(&[entry.in2]).unwrap();
+                        println!("# {:?}", &args);
+                        let amount = *args.amount;
+                        let abs_amount = amount.abs();
+                        if abs_amount >= 8 {
+                            0xFF
+                        } else if abs_amount == 0 {
+                            entry.in1
+                        } else {
+                            match args.mode {
+                                ShiftMode::Rotate => {
+                                    if amount > 0 {
+                                        (entry.in1 << abs_amount) | (entry.in1 >> (8 - abs_amount))
+                                    } else {
+                                        (entry.in1 >> abs_amount) | (entry.in1 << (8 - abs_amount))
+                                    }
+                                }
+                                ShiftMode::Arithmetic => {
+                                    if amount > 0 {
+                                        entry.in1 << abs_amount
+                                    } else {
+                                        entry.in1 >> abs_amount
+                                    }
+                                }
+                                ShiftMode::Logical => {
+                                    let signed = entry.in1 as i8;
+                                    (if amount > 0 {
+                                        signed << abs_amount
+                                    } else {
+                                        signed >> abs_amount
+                                    }) as u8
+                                }
+                                ShiftMode::Reserved3 => 0xFF,
                             }
                         }
-                        ShiftMode::Arithmetic => {
-                            if amount > 0 {
-                                entry.in1 << abs_amount
-                            } else {
-                                entry.in1 >> abs_amount
-                            }
-                        }
-                        ShiftMode::Logical => {
-                            let signed = entry.in1 as i8;
-                            (if amount > 0 {
-                                signed << abs_amount
-                            } else {
-                                signed >> abs_amount
-                            }) as u8
-                        }
-                        ShiftMode::Reserved3 => 0xFF,
                     }
+                    _ => 0xFF
                 }
             }
-            Opcode::Equals => {
-                if entry.in1 == entry.in2 {
-                    1u8
-                } else {
-                    0u8
-                }
-            }
-            Opcode::Multiply => entry.in1.wrapping_mul(entry.in2),
+            AluOpcode::MultiplyLo => ((((entry.in1 as u16) * (entry.in2 as u16)) >> 0) & 0xFF) as u8,
+            AluOpcode::MultiplyHi => ((((entry.in1 as u16) * (entry.in2 as u16)) >> 8) & 0xFF) as u8,
         };
 
         println!("{:02x}", out);

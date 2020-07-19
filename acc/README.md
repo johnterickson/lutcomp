@@ -6,12 +6,23 @@
 ## instruction format
 variable length
 
+## registers
+Each is 32-bit
+```
+r0
+r1
+r2
+r3
+```
+
 ## flags
 ```
 bit 0: carry
 bit 1: zero
 bit 2: negative
 ```
+
+# uComputer
 
 ## ALU lookup
 ```
@@ -40,8 +51,6 @@ bit 2: negative
 1 1 0 MultiplyLo: (in1 * in2) & 0xFF
 1 1 1 MultiplyHi: ((in1 * in2)>>8) & 0xFF
 ```
-
-# uComputer
 
 ## ucode instruction
 ```
