@@ -8,16 +8,14 @@ use packed_struct::prelude::*;
 use common::*;
 
 #[derive(Debug, PackedStruct)]
-#[packed_struct(size_bytes = "3", endian = "lsb", bit_numbering = "lsb0")]
+#[packed_struct(size_bytes = "4", endian = "lsb", bit_numbering = "lsb0")]
 pub struct LutEntry {
     #[packed_field(bits = "0..=7")]
-    in2: u8,
+    pub in2: u8,
     #[packed_field(bits = "8..=15")]
-    in1: u8,
+    pub in1: u8,
     #[packed_field(bits = "16..=18", ty = "enum")]
-    op: AluOpcode,
-    #[packed_field(bits = "19..=23")]
-    unused: Integer<u8, packed_bits::Bits5>,
+    pub op: AluOpcode,
 }
 
 pub fn alu() {
@@ -26,10 +24,8 @@ pub fn alu() {
     for encoded_entry in 0u32..=0x7FFFF {
         let bytes = encoded_entry.to_le_bytes();
         assert_eq!(0, bytes[3]);
-        let bytes = [bytes[2], bytes[1], bytes[0]];
         let entry = LutEntry::unpack(&bytes).unwrap();
         println!("# {:05x} {:?} {:?}", encoded_entry, &bytes, &entry);
-        assert_eq!(0, *entry.unused);
 
         let out = match entry.op {
             AluOpcode::AddLo => entry.in1.wrapping_add(entry.in2),

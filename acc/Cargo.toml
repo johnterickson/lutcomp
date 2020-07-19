@@ -4,5 +4,6 @@ members = [
 #    "app",
 #    "assemble",
     "common",
+    "sim",
     "ucode"
     ]

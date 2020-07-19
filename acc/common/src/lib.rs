@@ -6,6 +6,7 @@ extern crate packed_struct;
 #[macro_use]
 extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
+
 use std::collections::BTreeMap;
 
 #[macro_use]
@@ -144,7 +145,6 @@ pub struct ShiftArgs {
     #[packed_field(bits = "4..=5", ty = "enum")]
     pub mode: ShiftMode,
 }
-
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]

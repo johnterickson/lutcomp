@@ -15,7 +15,7 @@ use std::cell::RefCell;
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
-enum DataBusLoadEdge {
+pub enum DataBusLoadEdge {
     PcInc = 0,
     IR0 = 1,
     In1 = 2,
@@ -38,7 +38,7 @@ enum DataBusLoadEdge {
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
-enum AddressBusOutputLevel {
+pub enum AddressBusOutputLevel {
     Addr = 0,
     Pc = 1,
 }
@@ -47,7 +47,7 @@ enum AddressBusOutputLevel {
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
-enum DataBusOutputLevel {
+pub enum DataBusOutputLevel {
     Next = 0,
     Halt = 1,
     Imm = 2,
@@ -94,18 +94,16 @@ const MAX_UOPS: usize = MAX_UOP_BYTES / 2;
 #[derive(PackedStruct)]
 #[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
 pub struct MicroOp {
-    #[packed_field(bits = "0..=2", ty = "enum")]
-    data_bus_out: DataBusOutputLevel,
-    #[packed_field(bits = "3")]
-    reserved3: bool,
+    #[packed_field(bits = "0..=3", ty = "enum")]
+    pub data_bus_out: DataBusOutputLevel,
     #[packed_field(bits = "4..=6", ty = "enum")]
-    alu_opcode: AluOpcode,
+    pub alu_opcode: AluOpcode,
     #[packed_field(bits = "7", ty = "enum")]
-    address_bus_out: AddressBusOutputLevel,
+    pub address_bus_out: AddressBusOutputLevel,
     #[packed_field(bits = "8..=11", ty = "enum")]
-    data_bus_load: DataBusLoadEdge,
+    pub data_bus_load: DataBusLoadEdge,
     #[packed_field(bits = "12..=15")]
-    immediate: Integer<i8, packed_bits::Bits4>,
+    pub immediate: Integer<i8, packed_bits::Bits4>,
 }
 
 impl MicroOp {
@@ -118,7 +116,6 @@ impl MicroOp {
     ) -> MicroOp {
         MicroOp {
             data_bus_out: data_out,
-            reserved3: false,
             alu_opcode: alu_opcode.unwrap_or(AluOpcode::AddLo),
             address_bus_out: address_bus_out.unwrap_or(AddressBusOutputLevel::Addr),
             data_bus_load,
@@ -140,9 +137,9 @@ impl MicroOp {
 #[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
 pub struct MicroEntry {
     #[packed_field(bits = "0..=7")]
-    instruction: u8,
+    pub instruction: u8,
     #[packed_field(bits = "8..=11")]
-    flags: Integer<u8, packed_bits::Bits4>,
+    pub flags: Integer<u8, packed_bits::Bits4>,
 }
 
 pub fn ucode() {
