@@ -195,3 +195,4 @@ pub enum Opcode {
     Jmp = 8,
     Jz = 9,
 }
+

@@ -7,8 +7,13 @@ use packed_struct::prelude::*;
 
 use common::*;
 
+use lazy_static::lazy_static;
+lazy_static! {
+    pub static ref ALU: Vec<u8> = alu(false);
+}
+
 #[derive(Debug, PackedStruct)]
-#[packed_struct(size_bytes = "4", endian = "lsb", bit_numbering = "lsb0")]
+#[packed_struct(size_bytes = "3", endian = "lsb", bit_numbering = "lsb0")]
 pub struct LutEntry {
     #[packed_field(bits = "0..=7")]
     pub in2: u8,
@@ -18,15 +23,33 @@ pub struct LutEntry {
     pub op: AluOpcode,
 }
 
+impl LutEntry {
+    pub fn pack_lsb(&self) -> [u8; 3] {
+        let bytes = self.pack();
+        [bytes[2],bytes[1],bytes[0]]
+    }
+
+    pub fn unpack_lsb(index: u32) -> LutEntry {
+        let bytes = index.to_le_bytes();
+        assert_eq!(0, bytes[3]);
+        let bytes = [bytes[2], bytes[1], bytes[0]];
+        LutEntry::unpack(&bytes).unwrap()
+    }
+}
+
 pub fn alu(print: bool) -> Vec<u8> {
-    if print { println!("v2.0 raw"); }
+    if print {
+        println!("v2.0 raw");
+    }
     let mut out_bytes = Vec::new();
 
     for encoded_entry in 0u32..=0x7FFFF {
         let bytes = encoded_entry.to_le_bytes();
         assert_eq!(0, bytes[3]);
-        let entry = LutEntry::unpack(&bytes).unwrap();
-        if print { println!("# {:05x} {:?} {:?}", encoded_entry, &bytes, &entry); }
+        let entry = LutEntry::unpack_lsb(encoded_entry);
+        if print {
+            println!("# {:05x} {:?} {:?}", encoded_entry, &bytes, &entry);
+        }
 
         let out = match entry.op {
             AluOpcode::AddLo => entry.in1.wrapping_add(entry.in2),
@@ -53,7 +76,9 @@ pub fn alu(print: bool) -> Vec<u8> {
                 match special_mode.op {
                     SpecialOpcode::Shift => {
                         let args = ShiftArgs::unpack(&[entry.in2]).unwrap();
-                        if print { println!("# {:?}", &args); }
+                        if print {
+                            println!("# {:?}", &args);
+                        }
                         let amount = *args.amount;
                         let abs_amount = amount.abs();
                         if abs_amount >= 8 {
@@ -88,16 +113,38 @@ pub fn alu(print: bool) -> Vec<u8> {
                             }
                         }
                     }
-                    _ => 0xFF
+                    _ => 0xFF,
                 }
             }
-            AluOpcode::MultiplyLo => ((((entry.in1 as u16) * (entry.in2 as u16)) >> 0) & 0xFF) as u8,
-            AluOpcode::MultiplyHi => ((((entry.in1 as u16) * (entry.in2 as u16)) >> 8) & 0xFF) as u8,
+            AluOpcode::MultiplyLo => {
+                ((((entry.in1 as u16) * (entry.in2 as u16)) >> 0) & 0xFF) as u8
+            }
+            AluOpcode::MultiplyHi => {
+                ((((entry.in1 as u16) * (entry.in2 as u16)) >> 8) & 0xFF) as u8
+            }
         };
 
-        if print { println!("{:02x}", out); }
+        if print {
+            println!("{:02x}", out);
+        }
         out_bytes.push(out);
     }
 
     out_bytes
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pack() {
+        let lut_entry = LutEntry {
+            in1: 15,
+            in2: 240,
+            op: AluOpcode::Or,
+        };
+
+        assert_eq!([240, 15, 2], lut_entry.pack_lsb());
+    }
 }

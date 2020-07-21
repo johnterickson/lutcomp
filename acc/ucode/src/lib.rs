@@ -1,7 +1,7 @@
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
-use strum::IntoEnumIterator;
+use strum::{IntoEnumIterator,EnumCount};
 
 extern crate packed_struct;
 #[macro_use]
@@ -9,7 +9,12 @@ extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
 use common::*;
-use std::cell::{Cell, RefCell};
+use std::cell::{RefCell};
+
+use lazy_static::lazy_static;
+lazy_static! {
+    pub static ref UCODE: Vec<u8> = ucode(false);
+}
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
@@ -160,6 +165,18 @@ pub struct MicroEntry {
     pub flags: Integer<u8, packed_bits::Bits4>,
 }
 
+impl MicroEntry {
+    pub fn pack_lsb(&self) -> [u8; 2] {
+        let bytes = self.pack();
+        [bytes[1],bytes[0]]
+    }
+
+    pub fn unpack_lsb(bytes: &[u8; 2]) -> MicroEntry {
+        let bytes = [bytes[1], bytes[0]];
+        MicroEntry::unpack(&bytes).unwrap()
+    }
+}
+
 pub fn ucode(print: bool) -> Vec<u8> {
     if print { println!("v2.0 raw"); }
 
@@ -185,10 +202,21 @@ pub fn ucode(print: bool) -> Vec<u8> {
     // let mut uops = Vec::new();
     for encoded_inst in 0u16..(1 << 12) {
         let bytes: &[u8; 2] = &encoded_inst.to_le_bytes();
-        let inst = MicroEntry::unpack(bytes).expect(&format!(
-            "Could not decode {:02x}={:?}.",
-            encoded_inst, bytes
-        ));
+        let inst = MicroEntry::unpack_lsb(bytes);
+        let flags = Flags::from_bits_truncate(*inst.flags);
+        let opcode = Opcode::iter().nth(inst.instruction as usize);
+        let base_address = encoded_inst as usize * MAX_UOPS * 2;
+
+        if print {
+            println!(
+                "# addr:{:04x} inst:{:02x}={:?} flags:[{:?}] opcode:{:?}",
+                base_address,
+                encoded_inst, 
+                &inst,
+                &flags,
+                &opcode
+            );
+        }
 
         let wxyz_outs = &[
             DataBusOutputLevel::W,
@@ -210,10 +238,13 @@ pub fn ucode(print: bool) -> Vec<u8> {
             DataBusLoadEdge::Addr2,
         ];
 
-        let flags = Flags::from_bits_truncate(*inst.flags);
-        let opcode = Opcode::iter().nth(inst.instruction as usize);
 
-        let base_address = encoded_inst as usize * MAX_UOPS * 2;
+        assert_eq!(
+            Opcode::iter().last().unwrap() as u8,
+            Opcode::count() as u8 - 1,
+        );
+
+
 
         let inc_pc = RefCell::new(true);
         let uop_count = RefCell::new(0);
@@ -221,12 +252,8 @@ pub fn ucode(print: bool) -> Vec<u8> {
         let add_op = |u: MicroOp| {
             if print {
                 println!(
-                    "# addr:{:04x} inst:{:02x}={:?} flags:[{:?}] opcode:{:?} uop:{:?}",
+                    "#  addr:{:04x} uop:{:?}",
                     base_address + *uop_count.borrow() * 2,
-                    encoded_inst, 
-                    &inst,
-                    &flags,
-                    &opcode,
                     &u
                 );
                 u.print();
@@ -501,4 +528,19 @@ pub fn ucode(print: bool) -> Vec<u8> {
     }
 
     vec_out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pack() {
+        let entry = MicroEntry {
+            flags: 0xF.into(),
+            instruction:0xCC,
+        };
+
+        assert_eq!([0xCC, 0xF], entry.pack_lsb());
+    }
 }

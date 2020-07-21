@@ -1,6 +1,8 @@
 extern crate packed_struct;
 use packed_struct::prelude::*;
 
+use strum::IntoEnumIterator;
+
 use alu::*;
 use common::*;
 use ucode::*;
@@ -10,7 +12,7 @@ pub struct Computer {
     rom: Vec<u8>,
     ram: Vec<u8>,
     alu_lut: Vec<u8>,
-    urom: Vec<u8>,
+    ucode_rom: Vec<u8>,
     regs: [u8; 4],
     addr: [u8; 4],
     pc: [u8; 4],
@@ -36,12 +38,12 @@ impl Debug for Computer {
 }
 
 impl Computer {
-    pub fn new(rom: Vec<u8>, alu_lut: Vec<u8>, urom: Vec<u8>) -> Computer {
-        Computer {
+    pub fn new(rom: Vec<u8>) -> Computer {
+        let c = Computer {
             rom,
             ram: vec![0u8; 1 << 19],
-            alu_lut,
-            urom,
+            alu_lut: alu::ALU.clone(),
+            ucode_rom: ucode::UCODE.clone(),
             regs: [0u8; 4],
             addr: [0u8; 4],
             pc: [0u8; 4],
@@ -51,21 +53,31 @@ impl Computer {
             flags: Flags::empty(),
             ir0: 0,
             in1: 0,
-        }
+        };
+
+        assert_eq!(c.alu_lut.len(), 1 << 19);
+        assert_eq!(c.ucode_rom.len(), 1 << 19);
+        c
     }
 
     pub fn step(&mut self) -> bool {
+        println!("\n{:?}", &self);
+
         let urom_entry = MicroEntry {
             flags: self.flags.bits().into(),
             instruction: self.ir0
         };
-        let mut urom_addr = u16::from_le_bytes(urom_entry.pack()) as usize;
+        let mut urom_addr = u16::from_le_bytes(urom_entry.pack_lsb()) as usize;
         urom_addr <<= 7;
         urom_addr += self.upc as usize;
 
-        println!("urom_addr {:04x} = {:?} + {:02x}", urom_addr, urom_entry, self.upc);
+        let opcode = Opcode::iter().nth(urom_entry.instruction as usize);
+        println!("urom_addr {:04x} = {:?} {:?} + {:02x}", 
+            urom_addr, urom_entry, opcode, self.upc);
 
-        let urom_op = MicroOp::unpack(&[self.urom[urom_addr], self.urom[urom_addr+1]]).unwrap();
+        let urom_op = MicroOp::unpack(&[
+            self.ucode_rom[urom_addr], 
+            self.ucode_rom[urom_addr+1]]).unwrap();
         println!("urom_op: {:?}", urom_op);
         
         let addr_bus = u32::from_le_bytes(match urom_op.address_bus_out {
@@ -101,7 +113,7 @@ impl Computer {
         };
 
         if let Some(data_bus) = data_bus {
-            println!("data_bus: {:04x}", data_bus);
+            println!("data_bus: {:02x}", data_bus);
         }
         
         match urom_op.data_bus_load {
@@ -114,7 +126,20 @@ impl Computer {
                     in2: data_bus.unwrap(),
                     op: urom_op.alu_opcode,
                 };
-                self.alu = self.alu_lut[u32::from_le_bytes(lut_entry.pack()) as usize];
+                let lut_entry_bytes = lut_entry.pack_lsb();
+                let lut_entry_bytes = [
+                    lut_entry_bytes[0],
+                    lut_entry_bytes[1],
+                    lut_entry_bytes[2],
+                    0];
+                let lut_entry_index = u32::from_le_bytes(lut_entry_bytes) as usize;
+                print!("lut_entry:{:04x}={:?}={:?} => ",
+                    lut_entry_index,
+                    lut_entry_bytes,
+                    lut_entry);
+                let lut_output = self.alu_lut[lut_entry_index];
+                println!("{:02x}", lut_output);
+                self.alu = lut_output;
             },
             DataBusLoadEdge::Flags => {
                 self.flags = Flags::from_bits_truncate(data_bus.unwrap());
@@ -150,50 +175,81 @@ mod tests {
 
     #[test]
     fn halt() {
-        let urom = ucode::ucode(false);
-        let alu_lut = alu::alu(false);
         let mut rom = Vec::new();
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(
-            rom,
-            alu_lut,
-            urom
-        );
+        let mut c = Computer::new(rom);
             
-        while c.step() {
-            println!("{:?}", &c);
-        }
+        while c.step() {}
     }
 
-    // #[test]
-    // fn loadimm() {
-    //     let urom = ucode::ucode(false);
-    //     let alu_lut = alu::alu(false);
-    //     let mut rom = Vec::new();
-    //     rom.push(Opcode::LoadImm as u8);
-    //     rom.push(1);
-    //     rom.push(0);
-    //     rom.push(0);
-    //     rom.push(0);
-    //     rom.push(Opcode::Add as u8);
-    //     rom.push(2);
-    //     rom.push(0);
-    //     rom.push(0);
-    //     rom.push(0);
-    //     rom.push(Opcode::Halt as u8);
+    #[test]
+    fn loadimm() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm as u8);
+        rom.push(1);
+        rom.push(2);
+        rom.push(3);
+        rom.push(4);
+        rom.push(Opcode::Halt as u8);
 
-    //     let mut c = Computer::new(
-    //         rom,
-    //         alu_lut,
-    //         urom
-    //     );
+        let mut c = Computer::new(rom);
             
-    //     while c.step() {}
+        while c.step() {}
 
-    //     assert_eq!(c.regs[0], 3);
-    //     assert_eq!(c.regs[1], 0);
-    //     assert_eq!(c.regs[2], 0);
-    //     assert_eq!(c.regs[3], 0);
-    // }
+        assert_eq!(c.regs[0], 1);
+        assert_eq!(c.regs[1], 2);
+        assert_eq!(c.regs[2], 3);
+        assert_eq!(c.regs[3], 4);
+    }
+
+    #[test]
+    fn or() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm as u8);
+        rom.push(0xF0);
+        rom.push(0x0F);
+        rom.push(0xF0);
+        rom.push(0x0F);
+        rom.push(Opcode::Or as u8);
+        rom.push(0x0F);
+        rom.push(0xF0);
+        rom.push(0x0F);
+        rom.push(0xF0);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+            
+        while c.step() { }
+
+        assert_eq!(c.regs[0], 0xFF);
+        assert_eq!(c.regs[1], 0xFF);
+        assert_eq!(c.regs[2], 0xFF);
+        assert_eq!(c.regs[3], 0xFF);
+    }
+
+    #[test]
+    fn add_nocarry() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm as u8);
+        rom.push(1);
+        rom.push(0);
+        rom.push(0);
+        rom.push(0);
+        rom.push(Opcode::Add as u8);
+        rom.push(2);
+        rom.push(0);
+        rom.push(0);
+        rom.push(0);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+            
+        while c.step() { }
+
+        assert_eq!(c.regs[0], 3);
+        assert_eq!(c.regs[1], 0);
+        assert_eq!(c.regs[2], 0);
+        assert_eq!(c.regs[3], 0);
+    }
 }
