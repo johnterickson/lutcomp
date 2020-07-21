@@ -1,18 +1,21 @@
 extern crate packed_struct;
 use packed_struct::prelude::*;
 
+#[macro_use]
+extern crate itertools;
+
 use strum::IntoEnumIterator;
 
 use alu::*;
 use common::*;
-use ucode::*;
 use std::fmt::Debug;
+use ucode::*;
 
-pub struct Computer {
+pub struct Computer<'a> {
     rom: Vec<u8>,
     ram: Vec<u8>,
-    alu_lut: Vec<u8>,
-    ucode_rom: Vec<u8>,
+    alu_lut: &'a [u8],
+    ucode_rom: &'a [u8],
     regs: [u8; 4],
     addr: [u8; 4],
     pc: [u8; 4],
@@ -24,7 +27,7 @@ pub struct Computer {
     in1: u8,
 }
 
-impl Debug for Computer {
+impl<'a> Debug for Computer<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "upc:{:02x}", self.upc)?;
         write!(f, " pc:{:08x}", u32::from_le_bytes(self.pc))?;
@@ -32,18 +35,18 @@ impl Debug for Computer {
         write!(f, " regs:{:08x}", u32::from_le_bytes(self.regs))?;
         write!(f, " addr:{:08x}", u32::from_le_bytes(self.addr))?;
         write!(f, " ir0:{:02x}", self.ir0)?;
+        write!(f, " {:?}", self.flags)?;
         Ok(())
     }
-    
 }
 
-impl Computer {
-    pub fn new(rom: Vec<u8>) -> Computer {
+impl<'a> Computer<'a> {
+    pub fn new(rom: Vec<u8>) -> Computer<'a> {
         let c = Computer {
             rom,
             ram: vec![0u8; 1 << 19],
-            alu_lut: alu::ALU.clone(),
-            ucode_rom: ucode::UCODE.clone(),
+            alu_lut: &alu::ALU,
+            ucode_rom: &ucode::UCODE,
             regs: [0u8; 4],
             addr: [0u8; 4],
             pc: [0u8; 4],
@@ -65,24 +68,25 @@ impl Computer {
 
         let urom_entry = MicroEntry {
             flags: self.flags.bits().into(),
-            instruction: self.ir0
+            instruction: self.ir0,
         };
         let mut urom_addr = u16::from_le_bytes(urom_entry.pack_lsb()) as usize;
         urom_addr <<= 7;
         urom_addr += self.upc as usize;
 
         let opcode = Opcode::iter().nth(urom_entry.instruction as usize);
-        println!("urom_addr {:04x} = {:?} {:?} + {:02x}", 
-            urom_addr, urom_entry, opcode, self.upc);
+        println!(
+            "urom_addr {:04x} = {:?} {:?} + {:02x}",
+            urom_addr, urom_entry, opcode, self.upc
+        );
 
-        let urom_op = MicroOp::unpack(&[
-            self.ucode_rom[urom_addr], 
-            self.ucode_rom[urom_addr+1]]).unwrap();
+        let urom_op =
+            MicroOp::unpack(&[self.ucode_rom[urom_addr], self.ucode_rom[urom_addr + 1]]).unwrap();
         println!("urom_op: {:?}", urom_op);
-        
+
         let addr_bus = u32::from_le_bytes(match urom_op.address_bus_out {
             AddressBusOutputLevel::Addr => self.regs,
-            AddressBusOutputLevel::Pc => self.pc
+            AddressBusOutputLevel::Pc => self.pc,
         }) as usize;
 
         println!("addr_bus: {:04x}", addr_bus);
@@ -91,15 +95,17 @@ impl Computer {
             DataBusOutputLevel::Alu => Some(self.alu),
             DataBusOutputLevel::Halt => return false,
             DataBusOutputLevel::Imm => Some(*urom_op.immediate as u8),
-            DataBusOutputLevel::Mem => if addr_bus & 0x80000000 != 0 {
-                Some(self.ram[addr_bus])
-            } else {
-                Some(self.rom[addr_bus & 0x7FFFFFFF])
-            },
+            DataBusOutputLevel::Mem => {
+                if addr_bus & 0x80000000 != 0 {
+                    Some(self.ram[addr_bus])
+                } else {
+                    Some(self.rom[addr_bus & 0x7FFFFFFF])
+                }
+            }
             DataBusOutputLevel::Next => {
                 self.upc = 0;
                 return true;
-            },
+            }
             DataBusOutputLevel::Pc => {
                 self.pc = self.pcr;
                 None
@@ -115,7 +121,7 @@ impl Computer {
         if let Some(data_bus) = data_bus {
             println!("data_bus: {:02x}", data_bus);
         }
-        
+
         match urom_op.data_bus_load {
             DataBusLoadEdge::Addr0 => self.addr[0] = data_bus.unwrap(),
             DataBusLoadEdge::Addr1 => self.addr[1] = data_bus.unwrap(),
@@ -131,16 +137,17 @@ impl Computer {
                     lut_entry_bytes[0],
                     lut_entry_bytes[1],
                     lut_entry_bytes[2],
-                    0];
+                    0,
+                ];
                 let lut_entry_index = u32::from_le_bytes(lut_entry_bytes) as usize;
-                print!("lut_entry:{:04x}={:?}={:?} => ",
-                    lut_entry_index,
-                    lut_entry_bytes,
-                    lut_entry);
+                print!(
+                    "lut_entry:{:04x}={:?}={:?} => ",
+                    lut_entry_index, lut_entry_bytes, lut_entry
+                );
                 let lut_output = self.alu_lut[lut_entry_index];
                 println!("{:02x}", lut_output);
                 self.alu = lut_output;
-            },
+            }
             DataBusLoadEdge::Flags => {
                 self.flags = Flags::from_bits_truncate(data_bus.unwrap());
             }
@@ -173,13 +180,15 @@ impl Computer {
 mod tests {
     use super::*;
 
+    use itertools::Itertools;
+
     #[test]
     fn halt() {
         let mut rom = Vec::new();
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-            
+
         while c.step() {}
     }
 
@@ -194,7 +203,7 @@ mod tests {
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-            
+
         while c.step() {}
 
         assert_eq!(c.regs[0], 1);
@@ -219,8 +228,8 @@ mod tests {
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-            
-        while c.step() { }
+
+        while c.step() {}
 
         assert_eq!(c.regs[0], 0xFF);
         assert_eq!(c.regs[1], 0xFF);
@@ -228,28 +237,87 @@ mod tests {
         assert_eq!(c.regs[3], 0xFF);
     }
 
-    #[test]
-    fn add_nocarry() {
+    fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
+        add_tester_internal(carry_in, in1, in2, sum, carry_out);
+        add_tester_internal(carry_in, in2, in1, sum, carry_out);
+    }
+
+    fn add_tester_internal(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
+        println!(
+            "{:?} + {:04x} + {:04x} -> {:04x} + {:?}",
+            carry_in, in1, in2, sum, carry_out
+        );
+
         let mut rom = Vec::new();
+
         rom.push(Opcode::LoadImm as u8);
-        rom.push(1);
-        rom.push(0);
-        rom.push(0);
-        rom.push(0);
+        for b in &in1.to_le_bytes() {
+            rom.push(*b);
+        }
+
         rom.push(Opcode::Add as u8);
-        rom.push(2);
-        rom.push(0);
-        rom.push(0);
-        rom.push(0);
+        for b in &in2.to_le_bytes() {
+            rom.push(*b);
+        }
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-            
-        while c.step() { }
 
-        assert_eq!(c.regs[0], 3);
-        assert_eq!(c.regs[1], 0);
-        assert_eq!(c.regs[2], 0);
-        assert_eq!(c.regs[3], 0);
+        if carry_in {
+            c.flags |= Flags::CARRY;
+        }
+
+        while c.step() {}
+
+        assert_eq!(sum, u32::from_le_bytes(c.regs));
+        assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
+    }
+
+    #[test]
+    fn add_no_carry() {
+        add_tester(false, 1, 2, 3, false);
+        add_tester(false, 0x01010101, 0x02020202, 0x03030303, false);
+        add_tester(false, 0x01010101, 0xFEFEFEFE, 0xFFFFFFFF, false);
+    }
+
+    #[test]
+    fn add_internal_carry() {
+        add_tester(false, 0xFF, 1, 0x100, false);
+        add_tester(false, 0xFFFF, 1, 0x10000, false);
+        add_tester(false, 0xFFFFFF, 1, 0x1000000, false);
+        add_tester(false, 0xFFFFFFFF, 1, 0x0, true);
+    }
+
+    #[test]
+    fn add_incoming_carry() {
+        add_tester(true, 1, 2, 4, false);
+        add_tester(true, 0xFF, 0, 0x100, false);
+    }
+
+    #[test]
+    fn coverage() {
+        let values = &[0x0, 0x1, 0xFF];
+        for carry_in in &[false, true] {
+            for (((a1, a2), a3), a4) in values
+                .iter()
+                .cartesian_product(values)
+                .cartesian_product(values)
+                .cartesian_product(values)
+            {
+                let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
+                for (((b1, b2), b3), b4) in values
+                    .iter()
+                    .cartesian_product(values)
+                    .cartesian_product(values)
+                    .cartesian_product(values)
+                {
+                    let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
+                    let sum = a as u64 + b as u64 + *carry_in as u64;
+                    let carry_out = sum > u32::max_value() as u64;
+                    let sum = (sum & 0xFFFFFFFF) as u32;
+                    add_tester_internal(*carry_in, a, b, sum, carry_out);
+                }
+            }
+        }
     }
 }

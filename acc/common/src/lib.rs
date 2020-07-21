@@ -165,7 +165,6 @@ pub struct SpecialArgs {
     pub op: SpecialOpcode,
 }
 
-
 // #[derive(Debug, PackedStruct)]
 // #[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
 // pub struct Instruction {
@@ -195,4 +194,3 @@ pub enum Opcode {
     Jmp = 8,
     Jz = 9,
 }
-

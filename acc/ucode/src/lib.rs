@@ -1,7 +1,7 @@
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
-use strum::{IntoEnumIterator,EnumCount};
+use strum::{EnumCount, IntoEnumIterator};
 
 extern crate packed_struct;
 #[macro_use]
@@ -9,7 +9,7 @@ extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
 use common::*;
-use std::cell::{RefCell};
+use std::cell::RefCell;
 
 use lazy_static::lazy_static;
 lazy_static! {
@@ -46,9 +46,9 @@ impl DataBusLoadEdge {
             1 => DataBusLoadEdge::X,
             2 => DataBusLoadEdge::Y,
             3 => DataBusLoadEdge::Z,
-            _ => panic!()
+            _ => panic!(),
         }
-    } 
+    }
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -131,11 +131,7 @@ impl MicroOp {
         data_bus_load: DataBusLoadEdge,
         immediate: Option<i8>,
     ) -> MicroOp {
-
-        assert_eq!(
-            data_bus_load == DataBusLoadEdge::Alu,
-            alu_opcode.is_some()
-        );
+        assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
 
         MicroOp {
             data_bus_out: data_out,
@@ -168,7 +164,7 @@ pub struct MicroEntry {
 impl MicroEntry {
     pub fn pack_lsb(&self) -> [u8; 2] {
         let bytes = self.pack();
-        [bytes[1],bytes[0]]
+        [bytes[1], bytes[0]]
     }
 
     pub fn unpack_lsb(bytes: &[u8; 2]) -> MicroEntry {
@@ -178,7 +174,9 @@ impl MicroEntry {
 }
 
 pub fn ucode(print: bool) -> Vec<u8> {
-    if print { println!("v2.0 raw"); }
+    if print {
+        println!("v2.0 raw");
+    }
 
     let halt = MicroOp::new(
         None,
@@ -210,11 +208,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
         if print {
             println!(
                 "# addr:{:04x} inst:{:02x}={:?} flags:[{:?}] opcode:{:?}",
-                base_address,
-                encoded_inst, 
-                &inst,
-                &flags,
-                &opcode
+                base_address, encoded_inst, &inst, &flags, &opcode
             );
         }
 
@@ -238,13 +232,10 @@ pub fn ucode(print: bool) -> Vec<u8> {
             DataBusLoadEdge::Addr2,
         ];
 
-
         assert_eq!(
             Opcode::iter().last().unwrap() as u8,
             Opcode::count() as u8 - 1,
         );
-
-
 
         let inc_pc = RefCell::new(true);
         let uop_count = RefCell::new(0);
@@ -287,26 +278,28 @@ pub fn ucode(print: bool) -> Vec<u8> {
                     DataBusOutputLevel::Mem,
                     None,
                     DataBusLoadEdge::In1,
-                    None
+                    None,
                 ));
                 add_op(MicroOp::new(
                     None,
                     wxyz_outs[i],
                     Some(op),
                     DataBusLoadEdge::Alu,
-                    None
+                    None,
                 ));
                 add_op(MicroOp::new(
                     None,
                     DataBusOutputLevel::Alu,
                     None,
                     wxyz_loads[i],
-                    None
+                    None,
                 ));
             }
         };
 
-        if print { println!("# common prelude"); }
+        if print {
+            println!("# common prelude");
+        }
         add_op(MicroOp::new(
             Some(AddressBusOutputLevel::Pc),
             DataBusOutputLevel::Mem,
@@ -332,7 +325,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         DataBusOutputLevel::Mem,
                         None,
                         *edge,
-                        None
+                        None,
                     ));
                 }
             }
@@ -344,25 +337,25 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         DataBusOutputLevel::Mem,
                         None,
                         *addr_edge,
-                        None
+                        None,
                     ));
-                    if i == 0  {
+                    if i == 0 {
                         add_op(MicroOp::new(
                             Some(AddressBusOutputLevel::Pc),
                             DataBusOutputLevel::Mem,
                             None,
                             DataBusLoadEdge::In1,
-                            None
+                            None,
                         ));
                     }
                 }
-                for (i, edge) in wxyz_loads.iter().enumerate()  {
+                for (i, edge) in wxyz_loads.iter().enumerate() {
                     add_op(MicroOp::new(
                         Some(AddressBusOutputLevel::Addr),
                         DataBusOutputLevel::Mem,
                         None,
                         *edge,
-                        None
+                        None,
                     ));
                     if i != 3 {
                         add_op(MicroOp::new(
@@ -370,21 +363,21 @@ pub fn ucode(print: bool) -> Vec<u8> {
                             DataBusOutputLevel::Imm,
                             Some(AluOpcode::AddLo),
                             DataBusLoadEdge::Alu,
-                            Some(1)
+                            Some(1),
                         ));
                         add_op(MicroOp::new(
                             None,
                             DataBusOutputLevel::Alu,
                             None,
                             DataBusLoadEdge::In1,
-                            None
+                            None,
                         ));
                         add_op(MicroOp::new(
                             None,
                             DataBusOutputLevel::Alu,
                             None,
                             DataBusLoadEdge::Addr0,
-                            None
+                            None,
                         ));
                     }
                 }
@@ -406,7 +399,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         wxyz_outs[i],
                         None,
                         DataBusLoadEdge::In1,
-                        None
+                        None,
                     ));
 
                     // Apply carry
@@ -416,83 +409,83 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         DataBusOutputLevel::Imm,
                         Some(AluOpcode::AddLo),
                         DataBusLoadEdge::Alu,
-                        Some(carry_value)
+                        Some(carry_value),
                     ));
                     add_op(MicroOp::new(
                         None,
                         DataBusOutputLevel::Alu,
                         None,
                         wxyz_loads[i],
-                        None
+                        None,
                     ));
                     add_op(MicroOp::new(
                         None,
                         DataBusOutputLevel::Imm,
                         Some(AluOpcode::AddHi),
                         DataBusLoadEdge::Alu,
-                        Some(carry_value)
+                        Some(carry_value),
                     ));
                     add_op(MicroOp::new(
                         None,
                         DataBusOutputLevel::Alu,
                         None,
                         DataBusLoadEdge::Flags,
-                        None
+                        None,
                     ));
 
-                    // if carry bit is set at this point, it 
+                    // if carry bit is set at this point, it
                     // also means that wxyz[i] is zero and that
                     // 1) pc[1+i] + wxyz[i] cannot overflow
                     // 2) wxyz[i] := pc[i+1]
 
-                    if flags.contains(Flags::CARRY)
-                    {
-                        add_op(MicroOp::new(
+                    if flags.contains(Flags::CARRY) {
+                        let op = MicroOp::new(
                             Some(AddressBusOutputLevel::Pc),
                             DataBusOutputLevel::Mem,
                             None,
                             DataBusLoadEdge::wxyz(i),
-                            None
-                        ));
-
-                        // done!
-                    }
-                    else
-                    {
+                            None,
+                        );
+                        add_op(op);
+                        add_op(op);
+                        add_op(op);
+                        add_op(op);
+                        add_op(op);
+                    } else {
                         add_op(MicroOp::new(
                             None,
                             wxyz_outs[i],
                             None,
                             DataBusLoadEdge::In1,
-                            None
+                            None,
                         ));
                         add_op(MicroOp::new(
                             Some(AddressBusOutputLevel::Pc),
                             DataBusOutputLevel::Mem,
                             Some(AluOpcode::AddLo),
                             DataBusLoadEdge::Alu,
-                            None
+                            None,
                         ));
                         add_op(MicroOp::new(
                             None,
                             DataBusOutputLevel::Alu,
                             None,
                             wxyz_loads[i],
-                            None
+                            None,
                         ));
                         add_op(MicroOp::new(
                             Some(AddressBusOutputLevel::Pc),
                             DataBusOutputLevel::Mem,
                             Some(AluOpcode::AddHi),
                             DataBusLoadEdge::Alu,
-                            None
+                            None,
                         ));
                         add_op(MicroOp::new(
                             None,
                             DataBusOutputLevel::Alu,
                             None,
                             DataBusLoadEdge::Flags,
-                            None
+                            None,
                         ));
                     }
                 }
@@ -503,7 +496,9 @@ pub fn ucode(print: bool) -> Vec<u8> {
             _ => {}
         }
 
-        if print { println!("# common exit"); }
+        if print {
+            println!("# common exit");
+        }
         if *inc_pc.borrow() {
             add_op(pc_inc);
         }
@@ -512,7 +507,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
             DataBusOutputLevel::Next,
             None,
             DataBusLoadEdge::W, // doesn't matter
-            None
+            None,
         ));
 
         let uop_count = *uop_count.borrow();
@@ -521,7 +516,9 @@ pub fn ucode(print: bool) -> Vec<u8> {
         let filler_bytes = 2 * (MAX_UOPS - uop_count);
         let halt = halt.emit();
         assert_eq!(halt.0, halt.1);
-        if print { println!("{}*{:02x}", 2 * filler_bytes, halt.0); }
+        if print {
+            println!("{}*{:02x}", 2 * filler_bytes, halt.0);
+        }
         for _ in 0..filler_bytes {
             out.borrow_mut().push(halt.0);
         }
@@ -538,7 +535,7 @@ mod tests {
     fn pack() {
         let entry = MicroEntry {
             flags: 0xF.into(),
-            instruction:0xCC,
+            instruction: 0xCC,
         };
 
         assert_eq!([0xCC, 0xF], entry.pack_lsb());

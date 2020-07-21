@@ -26,7 +26,7 @@ pub struct LutEntry {
 impl LutEntry {
     pub fn pack_lsb(&self) -> [u8; 3] {
         let bytes = self.pack();
-        [bytes[2],bytes[1],bytes[0]]
+        [bytes[2], bytes[1], bytes[0]]
     }
 
     pub fn unpack_lsb(index: u32) -> LutEntry {
