@@ -148,7 +148,7 @@ impl MicroOp {
     }
 
     fn print(&self) {
-        println!("{:02x} {:02x}", self.emit().0, self.emit().1);
+        println!("{:02x} {:02x}", self.emit().1, self.emit().0);
     }
 }
 
@@ -303,6 +303,13 @@ pub fn ucode(print: bool) -> Vec<u8> {
         if print {
             println!("# common prelude");
         }
+        add_op(MicroOp::new(
+            Some(AddressBusOutputLevel::Pc),
+            DataBusOutputLevel::Mem,
+            None,
+            DataBusLoadEdge::IR0,
+            None,
+        ));
         add_op(MicroOp::new(
             Some(AddressBusOutputLevel::Pc),
             DataBusOutputLevel::Mem,
@@ -520,7 +527,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
         let halt = halt.emit();
         assert_eq!(halt.0, halt.1);
         if print {
-            println!("{}*{:02x}", 2 * filler_bytes, halt.0);
+            println!("{}*{:02x}", filler_bytes, halt.0);
         }
         for _ in 0..filler_bytes {
             out.borrow_mut().push(halt.0);
