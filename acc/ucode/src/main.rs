@@ -1,5 +1,5 @@
 use ucode::*;
 
 fn main() {
-    ucode();
+    ucode(true);
 }

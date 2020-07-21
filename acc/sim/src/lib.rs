@@ -4,6 +4,7 @@ use packed_struct::prelude::*;
 use alu::*;
 use common::*;
 use ucode::*;
+use std::fmt::Debug;
 
 pub struct Computer {
     rom: Vec<u8>,
@@ -21,7 +22,38 @@ pub struct Computer {
     in1: u8,
 }
 
+impl Debug for Computer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "upc:{:02x}", self.upc)?;
+        write!(f, " pc:{:08x}", u32::from_le_bytes(self.pc))?;
+        write!(f, " pcr:{:08x}", u32::from_le_bytes(self.pcr))?;
+        write!(f, " regs:{:08x}", u32::from_le_bytes(self.regs))?;
+        write!(f, " addr:{:08x}", u32::from_le_bytes(self.addr))?;
+        write!(f, " ir0:{:02x}", self.ir0)?;
+        Ok(())
+    }
+    
+}
+
 impl Computer {
+    pub fn new(rom: Vec<u8>, alu_lut: Vec<u8>, urom: Vec<u8>) -> Computer {
+        Computer {
+            rom,
+            ram: vec![0u8; 1 << 19],
+            alu_lut,
+            urom,
+            regs: [0u8; 4],
+            addr: [0u8; 4],
+            pc: [0u8; 4],
+            pcr: [0u8; 4],
+            upc: 0,
+            alu: 0,
+            flags: Flags::empty(),
+            ir0: 0,
+            in1: 0,
+        }
+    }
+
     pub fn step(&mut self) -> bool {
         let urom_entry = MicroEntry {
             flags: self.flags.bits().into(),
@@ -31,12 +63,17 @@ impl Computer {
         urom_addr <<= 7;
         urom_addr += self.upc as usize;
 
+        println!("urom_addr {:04x} = {:?} + {:02x}", urom_addr, urom_entry, self.upc);
+
         let urom_op = MicroOp::unpack(&[self.urom[urom_addr], self.urom[urom_addr+1]]).unwrap();
+        println!("urom_op: {:?}", urom_op);
         
         let addr_bus = u32::from_le_bytes(match urom_op.address_bus_out {
             AddressBusOutputLevel::Addr => self.regs,
             AddressBusOutputLevel::Pc => self.pc
         }) as usize;
+
+        println!("addr_bus: {:04x}", addr_bus);
 
         let data_bus = match urom_op.data_bus_out {
             DataBusOutputLevel::Alu => Some(self.alu),
@@ -48,7 +85,7 @@ impl Computer {
                 Some(self.rom[addr_bus & 0x7FFFFFFF])
             },
             DataBusOutputLevel::Next => {
-                self.upc += 1;
+                self.upc = 0;
                 return true;
             },
             DataBusOutputLevel::Pc => {
@@ -62,6 +99,10 @@ impl Computer {
             DataBusOutputLevel::Z => Some(self.regs[3]),
             DataBusOutputLevel::Reserved7 => return false,
         };
+
+        if let Some(data_bus) = data_bus {
+            println!("data_bus: {:04x}", data_bus);
+        }
         
         match urom_op.data_bus_load {
             DataBusLoadEdge::Addr0 => self.addr[0] = data_bus.unwrap(),
@@ -97,6 +138,62 @@ impl Computer {
             DataBusLoadEdge::Z => self.regs[3] = data_bus.unwrap(),
         }
 
+        self.upc += 2;
+
         true
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn halt() {
+        let urom = ucode::ucode(false);
+        let alu_lut = alu::alu(false);
+        let mut rom = Vec::new();
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(
+            rom,
+            alu_lut,
+            urom
+        );
+            
+        while c.step() {
+            println!("{:?}", &c);
+        }
+    }
+
+    // #[test]
+    // fn loadimm() {
+    //     let urom = ucode::ucode(false);
+    //     let alu_lut = alu::alu(false);
+    //     let mut rom = Vec::new();
+    //     rom.push(Opcode::LoadImm as u8);
+    //     rom.push(1);
+    //     rom.push(0);
+    //     rom.push(0);
+    //     rom.push(0);
+    //     rom.push(Opcode::Add as u8);
+    //     rom.push(2);
+    //     rom.push(0);
+    //     rom.push(0);
+    //     rom.push(0);
+    //     rom.push(Opcode::Halt as u8);
+
+    //     let mut c = Computer::new(
+    //         rom,
+    //         alu_lut,
+    //         urom
+    //     );
+            
+    //     while c.step() {}
+
+    //     assert_eq!(c.regs[0], 3);
+    //     assert_eq!(c.regs[1], 0);
+    //     assert_eq!(c.regs[2], 0);
+    //     assert_eq!(c.regs[3], 0);
+    // }
 }

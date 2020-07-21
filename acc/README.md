@@ -171,13 +171,28 @@ out pc, out mem, *, load ir0, *
 *, out imm, *, load a2, sx(-8)
 *, out imm, *, load a1, sx(0)
 
+*, out imm, *, load in1, sx(2) // r2
+*, out imm, multiplylo, load alu, sx(4)
+*, out alu, *, load x, *
+
+*, out imm, *, load a0, sx(3) // r3
+*, out imm, multiplylo, load alu, sx(4)
+*, out alu, *, load y, *
+
+*, out imm, *, load a0, sx(1) // r1
+*, out imm, multiplylo, load alu, sx(4)
+*, out alu, *, load z, *
+
  / repeat 4x
-*, out imm, *, load a0, sx(-8) // r2
+*, out x, *, load a0, *
 out addr, out mem, *, load in1, *
-*, out imm, *, load a0, sx(-4) // r3
+*, out y, *, load a0, *
 out addr, out mem, xor, load alu, *
-*, out imm, *, load a0, sx(4) // r1
+*, out z, *, load a0, *
 out addr, out alu, *, load mem, *
+
+
+TODO increment 
 /
 ```
 

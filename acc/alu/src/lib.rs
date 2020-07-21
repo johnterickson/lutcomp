@@ -18,14 +18,15 @@ pub struct LutEntry {
     pub op: AluOpcode,
 }
 
-pub fn alu() {
-    println!("v2.0 raw");
+pub fn alu(print: bool) -> Vec<u8> {
+    if print { println!("v2.0 raw"); }
+    let mut out_bytes = Vec::new();
 
     for encoded_entry in 0u32..=0x7FFFF {
         let bytes = encoded_entry.to_le_bytes();
         assert_eq!(0, bytes[3]);
         let entry = LutEntry::unpack(&bytes).unwrap();
-        println!("# {:05x} {:?} {:?}", encoded_entry, &bytes, &entry);
+        if print { println!("# {:05x} {:?} {:?}", encoded_entry, &bytes, &entry); }
 
         let out = match entry.op {
             AluOpcode::AddLo => entry.in1.wrapping_add(entry.in2),
@@ -52,7 +53,7 @@ pub fn alu() {
                 match special_mode.op {
                     SpecialOpcode::Shift => {
                         let args = ShiftArgs::unpack(&[entry.in2]).unwrap();
-                        println!("# {:?}", &args);
+                        if print { println!("# {:?}", &args); }
                         let amount = *args.amount;
                         let abs_amount = amount.abs();
                         if abs_amount >= 8 {
@@ -94,6 +95,9 @@ pub fn alu() {
             AluOpcode::MultiplyHi => ((((entry.in1 as u16) * (entry.in2 as u16)) >> 8) & 0xFF) as u8,
         };
 
-        println!("{:02x}", out);
+        if print { println!("{:02x}", out); }
+        out_bytes.push(out);
     }
+
+    out_bytes
 }

@@ -1,4 +1,4 @@
 use alu::*;
 fn main() {
-    alu();
+    alu(true);
 }

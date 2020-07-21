@@ -184,6 +184,14 @@ pub struct SpecialArgs {
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 pub enum Opcode {
-    Jmp = 0,
-    Jz = 1,
+    LoadImm = 0,
+    Add = 1,
+    Or = 2,
+    Xor = 3,
+    And = 4,
+    Load = 5,
+    Store = 6,
+    Halt = 7,
+    Jmp = 8,
+    Jz = 9,
 }
