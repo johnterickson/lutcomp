@@ -206,10 +206,13 @@ pub fn ucode(print: bool) -> Vec<u8> {
         let base_address = encoded_inst as usize * MAX_UOPS * 2;
 
         if print {
+            println!("#");
+            println!("#");
             println!(
                 "# addr:{:04x} inst:{:02x}={:?} flags:[{:?}] opcode:{:?}",
                 base_address, encoded_inst, &inst, &flags, &opcode
             );
+            println!("#");
         }
 
         let wxyz_outs = &[
