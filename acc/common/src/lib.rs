@@ -33,14 +33,32 @@ pub enum ShiftMode {
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum AluOpcode {
-    AddLo = 0,
-    AddHi = 1,
-    Or = 2,
-    Xor = 3,
-    And = 4,
-    Special = 5,
-    MultiplyLo = 6,
-    MultiplyHi = 7,
+    AddLoNoCarry = 0,
+    AddLoCarry = 1,
+    AddHiNoCarry = 2,
+    AddHiCarry = 3,
+    Or = 4,
+    Xor = 5,
+    And = 6,
+    Special = 7,
+}
+
+impl AluOpcode {
+    pub fn addlo(f: Flags) -> AluOpcode {
+        if f.contains(Flags::CARRY) {
+            AluOpcode::AddLoCarry
+        } else {
+            AluOpcode::AddLoNoCarry
+        }
+    }
+
+    pub fn addhi(f: Flags) -> AluOpcode {
+        if f.contains(Flags::CARRY) {
+            AluOpcode::AddHiCarry
+        } else {
+            AluOpcode::AddHiNoCarry
+        }
+    }
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -109,7 +127,6 @@ pub enum Opcode {
     Halt = 7,
     Jmp = 8,
     Jz = 9,
-    Multiply = 10,
-    RegsOr = 11,
-    FetchToReg = 12,
+    RegsOr = 10,
+    FetchToReg = 11,
 }

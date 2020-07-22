@@ -34,11 +34,13 @@ bit 2: negative
 ## ALU opcodes:
 ```
 0 0 0 addlo: (in1 + in2) & 0xFF
-0 0 1 addhi: Flags from (in1 + in2)
-0 1 0 Or: in1 | in2
-0 1 1 Xor: in1 ^ in2
-1 0 0 And: in1 & in2
-1 0 1 Special: mode:[in2][6..=7]
+0 0 1 addlocarry: (1 + in1 + in2) & 0xFF
+0 1 0 addhi: Flags from (in1 + in2)
+0 1 1 addhicarry: Flags from (1 + in1 + in2)
+1 0 0 Or: in1 | in2
+1 0 1 Xor: in1 ^ in2
+1 1 0 And: in1 & in2
+1 1 1 Special: mode:[in2][6..=7]
       mode 00: shifts/roates
             shift_mode:[in2][4..=5] amount:[in2][0..=3] as signed int
                   shift_mode:00 ROTATE(ACC, amount) -> [out]
@@ -48,8 +50,6 @@ bit 2: negative
       mode 01:
       mode 10:
       mode 11:
-1 1 0 MultiplyLo: (in1 * in2) & 0xFF
-1 1 1 MultiplyHi: ((in1 * in2)>>8) & 0xFF
 ```
 
 ## ucode instruction

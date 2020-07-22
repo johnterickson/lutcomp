@@ -195,7 +195,6 @@ mod tests {
     use super::*;
 
     use std::convert::TryInto;
-    use itertools::Itertools;
 
     #[test]
     fn halt() {
@@ -315,28 +314,6 @@ mod tests {
         assert_eq!(0xDEADBEEF, u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap()));
     }
 
-    #[test]
-    fn multiply() {
-        let mut rom = Vec::new();
-        rom.push(Opcode::LoadImm as u8);
-        rom.push(0xFF);
-        rom.push(0x00);
-        rom.push(0x00);
-        rom.push(0x00);
-        rom.push(Opcode::Multiply as u8);
-        rom.push(0xFF);
-        rom.push(Opcode::Halt as u8);
-
-        let mut c = Computer::new(rom);
-
-        while c.step() {}
-
-        assert_eq!(c.regs[0], 0x01);
-        assert_eq!(c.regs[1], 0xFE);
-        assert_eq!(c.regs[2], 0x00);
-        assert_eq!(c.regs[3], 0x00);
-    }
-
     fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
         add_tester_internal(carry_in, in1, in2, sum, carry_out);
         add_tester_internal(carry_in, in2, in1, sum, carry_out);
@@ -394,30 +371,31 @@ mod tests {
         add_tester(true, 0xFF, 0, 0x100, false);
     }
 
-    // #[test]
-    // fn coverage() {
-    //     let values = &[0x0, 0x1, 0xFF];
-    //     for carry_in in &[false, true] {
-    //         for (((a1, a2), a3), a4) in values
-    //             .iter()
-    //             .cartesian_product(values)
-    //             .cartesian_product(values)
-    //             .cartesian_product(values)
-    //         {
-    //             let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
-    //             for (((b1, b2), b3), b4) in values
-    //                 .iter()
-    //                 .cartesian_product(values)
-    //                 .cartesian_product(values)
-    //                 .cartesian_product(values)
-    //             {
-    //                 let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
-    //                 let sum = a as u64 + b as u64 + *carry_in as u64;
-    //                 let carry_out = sum > u32::max_value() as u64;
-    //                 let sum = (sum & 0xFFFFFFFF) as u32;
-    //                 add_tester_internal(*carry_in, a, b, sum, carry_out);
-    //             }
-    //         }
-    //     }
-    // }
+    #[test]
+    fn coverage() {
+        use itertools::Itertools;
+        let values = &[0x0, 0x1, 0xFF];
+        for carry_in in &[false, true] {
+            for (((a1, a2), a3), a4) in values
+                .iter()
+                .cartesian_product(values)
+                .cartesian_product(values)
+                .cartesian_product(values)
+            {
+                let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
+                for (((b1, b2), b3), b4) in values
+                    .iter()
+                    .cartesian_product(values)
+                    .cartesian_product(values)
+                    .cartesian_product(values)
+                {
+                    let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
+                    let sum = a as u64 + b as u64 + *carry_in as u64;
+                    let carry_out = sum > u32::max_value() as u64;
+                    let sum = (sum & 0xFFFFFFFF) as u32;
+                    add_tester_internal(*carry_in, a, b, sum, carry_out);
+                }
+            }
+        }
+    }
 }

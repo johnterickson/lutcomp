@@ -124,7 +124,7 @@ impl MicroOp {
 
         MicroOp {
             data_bus_out: data_out,
-            alu_opcode: alu_opcode.unwrap_or(AluOpcode::AddLo),
+            alu_opcode: alu_opcode.unwrap_or(AluOpcode::AddLoNoCarry),
             address_bus_out: address_bus_out.unwrap_or(AddressBusOutputLevel::Addr),
             data_bus_load,
             immediate: immediate.unwrap_or_default().into(),
@@ -360,7 +360,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         add_op(MicroOp::new(
                             None,
                             DataBusOutputLevel::Imm,
-                            Some(AluOpcode::AddLo),
+                            Some(AluOpcode::AddLoNoCarry),
                             DataBusLoadEdge::Alu,
                             Some(1),
                         ));
@@ -400,15 +400,12 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         DataBusLoadEdge::In1,
                         None,
                     ));
-
-                    // Apply carry
-                    let carry_value = if flags.contains(Flags::CARRY) { 1 } else { 0 };
                     add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Imm,
-                        Some(AluOpcode::AddLo),
+                        Some(AddressBusOutputLevel::Pc),
+                        DataBusOutputLevel::Mem,
+                        Some(AluOpcode::addlo(flags)),
                         DataBusLoadEdge::Alu,
-                        Some(carry_value),
+                        None,
                     ));
                     add_op(MicroOp::new(
                         None,
@@ -418,11 +415,11 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         None,
                     ));
                     add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Imm,
-                        Some(AluOpcode::AddHi),
+                        Some(AddressBusOutputLevel::Pc),
+                        DataBusOutputLevel::Mem,
+                        Some(AluOpcode::addhi(flags)),
                         DataBusLoadEdge::Alu,
-                        Some(carry_value),
+                        None,
                     ));
                     add_op(MicroOp::new(
                         None,
@@ -431,119 +428,11 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         DataBusLoadEdge::Flags,
                         None,
                     ));
-
-                    // if carry bit is set at this point, it
-                    // also means that wxyz[i] is zero and that
-                    // 1) pc[1+i] + wxyz[i] cannot overflow
-                    // 2) wxyz[i] := pc[i+1]
-
-                    if flags.contains(Flags::CARRY) {
-                        let op = MicroOp::new(
-                            Some(AddressBusOutputLevel::Pc),
-                            DataBusOutputLevel::Mem,
-                            None,
-                            DataBusLoadEdge::wxyz(i),
-                            None,
-                        );
-                        add_op(op);
-                        add_op(op);
-                        add_op(op);
-                        add_op(op);
-                        add_op(op);
-                    } else {
-                        add_op(MicroOp::new(
-                            None,
-                            wxyz_outs[i],
-                            None,
-                            DataBusLoadEdge::In1,
-                            None,
-                        ));
-                        add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Pc),
-                            DataBusOutputLevel::Mem,
-                            Some(AluOpcode::AddLo),
-                            DataBusLoadEdge::Alu,
-                            None,
-                        ));
-                        add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Alu,
-                            None,
-                            wxyz_loads[i],
-                            None,
-                        ));
-                        add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Pc),
-                            DataBusOutputLevel::Mem,
-                            Some(AluOpcode::AddHi),
-                            DataBusLoadEdge::Alu,
-                            None,
-                        ));
-                        add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Alu,
-                            None,
-                            DataBusLoadEdge::Flags,
-                            None,
-                        ));
-                    }
                 }
             }
             Some(Opcode::Halt) => {
                 add_op(halt);
             }
-            Some(Opcode::Multiply) =>  {
-                add_op(pc_inc);
-                add_op(MicroOp::new(
-                    None,
-                    DataBusOutputLevel::W,
-                    None,
-                    DataBusLoadEdge::In1,
-                    None,
-                ));
-                add_op(MicroOp::new(
-                    Some(AddressBusOutputLevel::Pc),
-                    DataBusOutputLevel::Mem,
-                    Some(AluOpcode::MultiplyLo),
-                    DataBusLoadEdge::Alu,
-                    None,
-                ));
-                add_op(MicroOp::new(
-                    None,
-                    DataBusOutputLevel::Alu,
-                    None,
-                    DataBusLoadEdge::W,
-                    None,
-                ));
-                add_op(MicroOp::new(
-                    Some(AddressBusOutputLevel::Pc),
-                    DataBusOutputLevel::Mem,
-                    Some(AluOpcode::MultiplyHi),
-                    DataBusLoadEdge::Alu,
-                    None,
-                ));
-                add_op(MicroOp::new(
-                    None,
-                    DataBusOutputLevel::Alu,
-                    None,
-                    DataBusLoadEdge::X,
-                    None,
-                ));
-                add_op(MicroOp::new(
-                    None,
-                    DataBusOutputLevel::Imm,
-                    None,
-                    DataBusLoadEdge::Y,
-                    Some(0),
-                ));
-                add_op(MicroOp::new(
-                    None,
-                    DataBusOutputLevel::Imm,
-                    None,
-                    DataBusLoadEdge::Z,
-                    Some(0),
-                ));
-            },
             Some(Opcode::RegsOr) => {
                 add_op(MicroOp::new(
                     None,
@@ -626,7 +515,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                             add_op(MicroOp::new(
                                 None,
                                 DataBusOutputLevel::Imm,
-                                Some(AluOpcode::AddLo),
+                                Some(AluOpcode::AddLoNoCarry),
                                 DataBusLoadEdge::Alu,
                                 Some(1),
                             ));
@@ -676,7 +565,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         add_op(MicroOp::new(
                             None,
                             DataBusOutputLevel::Imm,
-                            Some(AluOpcode::AddLo),
+                            Some(AluOpcode::AddLoNoCarry),
                             DataBusLoadEdge::Alu,
                             Some(1),
                         ));
@@ -739,7 +628,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                         add_op(MicroOp::new(
                             None,
                             DataBusOutputLevel::Imm,
-                            Some(AluOpcode::AddLo),
+                            Some(AluOpcode::AddLoNoCarry),
                             DataBusLoadEdge::Alu,
                             Some(1),
                         ));
@@ -807,27 +696,4 @@ mod tests {
 
         assert_eq!([0xCC, 0xF], entry.pack_lsb());
     }
-
-    // fn mul_lo(a: u8, b: u8) -> u8 {
-    //     (((a as u16)*(b as u16) >> 0) & 0xFF) as u8
-    // }
-
-    // fn mul_hi(a: u8, b: u8) -> u8 {
-    //     (((a as u16)*(b as u16) >> 8) & 0xFF) as u8
-    // }
-
-    // #[test]
-    // fn mul_requires_carry() {
-    //     for b0 in 0u8..=0xFF {
-    //         for b1 in 0u8..=0xFF {
-    //             for w in 0u8..=0xFF {
-    //                 let w_prime = mul_lo(w, b0);
-    //                 let x_prime = mul_hi(w, b0).wrapping_add(mul_lo(w, b1));
-    //                 let y_prime = mul_hi(w, b1) + ((mul_hi(w, b0) as u16 + mul_lo(w, b1) as u16)/256) as u8;
-    //                 let product = 256*256*(y_prime as u32) + 256*(x_prime as u32) + (w_prime as u32);
-    //                 assert!((w as u32) * ((b0 as u32) + 256*(b1 as u32)) == product);
-    //             }
-    //         }
-    //     }
-    // }
 }

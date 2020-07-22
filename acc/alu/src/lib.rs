@@ -51,10 +51,11 @@ pub fn alu(print: bool) -> Vec<u8> {
             println!("# {:05x} {:?} {:?}", encoded_entry, &bytes, &entry);
         }
 
+        let carry_in = entry.op as u8 % 2;
         let out = match entry.op {
-            AluOpcode::AddLo => entry.in1.wrapping_add(entry.in2),
-            AluOpcode::AddHi => {
-                let sum = (entry.in1 as u16) + (entry.in2 as u16);
+            AluOpcode::AddLoNoCarry | AluOpcode::AddLoCarry => entry.in1.wrapping_add(entry.in2).wrapping_add(carry_in),
+            AluOpcode::AddHiNoCarry | AluOpcode::AddHiCarry => {
+                let sum = (entry.in1 as u16) + (entry.in2 as u16) + (carry_in as u16);
 
                 let mut flags = Flags::from_bits_truncate(0);
                 if sum > 0xFF {
@@ -116,12 +117,6 @@ pub fn alu(print: bool) -> Vec<u8> {
                     _ => 0xFF,
                 }
             }
-            AluOpcode::MultiplyLo => {
-                ((((entry.in1 as u16) * (entry.in2 as u16)) >> 0) & 0xFF) as u8
-            }
-            AluOpcode::MultiplyHi => {
-                ((((entry.in1 as u16) * (entry.in2 as u16)) >> 8) & 0xFF) as u8
-            }
         };
 
         if print {
@@ -145,6 +140,6 @@ mod tests {
             op: AluOpcode::Or,
         };
 
-        assert_eq!([240, 15, 2], lut_entry.pack_lsb());
+        assert_eq!([240, 15, AluOpcode::Or as u8], lut_entry.pack_lsb());
     }
 }
