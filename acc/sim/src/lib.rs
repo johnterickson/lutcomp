@@ -271,7 +271,7 @@ mod tests {
     }
 
     #[test]
-    fn fetch_to_reg() {
+    fn fetch_to_reg_ram() {
         let mut rom = Vec::new();
         rom.push(Opcode::FetchToReg as u8);
         rom.push(0x80);
@@ -282,6 +282,33 @@ mod tests {
 
         let mut c = Computer::new(rom);
         c.ram.as_mut_slice()[0x017080..0x017084].copy_from_slice(&u32::to_le_bytes(0xDEADBEEF));
+
+        while c.step() {}
+
+        assert_eq!(0xDEADBEEF, u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap()));
+    }
+
+    #[test]
+    fn fetch_to_reg_rom() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::FetchToReg as u8);
+        rom.push(0xCC);
+        rom.push(0xCC);
+        rom.push(0xCC);
+        rom.push(0x04);
+        rom.push(Opcode::Halt as u8);
+        while rom.len() % 4 != 0 { rom.push(0); }
+        let addr = rom.len();
+        rom.push(0xEF);
+        rom.push(0xBE);
+        rom.push(0xAD);
+        rom.push(0xDE);
+        
+        rom[1] = addr.to_le_bytes()[0];
+        rom[2] = addr.to_le_bytes()[1];
+        rom[3] = addr.to_le_bytes()[2];
+
+        let mut c = Computer::new(rom);
 
         while c.step() {}
 
