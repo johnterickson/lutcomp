@@ -193,4 +193,5 @@ pub enum Opcode {
     Halt = 7,
     Jmp = 8,
     Jz = 9,
+    Multiply = 10,
 }

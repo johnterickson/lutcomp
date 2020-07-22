@@ -503,6 +503,58 @@ pub fn ucode(print: bool) -> Vec<u8> {
             Some(Opcode::Halt) => {
                 add_op(halt);
             }
+            Some(Opcode::Multiply) =>  {
+                add_op(pc_inc);
+                add_op(MicroOp::new(
+                    None,
+                    DataBusOutputLevel::W,
+                    None,
+                    DataBusLoadEdge::In1,
+                    None,
+                ));
+                add_op(MicroOp::new(
+                    Some(AddressBusOutputLevel::Pc),
+                    DataBusOutputLevel::Mem,
+                    Some(AluOpcode::MultiplyLo),
+                    DataBusLoadEdge::Alu,
+                    None,
+                ));
+                add_op(MicroOp::new(
+                    None,
+                    DataBusOutputLevel::Alu,
+                    None,
+                    DataBusLoadEdge::W,
+                    None,
+                ));
+                add_op(MicroOp::new(
+                    Some(AddressBusOutputLevel::Pc),
+                    DataBusOutputLevel::Mem,
+                    Some(AluOpcode::MultiplyHi),
+                    DataBusLoadEdge::Alu,
+                    None,
+                ));
+                add_op(MicroOp::new(
+                    None,
+                    DataBusOutputLevel::Alu,
+                    None,
+                    DataBusLoadEdge::X,
+                    None,
+                ));
+                add_op(MicroOp::new(
+                    None,
+                    DataBusOutputLevel::Imm,
+                    None,
+                    DataBusLoadEdge::Y,
+                    Some(0),
+                ));
+                add_op(MicroOp::new(
+                    None,
+                    DataBusOutputLevel::Imm,
+                    None,
+                    DataBusLoadEdge::Z,
+                    Some(0),
+                ));
+            }
             _ => {}
         }
 
@@ -549,5 +601,28 @@ mod tests {
         };
 
         assert_eq!([0xCC, 0xF], entry.pack_lsb());
+    }
+
+    fn mul_lo(a: u8, b: u8) -> u8 {
+        (((a as u16)*(b as u16) >> 0) & 0xFF) as u8
+    }
+
+    fn mul_hi(a: u8, b: u8) -> u8 {
+        (((a as u16)*(b as u16) >> 8) & 0xFF) as u8
+    }
+
+    #[test]
+    fn mul_no_carry() {
+        for b0 in 0u8..=0xFF {
+            for b1 in 0u8..=0xFF {
+                for w in 0u8..=0xFF {
+                    let w_prime = mul_lo(w, b0);
+                    let x_prime = mul_hi(w, b0).wrapping_add(mul_lo(w, b1));
+                    let y_prime = mul_hi(w, b1) + ((mul_hi(w, b0) as u16 + mul_lo(w, b1) as u16)/256) as u8;
+                    let product = 256*256*(y_prime as u32) + 256*(x_prime as u32) + (w_prime as u32);
+                    assert!((w as u32) * ((b0 as u32) + 256*(b1 as u32)) == product);
+                }
+            }
+        }
     }
 }

@@ -237,6 +237,28 @@ mod tests {
         assert_eq!(c.regs[3], 0xFF);
     }
 
+    #[test]
+    fn multiply() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm as u8);
+        rom.push(0xFF);
+        rom.push(0x00);
+        rom.push(0x00);
+        rom.push(0x00);
+        rom.push(Opcode::Multiply as u8);
+        rom.push(0xFF);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        while c.step() {}
+
+        assert_eq!(c.regs[0], 0x01);
+        assert_eq!(c.regs[1], 0xFE);
+        assert_eq!(c.regs[2], 0x00);
+        assert_eq!(c.regs[3], 0x00);
+    }
+
     fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
         add_tester_internal(carry_in, in1, in2, sum, carry_out);
         add_tester_internal(carry_in, in2, in1, sum, carry_out);
