@@ -7,8 +7,6 @@ extern crate packed_struct;
 extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
-use std::collections::BTreeMap;
-
 #[macro_use]
 extern crate bitflags;
 
@@ -49,92 +47,11 @@ pub enum AluOpcode {
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
-pub enum Register {
-    A = 0,
-    B = 1,
-    C = 2,
-    Pc = 3,
-    SerialIn = 4,
-    SerialOut = 5,
-    Reserved6 = 6,
-    Reserved7 = 7,
-}
-
-#[derive(Clone, Copy, Display, Debug, EnumDiscriminants)]
-pub enum MaybeDirect<T> {
-    Value(T),
-    Address(T),
-}
-
-impl<T: Copy> MaybeDirect<T> {
-    pub fn split(&self) -> (bool, T) {
-        match self {
-            MaybeDirect::Value(r) => (false, *r),
-            MaybeDirect::Address(r) => (true, *r),
-        }
-    }
-}
-
-#[derive(Clone, Display, Debug)]
-pub enum Value {
-    Constant(u8),
-    Label(String, Option<u8>),
-}
-
-impl Value {
-    pub fn resolve(&mut self, labels: &BTreeMap<String, u8>) {
-        match self {
-            Value::Constant(_) => {}
-            Value::Label(label, resolved_value) => {
-                *resolved_value = Some(
-                    *labels
-                        .get(label)
-                        .expect(&format!("Could not find label '{}'", label)),
-                );
-            }
-        }
-    }
-    pub fn unwrap_constant(&self) -> u8 {
-        match self {
-            Value::Constant(c) => *c,
-            Value::Label(label, resolved_value) => {
-                resolved_value.expect(&format!("Label '{}' has not been resolved", label))
-            }
-        }
-    }
-}
-
-#[derive(Clone, Display, Debug, EnumDiscriminants)]
-#[strum_discriminants(derive(Display, EnumCount, EnumIter, EnumString, PrimitiveEnum_u8))]
-pub enum InstructionMode {
-    Imm8(Register, Value),
-    Regs(Register, MaybeDirect<Register>, MaybeDirect<Register>),
-    Imm4(Register, MaybeDirect<Register>, Value),
-    MemOutRegs(Register, MaybeDirect<Register>, MaybeDirect<Register>),
-}
-
-#[derive(Debug, PackedStruct)]
-#[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
-pub struct PackedInstructionMode1or3 {
-    #[packed_field(bits = "0..=2", ty = "enum")]
-    pub in1_reg: Register,
-    #[packed_field(bits = "3")]
-    pub in1_indirect: bool,
-    #[packed_field(bits = "4..=6", ty = "enum")]
-    pub in2_reg: Register,
-    #[packed_field(bits = "7")]
-    pub in2_indirect: bool,
-}
-
-#[derive(Debug, PackedStruct)]
-#[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
-pub struct PackedInstructionMode2 {
-    #[packed_field(bits = "0..=3")]
-    pub imm: Integer<u8, packed_bits::Bits4>,
-    #[packed_field(bits = "4..=6", ty = "enum")]
-    pub in1_reg: Register,
-    #[packed_field(bits = "7")]
-    pub in1_indirect: bool,
+pub enum RwRegister {
+    W = 0,
+    X = 1,
+    Y = 2,
+    Z = 3,
 }
 
 #[derive(Debug, PackedStruct)]
@@ -145,7 +62,6 @@ pub struct ShiftArgs {
     #[packed_field(bits = "4..=5", ty = "enum")]
     pub mode: ShiftMode,
 }
-
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
@@ -194,4 +110,6 @@ pub enum Opcode {
     Jmp = 8,
     Jz = 9,
     Multiply = 10,
+    RegsOr = 11,
+    FetchToReg = 12,
 }

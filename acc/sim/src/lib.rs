@@ -1,7 +1,6 @@
 extern crate packed_struct;
 use packed_struct::prelude::*;
 
-#[macro_use]
 extern crate itertools;
 
 use strum::IntoEnumIterator;
@@ -10,6 +9,16 @@ use alu::*;
 use common::*;
 use std::fmt::Debug;
 use ucode::*;
+
+const MEM_BITS: usize = 19;
+
+const ROM_MIN: usize = 0;
+const ROM_SIZE: usize = 1 << MEM_BITS;
+const ROM_MAX: usize = ROM_MIN + ROM_SIZE - 1;
+
+const RAM_MIN: usize = ROM_MAX + 1;
+const RAM_SIZE: usize = 1 << MEM_BITS;
+const RAM_MAX: usize = RAM_MIN + RAM_SIZE - 1;
 
 pub struct Computer<'a> {
     rom: Vec<u8>,
@@ -44,7 +53,7 @@ impl<'a> Computer<'a> {
     pub fn new(rom: Vec<u8>) -> Computer<'a> {
         let c = Computer {
             rom,
-            ram: vec![0u8; 1 << 19],
+            ram: vec![0u8; 1 << MEM_BITS],
             alu_lut: &alu::ALU,
             ucode_rom: &ucode::UCODE,
             regs: [0u8; 4],
@@ -58,9 +67,18 @@ impl<'a> Computer<'a> {
             in1: 0,
         };
 
-        assert_eq!(c.alu_lut.len(), 1 << 19);
-        assert_eq!(c.ucode_rom.len(), 1 << 19);
+        assert_eq!(c.alu_lut.len(), 1 << MEM_BITS);
+        assert_eq!(c.ucode_rom.len(), 1 << MEM_BITS);
         c
+    }
+
+    fn mem_mut(&mut self, addr_bus: u32) -> &mut u8 {
+        let addr_bus = addr_bus & 0x0FFFFF;
+        match addr_bus as usize {
+            a if ROM_MIN <= a && a <= ROM_MAX => &mut self.rom[a - ROM_MIN],
+            a if RAM_MIN <= a && a <= RAM_MAX => &mut self.ram[a - RAM_MIN],
+            _ => panic!(format!("Invalid address: {:08x}", addr_bus)),
+        }
     }
 
     pub fn step(&mut self) -> bool {
@@ -76,7 +94,7 @@ impl<'a> Computer<'a> {
 
         let opcode = Opcode::iter().nth(urom_entry.instruction as usize);
         println!(
-            "urom_addr {:04x} = {:?} {:?} + {:02x}",
+            "urom_addr {:05x} = {:?} {:?} + {:02x}",
             urom_addr, urom_entry, opcode, self.upc
         );
 
@@ -85,22 +103,18 @@ impl<'a> Computer<'a> {
         println!("urom_op: {:?}", urom_op);
 
         let addr_bus = u32::from_le_bytes(match urom_op.address_bus_out {
-            AddressBusOutputLevel::Addr => self.regs,
+            AddressBusOutputLevel::Addr => self.addr,
             AddressBusOutputLevel::Pc => self.pc,
-        }) as usize;
+        });
 
-        println!("addr_bus: {:04x}", addr_bus);
+        println!("addr_bus: {:08x}", addr_bus);
 
         let data_bus = match urom_op.data_bus_out {
             DataBusOutputLevel::Alu => Some(self.alu),
             DataBusOutputLevel::Halt => return false,
-            DataBusOutputLevel::Imm => Some(*urom_op.immediate as u8),
+            DataBusOutputLevel::Imm => Some(((*urom_op.immediate << 4) >> 4) as u8),
             DataBusOutputLevel::Mem => {
-                if addr_bus & 0x80000000 != 0 {
-                    Some(self.ram[addr_bus])
-                } else {
-                    Some(self.rom[addr_bus & 0x7FFFFFFF])
-                }
+                Some(*self.mem_mut(addr_bus))
             }
             DataBusOutputLevel::Next => {
                 self.upc = 0;
@@ -141,7 +155,7 @@ impl<'a> Computer<'a> {
                 ];
                 let lut_entry_index = u32::from_le_bytes(lut_entry_bytes) as usize;
                 print!(
-                    "lut_entry:{:04x}={:?}={:?} => ",
+                    "lut_entry:{:05x}={:?}={:?} => ",
                     lut_entry_index, lut_entry_bytes, lut_entry
                 );
                 let lut_output = self.alu_lut[lut_entry_index];
@@ -154,7 +168,7 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
             DataBusLoadEdge::IR0 => self.ir0 = data_bus.unwrap(),
             DataBusLoadEdge::Mem => {
-                self.ram[addr_bus] = data_bus.unwrap();
+                *self.mem_mut(addr_bus) = data_bus.unwrap();
             }
             DataBusLoadEdge::PcInc => {
                 self.pc = (u32::from_le_bytes(self.pc) + 1).to_le_bytes();
@@ -180,6 +194,7 @@ impl<'a> Computer<'a> {
 mod tests {
     use super::*;
 
+    use std::convert::TryInto;
     use itertools::Itertools;
 
     #[test]
@@ -238,6 +253,42 @@ mod tests {
     }
 
     #[test]
+    fn regsor() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::RegsOr as u8);
+        rom.push(0x8);
+        rom.push(0x0);
+        rom.push(0x4);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+        c.ram.as_mut_slice()[0..4].copy_from_slice(&u32::to_le_bytes(0x0F0F0F0F));
+        c.ram.as_mut_slice()[4..8].copy_from_slice(&u32::to_le_bytes(0x40302010));
+
+        while c.step() {}
+
+        assert_eq!(0x4F3F2F1F, u32::from_le_bytes(c.ram[8..0xc].try_into().unwrap()));
+    }
+
+    #[test]
+    fn fetch_to_reg() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::FetchToReg as u8);
+        rom.push(0x80);
+        rom.push(0x70);
+        rom.push(0x09);
+        rom.push(0x04);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+        c.ram.as_mut_slice()[0x017080..0x017084].copy_from_slice(&u32::to_le_bytes(0xDEADBEEF));
+
+        while c.step() {}
+
+        assert_eq!(0xDEADBEEF, u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap()));
+    }
+
+    #[test]
     fn multiply() {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm as u8);
@@ -266,7 +317,7 @@ mod tests {
 
     fn add_tester_internal(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
         println!(
-            "{:?} + {:04x} + {:04x} -> {:04x} + {:?}",
+            "test case {:?} + {:08x} + {:08x} -> {:08x} + {:?}",
             carry_in, in1, in2, sum, carry_out
         );
 
@@ -316,30 +367,30 @@ mod tests {
         add_tester(true, 0xFF, 0, 0x100, false);
     }
 
-    #[test]
-    fn coverage() {
-        let values = &[0x0, 0x1, 0xFF];
-        for carry_in in &[false, true] {
-            for (((a1, a2), a3), a4) in values
-                .iter()
-                .cartesian_product(values)
-                .cartesian_product(values)
-                .cartesian_product(values)
-            {
-                let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
-                for (((b1, b2), b3), b4) in values
-                    .iter()
-                    .cartesian_product(values)
-                    .cartesian_product(values)
-                    .cartesian_product(values)
-                {
-                    let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
-                    let sum = a as u64 + b as u64 + *carry_in as u64;
-                    let carry_out = sum > u32::max_value() as u64;
-                    let sum = (sum & 0xFFFFFFFF) as u32;
-                    add_tester_internal(*carry_in, a, b, sum, carry_out);
-                }
-            }
-        }
-    }
+    // #[test]
+    // fn coverage() {
+    //     let values = &[0x0, 0x1, 0xFF];
+    //     for carry_in in &[false, true] {
+    //         for (((a1, a2), a3), a4) in values
+    //             .iter()
+    //             .cartesian_product(values)
+    //             .cartesian_product(values)
+    //             .cartesian_product(values)
+    //         {
+    //             let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
+    //             for (((b1, b2), b3), b4) in values
+    //                 .iter()
+    //                 .cartesian_product(values)
+    //                 .cartesian_product(values)
+    //                 .cartesian_product(values)
+    //             {
+    //                 let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
+    //                 let sum = a as u64 + b as u64 + *carry_in as u64;
+    //                 let carry_out = sum > u32::max_value() as u64;
+    //                 let sum = (sum & 0xFFFFFFFF) as u32;
+    //                 add_tester_internal(*carry_in, a, b, sum, carry_out);
+    //             }
+    //         }
+    //     }
+    // }
 }
