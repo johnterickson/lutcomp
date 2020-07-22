@@ -146,17 +146,10 @@ impl<'a> Computer<'a> {
                     in2: data_bus.unwrap(),
                     op: urom_op.alu_opcode,
                 };
-                let lut_entry_bytes = lut_entry.pack_lsb();
-                let lut_entry_bytes = [
-                    lut_entry_bytes[0],
-                    lut_entry_bytes[1],
-                    lut_entry_bytes[2],
-                    0,
-                ];
-                let lut_entry_index = u32::from_le_bytes(lut_entry_bytes) as usize;
+                let lut_entry_index = lut_entry.to_index() as usize;
                 print!(
-                    "lut_entry:{:05x}={:?}={:?} => ",
-                    lut_entry_index, lut_entry_bytes, lut_entry
+                    "lut_entry:{:05x}={:?} => ",
+                    lut_entry_index, lut_entry
                 );
                 let lut_output = self.alu_lut[lut_entry_index];
                 println!("{:02x}", lut_output);

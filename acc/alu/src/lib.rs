@@ -29,6 +29,17 @@ impl LutEntry {
         [bytes[2], bytes[1], bytes[0]]
     }
 
+    pub fn to_index(&self) -> u32 {
+        let lut_entry_bytes = self.pack_lsb();
+        let lut_entry_bytes = [
+            lut_entry_bytes[0],
+            lut_entry_bytes[1],
+            lut_entry_bytes[2],
+            0,
+        ];
+        u32::from_le_bytes(lut_entry_bytes)
+    }
+
     pub fn unpack_lsb(index: u32) -> LutEntry {
         let bytes = index.to_le_bytes();
         assert_eq!(0, bytes[3]);
@@ -141,5 +152,27 @@ mod tests {
         };
 
         assert_eq!([240, 15, AluOpcode::Or as u8], lut_entry.pack_lsb());
+    }
+
+    #[test]
+    fn rotate() {
+        let shift_args = ShiftArgs {
+            mode: ShiftMode::Rotate,
+            amount: 4.into()
+        };
+
+        let args = SpecialArgs {
+            op: SpecialOpcode::Shift,
+            mode_args: shift_args.pack()[0].into(),
+        };
+
+        let lut_entry = LutEntry {
+            in1: 0x0F,
+            in2: args.pack()[0],
+            op: AluOpcode::Special,
+        };
+
+        assert_eq!(0x04, lut_entry.to_index() & 0xFF);
+        assert_eq!(0xF0, ALU[lut_entry.to_index() as usize]);
     }
 }
