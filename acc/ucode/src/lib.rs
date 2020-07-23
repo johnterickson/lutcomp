@@ -110,7 +110,62 @@ pub struct MicroOp {
     pub immediate: Integer<u8, packed_bits::Bits4>,
 }
 
+enum Load {
+    Direct(DataBusLoadEdge),
+    Mem(AddressBusOutputLevel),
+    Alu(AluOpcode),
+    MemAlu(AluOpcode, AddressBusOutputLevel),
+}
+
+enum Output {
+    Direct(DataBusOutputLevel),
+    Imm(u8),
+    Mem(AddressBusOutputLevel),
+}
+
 impl MicroOp {
+    fn copy(
+        out: Output,
+        load: Load,
+    ) -> MicroOp {
+        
+        let load_addr = match load {
+            Load::Mem(a) | Load::MemAlu(_,a) => Some(a),
+            _ => None
+        };
+        let out_addr = match out {
+            Output::Mem(a) => Some(a),
+            _ => None
+        };
+
+        let address_bus_out = match (out_addr,load_addr) {
+            (Some(load_addr), Some(out_addr)) => {
+                assert_eq!(load_addr, out_addr);
+                Some(load_addr)
+            },
+            (Some(load_addr), None) => Some(load_addr),
+            (None, Some(out_addr)) => Some(out_addr),
+            (None, None) => None,
+        };
+        
+        let (alu_opcode,data_bus_load) = match load {
+            Load::Direct(e) => (None, e),
+            Load::Alu(o) => (Some(o), DataBusLoadEdge::Alu),
+            Load::Mem(_) => (None, DataBusLoadEdge::Mem),
+            Load::MemAlu(o, _) => (Some(o), DataBusLoadEdge::Mem),
+        };
+
+        let (data_out, immediate) = match out {
+            Output::Direct(o) => (o, None),
+            Output::Imm(i) => (DataBusOutputLevel::Imm, Some(i)),
+            Output::Mem(_) => (DataBusOutputLevel::Mem, None)
+        };
+
+        MicroOp::new(
+            address_bus_out, data_out, alu_opcode, data_bus_load, immediate
+        )
+    }
+
     fn new(
         address_bus_out: Option<AddressBusOutputLevel>,
         data_out: DataBusOutputLevel,
@@ -122,10 +177,16 @@ impl MicroOp {
         assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
         assert_eq!(data_out == DataBusOutputLevel::Imm, immediate.is_some());
 
+        let default_addr_bus = if DataBusOutputLevel::Halt == data_out {
+            AddressBusOutputLevel::Addr
+        } else {
+            AddressBusOutputLevel::Pc
+        };
+
         MicroOp {
             data_bus_out: data_out,
             alu_opcode: alu_opcode.unwrap_or(AluOpcode::AddLoNoCarry),
-            address_bus_out: address_bus_out.unwrap_or(AddressBusOutputLevel::Addr),
+            address_bus_out: address_bus_out.unwrap_or(default_addr_bus),
             data_bus_load,
             immediate: immediate.unwrap_or_default().into(),
         }
@@ -247,6 +308,10 @@ pub fn ucode(print: bool) -> Vec<u8> {
             *uop_count.borrow_mut() += 1;
         };
 
+        let add_copy = |out: Output, load: Load| {
+            add_op(MicroOp::copy(out, load));
+        };
+
         let jmp_abs = || {
             for addr_edge in addr_loads {
                 add_op(pc_inc);
@@ -263,102 +328,24 @@ pub fn ucode(print: bool) -> Vec<u8> {
         };
 
         let start_of_ram = || {
-            add_op(MicroOp::new(
-                None,
-                DataBusOutputLevel::Imm,
-                None,
-                DataBusLoadEdge::Addr2,
-                Some(0x8),
-            ));
-            add_op(MicroOp::new(
-                None,
-                DataBusOutputLevel::Imm,
-                None,
-                DataBusLoadEdge::Addr1,
-                Some(0),
-            ));
-        };
-
-        let read_reg = || {
-            for i in 0..=3 {
-                add_op(MicroOp::new(
-                    Some(AddressBusOutputLevel::Addr),
-                    DataBusOutputLevel::Mem,
-                    None,
-                    DataBusLoadEdge::wxyz(i as usize),
-                    None,
-                ));
-
-                if i != 3 {
-                    add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Imm,
-                        Some(AluOpcode::AddLoNoCarry),
-                        DataBusLoadEdge::Alu,
-                        Some(1),
-                    ));
-                    add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Alu,
-                        None,
-                        DataBusLoadEdge::In1,
-                        None,
-                    ));
-                    add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Alu,
-                        None,
-                        DataBusLoadEdge::Addr0,
-                        None,
-                    ));
-                }
-            }
+            add_copy(Output::Imm(0x8), Load::Direct(DataBusLoadEdge::Addr2));
+            add_copy(Output::Imm(0x0), Load::Direct(DataBusLoadEdge::Addr1));
         };
 
         let parallel = |op: AluOpcode| {
             for i in 0..=3 {
                 add_op(pc_inc);
-                add_op(MicroOp::new(
-                    Some(AddressBusOutputLevel::Pc),
-                    DataBusOutputLevel::Mem,
-                    None,
-                    DataBusLoadEdge::In1,
-                    None,
-                ));
-                add_op(MicroOp::new(
-                    None,
-                    wxyz_outs[i],
-                    Some(op),
-                    DataBusLoadEdge::Alu,
-                    None,
-                ));
-                add_op(MicroOp::new(
-                    None,
-                    DataBusOutputLevel::Alu,
-                    None,
-                    wxyz_loads[i],
-                    None,
-                ));
+                add_copy(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                add_copy(Output::Direct(wxyz_outs[i]), Load::Alu(op));
+                add_copy(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(wxyz_loads[i]));
             }
         };
 
         if print {
             println!("# common prelude");
         }
-        add_op(MicroOp::new(
-            Some(AddressBusOutputLevel::Pc),
-            DataBusOutputLevel::Mem,
-            None,
-            DataBusLoadEdge::IR0,
-            None,
-        ));
-        add_op(MicroOp::new(
-            Some(AddressBusOutputLevel::Pc),
-            DataBusOutputLevel::Mem,
-            None,
-            DataBusLoadEdge::IR0,
-            None,
-        ));
+        add_copy(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::IR0));
+        add_copy(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::IR0));
 
         match opcode {
             Some(Opcode::Jmp) => {
