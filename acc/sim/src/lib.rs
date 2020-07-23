@@ -112,7 +112,7 @@ impl<'a> Computer<'a> {
         let data_bus = match urom_op.data_bus_out {
             DataBusOutputLevel::Alu => Some(self.alu),
             DataBusOutputLevel::Halt => return false,
-            DataBusOutputLevel::Imm => Some(((*urom_op.immediate << 4) >> 4) as u8),
+            DataBusOutputLevel::Imm => Some(*urom_op.immediate),
             DataBusOutputLevel::Mem => {
                 Some(*self.mem_mut(addr_bus))
             }

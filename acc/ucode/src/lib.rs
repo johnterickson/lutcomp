@@ -107,7 +107,7 @@ pub struct MicroOp {
     #[packed_field(bits = "8..=11", ty = "enum")]
     pub data_bus_load: DataBusLoadEdge,
     #[packed_field(bits = "12..=15")]
-    pub immediate: Integer<i8, packed_bits::Bits4>,
+    pub immediate: Integer<u8, packed_bits::Bits4>,
 }
 
 impl MicroOp {
@@ -116,7 +116,7 @@ impl MicroOp {
         data_out: DataBusOutputLevel,
         alu_opcode: Option<AluOpcode>,
         data_bus_load: DataBusLoadEdge,
-        immediate: Option<i8>,
+        immediate: Option<u8>,
     ) -> MicroOp {
         assert_eq!(data_bus_load == DataBusLoadEdge::Mem || data_out == DataBusOutputLevel::Mem, address_bus_out.is_some());
         assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
@@ -439,7 +439,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                     DataBusOutputLevel::Imm,
                     None,
                     DataBusLoadEdge::Addr2,
-                    Some(-8),
+                    Some(0x8),
                 ));
                 add_op(MicroOp::new(
                     None,
@@ -591,7 +591,7 @@ pub fn ucode(print: bool) -> Vec<u8> {
                     DataBusOutputLevel::Imm,
                     None,
                     DataBusLoadEdge::Addr2,
-                    Some(-8),
+                    Some(0x8),
                 ));
                 add_op(MicroOp::new(
                     None,
