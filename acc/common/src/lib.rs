@@ -80,12 +80,22 @@ pub struct ShiftArgs {
     #[packed_field(bits = "4..=5", ty = "enum")]
     pub mode: ShiftMode,
 }
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+pub enum SpecialMicroHelper {
+    AllBitsIfOdd = 0,
+    LeftShiftByOne = 1,
+    RightShiftByOne = 2,
+}
+
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum SpecialOpcode {
-    Shift = 0,
-    Reserved1 = 1,
+    MicroHelper = 0,
+    Shift = 1,
     Reserved2 = 2,
     Reserved3 = 3,
 }
@@ -117,9 +127,9 @@ pub struct SpecialArgs {
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 pub enum Opcode {
-    LoadImm = 0,
-    Add = 1,
-    Or = 2,
+    LoadImm = 0, // [32-bit constant] -> reg?
+    Add = 1, 
+    Or = 2,// reg? | acc -> acc
     Xor = 3,
     And = 4,
     Load = 5,
@@ -127,6 +137,10 @@ pub enum Opcode {
     Halt = 7,
     Jmp = 8,
     Jz = 9,
-    RegsOr = 10,
-    FetchToReg = 11,
+    RegsOr = 10, // reg? | reg? -> reg?
+    FetchAbsToReg = 11, // mem[24-bit address] -> reg?
+    Multiply = 12,
+    FetchRegToReg = 13, // mem[reg?] -> reg?
+    RegsAddPart1 = 14, // carry + reg? + reg? -> reg? + carry
+    RegsAddPart2 = 15, // carry + reg? + reg? -> reg? + carry
 }

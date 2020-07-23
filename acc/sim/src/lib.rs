@@ -39,12 +39,13 @@ pub struct Computer<'a> {
 impl<'a> Debug for Computer<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "upc:{:02x}", self.upc)?;
-        write!(f, " pc:{:08x}", u32::from_le_bytes(self.pc))?;
+        write!(f, " pc:{:05x}", u32::from_le_bytes(self.pc))?;
         write!(f, " pcr:{:08x}", u32::from_le_bytes(self.pcr))?;
         write!(f, " regs:{:08x}", u32::from_le_bytes(self.regs))?;
-        write!(f, " addr:{:08x}", u32::from_le_bytes(self.addr))?;
+        write!(f, " addr:{:05x}", u32::from_le_bytes(self.addr))?;
         write!(f, " ir0:{:02x}", self.ir0)?;
-        write!(f, " {:?}", self.flags)?;
+        write!(f, " in1:{:02x}", self.in1)?;
+        write!(f, " flags:[{:?}]", self.flags)?;
         Ok(())
     }
 }
@@ -107,13 +108,12 @@ impl<'a> Computer<'a> {
             AddressBusOutputLevel::Pc => self.pc,
         });
 
-        println!("addr_bus: {:08x}", addr_bus);
-
         let data_bus = match urom_op.data_bus_out {
             DataBusOutputLevel::Alu => Some(self.alu),
             DataBusOutputLevel::Halt => return false,
             DataBusOutputLevel::Imm => Some(*urom_op.immediate),
             DataBusOutputLevel::Mem => {
+                println!("addr_bus: {:08x}", addr_bus);
                 Some(*self.mem_mut(addr_bus))
             }
             DataBusOutputLevel::Next => {
@@ -161,6 +161,7 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
             DataBusLoadEdge::IR0 => self.ir0 = data_bus.unwrap(),
             DataBusLoadEdge::Mem => {
+                println!("addr_bus: {:08x}", addr_bus);
                 *self.mem_mut(addr_bus) = data_bus.unwrap();
             }
             DataBusLoadEdge::PcInc => {
@@ -248,24 +249,60 @@ mod tests {
     fn regsor() {
         let mut rom = Vec::new();
         rom.push(Opcode::RegsOr as u8);
-        rom.push(0x8);
-        rom.push(0x0);
         rom.push(0x4);
+        rom.push(0x8);
+        rom.push(0xc);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-        c.ram.as_mut_slice()[0..4].copy_from_slice(&u32::to_le_bytes(0x0F0F0F0F));
-        c.ram.as_mut_slice()[4..8].copy_from_slice(&u32::to_le_bytes(0x40302010));
+        c.ram.as_mut_slice()[0x4..0x8].copy_from_slice(&u32::to_le_bytes(0x0F0F0F0F));
+        c.ram.as_mut_slice()[0x8..0xC].copy_from_slice(&u32::to_le_bytes(0x40302010));
 
         while c.step() {}
 
-        assert_eq!(0x4F3F2F1F, u32::from_le_bytes(c.ram[8..0xc].try_into().unwrap()));
+        assert_eq!(0x4F3F2F1F, u32::from_le_bytes(c.ram[0xc..0x10].try_into().unwrap()));
     }
 
     #[test]
-    fn fetch_to_reg_ram() {
+    fn regsadd() {
         let mut rom = Vec::new();
-        rom.push(Opcode::FetchToReg as u8);
+        rom.push(Opcode::RegsAddPart1 as u8);
+        rom.push(0x4);
+        rom.push(0x8);
+        rom.push(0xc);
+        rom.push(Opcode::RegsAddPart2 as u8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+        c.ram.as_mut_slice()[4..8].copy_from_slice(&u32::to_le_bytes(0x12345678));
+        c.ram.as_mut_slice()[8..0xc].copy_from_slice(&u32::to_le_bytes(0x11111111));
+
+        while c.step() {}
+
+        assert_eq!(0x23456789, u32::from_le_bytes(c.ram[0xc..0x10].try_into().unwrap()));
+    }
+
+    #[test]
+    fn fetchreg_to_reg_ram() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::FetchRegToReg as u8);
+        rom.push(0x08);
+        rom.push(0x04);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+        c.ram.as_mut_slice()[0x08..0x0C].copy_from_slice(&u32::to_le_bytes(0x97080));
+        c.ram.as_mut_slice()[0x017080..0x017084].copy_from_slice(&u32::to_le_bytes(0xDEADBEEF));
+
+        while c.step() {}
+
+        assert_eq!(0xDEADBEEF, u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap()));
+    }
+
+    #[test]
+    fn fetchabs_to_reg_ram() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::FetchAbsToReg as u8);
         rom.push(0x80);
         rom.push(0x70);
         rom.push(0x09);
@@ -281,9 +318,9 @@ mod tests {
     }
 
     #[test]
-    fn fetch_to_reg_rom() {
+    fn fetchabs_to_reg_rom() {
         let mut rom = Vec::new();
-        rom.push(Opcode::FetchToReg as u8);
+        rom.push(Opcode::FetchAbsToReg as u8);
         rom.push(0xCC);
         rom.push(0xCC);
         rom.push(0xCC);
