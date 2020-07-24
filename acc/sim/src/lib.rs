@@ -7,7 +7,7 @@ use strum::IntoEnumIterator;
 
 use alu::*;
 use common::*;
-use std::fmt::Debug;
+use std::{convert::TryInto, fmt::Debug};
 use ucode::*;
 
 const MEM_BITS: usize = 19;
@@ -73,13 +73,22 @@ impl<'a> Computer<'a> {
         c
     }
 
-    fn mem_mut(&mut self, addr_bus: u32) -> &mut u8 {
+    fn mem_slice_mut(&mut self, addr_bus: u32, len: usize) -> &mut [u8] {
         let addr_bus = addr_bus & 0x0FFFFF;
         match addr_bus as usize {
-            a if ROM_MIN <= a && a <= ROM_MAX => &mut self.rom[a - ROM_MIN],
-            a if RAM_MIN <= a && a <= RAM_MAX => &mut self.ram[a - RAM_MIN],
+            a if ROM_MIN <= a && a <= ROM_MAX => &mut self.rom[a - ROM_MIN..(len + a - ROM_MIN)],
+            a if RAM_MIN <= a && a <= RAM_MAX => &mut self.ram[a - RAM_MIN..(len + a - RAM_MIN)],
             _ => panic!(format!("Invalid address: {:08x}", addr_bus)),
         }
+    }
+
+    fn mem_byte_mut(&mut self, addr_bus: u32) -> &mut u8 {
+        &mut self.mem_slice_mut(addr_bus, 1)[0]
+    }
+
+    pub fn mem_word_mut(&mut self, addr_bus: u32) -> &mut [u8; 4] {
+        let slice: &mut [u8; 4] = self.mem_slice_mut(addr_bus, 4).try_into().unwrap();
+        slice
     }
 
     pub fn step(&mut self) -> bool {
@@ -114,7 +123,7 @@ impl<'a> Computer<'a> {
             DataBusOutputLevel::Imm => Some(*urom_op.immediate),
             DataBusOutputLevel::Mem => {
                 println!("addr_bus: {:08x}", addr_bus);
-                Some(*self.mem_mut(addr_bus))
+                Some(*self.mem_byte_mut(addr_bus))
             }
             DataBusOutputLevel::Next => {
                 self.upc = 0;
@@ -147,10 +156,7 @@ impl<'a> Computer<'a> {
                     op: urom_op.alu_opcode,
                 };
                 let lut_entry_index = lut_entry.to_index() as usize;
-                print!(
-                    "lut_entry:{:05x}={:?} => ",
-                    lut_entry_index, lut_entry
-                );
+                print!("lut_entry:{:05x}={:?} => ", lut_entry_index, lut_entry);
                 let lut_output = self.alu_lut[lut_entry_index];
                 println!("{:02x}", lut_output);
                 self.alu = lut_output;
@@ -162,7 +168,7 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::IR0 => self.ir0 = data_bus.unwrap(),
             DataBusLoadEdge::Mem => {
                 println!("addr_bus: {:08x}", addr_bus);
-                *self.mem_mut(addr_bus) = data_bus.unwrap();
+                *self.mem_byte_mut(addr_bus) = data_bus.unwrap();
             }
             DataBusLoadEdge::PcInc => {
                 self.pc = (u32::from_le_bytes(self.pc) + 1).to_le_bytes();
@@ -204,20 +210,18 @@ mod tests {
     fn loadimm() {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm as u8);
-        rom.push(1);
-        rom.push(2);
-        rom.push(3);
         rom.push(4);
+        rom.push(0xef);
+        rom.push(0xcd);
+        rom.push(0xab);
+        rom.push(0x89);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
 
         while c.step() {}
 
-        assert_eq!(c.regs[0], 1);
-        assert_eq!(c.regs[1], 2);
-        assert_eq!(c.regs[2], 3);
-        assert_eq!(c.regs[3], 4);
+        assert_eq!(0x89abcdef, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
     }
 
     #[test]
@@ -255,12 +259,14 @@ mod tests {
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-        c.ram.as_mut_slice()[0x4..0x8].copy_from_slice(&u32::to_le_bytes(0x0F0F0F0F));
-        c.ram.as_mut_slice()[0x8..0xC].copy_from_slice(&u32::to_le_bytes(0x40302010));
+        c.mem_word_mut(0x80004)
+            .copy_from_slice(&u32::to_le_bytes(0x0F0F0F0F));
+        c.mem_word_mut(0x80008)
+            .copy_from_slice(&u32::to_le_bytes(0x40302010));
 
         while c.step() {}
 
-        assert_eq!(0x4F3F2F1F, u32::from_le_bytes(c.ram[0xc..0x10].try_into().unwrap()));
+        assert_eq!(0x4F3F2F1F, u32::from_le_bytes(*c.mem_word_mut(0x8000c)));
     }
 
     #[test]
@@ -279,7 +285,10 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(0x23456789, u32::from_le_bytes(c.ram[0xc..0x10].try_into().unwrap()));
+        assert_eq!(
+            0x23456789,
+            u32::from_le_bytes(c.ram[0xc..0x10].try_into().unwrap())
+        );
     }
 
     #[test]
@@ -296,7 +305,10 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(0xDEADBEEF, u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap()));
+        assert_eq!(
+            0xDEADBEEF,
+            u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap())
+        );
     }
 
     #[test]
@@ -314,7 +326,10 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(0xDEADBEEF, u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap()));
+        assert_eq!(
+            0xDEADBEEF,
+            u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap())
+        );
     }
 
     #[test]
@@ -326,13 +341,15 @@ mod tests {
         rom.push(0xCC);
         rom.push(0x04);
         rom.push(Opcode::Halt as u8);
-        while rom.len() % 4 != 0 { rom.push(0); }
+        while rom.len() % 4 != 0 {
+            rom.push(0);
+        }
         let addr = rom.len();
         rom.push(0xEF);
         rom.push(0xBE);
         rom.push(0xAD);
         rom.push(0xDE);
-        
+
         rom[1] = addr.to_le_bytes()[0];
         rom[2] = addr.to_le_bytes()[1];
         rom[3] = addr.to_le_bytes()[2];
@@ -341,7 +358,10 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(0xDEADBEEF, u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap()));
+        assert_eq!(
+            0xDEADBEEF,
+            u32::from_le_bytes(c.ram[0x04..0x08].try_into().unwrap())
+        );
     }
 
     fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
@@ -358,14 +378,22 @@ mod tests {
         let mut rom = Vec::new();
 
         rom.push(Opcode::LoadImm as u8);
+        rom.push(0);
         for b in &in1.to_le_bytes() {
             rom.push(*b);
         }
 
-        rom.push(Opcode::Add as u8);
+        rom.push(Opcode::LoadImm as u8);
+        rom.push(4);
         for b in &in2.to_le_bytes() {
             rom.push(*b);
         }
+
+        rom.push(Opcode::RegsAddPart1 as u8);
+        rom.push(0);
+        rom.push(4);
+        rom.push(8);
+        rom.push(Opcode::RegsAddPart2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
@@ -376,7 +404,21 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(sum, u32::from_le_bytes(c.regs));
+        assert_eq!(
+            in1,
+            u32::from_le_bytes(*c.mem_word_mut(0x80000))
+        );
+
+        assert_eq!(
+            in2,
+            u32::from_le_bytes(*c.mem_word_mut(0x80004))
+        );
+
+        assert_eq!(
+            sum,
+            u32::from_le_bytes(*c.mem_word_mut(0x80008))
+        );
+
         assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
     }
 

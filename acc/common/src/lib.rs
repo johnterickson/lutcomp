@@ -127,9 +127,9 @@ pub struct SpecialArgs {
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 pub enum Opcode {
-    LoadImm = 0, // [32-bit constant] -> reg?
-    Add = 1, 
-    Or = 2,// reg? | acc -> acc
+    LoadImm = 0, // regA <- [32-bit constant BCDE]
+    Add = 1,
+    Or = 2, // reg? | acc -> acc
     Xor = 3,
     And = 4,
     Load = 5,
@@ -137,10 +137,10 @@ pub enum Opcode {
     Halt = 7,
     Jmp = 8,
     Jz = 9,
-    RegsOr = 10, // reg? | reg? -> reg?
-    FetchAbsToReg = 11, // mem[24-bit address] -> reg?
+    RegsOr = 10,        // regA | regB -> regC
+    FetchAbsToReg = 11, // mem[24-bit address ABCD] -> regE
     Multiply = 12,
-    FetchRegToReg = 13, // mem[reg?] -> reg?
-    RegsAddPart1 = 14, // carry + reg? + reg? -> reg? + carry
-    RegsAddPart2 = 15, // carry + reg? + reg? -> reg? + carry
+    FetchRegToReg = 13, // mem[regA] -> regB
+    RegsAddPart1 = 14,  // carry + regA + regB -> regC + carry
+    RegsAddPart2 = 15,  // [none]
 }

@@ -1,5 +1,5 @@
 extern crate strum;
-use strum::{IntoEnumIterator};
+use strum::IntoEnumIterator;
 
 extern crate packed_struct;
 #[macro_use]
@@ -65,7 +65,9 @@ pub fn alu(print: bool) -> Vec<u8> {
 
         let carry_in = entry.op as u8 % 2;
         let out = match entry.op {
-            AluOpcode::AddLoNoCarry | AluOpcode::AddLoCarry => entry.in1.wrapping_add(entry.in2).wrapping_add(carry_in),
+            AluOpcode::AddLoNoCarry | AluOpcode::AddLoCarry => {
+                entry.in1.wrapping_add(entry.in2).wrapping_add(carry_in)
+            }
             AluOpcode::AddHiNoCarry | AluOpcode::AddHiCarry => {
                 let sum = (entry.in1 as u16) + (entry.in2 as u16) + (carry_in as u16);
 
@@ -90,14 +92,14 @@ pub fn alu(print: bool) -> Vec<u8> {
                     SpecialOpcode::MicroHelper => {
                         match SpecialMicroHelper::iter().nth(*special_mode.mode_args as usize) {
                             Some(SpecialMicroHelper::AllBitsIfOdd) => {
-                                if entry.in1 & 0x1 == 0 { 0x00 } else { 0xFF }
+                                if entry.in1 & 0x1 == 0 {
+                                    0x00
+                                } else {
+                                    0xFF
+                                }
                             }
-                            Some(SpecialMicroHelper::LeftShiftByOne) => {
-                                entry.in1 << 1
-                            },
-                            Some(SpecialMicroHelper::RightShiftByOne) => {
-                                entry.in1 >> 1
-                            }
+                            Some(SpecialMicroHelper::LeftShiftByOne) => entry.in1 << 1,
+                            Some(SpecialMicroHelper::RightShiftByOne) => entry.in1 >> 1,
                             None => 0xFF,
                         }
                     }
