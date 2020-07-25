@@ -102,7 +102,7 @@ impl<'a> Computer<'a> {
         urom_addr <<= 7;
         urom_addr += self.upc as usize;
 
-        let opcode = Opcode::iter().nth(urom_entry.instruction as usize);
+        let opcode = Opcode::iter().filter(|o| *o as u8 == urom_entry.instruction).next();
         println!(
             "urom_addr {:05x} = {:?} {:?} + {:02x}",
             urom_addr, urom_entry, opcode, self.upc
@@ -209,7 +209,7 @@ mod tests {
     #[test]
     fn loadimm() {
         let mut rom = Vec::new();
-        rom.push(Opcode::LoadImm as u8);
+        rom.push(Opcode::LoadImm32 as u8);
         rom.push(4);
         rom.push(0xef);
         rom.push(0xcd);
@@ -225,32 +225,55 @@ mod tests {
     }
 
     #[test]
-    fn or() {
+    fn load8() {
         let mut rom = Vec::new();
-        rom.push(Opcode::LoadImm as u8);
-        rom.push(0xF0);
-        rom.push(0x0F);
-        rom.push(0xF0);
-        rom.push(0x0F);
-        rom.push(Opcode::Or as u8);
-        rom.push(0x0F);
-        rom.push(0xF0);
-        rom.push(0x0F);
-        rom.push(0xF0);
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(4);
+        rom.push(0x34);
+        rom.push(0x12);
+        rom.push(0x08);
+        rom.push(0x00);
+        rom.push(Opcode::Load8 as u8);
+        rom.push(4);
+        rom.push(8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
 
+        c.mem_word_mut(0x81234)
+            .copy_from_slice(&u32::to_le_bytes(0xDEADBEEF));
+
         while c.step() {}
 
-        assert_eq!(c.regs[0], 0xFF);
-        assert_eq!(c.regs[1], 0xFF);
-        assert_eq!(c.regs[2], 0xFF);
-        assert_eq!(c.regs[3], 0xFF);
+        assert_eq!(0xEF, *c.mem_byte_mut(0x80008));
     }
 
     #[test]
-    fn regsor() {
+    fn load32() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(4);
+        rom.push(0x34);
+        rom.push(0x12);
+        rom.push(0x08);
+        rom.push(0x00);
+        rom.push(Opcode::Load32 as u8);
+        rom.push(4);
+        rom.push(8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        c.mem_word_mut(0x81234)
+            .copy_from_slice(&u32::to_le_bytes(0xDEADBEEF));
+
+        while c.step() {}
+
+        assert_eq!(0xDEADBEEF, u32::from_le_bytes(*c.mem_word_mut(0x80008)));
+    }
+
+    #[test]
+    fn or() {
         let mut rom = Vec::new();
         rom.push(Opcode::RegsOr as u8);
         rom.push(0x4);
@@ -272,11 +295,11 @@ mod tests {
     #[test]
     fn regsadd() {
         let mut rom = Vec::new();
-        rom.push(Opcode::RegsAddPart1 as u8);
+        rom.push(Opcode::RegsAdd32Part1 as u8);
         rom.push(0x4);
         rom.push(0x8);
         rom.push(0xc);
-        rom.push(Opcode::RegsAddPart2 as u8);
+        rom.push(Opcode::RegsAdd32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
@@ -377,23 +400,23 @@ mod tests {
 
         let mut rom = Vec::new();
 
-        rom.push(Opcode::LoadImm as u8);
+        rom.push(Opcode::LoadImm32 as u8);
         rom.push(0);
         for b in &in1.to_le_bytes() {
             rom.push(*b);
         }
 
-        rom.push(Opcode::LoadImm as u8);
+        rom.push(Opcode::LoadImm32 as u8);
         rom.push(4);
         for b in &in2.to_le_bytes() {
             rom.push(*b);
         }
 
-        rom.push(Opcode::RegsAddPart1 as u8);
+        rom.push(Opcode::RegsAdd32Part1 as u8);
         rom.push(0);
         rom.push(4);
         rom.push(8);
-        rom.push(Opcode::RegsAddPart2 as u8);
+        rom.push(Opcode::RegsAdd32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);

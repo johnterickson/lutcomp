@@ -90,7 +90,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                 let special_mode = SpecialArgs::unpack(&[entry.in2]).unwrap();
                 match special_mode.op {
                     SpecialOpcode::MicroHelper => {
-                        match SpecialMicroHelper::iter().nth(*special_mode.mode_args as usize) {
+                        match SpecialMicroHelper::iter().filter(|o| *o as u8 == *special_mode.mode_args).next() {
                             Some(SpecialMicroHelper::AllBitsIfOdd) => {
                                 if entry.in1 & 0x1 == 0 {
                                     0x00
@@ -100,6 +100,10 @@ pub fn alu(print: bool) -> Vec<u8> {
                             }
                             Some(SpecialMicroHelper::LeftShiftByOne) => entry.in1 << 1,
                             Some(SpecialMicroHelper::RightShiftByOne) => entry.in1 >> 1,
+                            Some(SpecialMicroHelper::SwapNibbles) => (entry.in1 >> 4) | (entry.in1 << 4),
+                            Some(SpecialMicroHelper::Decrement) => entry.in1.wrapping_add(0xFF),
+                            Some(SpecialMicroHelper::Negate) => (entry.in1 ^ 0xFF).wrapping_add(0x01),
+                            Some(SpecialMicroHelper::Pow2Mask) => ((1u64 << (entry.in1 & 0x1F)) - 1) as u8,
                             None => 0xFF,
                         }
                     }
@@ -108,8 +112,8 @@ pub fn alu(print: bool) -> Vec<u8> {
                         if print {
                             println!("# {:?}", &args);
                         }
-                        let amount = *args.amount;
-                        let abs_amount = amount.abs();
+                        let left_amount = *args.left_amount;
+                        let abs_amount = left_amount.abs();
                         if abs_amount >= 8 {
                             0xFF
                         } else if abs_amount == 0 {
@@ -117,14 +121,14 @@ pub fn alu(print: bool) -> Vec<u8> {
                         } else {
                             match args.mode {
                                 ShiftMode::Rotate => {
-                                    if amount > 0 {
+                                    if left_amount > 0 {
                                         (entry.in1 << abs_amount) | (entry.in1 >> (8 - abs_amount))
                                     } else {
                                         (entry.in1 >> abs_amount) | (entry.in1 << (8 - abs_amount))
                                     }
                                 }
                                 ShiftMode::Arithmetic => {
-                                    if amount > 0 {
+                                    if left_amount > 0 {
                                         entry.in1 << abs_amount
                                     } else {
                                         entry.in1 >> abs_amount
@@ -132,7 +136,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                                 }
                                 ShiftMode::Logical => {
                                     let signed = entry.in1 as i8;
-                                    (if amount > 0 {
+                                    (if left_amount > 0 {
                                         signed << abs_amount
                                     } else {
                                         signed >> abs_amount
@@ -169,6 +173,50 @@ mod tests {
         };
 
         assert_eq!([240, 15, AluOpcode::Or as u8], lut_entry.pack_lsb());
+    }
+
+    fn test_special_micro(op: SpecialMicroHelper, in1: u8, expected: u8) {
+        let lut_entry = LutEntry {
+            in1,
+            in2: (SpecialArgs{
+                op: SpecialOpcode::MicroHelper,
+                mode_args: (op as u8).into()
+            }).pack()[0],
+            op: AluOpcode::Special,
+        };
+
+        assert_eq!(expected, ALU[lut_entry.to_index() as usize]);
+    }
+
+    #[test]
+    fn pow2_mask() {
+        test_special_micro(SpecialMicroHelper::Pow2Mask, 3, 0x7);
+        test_special_micro(SpecialMicroHelper::Pow2Mask, 2, 0x3);
+        test_special_micro(SpecialMicroHelper::Pow2Mask, 1, 0x1);
+        test_special_micro(SpecialMicroHelper::Pow2Mask, 0, 0x0);
+    }
+
+    #[test]
+    fn all_bits_if_odd() {
+        test_special_micro(SpecialMicroHelper::AllBitsIfOdd, 0x7, 0xFF);
+        test_special_micro(SpecialMicroHelper::AllBitsIfOdd, 0x6, 0x00);
+    }
+
+    #[test]
+    fn swap_nibbles() {
+        test_special_micro(SpecialMicroHelper::SwapNibbles, 0x34, 0x43);
+    }
+
+    #[test]
+    fn decrement() {
+        test_special_micro(SpecialMicroHelper::Decrement, 0x17, 0x16);
+        test_special_micro(SpecialMicroHelper::Decrement, 0x00, 0xFF);
+    }
+
+    #[test]
+    fn negate() {
+        test_special_micro(SpecialMicroHelper::Negate, 0x01, 0xFF);
+        test_special_micro(SpecialMicroHelper::Negate, 0xFF, 0x01);
     }
 
     // #[test]

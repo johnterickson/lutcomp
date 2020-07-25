@@ -21,17 +21,6 @@ bitflags! {
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
-#[strum(serialize_all = "lowercase")]
-pub enum ShiftMode {
-    Rotate = 0,
-    Logical = 1,
-    Arithmetic = 2,
-    Reserved3 = 3,
-}
-
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
-#[derive(EnumCount, EnumIter, EnumString)]
-#[derive(PrimitiveEnum_u8)]
 pub enum AluOpcode {
     AddLoNoCarry = 0,
     AddLoCarry = 1,
@@ -72,11 +61,23 @@ pub enum RwRegister {
     Z = 3,
 }
 
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+#[strum(serialize_all = "lowercase")]
+pub enum ShiftMode {
+    Rotate = 0,
+    Logical = 1,
+    Arithmetic = 2,
+    Reserved3 = 3,
+}
+
 #[derive(Debug, PackedStruct)]
 #[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
 pub struct ShiftArgs {
     #[packed_field(bits = "0..=3")]
-    pub amount: Integer<i8, packed_bits::Bits4>,
+    pub left_amount: Integer<i8, packed_bits::Bits4>,
     #[packed_field(bits = "4..=5", ty = "enum")]
     pub mode: ShiftMode,
 }
@@ -88,6 +89,10 @@ pub enum SpecialMicroHelper {
     AllBitsIfOdd = 0,
     LeftShiftByOne = 1,
     RightShiftByOne = 2,
+    SwapNibbles = 3,
+    Decrement = 4,
+    Negate = 5,
+    Pow2Mask = 6,
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -127,20 +132,25 @@ pub struct SpecialArgs {
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 pub enum Opcode {
-    LoadImm = 0, // regA <- [32-bit constant BCDE]
-    Add = 1,
-    Or = 2, // reg? | acc -> acc
-    Xor = 3,
-    And = 4,
-    Load = 5,
+    LoadImm8 = 0, // regA <- [8-bit constant B]
+    Jmp = 1, // pc <- [24-bit constant ABC]
+    Jz = 2, // if Flags & CARY { px <- [24-bit constant ABC]}
+    
+    Load8 = 3, // 8-bit MEM[24-bit RegA] -> RegB
+
+    LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
+    RegsAdd32Part1 = 0x81,  // 32-bit carry + regA + regB -> regC + carry
+    RegsAdd32Part2 = 0x82,  // [none] must follow Part1
+    Load32 = 0x83, // 32-bit MEM[24-bit RegA] -> RegB
+
     Store = 6,
-    Halt = 7,
-    Jmp = 8,
-    Jz = 9,
-    RegsOr = 10,        // regA | regB -> regC
+    RegsOr = 10, // regA | regB -> regC
     FetchAbsToReg = 11, // mem[24-bit address ABCD] -> regE
     Multiply = 12,
     FetchRegToReg = 13, // mem[regA] -> regB
-    RegsAddPart1 = 14,  // carry + regA + regB -> regC + carry
-    RegsAddPart2 = 15,  // [none]
+    AddRegImm = 14, // regA += [32-bit constant BCDE]
+    OrRegImm = 15, // regA |= [32-bit constant BCDE]
+    ShiftLeftSubByteRegImm = 16, // regA <<= [8-bit constant B]
+
+    Halt = 255,
 }
