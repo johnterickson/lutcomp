@@ -357,6 +357,8 @@ impl Ucode {
             None,
         );
 
+        
+
         // let mut uops = Vec::new();
         for encoded_inst in 0u16..(1 << 12) {
             let bytes: &[u8; 2] = &encoded_inst.to_le_bytes();
@@ -367,6 +369,11 @@ impl Ucode {
             self.base_address = encoded_inst as usize * MAX_UOPS * 2;
             self.uop_count = 0;
             self.inc_pc = true;
+
+            let noop = MicroOp::copy(
+                Output::Imm(flags.bits()),
+                Load::Direct(DataBusLoadEdge::Flags)
+            );
 
             if self.print {
                 println!("#");
@@ -653,9 +660,8 @@ impl Ucode {
                         self.pc_inc();
                         self.add(Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
                     } else {
-                        // filler
-                        self.add(Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
+                        self.add_op(noop);
+                        self.add_op(noop);
                     }
                     
                     //   Z = if b & 1 { 0xFF } else { 0x00 }

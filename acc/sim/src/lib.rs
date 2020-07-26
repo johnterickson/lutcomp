@@ -387,12 +387,14 @@ mod tests {
 
     #[test]
     fn mul8() {
-        let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
-        for a in &values {
-            for b in &values {
-                mul8_helper(*a, *b);
-            }
-        }
+        // let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
+        // for a in &values {
+        //     for b in &values {
+        //         mul8_helper(*a, *b);
+        //     }
+        // }
+        mul8_helper(1, 1);
+        assert!(false);
     }
 
 
