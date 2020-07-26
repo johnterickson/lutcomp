@@ -207,7 +207,22 @@ mod tests {
     }
 
     #[test]
-    fn loadimm() {
+    fn loadimm8() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(4);
+        rom.push(0xef);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        while c.step() {}
+
+        assert_eq!(0xef, *c.mem_byte_mut(0x80004));
+    }
+
+    #[test]
+    fn loadimm32() {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm32 as u8);
         rom.push(4);
@@ -249,6 +264,32 @@ mod tests {
     }
 
     #[test]
+    fn store8() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(0x0);
+        rom.push(0xAA);
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(4);
+        rom.push(0x34);
+        rom.push(0x12);
+        rom.push(0x08);
+        rom.push(0x00);
+        rom.push(Opcode::Store8 as u8);
+        rom.push(0);
+        rom.push(4);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        while c.step() {}
+
+        assert_eq!(0xAA, *c.mem_byte_mut(0x80000));
+        assert_eq!(0x81234, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
+        assert_eq!(0xAA, *c.mem_byte_mut(0x81234));
+    }
+
+    #[test]
     fn load32() {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm32 as u8);
@@ -270,6 +311,36 @@ mod tests {
         while c.step() {}
 
         assert_eq!(0xDEADBEEF, u32::from_le_bytes(*c.mem_word_mut(0x80008)));
+    }
+
+    #[test]
+    fn store32() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(0x0);
+        rom.push(0xEF);
+        rom.push(0xCD);
+        rom.push(0xAB);
+        rom.push(0x89);
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(4);
+        rom.push(0x34);
+        rom.push(0x12);
+        rom.push(0x08);
+        rom.push(0x00);
+        rom.push(Opcode::Store32Part1 as u8);
+        rom.push(0);
+        rom.push(4);
+        rom.push(Opcode::Store32Part2 as u8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        while c.step() {}
+
+        assert_eq!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+        assert_eq!(0x81234, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
+        assert_eq!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
     }
 
     #[test]

@@ -137,13 +137,17 @@ pub enum Opcode {
     Jz = 2, // if Flags & CARY { px <- [24-bit constant ABC]}
     
     Load8 = 3, // 8-bit MEM[24-bit RegA] -> RegB
+    Store8 = 4, // Reg A -> 8-bit MEM[24-bit RegB]
+    Mul8Part1 = 5, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSBs RegC
+    Mul8Part2 = 6,
 
     LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
     RegsAdd32Part1 = 0x81,  // 32-bit carry + regA + regB -> regC + carry
     RegsAdd32Part2 = 0x82,  // [none] must follow Part1
     Load32 = 0x83, // 32-bit MEM[24-bit RegA] -> RegB
+    Store32Part1 = 0x84, // RegA -> 32-bit MEM[24-bit RegB]
+    Store32Part2 = 0x85, // RegA -> 32-bit MEM[24-bit RegB]
 
-    Store = 6,
     RegsOr = 10, // regA | regB -> regC
     FetchAbsToReg = 11, // mem[24-bit address ABCD] -> regE
     Multiply = 12,
