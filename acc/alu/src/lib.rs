@@ -75,7 +75,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                 if sum > 0xFF {
                     flags.insert(Flags::CARRY);
                 }
-                if sum == 0 {
+                if (sum&0xFF) == 0 {
                     flags.insert(Flags::ZERO);
                 }
                 if sum & 0x80 == 0x80 {
@@ -104,6 +104,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                             Some(SpecialMicroHelper::Decrement) => entry.in1.wrapping_add(0xFF),
                             Some(SpecialMicroHelper::Negate) => (entry.in1 ^ 0xFF).wrapping_add(0x01),
                             Some(SpecialMicroHelper::Pow2Mask) => ((1u64 << (entry.in1 & 0x1F)) - 1) as u8,
+                            Some(SpecialMicroHelper::Invert) => (entry.in1 ^ 0xFF),
                             None => 0xFF,
                         }
                     }

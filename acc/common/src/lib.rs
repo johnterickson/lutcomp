@@ -93,6 +93,7 @@ pub enum SpecialMicroHelper {
     Decrement = 4,
     Negate = 5,
     Pow2Mask = 6,
+    Invert = 7,
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -138,8 +139,9 @@ pub enum Opcode {
     
     Load8 = 3, // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 4, // Reg A -> 8-bit MEM[24-bit RegB]
-    Mul8Part1 = 5, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSBs RegC
+    Mul8Part1 = 5, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
     Mul8Part2 = 6,
+
 
     LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
     RegsAdd32Part1 = 0x81,  // 32-bit carry + regA + regB -> regC + carry
@@ -147,10 +149,10 @@ pub enum Opcode {
     Load32 = 0x83, // 32-bit MEM[24-bit RegA] -> RegB
     Store32Part1 = 0x84, // RegA -> 32-bit MEM[24-bit RegB]
     Store32Part2 = 0x85, // RegA -> 32-bit MEM[24-bit RegB]
+    Or32 = 0x86, // regA | regB -> regC
 
-    RegsOr = 10, // regA | regB -> regC
+
     FetchAbsToReg = 11, // mem[24-bit address ABCD] -> regE
-    Multiply = 12,
     FetchRegToReg = 13, // mem[regA] -> regB
     AddRegImm = 14, // regA += [32-bit constant BCDE]
     OrRegImm = 15, // regA |= [32-bit constant BCDE]

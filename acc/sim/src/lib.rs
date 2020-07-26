@@ -346,7 +346,7 @@ mod tests {
     #[test]
     fn or() {
         let mut rom = Vec::new();
-        rom.push(Opcode::RegsOr as u8);
+        rom.push(Opcode::Or32 as u8);
         rom.push(0x4);
         rom.push(0x8);
         rom.push(0xc);
@@ -362,6 +362,39 @@ mod tests {
 
         assert_eq!(0x4F3F2F1F, u32::from_le_bytes(*c.mem_word_mut(0x8000c)));
     }
+
+    fn mul8_helper(a: u8, b: u8) {
+        println!("testing {}*{}", a, b);
+
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(0x4);
+        rom.push(a);
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(0x5);
+        rom.push(b);
+        rom.push(Opcode::Mul8Part1 as u8);
+        rom.push(0x4);
+        rom.push(0x5);
+        rom.push(Opcode::Mul8Part2 as u8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+        while c.step() {}
+
+        assert_eq!((a as u32) * (b as u32), u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
+
+    #[test]
+    fn mul8() {
+        let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
+        for a in &values {
+            for b in &values {
+                mul8_helper(*a, *b);
+            }
+        }
+    }
+
 
     #[test]
     fn regsadd() {
