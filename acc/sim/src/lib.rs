@@ -581,10 +581,12 @@ mod tests {
                     .cartesian_product(values)
                 {
                     let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
-                    let sum = a as u64 + b as u64 + *carry_in as u64;
-                    let carry_out = sum > u32::max_value() as u64;
-                    let sum = (sum & 0xFFFFFFFF) as u32;
-                    add_tester(*carry_in, a, b, sum, carry_out);
+                    if a > b {
+                        let sum = a as u64 + b as u64 + *carry_in as u64;
+                        let carry_out = sum > u32::max_value() as u64;
+                        let sum = (sum & 0xFFFFFFFF) as u32;
+                        add_tester(*carry_in, a, b, sum, carry_out);
+                    }
                 }
             }
         }
