@@ -344,6 +344,43 @@ impl Ucode {
         self.inc_pc = false;
     }
 
+    fn parallel_op_32(&mut self, alu_op: AluOpcode) {
+        self.start_of_ram();
+
+        for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y] {
+            self.pc_inc();
+            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
+        }
+
+        self.pc_inc();
+
+        for i in 0..=3 {
+            self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+            self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(alu_op));
+            if i == 0 {
+                self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+            } else {
+                self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+            }
+            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+            if i != 3 {
+                self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+
+                for r in &[RwRegister::X, RwRegister::Y, RwRegister::Z] {
+                    if i == 0 && *r == RwRegister::Z{
+                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::AddLoNoCarry));
+                    } else {
+                        self.add(Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
+                    }
+                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
+                }
+            }
+        }
+    }
+
     fn build(&mut self) -> Vec<u8> {
         if self.print {
             println!("v2.0 raw");
@@ -388,10 +425,6 @@ impl Ucode {
             if self.print {
                 println!("# common prelude");
             }
-            self.add(
-                Output::Mem(AddressBusOutputLevel::Pc),
-                Load::Direct(DataBusLoadEdge::IR0),
-            );
             self.add(
                 Output::Mem(AddressBusOutputLevel::Pc),
                 Load::Direct(DataBusLoadEdge::IR0),
@@ -1155,258 +1188,90 @@ impl Ucode {
                     self.add_op(halt);
                 }
                 Some(Opcode::Or32) => {
+                    self.parallel_op_32(AluOpcode::Or);
+                }
+                Some(Opcode::And32) => {
+                    self.parallel_op_32(AluOpcode::And);
+                }
+                Some(Opcode::Add32NoCarryOut) => {
                     self.start_of_ram();
 
-                    for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y, DataBusLoadEdge::Z] {
+                    for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y] {
                         self.pc_inc();
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Pc),
-                            DataBusOutputLevel::Mem,
-                            None,
-                            *edge,
-                            None,
-                        ));
+                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
                     }
+
+                    self.pc_inc();
 
                     for i in 0..=3 {
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::X,
-                            None,
-                            DataBusLoadEdge::Addr0,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Addr),
-                            DataBusOutputLevel::Mem,
-                            None,
-                            DataBusLoadEdge::In1,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Y,
-                            None,
-                            DataBusLoadEdge::Addr0,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Addr),
-                            DataBusOutputLevel::Mem,
-                            Some(AluOpcode::Or),
-                            DataBusLoadEdge::Alu,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Z,
-                            None,
-                            DataBusLoadEdge::Addr0,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Addr),
-                            DataBusOutputLevel::Alu,
-                            None,
-                            DataBusLoadEdge::Mem,
-                            None,
-                        ));
-
+                        self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                        self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+                        
                         if i != 3 {
-                            self.add_op(MicroOp::new(
-                                None,
-                                DataBusOutputLevel::Imm,
-                                None,
-                                DataBusLoadEdge::In1,
-                                Some(1),
-                            ));
-                            for r in &[RwRegister::X, RwRegister::Y, RwRegister::Z] {
-                                self.add_op(MicroOp::new(
-                                    None,
-                                    DataBusOutputLevel::wxyz(*r as usize),
-                                    Some(AluOpcode::AddLoNoCarry),
-                                    DataBusLoadEdge::Alu,
-                                    None,
-                                ));
-                                self.add_op(MicroOp::new(
-                                    None,
-                                    DataBusOutputLevel::Alu,
-                                    None,
-                                    DataBusLoadEdge::wxyz(*r as usize),
-                                    None,
-                                ));
+                            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                            if i == 0 {
+                                self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                            } else {
+                                self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
                             }
+                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+
+                            self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+                            for r in &[RwRegister::X, RwRegister::Y, RwRegister::Z] {
+                                if i == 0 && *r == RwRegister::Z{
+                                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::AddLoNoCarry));
+                                } else {
+                                    self.add(Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
+                                }
+                                self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
+                            }
+                        } else {
+                            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                            self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
                         }
                     }
                 }
-                Some(Opcode::RegsAdd32Part1) => {
-                    for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y, DataBusLoadEdge::Z] {
-                        self.pc_inc();
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Pc),
-                            DataBusOutputLevel::Mem,
-                            None,
-                            *edge,
-                            None,
-                        ));
-                    }
-
+                Some(Opcode::Add32Part1) => {
                     self.start_of_ram();
 
-                    for _ in 0..=2 {
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::X,
-                            None,
-                            DataBusLoadEdge::Addr0,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Addr),
-                            DataBusOutputLevel::Mem,
-                            None,
-                            DataBusLoadEdge::In1,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Y,
-                            None,
-                            DataBusLoadEdge::Addr0,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Addr),
-                            DataBusOutputLevel::Mem,
-                            Some(AluOpcode::addlo(flags)),
-                            DataBusLoadEdge::Alu,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Alu,
-                            None,
-                            DataBusLoadEdge::W,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Addr),
-                            DataBusOutputLevel::Mem,
-                            Some(AluOpcode::addhi(flags)),
-                            DataBusLoadEdge::Alu,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Alu,
-                            None,
-                            DataBusLoadEdge::Flags,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Z,
-                            None,
-                            DataBusLoadEdge::Addr0,
-                            None,
-                        ));
-                        self.add_op(MicroOp::new(
-                            Some(AddressBusOutputLevel::Addr),
-                            DataBusOutputLevel::W,
-                            None,
-                            DataBusLoadEdge::Mem,
-                            None,
-                        ));
+                    for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y, DataBusLoadEdge::Z] {
+                        self.pc_inc();
+                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
+                    }
 
-                        self.add_op(MicroOp::new(
-                            None,
-                            DataBusOutputLevel::Imm,
-                            None,
-                            DataBusLoadEdge::In1,
-                            Some(1),
-                        ));
+                    for _i in 0..=2 {
+                        self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                        self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                        self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                        self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+
+                        self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
                         for r in &[RwRegister::X, RwRegister::Y, RwRegister::Z] {
-                            self.add_op(MicroOp::new(
-                                None,
-                                DataBusOutputLevel::wxyz(*r as usize),
-                                Some(AluOpcode::AddLoNoCarry),
-                                DataBusLoadEdge::Alu,
-                                None,
-                            ));
-                            self.add_op(MicroOp::new(
-                                None,
-                                DataBusOutputLevel::Alu,
-                                None,
-                                DataBusLoadEdge::wxyz(*r as usize),
-                                None,
-                            ));
+                            self.add(Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
+                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
                         }
                     }
                 }
-                Some(Opcode::RegsAdd32Part2) => {
-                    self.add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::X,
-                        None,
-                        DataBusLoadEdge::Addr0,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        Some(AddressBusOutputLevel::Addr),
-                        DataBusOutputLevel::Mem,
-                        None,
-                        DataBusLoadEdge::In1,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Y,
-                        None,
-                        DataBusLoadEdge::Addr0,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        Some(AddressBusOutputLevel::Addr),
-                        DataBusOutputLevel::Mem,
-                        Some(AluOpcode::addlo(flags)),
-                        DataBusLoadEdge::Alu,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Alu,
-                        None,
-                        DataBusLoadEdge::W,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        Some(AddressBusOutputLevel::Addr),
-                        DataBusOutputLevel::Mem,
-                        Some(AluOpcode::addhi(flags)),
-                        DataBusLoadEdge::Alu,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Alu,
-                        None,
-                        DataBusLoadEdge::Flags,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        None,
-                        DataBusOutputLevel::Z,
-                        None,
-                        DataBusLoadEdge::Addr0,
-                        None,
-                    ));
-                    self.add_op(MicroOp::new(
-                        Some(AddressBusOutputLevel::Addr),
-                        DataBusOutputLevel::W,
-                        None,
-                        DataBusLoadEdge::Mem,
-                        None,
-                    ));
+                Some(Opcode::Add32Part2) => {
+                    self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(Opcode::FetchAbsToReg) => {
                     for data_bus_load in &[
@@ -1548,9 +1413,13 @@ impl Ucode {
             );
 
             let uop_count = self.uop_count;
-            assert!(uop_count < MAX_UOPS);
+            assert!(uop_count <= MAX_UOPS, "{} > {}", uop_count, MAX_UOPS);
 
-            let filler_bytes = 2 * (MAX_UOPS - uop_count);
+            let uop_remaining = MAX_UOPS - uop_count;
+            if self.print {
+                println!("# Filling in remaining {} uops with HALT", uop_remaining);
+            }
+            let filler_bytes = 2 * uop_remaining;
             let halt = halt.emit();
             assert_eq!(halt.0, halt.1);
             if self.print {

@@ -346,7 +346,7 @@ mod tests {
     }
 
     #[test]
-    fn or() {
+    fn or32() {
         let mut rom = Vec::new();
         rom.push(Opcode::Or32 as u8);
         rom.push(0x4);
@@ -401,13 +401,13 @@ mod tests {
     }
 
     #[test]
-    fn regsadd() {
+    fn add32() {
         let mut rom = Vec::new();
-        rom.push(Opcode::RegsAdd32Part1 as u8);
+        rom.push(Opcode::Add32Part1 as u8);
         rom.push(0x4);
         rom.push(0x8);
         rom.push(0xc);
-        rom.push(Opcode::RegsAdd32Part2 as u8);
+        rom.push(Opcode::Add32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
@@ -476,38 +476,59 @@ mod tests {
     }
 
     fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
-        add_tester_internal(carry_in, in1, in2, sum, carry_out);
-        add_tester_internal(carry_in, in2, in1, sum, carry_out);
+        add_tester_with_carry_out(carry_in, in1, in2, sum, carry_out);
+        add_tester_with_carry_out(carry_in, in2, in1, sum, carry_out);
+        add_tester_without_carry_out(carry_in, in1, in2, sum);
+        add_tester_without_carry_out(carry_in, in2, in1, sum);
     }
 
-    fn add_tester_internal(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
+    fn add_tester_with_carry_out(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
         println!(
             "test case {:?} + {:08x} + {:08x} -> {:08x} + {:?}",
             carry_in, in1, in2, sum, carry_out
         );
 
         let mut rom = Vec::new();
-
-        rom.push(Opcode::LoadImm32 as u8);
-        rom.push(0);
-        for b in &in1.to_le_bytes() {
-            rom.push(*b);
-        }
-
-        rom.push(Opcode::LoadImm32 as u8);
-        rom.push(4);
-        for b in &in2.to_le_bytes() {
-            rom.push(*b);
-        }
-
-        rom.push(Opcode::RegsAdd32Part1 as u8);
+        rom.push(Opcode::Add32Part1 as u8);
         rom.push(0);
         rom.push(4);
         rom.push(8);
-        rom.push(Opcode::RegsAdd32Part2 as u8);
+        rom.push(Opcode::Add32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
+
+        c.mem_word_mut(0x80000).copy_from_slice(&in1.to_le_bytes());
+        c.mem_word_mut(0x80004).copy_from_slice(&in2.to_le_bytes());
+
+        if carry_in {
+            c.flags |= Flags::CARRY;
+        }
+
+        while c.step() {}
+
+        assert_eq!(sum, u32::from_le_bytes(*c.mem_word_mut(0x80008)));
+        assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
+    }
+
+    fn add_tester_without_carry_out(carry_in: bool, in1: u32, in2: u32, sum: u32) {
+        println!(
+            "test case {:?} + {:08x} + {:08x} -> {:08x}",
+            carry_in, in1, in2, sum
+        );
+
+        let mut rom = Vec::new();
+
+        rom.push(Opcode::Add32NoCarryOut as u8);
+        rom.push(0);
+        rom.push(4);
+        rom.push(8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        c.mem_word_mut(0x80000).copy_from_slice(&in1.to_le_bytes());
+        c.mem_word_mut(0x80004).copy_from_slice(&in2.to_le_bytes());
 
         if carry_in {
             c.flags |= Flags::CARRY;
@@ -516,12 +537,8 @@ mod tests {
         while c.step() {}
 
         assert_eq!(in1, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
-
         assert_eq!(in2, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
-
         assert_eq!(sum, u32::from_le_bytes(*c.mem_word_mut(0x80008)));
-
-        assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
     }
 
     #[test]
@@ -567,7 +584,7 @@ mod tests {
                     let sum = a as u64 + b as u64 + *carry_in as u64;
                     let carry_out = sum > u32::max_value() as u64;
                     let sum = (sum & 0xFFFFFFFF) as u32;
-                    add_tester_internal(*carry_in, a, b, sum, carry_out);
+                    add_tester(*carry_in, a, b, sum, carry_out);
                 }
             }
         }

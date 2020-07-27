@@ -4,12 +4,21 @@ digit = { '0'..'9' }
 label = { ":" ~ alpha ~ (alpha | digit | "_" )+ }
 new_line = _{ "\r\n" | "\n"}
 
-hex_constant = {"-"? ~ ASCII_HEX_DIGIT+}
+unsigned_hex_constant = {ASCII_HEX_DIGIT+}
+signed_hex_constant = {"-"? ~ unsigned_hex_constant}
 char_constant = {"'" ~ ANY ~ "'"}
-constant = _{char_constant | "$" ~ hex_constant | label}
+constant = _{char_constant | "$" ~ signed_hex_constant | label}
 
-register = { "a" | "b" | "c" | "pc" | "serialin" | "serialout" }
-deref_register = {"&" ~ register}
+register = { "r" ~ unsigned_hex_constant }
+deref_register = {"*" ~ register}
+loadimm8 = {"loadimm8" ~ register ~ constant }
+jmp = {"jmp" ~ constant }
+jz = {"jz" ~ constant }
+load8 = {"load8" ~ deref_register ~ register }
+store8 = {"store8" ~ register ~ deref_register }
+mul8 = { "mul8" ~ register ~ register ~ register }
+
+
 direct_register = {!"&" ~ register}
 maybe_deref_register = _{ deref_register | direct_register}
 mode_imm8 = {!"&" ~ register ~ constant}

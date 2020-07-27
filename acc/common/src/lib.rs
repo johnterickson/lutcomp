@@ -121,25 +121,31 @@ pub struct SpecialArgs {
 pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
     Jmp = 1,      // pc <- [24-bit constant ABC]
-    Jz = 2,       // if Flags & CARY { px <- [24-bit constant ABC]}
+    Jz = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
 
-    Load8 = 3,     // 8-bit MEM[24-bit RegA] -> RegB
-    Store8 = 4,    // Reg A -> 8-bit MEM[24-bit RegB]
-    Mul8Part1 = 5, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
-    Mul8Part2 = 6,
+    Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
+    Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
+
+    Mul8Part1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
+    Mul8Part2 = 0x21,
+
 
     LoadImm32 = 0x80,      // regA <- [32-bit constant BCDE]
-    RegsAdd32Part1 = 0x81, // 32-bit carry + regA + regB -> regC + carry
-    RegsAdd32Part2 = 0x82, // [none] must follow Part1
-    Load32 = 0x83,         // 32-bit MEM[24-bit RegA] -> RegB
-    Store32Part1 = 0x84,   // RegA -> 32-bit MEM[24-bit RegB]
-    Store32Part2 = 0x85,   // RegA -> 32-bit MEM[24-bit RegB]
-    Or32 = 0x86,           // regA | regB -> regC
+    
+    Load32 = 0x90,         // 32-bit MEM[24-bit RegA] -> RegB
+    Store32Part1 = 0x92,   // RegA -> 32-bit MEM[24-bit RegB]
+    Store32Part2 = 0x93,   // RegA -> 32-bit MEM[24-bit RegB]
+    
+    Add32NoCarryOut = 0xA0, // 32-bit carry + regA + regB -> regC
+    Add32Part1 = 0xA1, // 32-bit carry + regA + regB -> regC + carry
+    Add32Part2 = 0xA2, // [none] must follow Part1
+
+    Or32 = 0xB0,           // regA | regB -> regC
+    And32 = 0xB1,           // regA | regB -> regC
 
     FetchAbsToReg = 11,          // mem[24-bit address ABCD] -> regE
     AddRegImm = 14,              // regA += [32-bit constant BCDE]
     OrRegImm = 15,               // regA |= [32-bit constant BCDE]
-    ShiftLeftSubByteRegImm = 16, // regA <<= [8-bit constant B]
 
     Halt = 255,
 }

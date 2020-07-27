@@ -1,0 +1,38 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+lower = { 'a'..'z' }
+alpha = { lower | 'A'..'Z' }
+digit = { '0'..'9' }
+number = { digit+ }
+ident = { lower ~ (alpha | digit)* }
+
+operation = _{ add | subtract | multiply | or | equals | notequals}
+add      = { "+" }
+subtract = { "-" }
+multiply = { "*" }
+or = { "||" }
+equals = { "==" }
+notequals = { "!=" }
+
+operator_expression = { "(" ~ expression ~ operation ~ expression ~ ")" }
+expression = { ident | number |  operator_expression }
+
+if_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" }
+assign = { "ASSIGN" ~ ident ~ ":=" ~ expression ~ ";" }
+load = { "LOAD" ~ ident ~ "<-" ~ "*" ~ expression ~ ";"}
+store = { "STORE" ~ ident ~ "->" ~ "*" ~ expression ~ ";"}
+return_statement = { "RETURN" ~ expression ~ ";" }
+
+call = { "CALL" ~ ident ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
+
+statement = { assign | if_statement | return_statement | call | load | store}
+body = { (statement)+ }
+paramters = { ident? ~ ("," ~ ident)* }
+function = {"FUNCTION " ~ ident ~ "(" ~ paramters ~ ")" ~ "{" ~ body ~ "}"}
+
+program = {
+    SOI ~
+    function+ ~
+    EOI
+}
