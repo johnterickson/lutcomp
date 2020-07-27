@@ -520,6 +520,122 @@ impl Ucode {
                         }
                     }
                 }
+                Some(Opcode::Copy32) => {
+                    self.start_of_ram();
+                    self.pc_inc();
+                    self.add(
+                        Output::Mem(AddressBusOutputLevel::Pc),
+                        Load::Direct(DataBusLoadEdge::W),
+                    );
+
+                    self.pc_inc();
+                    self.add(
+                        Output::Mem(AddressBusOutputLevel::Pc),
+                        Load::Direct(DataBusLoadEdge::X),
+                    );
+
+                    self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+
+                    for i in 0..=3 {
+                        self.add(
+                            Output::Direct(DataBusOutputLevel::W),
+                            Load::Direct(DataBusLoadEdge::Addr0),
+                        );
+                        self.add(
+                            Output::Mem(AddressBusOutputLevel::Addr),
+                            Load::Direct(DataBusLoadEdge::Z),
+                        );
+                        self.add(
+                            Output::Direct(DataBusOutputLevel::X),
+                            Load::Direct(DataBusLoadEdge::Addr0),
+                        );
+                        self.add(
+                            Output::Direct(DataBusOutputLevel::Z),
+                            Load::Mem(AddressBusOutputLevel::Addr),
+                        );
+
+                        if i != 3 {
+                            self.add(
+                                Output::Direct(DataBusOutputLevel::W),
+                                Load::Alu(AluOpcode::AddLoNoCarry),
+                            );
+                            self.add(
+                                Output::Direct(DataBusOutputLevel::Alu),
+                                Load::Direct(DataBusLoadEdge::W),
+                            );
+                            self.add(
+                                Output::Direct(DataBusOutputLevel::X),
+                                Load::Alu(AluOpcode::AddLoNoCarry),
+                            );
+                            self.add(
+                                Output::Direct(DataBusOutputLevel::Alu),
+                                Load::Direct(DataBusLoadEdge::X),
+                            );
+                        }
+                    }
+                }
+                Some(Opcode::StoreImm32) => {
+                    self.start_of_ram();
+                    self.pc_inc();
+
+                    self.add(
+                        Output::Mem(AddressBusOutputLevel::Pc),
+                        Load::Direct(DataBusLoadEdge::In1),
+                    );
+
+                    // copy address into wxy
+                    for (i, load_edge) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                        self.add(
+                            Output::Direct(DataBusOutputLevel::Alu),
+                            Load::Direct(DataBusLoadEdge::Addr0),
+                        );
+                        self.add(
+                            Output::Mem(AddressBusOutputLevel::Addr),
+                            Load::Direct(*load_edge),
+                        );
+                    }
+
+                    // copy address to addres regs
+                    for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
+                        self.add(
+                            Output::Direct(Ucode::WXYZ_OUTS[i]),
+                            Load::Direct(*load_edge),
+                        );
+                    }
+
+                    self.add(
+                        Output::Imm(1),
+                        Load::Direct(DataBusLoadEdge::In1),
+                    );
+
+
+                    for i in 0..=3 {
+                        self.pc_inc();
+                        self.add(
+                            Output::Mem(AddressBusOutputLevel::Pc),
+                            Load::Direct(DataBusLoadEdge::Z),
+                        );
+                        self.add(
+                            Output::Direct(DataBusOutputLevel::W),
+                            Load::Direct(DataBusLoadEdge::Addr0));
+                        self.add(
+                            Output::Direct(DataBusOutputLevel::Z),
+                            Load::Mem(AddressBusOutputLevel::Addr),
+                        );
+
+                        if i != 3 {
+                            self.add(
+                                Output::Direct(DataBusOutputLevel::W),
+                                Load::Alu(AluOpcode::AddLoNoCarry)
+                            );
+                            self.add(
+                                Output::Direct(DataBusOutputLevel::Alu),
+                                Load::Direct(DataBusLoadEdge::W));
+                            
+                        }
+                    }
+                }
                 Some(Opcode::Load8) => {
                     self.start_of_ram();
                     self.pc_inc();

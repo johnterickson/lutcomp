@@ -130,10 +130,12 @@ pub enum Opcode {
     Mul8Part2 = 0x21,
 
     LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
+    Copy32 = 0x81, // regA -> regB
 
     Load32 = 0x90,       // 32-bit MEM[24-bit RegA] -> RegB
     Store32Part1 = 0x92, // RegA -> 32-bit MEM[24-bit RegB]
     Store32Part2 = 0x93, // RegA -> 32-bit MEM[24-bit RegB]
+    StoreImm32, // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
     Add32NoCarryOut = 0xA0, // 32-bit carry + regA + regB -> regC
     Add32Part1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry

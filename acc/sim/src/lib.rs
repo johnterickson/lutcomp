@@ -346,6 +346,26 @@ mod tests {
     }
 
     #[test]
+    fn storeimm32() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::StoreImm32 as u8);
+        rom.push(0xC);
+        rom.push(0xEF);
+        rom.push(0xCD);
+        rom.push(0xAB);
+        rom.push(0x89);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        *c.mem_word_mut(0x8000C) = u32::to_le_bytes(0x81234);
+
+        while c.step() {}
+
+        assert_eq!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
+    }
+
+    #[test]
     fn or32() {
         let mut rom = Vec::new();
         rom.push(Opcode::Or32 as u8);
@@ -419,6 +439,25 @@ mod tests {
         assert_eq!(
             0x23456789,
             u32::from_le_bytes(c.ram[0xc..0x10].try_into().unwrap())
+        );
+    }
+
+    #[test]
+    fn copy32() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Copy32 as u8);
+        rom.push(0x4);
+        rom.push(0x8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+        c.mem_word_mut(0x80004).copy_from_slice(&u32::to_le_bytes(0x12345678));
+
+        while c.step() {}
+
+        assert_eq!(
+            0x12345678,
+            u32::from_le_bytes(*c.mem_word_mut(0x80008))
         );
     }
 
