@@ -75,7 +75,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                 if sum > 0xFF {
                     flags.insert(Flags::CARRY);
                 }
-                if (sum&0xFF) == 0 {
+                if (sum & 0xFF) == 0 {
                     flags.insert(Flags::ZERO);
                 }
                 if sum & 0x80 == 0x80 {
@@ -90,7 +90,10 @@ pub fn alu(print: bool) -> Vec<u8> {
                 let special_mode = SpecialArgs::unpack(&[entry.in2]).unwrap();
                 match special_mode.op {
                     SpecialOpcode::MicroHelper => {
-                        match SpecialMicroHelper::iter().filter(|o| *o as u8 == *special_mode.mode_args).next() {
+                        match SpecialMicroHelper::iter()
+                            .filter(|o| *o as u8 == *special_mode.mode_args)
+                            .next()
+                        {
                             Some(SpecialMicroHelper::AllBitsIfOdd) => {
                                 if entry.in1 & 0x1 == 0 {
                                     0x00
@@ -100,10 +103,16 @@ pub fn alu(print: bool) -> Vec<u8> {
                             }
                             Some(SpecialMicroHelper::LeftShiftByOne) => entry.in1 << 1,
                             Some(SpecialMicroHelper::RightShiftByOne) => entry.in1 >> 1,
-                            Some(SpecialMicroHelper::SwapNibbles) => (entry.in1 >> 4) | (entry.in1 << 4),
+                            Some(SpecialMicroHelper::SwapNibbles) => {
+                                (entry.in1 >> 4) | (entry.in1 << 4)
+                            }
                             Some(SpecialMicroHelper::Decrement) => entry.in1.wrapping_add(0xFF),
-                            Some(SpecialMicroHelper::Negate) => (entry.in1 ^ 0xFF).wrapping_add(0x01),
-                            Some(SpecialMicroHelper::Pow2Mask) => ((1u64 << (entry.in1 & 0x1F)) - 1) as u8,
+                            Some(SpecialMicroHelper::Negate) => {
+                                (entry.in1 ^ 0xFF).wrapping_add(0x01)
+                            }
+                            Some(SpecialMicroHelper::Pow2Mask) => {
+                                ((1u64 << (entry.in1 & 0x1F)) - 1) as u8
+                            }
                             Some(SpecialMicroHelper::Invert) => (entry.in1 ^ 0xFF),
                             None => 0xFF,
                         }
@@ -179,10 +188,11 @@ mod tests {
     fn test_special_micro(op: SpecialMicroHelper, in1: u8, expected: u8) {
         let lut_entry = LutEntry {
             in1,
-            in2: (SpecialArgs{
+            in2: (SpecialArgs {
                 op: SpecialOpcode::MicroHelper,
-                mode_args: (op as u8).into()
-            }).pack()[0],
+                mode_args: (op as u8).into(),
+            })
+            .pack()[0],
             op: AluOpcode::Special,
         };
 
