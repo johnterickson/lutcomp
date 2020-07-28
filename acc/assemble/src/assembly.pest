@@ -11,32 +11,40 @@ constant = _{char_constant | "$" ~ signed_hex_constant | label}
 
 register = { "r" ~ unsigned_hex_constant }
 deref_register = {"*" ~ register}
+
 loadimm8 = {"loadimm8" ~ register ~ constant }
 jmp = {"jmp" ~ constant }
 jz = {"jz" ~ constant }
-load8 = {"load8" ~ deref_register ~ register }
-store8 = {"store8" ~ register ~ deref_register }
+load8 = {"load8" ~ register ~ deref_register  }
+store8 = {"store8" ~ deref_register ~ register }
+ttyin = {"ttyin" ~ register }
+ttyout = {"ttyout" ~ register }
 mul8 = { "mul8" ~ register ~ register ~ register }
 
+loadimm32 = { "loadimm32" ~ register ~ constant }
+loadimm32 = { "copy32" ~ register ~ register }
+load32 = {"load32" ~ register ~ deref_register  }
+store32 = {"store32" ~ deref_register ~ register }
+storeimm32 = {"storeimm32" ~ deref_register ~ constant }
+add32_nocarryout = { "add32_nocarryout" ~ register ~ register ~ register }
+add32 = { "add32" ~ register ~ register ~ register }
+or32 = {"or32" ~ register ~ register ~ register }
+and32 = {"and32" ~ register ~ register ~ register }
+halt = {"halt"}
 
-direct_register = {!"&" ~ register}
-maybe_deref_register = _{ deref_register | direct_register}
-mode_imm8 = {!"&" ~ register ~ constant}
-mode_imm4 = {!"&" ~ register ~ maybe_deref_register ~ constant}
-mode_regs = {!"&" ~ register ~ maybe_deref_register ~ maybe_deref_register}
-mode_memoutregs = {"&" ~ register ~ maybe_deref_register ~ maybe_deref_register}
-args = _{mode_imm8 | mode_imm4 | mode_regs | mode_memoutregs}
+op = _{ 
+    loadimm8 | jmp | jz | 
+    load8 | store8 | ttyin | ttyout |
+    mul8 |
+    loadimm32 | copy32 |
+    load32 | store32 | storeimm32 |
+    add32_nocarryout | add32 |
+    or32 | and32 |
+    halt
+}
 
-opcode = {"loadimm" | "add" | "or" | "xor" | "and" | "shift" | "equals" | "multiply" }
-
-// pseudo_call = { "!call" ~ label}
-// pseudo_return = { "!return" }
-// pseudo_initstack = { "!init_stack" }
-pseudo_skip_if_zero = { "!skip_if_zero" }
-pseudo_copy = { "!copy" ~ register ~ maybe_deref_register}
-
-instruction = {!"#" ~ !":" ~ opcode ~ args }
+instruction = {!"#" ~ !":" ~ op }
 comment = { "#" ~ (!new_line ~ ANY)* }
-line = _{ pseudo_skip_if_zero | pseudo_copy | comment | label | instruction }
+line = _{ comment | label | instruction }
 
 program = {SOI ~ (line? ~ new_line)* ~ EOI}

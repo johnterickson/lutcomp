@@ -123,21 +123,24 @@ pub enum Opcode {
     Jmp = 1,      // pc <- [24-bit constant ABC]
     Jz = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
 
-    Load8 = 0x10,  // 8-bit MEM[24-bit RegA] -> RegB
-    Store8 = 0x11, // Reg A -> 8-bit MEM[24-bit RegB]
-    LoadTty8 = 0x12, // TTY -> RegA
+    Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
+    Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
+    LoadTty8 = 0x12,  // TTY -> RegA
     StoreTty8 = 0x13, // RegA -> TTY
 
     Mul8Part1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
     Mul8Part2 = 0x21,
 
+    OrRegImm = 0x32,  // regA |= [32-bit constant BCDE]
+    AddRegImm = 0x33, // regA &= [32-bit constant BCDE]
+
     LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
-    Copy32 = 0x81, // regA -> regB
+    Copy32 = 0x81,    // regA -> regB
 
     Load32 = 0x90,       // 32-bit MEM[24-bit RegA] -> RegB
     Store32Part1 = 0x92, // RegA -> 32-bit MEM[24-bit RegB]
     Store32Part2 = 0x93, // RegA -> 32-bit MEM[24-bit RegB]
-    StoreImm32, // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
+    StoreImm32,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
     Add32NoCarryOut = 0xA0, // 32-bit carry + regA + regB -> regC
     Add32Part1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry
@@ -145,10 +148,6 @@ pub enum Opcode {
 
     Or32 = 0xB0,  // regA | regB -> regC
     And32 = 0xB1, // regA | regB -> regC
-
-    FetchAbsToReg = 11, // mem[24-bit address ABCD] -> regE
-    AddRegImm = 14,     // regA += [32-bit constant BCDE]
-    OrRegImm = 15,      // regA |= [32-bit constant BCDE]
 
     Halt = 255,
 }
