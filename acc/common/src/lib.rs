@@ -125,6 +125,8 @@ pub enum Opcode {
 
     Load8 = 0x10,  // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 0x11, // Reg A -> 8-bit MEM[24-bit RegB]
+    LoadTty8 = 0x12, // TTY -> RegA
+    StoreTty8 = 0x13, // RegA -> TTY
 
     Mul8Part1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
     Mul8Part2 = 0x21,

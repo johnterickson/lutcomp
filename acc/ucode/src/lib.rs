@@ -743,6 +743,39 @@ impl Ucode {
                         Load::Mem(AddressBusOutputLevel::Addr),
                     );
                 }
+                Some(Opcode::LoadTty8) => {
+                    self.start_of_ram();
+                    self.pc_inc();
+                    self.add(
+                        Output::Mem(AddressBusOutputLevel::Pc),
+                        Load::Direct(DataBusLoadEdge::Addr0),
+                    );
+
+                    self.add(
+                        Output::Direct(DataBusOutputLevel::TtyIn),
+                        Load::Mem(AddressBusOutputLevel::Addr),
+                    );
+
+                    // ack it
+                    self.add(
+                        Output::Mem(AddressBusOutputLevel::Addr),
+                        Load::Direct(DataBusLoadEdge::TtyIn),
+                    );
+                }
+                Some(Opcode::StoreTty8) => {
+                    self.start_of_ram();
+                    self.pc_inc();
+                    self.add(
+                        Output::Mem(AddressBusOutputLevel::Pc),
+                        Load::Direct(DataBusLoadEdge::Addr0),
+                    );
+
+                    // copy value into Z
+                    self.add(
+                        Output::Mem(AddressBusOutputLevel::Addr),
+                        Load::Direct(DataBusLoadEdge::TtyOut),
+                    );
+                }
                 Some(Opcode::Store32Part1) => {
                     self.start_of_ram();
 

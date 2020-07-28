@@ -7,7 +7,7 @@ use strum::IntoEnumIterator;
 
 use alu::*;
 use common::*;
-use std::{convert::TryInto, fmt::Debug};
+use std::{convert::TryInto, fmt::Debug, collections::VecDeque};
 use ucode::*;
 
 const MEM_BITS: usize = 19;
@@ -23,6 +23,8 @@ const RAM_MAX: usize = RAM_MIN + RAM_SIZE - 1;
 pub struct Computer<'a> {
     rom: Vec<u8>,
     ram: Vec<u8>,
+    tty_in: VecDeque<u8>,
+    tty_out: VecDeque<u8>,
     alu_lut: &'a [u8],
     ucode_rom: &'a [u8],
     regs: [u8; 4],
@@ -55,6 +57,8 @@ impl<'a> Computer<'a> {
         let c = Computer {
             rom,
             ram: vec![0u8; 1 << MEM_BITS],
+            tty_in: VecDeque::new(),
+            tty_out: VecDeque::new(),
             alu_lut: &alu::ALU,
             ucode_rom: &ucode::UCODE,
             regs: [0u8; 4],
@@ -135,7 +139,10 @@ impl<'a> Computer<'a> {
                 self.pc = self.pcr;
                 None
             }
-            DataBusOutputLevel::TtyIn => unimplemented!(),
+            DataBusOutputLevel::TtyIn => {
+                let peek = self.tty_in.front();
+                Some(peek.map_or(0x00, |c| 0x80 | *c))
+            }
             DataBusOutputLevel::W => Some(self.regs[0]),
             DataBusOutputLevel::X => Some(self.regs[1]),
             DataBusOutputLevel::Y => Some(self.regs[2]),
@@ -178,8 +185,13 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::PcR => {
                 self.pcr = self.addr;
             }
-            DataBusLoadEdge::TtyIn => unimplemented!(),
-            DataBusLoadEdge::TtyOut => print!("{}", data_bus.unwrap() as char),
+            DataBusLoadEdge::TtyIn => {
+                let _ = self.tty_in.pop_front();
+            },
+            DataBusLoadEdge::TtyOut => {
+                self.tty_out.push_back(data_bus.unwrap());
+                print!("{}", data_bus.unwrap() as char);
+            }
             DataBusLoadEdge::W => self.regs[0] = data_bus.unwrap(),
             DataBusLoadEdge::X => self.regs[1] = data_bus.unwrap(),
             DataBusLoadEdge::Y => self.regs[2] = data_bus.unwrap(),
@@ -239,6 +251,50 @@ mod tests {
         while c.step() {}
 
         assert_eq!(0x89abcdef, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
+    }
+
+    #[test]
+    fn ttyout() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(0);
+        rom.push(0x41);
+        rom.push(0x42);
+        rom.push(0x43);
+        rom.push(0x0A);
+        rom.push(Opcode::StoreTty8 as u8);
+        rom.push(0x00);
+        rom.push(Opcode::StoreTty8 as u8);
+        rom.push(0x01);
+        rom.push(Opcode::StoreTty8 as u8);
+        rom.push(0x02);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        while c.step() {}
+
+        let chars = c.tty_out.iter().copied().collect();
+        assert_eq!("ABC", String::from_utf8(chars).unwrap().as_str());
+    }
+
+    #[test]
+    fn ttyin() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadTty8 as u8);
+        rom.push(0);
+        rom.push(Opcode::LoadTty8 as u8);
+        rom.push(1);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        c.tty_in.push_front('A' as u8);
+
+        while c.step() {}
+
+        assert_eq!(0x80 | ('A' as u8), *c.mem_byte_mut(0x80000));
+        assert_eq!(0, *c.mem_byte_mut(0x80001));
     }
 
     #[test]
