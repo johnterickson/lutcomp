@@ -89,34 +89,30 @@ pub fn alu(print: bool) -> Vec<u8> {
             AluOpcode::Special => {
                 let special_mode = SpecialArgs::unpack(&[entry.in2]).unwrap();
                 match special_mode.op {
-                    SpecialOpcode::MicroHelper => {
-                        match SpecialMicroHelper::iter()
-                            .filter(|o| *o as u8 == *special_mode.mode_args)
-                            .next()
-                        {
-                            Some(SpecialMicroHelper::AllBitsIfOdd) => {
-                                if entry.in1 & 0x1 == 0 {
-                                    0x00
-                                } else {
-                                    0xFF
-                                }
+                    SpecialOpcode::MicroHelper => match SpecialMicroHelper::iter()
+                        .filter(|o| *o as u8 == *special_mode.mode_args)
+                        .next()
+                    {
+                        Some(SpecialMicroHelper::AllBitsIfOdd) => {
+                            if entry.in1 & 0x1 == 0 {
+                                0x00
+                            } else {
+                                0xFF
                             }
-                            Some(SpecialMicroHelper::LeftShiftByOne) => entry.in1 << 1,
-                            Some(SpecialMicroHelper::RightShiftByOne) => entry.in1 >> 1,
-                            Some(SpecialMicroHelper::SwapNibbles) => {
-                                (entry.in1 >> 4) | (entry.in1 << 4)
-                            }
-                            Some(SpecialMicroHelper::Decrement) => entry.in1.wrapping_add(0xFF),
-                            Some(SpecialMicroHelper::Negate) => {
-                                (entry.in1 ^ 0xFF).wrapping_add(0x01)
-                            }
-                            Some(SpecialMicroHelper::Pow2Mask) => {
-                                ((1u64 << (entry.in1 & 0x1F)) - 1) as u8
-                            }
-                            Some(SpecialMicroHelper::Invert) => (entry.in1 ^ 0xFF),
-                            None => 0xFF,
                         }
-                    }
+                        Some(SpecialMicroHelper::LeftShiftByOne) => entry.in1 << 1,
+                        Some(SpecialMicroHelper::RightShiftByOne) => entry.in1 >> 1,
+                        Some(SpecialMicroHelper::SwapNibbles) => {
+                            (entry.in1 >> 4) | (entry.in1 << 4)
+                        }
+                        Some(SpecialMicroHelper::Decrement) => entry.in1.wrapping_add(0xFF),
+                        Some(SpecialMicroHelper::Negate) => (entry.in1 ^ 0xFF).wrapping_add(0x01),
+                        Some(SpecialMicroHelper::Pow2Mask) => {
+                            ((1u64 << (entry.in1 & 0x1F)) - 1) as u8
+                        }
+                        Some(SpecialMicroHelper::Invert) => (entry.in1 ^ 0xFF),
+                        None => 0xFF,
+                    },
                     SpecialOpcode::Shift => {
                         let args = ShiftArgs::unpack(&[*special_mode.mode_args]).unwrap();
                         if print {
