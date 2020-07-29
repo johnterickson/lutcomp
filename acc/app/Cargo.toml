@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 strum = "0.18.0"
 alu = { path = "../alu" }
-# assemble = { path = "../assemble" }
+assemble = { path = "../assemble" }
 common = { path = "../common" }
+sim = { path = "../sim" }
 ucode = { path = "../ucode" }

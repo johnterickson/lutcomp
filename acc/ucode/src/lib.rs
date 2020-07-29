@@ -12,7 +12,7 @@ use common::*;
 
 use lazy_static::lazy_static;
 lazy_static! {
-    pub static ref UCODE: Vec<u8> = ucode(false);
+    pub static ref UCODE: Vec<(u8, &'static str, u32)> = ucode(false);
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -122,7 +122,7 @@ enum Output {
 }
 
 impl MicroOp {
-    fn copy(out: Output, load: Load) -> MicroOp {
+    fn create(out: Output, load: Load) -> MicroOp {
         let load_addr = match load {
             Load::Mem(a) => Some(a),
             _ => None,
@@ -157,12 +157,14 @@ impl MicroOp {
         MicroOp::new(address_bus_out, data_out, alu_opcode, data_bus_load, immediate)
     }
 
-    fn new(address_bus_out: Option<AddressBusOutputLevel>, data_out: DataBusOutputLevel, alu_opcode: Option<AluOpcode>, data_bus_load: DataBusLoadEdge, immediate: Option<u8>) -> MicroOp {
-        assert_eq!(data_bus_load == DataBusLoadEdge::Mem || data_out == DataBusOutputLevel::Mem, address_bus_out.is_some());
+    fn new(address_bus_out: Option<AddressBusOutputLevel>, data_bus_out: DataBusOutputLevel, alu_opcode: Option<AluOpcode>, data_bus_load: DataBusLoadEdge, immediate: Option<u8>) -> MicroOp {
+        if data_bus_out != DataBusOutputLevel::Pc {
+            assert_eq!(data_bus_load == DataBusLoadEdge::Mem || data_bus_out == DataBusOutputLevel::Mem, address_bus_out.is_some());
+        }
         assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
-        assert_eq!(data_out == DataBusOutputLevel::Imm, immediate.is_some());
+        assert_eq!(data_bus_out == DataBusOutputLevel::Imm, immediate.is_some());
 
-        let default_addr_bus = if DataBusOutputLevel::Halt == data_out {
+        let default_addr_bus = if DataBusOutputLevel::Halt == data_bus_out {
             AddressBusOutputLevel::Addr
         } else {
             AddressBusOutputLevel::Pc
@@ -173,18 +175,23 @@ impl MicroOp {
         match data_bus_load {
             DataBusLoadEdge::Addr0 | DataBusLoadEdge::Addr1 | DataBusLoadEdge::Addr2 => {
                 if address_bus_out == AddressBusOutputLevel::Addr {
-                    assert_ne!(data_out, DataBusOutputLevel::Mem, "reading from memory and changing address is unstable");
+                    assert_ne!(data_bus_out, DataBusOutputLevel::Mem, "reading from memory and changing address is unstable");
                 }
             }
             _ => {}
         }
 
+        if data_bus_load == DataBusLoadEdge::PcR {
+            assert_eq!(address_bus_out, AddressBusOutputLevel::Addr);
+        }
+        let alu_opcode = alu_opcode.unwrap_or(AluOpcode::AddLoNoCarry);
+        let immediate = immediate.unwrap_or_default().into();
         MicroOp {
-            data_bus_out: data_out,
-            alu_opcode: alu_opcode.unwrap_or(AluOpcode::AddLoNoCarry),
+            data_bus_out,
+            alu_opcode,
             address_bus_out,
             data_bus_load,
-            immediate: immediate.unwrap_or_default().into(),
+            immediate,
         }
     }
 
@@ -238,12 +245,24 @@ impl MicroEntry {
 // }
 
 struct Ucode {
-    vec_out: Vec<u8>,
+    vec_out: Vec<(u8,&'static str, u32)>,
     print: bool,
 
     base_address: usize,
     uop_count: usize,
     inc_pc: bool,
+}
+
+macro_rules! add {
+    ($self:expr, $out:expr, $load:expr) => {
+        $self.add_with_source($out,$load, file!(), line!());
+    };
+}
+
+macro_rules! pc_inc {
+    ($self:expr) => {
+        $self.pc_inc(file!(), line!());
+    };
 }
 
 impl Ucode {
@@ -263,34 +282,48 @@ impl Ucode {
 
     const WXYZ_LOADS: [DataBusLoadEdge; 4] = [DataBusLoadEdge::W, DataBusLoadEdge::X, DataBusLoadEdge::Y, DataBusLoadEdge::Z];
 
-    fn pc_inc(&mut self) {
-        self.add_op(MicroOp::new(None, DataBusOutputLevel::W, None, DataBusLoadEdge::PcInc, None));
+    fn pc_inc(&mut self, file: &'static str, line: u32) {
+        self.add_op(
+            MicroOp::create(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::PcInc)),
+            file, line);
     }
 
-    fn add_op(&mut self, u: MicroOp) {
+    fn add_op(&mut self, u: MicroOp, file: &'static str, line: u32) {
         if self.print {
-            println!("#  addr:{:05x} uop:{:?}", self.base_address + self.uop_count * 2, &u);
+            println!("#  addr:{:05x} uop:{:?} source:{}:{}", 
+                self.base_address + self.uop_count * 2, &u, file, line);
             u.print();
         }
-        self.vec_out.push(u.emit().0);
-        self.vec_out.push(u.emit().1);
+        self.vec_out.push((u.emit().0, file, line));
+        self.vec_out.push((u.emit().1, file, line));
         self.uop_count += 1;
     }
 
-    fn add(&mut self, out: Output, load: Load) {
-        self.add_op(MicroOp::copy(out, load));
+    fn add_with_source(&mut self, out: Output, load: Load, file: &'static str, line: u32) {
+        self.add_op(MicroOp::create(out, load), file, line);
     }
 
     fn start_of_ram(&mut self) {
-        self.add(Output::Imm(0x8), Load::Direct(DataBusLoadEdge::Addr2));
-        self.add(Output::Imm(0x0), Load::Direct(DataBusLoadEdge::Addr1));
+        add!(self, Output::Imm(0x8), Load::Direct(DataBusLoadEdge::Addr2));
+        add!(self, Output::Imm(0x0), Load::Direct(DataBusLoadEdge::Addr1));
     }
 
     fn jmp_abs(&mut self) {
         for addr_edge in &Ucode::ADDR_LOADS {
-            self.pc_inc();
-            self.add_op(MicroOp::new(Some(AddressBusOutputLevel::Pc), DataBusOutputLevel::Mem, None, *addr_edge, None));
+            pc_inc!(self);
+            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*addr_edge));
         }
+
+        self.add_op(
+            MicroOp::new(
+                Some(AddressBusOutputLevel::Addr),
+                DataBusOutputLevel::Pc,
+                None,
+                DataBusLoadEdge::PcR,
+                None,
+            ), 
+            file!(),
+            line!());
 
         self.inc_pc = false;
     }
@@ -299,40 +332,40 @@ impl Ucode {
         self.start_of_ram();
 
         for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y] {
-            self.pc_inc();
-            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
+            pc_inc!(self);
+            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
         }
 
-        self.pc_inc();
+        pc_inc!(self);
 
         for i in 0..=3 {
-            self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
-            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
-            self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
-            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(alu_op));
+            add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+            add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(alu_op));
             if i == 0 {
-                self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
             } else {
-                self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
             }
-            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
             if i != 3 {
-                self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+                add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
 
                 for r in &[RwRegister::X, RwRegister::Y, RwRegister::Z] {
                     if i == 0 && *r == RwRegister::Z {
-                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::AddLoNoCarry));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::AddLoNoCarry));
                     } else {
-                        self.add(Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
+                        add!(self, Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
                     }
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
                 }
             }
         }
     }
 
-    fn build(&mut self) -> Vec<u8> {
+    fn build(&mut self) -> Vec<(u8, &'static str, u32)> {
         if self.print {
             println!("v2.0 raw");
         }
@@ -356,7 +389,7 @@ impl Ucode {
             self.uop_count = 0;
             self.inc_pc = true;
 
-            let noop = MicroOp::copy(Output::Imm(flags.bits()), Load::Direct(DataBusLoadEdge::Flags));
+            let noop = MicroOp::create(Output::Imm(flags.bits()), Load::Direct(DataBusLoadEdge::Flags));
 
             if self.print {
                 println!("#");
@@ -368,7 +401,7 @@ impl Ucode {
             if self.print {
                 println!("# common prelude");
             }
-            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::IR0));
+            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::IR0));
 
             match opcode {
                 Some(Opcode::Jmp) => {
@@ -377,460 +410,528 @@ impl Ucode {
                 Some(Opcode::Jz) => {
                     if flags.contains(Flags::ZERO) {
                         self.jmp_abs();
+                    } else {
+                        pc_inc!(self);
+                        pc_inc!(self);
+                        pc_inc!(self);
                     }
                 }
                 Some(Opcode::LoadImm8) => {
                     self.start_of_ram();
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.pc_inc();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    pc_inc!(self);
 
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(Opcode::LoadImm32) => {
                     self.start_of_ram();
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
 
                     for i in 0..=3 {
-                        self.pc_inc();
-                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
-                        self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                        pc_inc!(self);
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
+                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
 
                         if i != 3 {
-                            self.add(Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
                     }
                 }
                 Some(Opcode::Copy32) => {
                     self.start_of_ram();
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
 
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::X));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::X));
 
-                    self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
 
                     for i in 0..=3 {
-                        self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Z));
-                        self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
+                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Z));
+                        add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
 
                         if i != 3 {
-                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                            self.add(Output::Direct(DataBusOutputLevel::X), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Direct(DataBusOutputLevel::X), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
                         }
                     }
                 }
                 Some(Opcode::StoreImm32) => {
                     self.start_of_ram();
-                    self.pc_inc();
+                    pc_inc!(self);
 
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
 
                     // copy address into wxy
                     for (i, load_edge) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
-                        self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
+                        add!(self, Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
                     // copy address to addres regs
                     for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
-                        self.add(Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
                     }
 
-                    self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
 
                     for i in 0..=3 {
-                        self.pc_inc();
-                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Z));
-                        self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
+                        pc_inc!(self);
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Z));
+                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
 
                         if i != 3 {
-                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
                         }
                     }
                 }
                 Some(Opcode::Load8) => {
                     self.start_of_ram();
-                    self.pc_inc();
+                    pc_inc!(self);
 
                     // copy address into wxy
                     for (i, load_edge) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
                         if i == 0 {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                         } else {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
                     // copy address to addres regs
                     for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
-                        self.add(Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
                     }
 
                     // copy value into W
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
 
                     // store value
                     self.start_of_ram();
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(Opcode::Store8) => {
                     self.start_of_ram();
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
 
                     // copy value into Z
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Z));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Z));
 
                     // copy address into wxy
-                    self.pc_inc();
+                    pc_inc!(self);
                     for (i, load_edge) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
                         if i == 0 {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                         } else {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
                     // copy address to addres regs
                     for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
-                        self.add(Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
                     }
 
                     // store value to memory
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
                 }
-                Some(Opcode::LoadTty8) => {
+                Some(Opcode::Copy8) => {
                     self.start_of_ram();
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
 
-                    self.add(Output::Direct(DataBusOutputLevel::TtyIn), Load::Mem(AddressBusOutputLevel::Addr));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+                    
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                }
+                Some(Opcode::AndImm8) => {
+                    self.start_of_ram();
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                }
+                Some(Opcode::OrImm8) => {
+                    self.start_of_ram();
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                }
+                Some(Opcode::XorImm8) => {
+                    self.start_of_ram();
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    
+                    pc_inc!(self);
+
+                    // a | b -> W
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+
+                    // ~ (a & b)
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+
+                    // a ^ b == (a | b) & ~( a & b)
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                }
+                Some(Opcode::Add8) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+                    
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::addlo(flags)));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::addhi(flags)));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                }
+                Some(Opcode::TtyIn) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::TtyIn), Load::Mem(AddressBusOutputLevel::Addr));
 
                     // ack it
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::TtyIn));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::TtyIn));
                 }
-                Some(Opcode::StoreTty8) => {
+                Some(Opcode::TtyOut) => {
                     self.start_of_ram();
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
 
                     // copy value into Z
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::TtyOut));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::TtyOut));
                 }
                 Some(Opcode::Store32Part1) => {
                     self.start_of_ram();
 
                     // store regA in Z
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Z));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Z));
 
                     // store regB's addr in WXY
-                    self.pc_inc();
+                    pc_inc!(self);
                     for (i, load_edge) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
                         if i == 0 {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                         } else {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
                     for i in 0..=1 {
                         self.start_of_ram();
-                        self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
-                        self.add(Output::Imm(0), Load::Alu(AluOpcode::AddLoNoCarry));
+                        add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddLoNoCarry));
 
                         // load up store address
                         for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
-                            self.add(Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                            add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
                         }
 
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
                         if i != 3 {
-                            self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+                            add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
-                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
                         }
                     }
                 }
                 Some(Opcode::Store32Part2) => {
                     for i in 2..=3 {
                         self.start_of_ram();
-                        self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
-                        self.add(Output::Imm(0), Load::Alu(AluOpcode::AddLoNoCarry));
+                        add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddLoNoCarry));
 
                         // load up store address
                         for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
-                            self.add(Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                            add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
                         }
 
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
                         if i != 3 {
-                            self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+                            add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
-                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
                         }
                     }
                 }
                 Some(Opcode::Load32) => {
                     self.start_of_ram();
-                    self.pc_inc();
+                    pc_inc!(self);
 
                     // copy address into wxy
                     for (i, load_edge) in Ucode::WXYZ_LOADS.iter().enumerate() {
                         if i == 0 {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                         } else {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
                     // copy address in wxy to addres regs
                     for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
-                        self.add(Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
                     }
 
                     // copy addr0 to Z
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::Z));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::Z));
 
                     // copy value into WXYZ
                     for (i, load_edge) in Ucode::WXYZ_LOADS.iter().enumerate() {
                         if i != 0 {
-                            self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
                     // store value
                     self.start_of_ram();
-                    self.pc_inc();
+                    pc_inc!(self);
                     for (i, reg) in Ucode::WXYZ_OUTS.iter().enumerate() {
                         if i == 0 {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                         } else {
-                            self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(i as u8), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
 
-                        self.add(Output::Direct(*reg), Load::Mem(AddressBusOutputLevel::Addr));
+                        add!(self, Output::Direct(*reg), Load::Mem(AddressBusOutputLevel::Addr));
                     }
                 }
                 Some(Opcode::Mul8Part1) => {
                     self.start_of_ram();
-                    self.pc_inc();
+                    pc_inc!(self);
                     // 16-bit "A" in WX
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
-                    self.add(Output::Imm(0), Load::Direct(DataBusLoadEdge::X));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::X));
 
                     // 8-bit "B" in Y
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Y));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Y));
                 }
                 Some(Opcode::Mul8Part2) => {
                     self.inc_pc = false; // handle this manually
 
-                    self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                     if flags.contains(Flags::ZERO) {
-                        self.pc_inc();
-                        self.add(Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
+                        pc_inc!(self);
+                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
                     } else {
-                        self.add_op(noop);
-                        self.add_op(noop);
+                        self.add_op(noop, file!(), line!());
+                        self.add_op(noop, file!(), line!());
                     }
 
                     //   Z = if b & 1 { 0xFF } else { 0x00 }
 
                     // point memory to product0, three times to
-                    self.add(Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
 
                     // store mask in Z
-                    self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Imm(SpecialMicroHelper::AllBitsIfOdd as u8), Load::Alu(AluOpcode::Special));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::AllBitsIfOdd as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
                     // mask W with Z
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
 
                     // add product0 masked W
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::AddHiNoCarry));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::AddLoNoCarry));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::AddLoNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
                     // point memory to product1
-                    self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::Addr0));
 
                     // mask X with Z
-                    self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
 
                     // add product1 masked X
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
                     //   need to left-shift [WX] by 1
 
                     // create shift command and store in Z: 01==Shift 00=Rotate
-                    self.add(Output::Imm(0b0100), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Imm(1), Load::Alu(AluOpcode::Or));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+                    add!(self, Output::Imm(0b0100), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
                     // rotate X by 1
-                    self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
 
                     // rotate W by 1
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
 
                     // create ~1 mask and store in Z
-                    self.add(Output::Imm(0x1), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+                    add!(self, Output::Imm(0x1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
                     // clear out lowest bit from X
-                    self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
 
                     // grab lowest bit from W and OR into X
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Imm(1), Load::Alu(AluOpcode::And));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::X), Load::Alu(AluOpcode::Or));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
 
                     // clear out lowest bit from W
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
 
                     //   need to right-shift Y by 1
-                    self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Imm(SpecialMicroHelper::RightShiftByOne as u8), Load::Alu(AluOpcode::Special));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Y));
+                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::RightShiftByOne as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Y));
                 }
-                // Some(Opcode::ShiftLeftSubByteRegImm) => {
-
-                //     // W holds register number
-                //     self.pc_inc();
-                //     self.add_copy(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
-
-                //     self.add_copy(Output::Imm(0b0101), Load::Direct(DataBusLoadEdge::In1));
-                //     self.add_copy(Output::Imm(SpecialSpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
-
-                //     // PC points to shift amount
-                //     self.pc_inc();
-                //     self.add_copy(Output::Imm(0b111), Load::Direct(DataBusLoadEdge::In1));
-                //     self.add_copy(Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::And));
-
-                //     // read first byte to X
-                //     self.start_of_ram();
-                //     self.add_copy(Output::Mem(AddressBusOutputLevel::W), Load::Direct(DataBusLoadEdge::Addr0));
-                //     self.add_copy(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::X));
-
-                //     todo!();
-                // }
-                Some(Opcode::AddRegImm) => {
+                Some(Opcode::AndImm32) => {
                     self.start_of_ram();
 
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
 
                     for i in 0..=3 {
-                        self.pc_inc();
-                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-                        self.add(Output::Direct(DataBusOutputLevel::X), Load::Mem(AddressBusOutputLevel::Addr));
+                        pc_inc!(self);
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                        add!(self, Output::Direct(DataBusOutputLevel::X), Load::Mem(AddressBusOutputLevel::Addr));
 
                         if i != 3 {
-                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
                     }
                 }
-                Some(Opcode::OrRegImm) => {
+                Some(Opcode::OrImm32) => {
                     self.start_of_ram();
 
-                    self.pc_inc();
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
 
                     for i in 0..=3 {
-                        self.pc_inc();
-                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::Or));
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                        pc_inc!(self);
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::Or));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
                         if i != 3 {
-                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                            self.add(Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
                         }
                     }
                 }
                 Some(Opcode::Halt) => {
-                    self.add_op(halt);
+                    self.add_op(halt, file!(), line!());
                 }
                 Some(Opcode::Or32) => {
                     self.parallel_op_32(AluOpcode::Or);
@@ -842,42 +943,42 @@ impl Ucode {
                     self.start_of_ram();
 
                     for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y] {
-                        self.pc_inc();
-                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
+                        pc_inc!(self);
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
                     }
 
-                    self.pc_inc();
+                    pc_inc!(self);
 
                     for i in 0..=3 {
-                        self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
-                        self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
 
                         if i != 3 {
-                            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                             if i == 0 {
-                                self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                                add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                             } else {
-                                self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                                add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
                             }
-                            self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
 
-                            self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
                             for r in &[RwRegister::X, RwRegister::Y, RwRegister::Z] {
                                 if i == 0 && *r == RwRegister::Z {
-                                    self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::AddLoNoCarry));
+                                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(AluOpcode::AddLoNoCarry));
                                 } else {
-                                    self.add(Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
+                                    add!(self, Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
                                 }
-                                self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
+                                add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
                             }
                         } else {
-                            self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
-                            self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                            add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
                         }
                     }
                 }
@@ -885,41 +986,41 @@ impl Ucode {
                     self.start_of_ram();
 
                     for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y, DataBusLoadEdge::Z] {
-                        self.pc_inc();
-                        self.add(Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
+                        pc_inc!(self);
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*edge));
                     }
 
                     for _i in 0..=2 {
-                        self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
-                        self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                        self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
-                        self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-                        self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
-                        self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                        add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                        add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
 
-                        self.add(Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
                         for r in &[RwRegister::X, RwRegister::Y, RwRegister::Z] {
-                            self.add(Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
-                            self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
+                            add!(self, Output::Direct(DataBusOutputLevel::wxyz(*r as usize)), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::wxyz(*r as usize)));
                         }
                     }
                 }
                 Some(Opcode::Add32Part2) => {
-                    self.add(Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
-                    self.add(Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                    self.add(Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
-                    self.add(Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-                    self.add(Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
-                    self.add(Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
                 }
-                _ => {
-                    self.add_op(halt);
+                None => {
+                    self.add_op(halt, file!(), line!());
                 }
             }
 
@@ -927,11 +1028,11 @@ impl Ucode {
                 println!("# common exit");
             }
             if self.inc_pc {
-                self.pc_inc();
+                pc_inc!(self);
             }
-            self.add(
+            add!(self, 
                 Output::Direct(DataBusOutputLevel::Next),
-                Load::Direct(DataBusLoadEdge::W), // doesn't matter
+                Load::Direct(DataBusLoadEdge::W) // doesn't matter
             );
 
             let uop_count = self.uop_count;
@@ -948,7 +1049,7 @@ impl Ucode {
                 println!("{}*{:02x}", filler_bytes, halt.0);
             }
             for _ in 0..filler_bytes {
-                self.vec_out.push(halt.0);
+                self.vec_out.push((halt.0, file!(), line!()));
             }
         }
 
@@ -956,7 +1057,7 @@ impl Ucode {
     }
 }
 
-pub fn ucode(print: bool) -> Vec<u8> {
+pub fn ucode(print: bool) -> Vec<(u8, &'static str, u32)> {
     let mut ucode = Ucode::new(print);
     ucode.build()
 }

@@ -2,7 +2,7 @@
 members = [
     "alu", 
     "app",
- #   "assemble",
+    "assemble",
     "common",
     "sim",
     "ucode"

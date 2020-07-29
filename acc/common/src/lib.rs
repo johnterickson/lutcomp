@@ -122,17 +122,20 @@ pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
     Jmp = 1,      // pc <- [24-bit constant ABC]
     Jz = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
+    Copy8 = 3, // regA -> regB
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
-    LoadTty8 = 0x12,  // TTY -> RegA
-    StoreTty8 = 0x13, // RegA -> TTY
+    TtyIn = 0x12,  // TTY -> RegA
+    TtyOut = 0x13, // RegA -> TTY
 
     Mul8Part1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
     Mul8Part2 = 0x21,
+    Add8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
 
-    OrRegImm = 0x32,  // regA |= [32-bit constant BCDE]
-    AddRegImm = 0x33, // regA &= [32-bit constant BCDE]
+    AndImm8 = 0x30, // regA &= [8-bit constant B]
+    OrImm8 = 0x31, // regA |= [8-bit constant B]
+    XorImm8 = 0x32, // regA ^= [8-bit constant B]
 
     LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
     Copy32 = 0x81,    // regA -> regB
@@ -147,7 +150,9 @@ pub enum Opcode {
     Add32Part2 = 0xA2,      // [none] must follow Part1
 
     Or32 = 0xB0,  // regA | regB -> regC
-    And32 = 0xB1, // regA | regB -> regC
+    And32 = 0xB1, // regA & regB -> regC
+    OrImm32 = 0xB2,  // regA |= [32-bit constant BCDE]
+    AndImm32 = 0xB3, // regA &= [32-bit constant BCDE]
 
     Halt = 255,
 }

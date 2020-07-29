@@ -6,101 +6,75 @@ use pest::Parser;
 extern crate strum;
 
 extern crate packed_struct;
-use packed_struct::prelude::*;
 
 use common::*;
-use std::{collections::BTreeMap, io::Read};
+use std::{collections::BTreeMap, convert::TryInto};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
 pub struct AssemblyParser;
 
 #[derive(Clone, Debug)]
+enum Value {
+    Constant8(u8),
+    Constant24(u32),
+    Constant32(u32),
+    Register(u8),
+    Label24(String),
+    Label32(String),
+}
+
+#[derive(Clone, Debug)]
 struct AssemblyInstruction {
     source: String,
     opcode: Opcode,
-    mode: InstructionMode,
+    args: Vec<Value>,
+    resolved: Option<Vec<u8>>
 }
 
 impl AssemblyInstruction {
-    fn resolve(&mut self, labels: &BTreeMap<String, u8>) {
-        match &mut self.mode {
-            InstructionMode::Regs(_, _, _) => {}
-            InstructionMode::Imm8(_, in2) => in2.resolve(labels),
-            InstructionMode::Imm4(_, _, in2) => in2.resolve(labels),
-            InstructionMode::MemOutRegs(_, _, _) => {}
+    fn size(&self) -> u32 {
+        let mut sum = 0;
+        sum += 1;
+        for arg in &self.args {
+            sum += match arg {
+                Value::Constant8(_) => 1,
+                Value::Constant24(_) => 3,
+                Value::Constant32(_) => 4,
+                Value::Register(_) => 1,
+                Value::Label24(_) => 3,
+                Value::Label32(_) => 4,
+            }
         }
+        sum
     }
-
-    fn emit(&self) -> Instruction {
-        let (out_reg, mode, mode_specific) = match &self.mode {
-            InstructionMode::Regs(out_reg, in1, in2) => {
-                let (in1_indirect, in1_reg) = in1.split();
-                let (in2_indirect, in2_reg) = in2.split();
-                (
-                    out_reg,
-                    InstructionModeDiscriminants::Regs,
-                    PackedInstructionMode1or3 {
-                        in1_indirect,
-                        in1_reg,
-                        in2_indirect,
-                        in2_reg,
-                    }
-                    .pack()[0],
-                )
+    fn resolve(&mut self, labels: &BTreeMap<String, u32>, _current_pc: u32) {
+        let mut bytes = Vec::new();
+        bytes.push(self.opcode as u8);
+        for arg in &self.args {
+            match arg {
+                Value::Constant8(c) => bytes.push(*c),
+                Value::Constant24(c) => bytes.extend_from_slice(&u32::to_le_bytes(*c)[0..=2]),
+                Value::Constant32(c) => bytes.extend_from_slice(&u32::to_le_bytes(*c)),
+                Value::Register(r) => bytes.push(*r),
+                Value::Label24(label) => {
+                    let address =*labels.get(label).expect("label not found");
+                    bytes.extend_from_slice(&u32::to_le_bytes(address)[0..=2]);
+                },
+                Value::Label32(label) => {
+                    let address =*labels.get(label).expect("label not found");
+                    bytes.extend_from_slice(&u32::to_le_bytes(address));
+                },
             }
-            InstructionMode::Imm8(out_reg, in2) => (
-                out_reg,
-                InstructionModeDiscriminants::Imm8,
-                in2.unwrap_constant(),
-            ),
-            InstructionMode::Imm4(out_reg, in1, in2) => {
-                let (in1_indirect, in1_reg) = in1.split();
-
-                (
-                    out_reg,
-                    InstructionModeDiscriminants::Imm4,
-                    PackedInstructionMode2 {
-                        in1_indirect,
-                        in1_reg,
-                        imm: in2.unwrap_constant().into(),
-                    }
-                    .pack()[0],
-                )
-            }
-            InstructionMode::MemOutRegs(out_reg, in1, in2) => {
-                let (in1_indirect, in1_reg) = in1.split();
-                let (in2_indirect, in2_reg) = in2.split();
-                (
-                    out_reg,
-                    InstructionModeDiscriminants::MemOutRegs,
-                    PackedInstructionMode1or3 {
-                        in1_indirect,
-                        in1_reg,
-                        in2_indirect,
-                        in2_reg,
-                    }
-                    .pack()[0],
-                )
-            }
-        };
-
-        Instruction {
-            op: self.opcode,
-            mode: mode,
-            mode_specific,
-            out_reg: *out_reg,
         }
+
+        assert_eq!(self.size(), bytes.len() as u32);
+
+        self.resolved = Some(bytes);
     }
 }
 
-pub fn assemble() {
-    let input = {
-        let mut input = String::new();
-        std::io::stdin().lock().read_to_string(&mut input).unwrap();
-        input
-    };
-
+pub fn assemble(input: String) -> Vec<u8> {
     use pest::iterators::Pair;
 
     println!("v2.0 raw");
@@ -124,43 +98,61 @@ pub fn assemble() {
         dump_tree(assembly, 0);
     }
 
-    fn parse_maybe_direct(maybe: Pair<Rule>) -> MaybeDirect<Register> {
-        match maybe.as_rule() {
-            Rule::deref_register => {
-                let mut register = maybe.into_inner();
-                let reg = std::str::FromStr::from_str(register.next().unwrap().as_str()).unwrap();
-                MaybeDirect::Address(reg)
-            }
-            Rule::direct_register => {
-                let mut register = maybe.into_inner();
-                let reg = std::str::FromStr::from_str(register.next().unwrap().as_str()).unwrap();
-                MaybeDirect::Value(reg)
-            }
+    fn parse_unsigned_hex(hex: Pair<Rule>) -> u32 {
+        assert_eq!(hex.as_rule(), Rule::unsigned_hex_constant);
+        u32::from_str_radix(hex.as_str(), 16).unwrap()
+    }
+
+    fn parse_signed_hex(hex: Pair<Rule>) -> u32 {
+        assert_eq!(hex.as_rule(), Rule::signed_hex_constant);
+        let mut chars = hex.as_str().chars();
+        if chars.next().unwrap() == '-' {
+            let positive =
+                u32::from_str_radix(hex.as_str().trim_start_matches('-'), 16).unwrap();
+            ((positive as i64) * (-1i64)).try_into().expect("does not fit in u32")
+        } else {
+            parse_unsigned_hex(hex.into_inner().next().unwrap())
+        }
+    }
+
+    fn parse_char(constant: Pair<Rule>) -> u8 {
+        assert_eq!(constant.as_rule(), Rule::char_constant);
+        let mut chars = constant.as_str().chars();
+        assert_eq!('\'', chars.next().unwrap());
+        let c = chars.next().unwrap();
+        assert_eq!('\'', chars.next().unwrap());
+        assert_eq!(None, chars.next());
+        c as u8
+    }
+
+    fn parse_constant8(constant: Pair<Rule>) -> Value {
+        assert_eq!(constant.as_rule(), Rule::constant8);
+        let constant = constant.into_inner().next().unwrap();
+        match constant.as_rule() {
+            Rule::signed_hex_constant => Value::Constant8(parse_signed_hex(constant).try_into().expect("does not fit in u8")),
+            Rule::char_constant => Value::Constant8(parse_char(constant)),
             r => panic!("unexpexted {:?}", r),
         }
     }
 
-    fn parse_constant(constant: Pair<Rule>) -> Value {
+    fn parse_constant24(constant: Pair<Rule>) -> Value {
+        assert_eq!(constant.as_rule(), Rule::constant24);
+        let constant = constant.into_inner().next().unwrap();
         match constant.as_rule() {
-            Rule::hex_constant => {
-                let mut chars = constant.as_str().chars();
-                Value::Constant(if chars.next().unwrap() == '-' {
-                    let positive =
-                        i8::from_str_radix(constant.as_str().trim_start_matches('-'), 16).unwrap();
-                    (-1 * positive) as u8
-                } else {
-                    u8::from_str_radix(constant.as_str(), 16).unwrap()
-                })
-            }
-            Rule::char_constant => {
-                let mut chars = constant.as_str().chars();
-                assert_eq!('\'', chars.next().unwrap());
-                let c = chars.next().unwrap();
-                assert_eq!('\'', chars.next().unwrap());
-                assert_eq!(None, chars.next());
-                Value::Constant(c as u8)
-            }
-            Rule::label => Value::Label(constant.as_str().to_owned(), None),
+            Rule::signed_hex_constant => Value::Constant24(parse_signed_hex(constant)),
+            Rule::char_constant => Value::Constant24(parse_char(constant) as u32),
+            Rule::label => Value::Label24(constant.as_str().to_owned()),
+            r => panic!("unexpexted {:?}", r),
+        }
+    }
+
+    fn parse_constant32(constant: Pair<Rule>) -> Value {
+        assert_eq!(constant.as_rule(), Rule::constant32);
+        let constant = constant.into_inner().next().unwrap();
+        match constant.as_rule() {
+            Rule::signed_hex_constant => Value::Constant32(parse_signed_hex(constant)),
+            Rule::char_constant => Value::Constant32(parse_char(constant) as u32),
+            Rule::label => Value::Label32(constant.as_str().to_owned()),
             r => panic!("unexpexted {:?}", r),
         }
     }
@@ -170,121 +162,59 @@ pub fn assemble() {
         Comment(String),
     }
 
-    let mut lines = Vec::new();
+    let mut lines : Vec<SourceLine> = Vec::new();
     let mut labels = BTreeMap::new();
-
-    labels.insert(":tty".to_owned(), 0);
-    labels.insert(":halt".to_owned(), 0xff);
 
     let mut assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
     let assembly = assembly.next().unwrap();
     let assembly = assembly.into_inner();
+
+    let mut pc = 0u32;
     for line in assembly {
         match line.as_rule() {
             Rule::instruction => {
-                let instruction = line;
+                let instruction = line.into_inner().next().unwrap();
                 let source = instruction.as_span().as_str().to_owned();
-                let mut tokens = instruction.into_inner();
 
-                let opcode: Opcode = {
-                    let opcode = tokens.next().unwrap();
-                    assert_eq!(Rule::opcode, opcode.as_rule());
-                    std::str::FromStr::from_str(opcode.as_str()).unwrap()
+                let mut args = Vec::new();
+
+                let opcode_name = format!("{:?}", instruction.as_rule()); //ew
+                let opcode = match &opcode_name {
+                    name => std::str::FromStr::from_str(name)
+                        .expect(&format!("Could not parse op {}", name)),
                 };
 
-                let mode = {
-                    let inputs = tokens.next().unwrap();
-                    match inputs.as_rule() {
-                        Rule::mode_imm8 => {
-                            let mut args = inputs.into_inner();
-                            let out =
-                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
-                            let in2 = parse_constant(args.next().unwrap());
-                            InstructionMode::Imm8(out, in2)
-                        }
-                        Rule::mode_regs => {
-                            let mut args = inputs.into_inner();
-                            let out =
-                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
-                            let in1 = parse_maybe_direct(args.next().unwrap());
-                            let in2 = parse_maybe_direct(args.next().unwrap());
-                            InstructionMode::Regs(out, in1, in2)
-                        }
-                        Rule::mode_imm4 => {
-                            let mut args = inputs.into_inner();
-                            let out =
-                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
-                            let in1 = parse_maybe_direct(args.next().unwrap());
-                            let in2 = parse_constant(args.next().unwrap());
-                            InstructionMode::Imm4(out, in1, in2)
-                        }
-                        Rule::mode_memoutregs => {
-                            let mut args = inputs.into_inner();
-                            let out =
-                                std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
-                            let in1 = parse_maybe_direct(args.next().unwrap());
-                            let in2 = parse_maybe_direct(args.next().unwrap());
-                            InstructionMode::MemOutRegs(out, in1, in2)
-                        }
-                        r => panic!("Unexpected: {:?}", r),
-                    }
-                };
+                let arg_tokens = instruction.into_inner();
 
+                for arg in arg_tokens {
+                    let value = match arg.as_rule() {
+                        Rule::register => {
+                            let reg = parse_unsigned_hex(arg.into_inner().next().unwrap());
+                            Value::Register(reg.try_into().expect("invalid register"))
+                        }
+                        Rule::constant8 => parse_constant8(arg),
+                        Rule::constant24 => parse_constant24(arg),
+                        Rule::constant32 => parse_constant32(arg),
+                        r => panic!("unexpexted {:?}", r),
+                    };
+
+                    args.push(value);
+                }
+                
                 let inst = AssemblyInstruction {
                     source,
                     opcode,
-                    mode,
+                    args,
+                    resolved: None,
                 };
+
+                pc += inst.size();
 
                 println!("# {:?}", &inst);
                 lines.push(SourceLine::Instruction(inst));
-            }
-            Rule::pseudo_copy => {
-                let source = line.as_str().to_owned();
-                let mut args = line.into_inner();
-                let dst = std::str::FromStr::from_str(args.next().unwrap().as_str()).unwrap();
-                let src = parse_maybe_direct(args.next().unwrap());
-
-                let inst = AssemblyInstruction {
-                    source,
-                    opcode: Opcode::Or,
-                    mode: InstructionMode::Regs(dst, src, src),
-                };
-
-                println!("# {:?}", &inst);
-                lines.push(SourceLine::Instruction(inst));
-            }
-            Rule::pseudo_skip_if_zero => {
-                let source = line.as_str().to_owned();
-                let mut insts = vec![
-                    AssemblyInstruction {
-                        source: source.clone(),
-                        opcode: Opcode::Shift,
-                        mode: InstructionMode::Imm8(Register::A, Value::Constant(1)),
-                    },
-                    AssemblyInstruction {
-                        source: source.clone(),
-                        opcode: Opcode::Add,
-                        mode: InstructionMode::Imm8(Register::A, Value::Constant(1)),
-                    },
-                    AssemblyInstruction {
-                        source: source.clone(),
-                        opcode: Opcode::Add,
-                        mode: InstructionMode::Regs(
-                            Register::Pc,
-                            MaybeDirect::Value(Register::A),
-                            MaybeDirect::Value(Register::Pc),
-                        ),
-                    },
-                ];
-
-                for inst in insts.drain(..) {
-                    println!("# {:?}", &inst);
-                    lines.push(SourceLine::Instruction(inst));
-                }
             }
             Rule::label => {
-                labels.insert(line.as_str().to_owned(), lines.len() as u8);
+                labels.insert(line.as_str().to_owned(), pc);
                 lines.push(SourceLine::Comment(line.as_str().to_owned()));
             }
             Rule::comment => {
@@ -295,21 +225,26 @@ pub fn assemble() {
         }
     }
 
-    let mut pc = 0;
+    let mut rom = Vec::new();
+    let mut pc = 0u32;
     for line in lines.as_mut_slice() {
         match line {
             SourceLine::Comment(comment) => {
                 println!("# {}", &comment);
             }
             SourceLine::Instruction(i) => {
-                i.resolve(&labels);
-                let packed = i.emit();
+                i.resolve(&labels, pc);
                 println!("# {:02x} {:?}", pc, &i);
-                println!("# {:02x} {:?}", pc, &packed);
-                let bytes = packed.pack();
-                println!("{:02x} {:02x}", bytes[1], bytes[0]);
-                pc += 2;
+
+                for byte in i.resolved.as_ref().unwrap() {
+                    print!("{:02x} ", byte);
+                    rom.push(*byte);
+                    pc += 1;
+                }
+                println!();
             }
         }
     }
+
+    rom
 }
