@@ -31,7 +31,6 @@ dependencies = [
  "packed_struct",
  "pest",
  "pest_derive",
- "sim",
  "strum",
 ]
 
