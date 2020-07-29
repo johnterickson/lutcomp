@@ -1,15 +1,29 @@
 extern crate packed_struct;
 use packed_struct::prelude::*;
 
-extern crate itertools;
 
 use strum::IntoEnumIterator;
 
 use alu::*;
 use common::*;
-use std::{collections::VecDeque, convert::TryInto, fmt::Debug, io};
+use std::{collections::VecDeque, convert::TryInto, fmt::Debug, io, sync::{Mutex, mpsc::{self, Receiver}}, thread};
 use ucode::*;
-use io::Read;
+
+fn spawn_stdin_channel() -> Receiver<String> {
+    let (tx, rx) = mpsc::channel::<String>();
+    thread::spawn(move || loop {
+        let mut buffer = String::new();
+        io::stdin().read_line(&mut buffer).unwrap();
+        tx.send(buffer).unwrap();
+    });
+    rx
+}
+
+
+use lazy_static::lazy_static;
+lazy_static! {
+    pub static ref NONBLOCKING_STDIN: Mutex<Receiver<String>> = Mutex::new(spawn_stdin_channel());
+}
 
 const MEM_BITS: usize = 19;
 
@@ -156,11 +170,11 @@ impl<'a> Computer<'a> {
             }
             DataBusOutputLevel::TtyIn => {
                 if self.print {
-                    let stdin = io::stdin();
-                    let mut stdin = stdin.lock();
-                    let mut buffer = [0u8; 1];
-                    while let Ok(1) = stdin.read(&mut buffer) {
-                        self.tty_in.push_back(buffer[0]);
+                    let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
+                    if let Ok(line) = stdin_channel.try_recv() {
+                        for c in line.chars() {
+                            self.tty_in.push_back(c as u8);
+                        }
                     }
                 }
                 let peek = self.tty_in.front();

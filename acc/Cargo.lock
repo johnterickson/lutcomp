@@ -275,6 +275,7 @@ dependencies = [
  "alu",
  "common",
  "itertools",
+ "lazy_static",
  "packed_struct",
  "strum",
  "ucode",

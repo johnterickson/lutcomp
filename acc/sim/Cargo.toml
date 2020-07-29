@@ -10,6 +10,7 @@ edition = "2018"
 strum = "0.18.0"
 packed_struct = "*"
 itertools = "0.9"
+lazy_static = "1.4.0"
 alu = { path = "../alu" }
 common = { path = "../common" }
 ucode = { path = "../ucode" }

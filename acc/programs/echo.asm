@@ -1,16 +1,29 @@
+loadimm8 r01 <- 'H'
+ttyout r01
+loadimm8 r01 <- 'i'
+ttyout r01
+loadimm8 r01 <- '!'
+ttyout r01
+loadimm8 r01 <- $0A
+ttyout r01
+:prompt
 loadimm8 r01 <- '>'
 ttyout r01
 loadimm8 r01 <- ':'
 ttyout r01
-:loop
+:read
 ttyin r01
 copy8 r01 -> r02
 andimm8 r02 <- $80
-jz :loop
+jz :read
 andimm8 r01 <- $7f
 ttyout r01
-xorimm8 r01 <- 'q'
+copy8 r01 -> r02
+xorimm8 r02 <- 'q'
 jz :halt
-jmp :loop
+copy8 r01 -> r02
+xorimm8 r02 <- $0A
+jz :prompt
+jmp :read
 :halt
 halt
