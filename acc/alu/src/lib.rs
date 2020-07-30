@@ -84,7 +84,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                 flags.bits()
             }
             AluOpcode::Or => entry.in1 | entry.in2,
-            AluOpcode::Xor => entry.in1 ^ entry.in2,
+            AluOpcode::Reserved5 => 0xFF,
             AluOpcode::And => entry.in1 & entry.in2,
             AluOpcode::Special => {
                 let special_mode = SpecialArgs::unpack(&[entry.in2]).unwrap();

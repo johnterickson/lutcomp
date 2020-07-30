@@ -12,10 +12,10 @@ use std::{collections::BTreeMap, convert::TryInto};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
-pub struct AssemblyParser;
+struct AssemblyParser;
 
 #[derive(Clone, Debug)]
-enum Value {
+pub enum Value {
     Constant8(u8),
     Constant24(u32),
     Constant32(u32),
@@ -25,15 +25,15 @@ enum Value {
 }
 
 #[derive(Clone, Debug)]
-struct AssemblyInstruction {
+pub struct Instruction {
     source: String,
     opcode: Opcode,
     args: Vec<Value>,
     resolved: Option<Vec<u8>>
 }
 
-impl AssemblyInstruction {
-    fn size(&self) -> u32 {
+impl Instruction {
+    pub fn size(&self) -> u32 {
         let mut sum = 0;
         sum += 1;
         for arg in &self.args {
@@ -48,7 +48,8 @@ impl AssemblyInstruction {
         }
         sum
     }
-    fn resolve(&mut self, labels: &BTreeMap<String, u32>, _current_pc: u32) {
+
+    pub fn resolve(&mut self, labels: &BTreeMap<String, u32>, _current_pc: u32) {
         let mut bytes = Vec::new();
         bytes.push(self.opcode as u8);
         for arg in &self.args {
@@ -158,7 +159,7 @@ pub fn assemble(input: String) -> Vec<u8> {
     }
 
     enum SourceLine {
-        Instruction(AssemblyInstruction),
+        Instruction(Instruction),
         Comment(String),
     }
 
@@ -201,7 +202,7 @@ pub fn assemble(input: String) -> Vec<u8> {
                     args.push(value);
                 }
                 
-                let inst = AssemblyInstruction {
+                let inst = Instruction {
                     source,
                     opcode,
                     args,

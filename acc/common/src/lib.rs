@@ -27,7 +27,7 @@ pub enum AluOpcode {
     AddHiNoCarry = 2,
     AddHiCarry = 3,
     Or = 4,
-    Xor = 5,
+    Reserved5 = 5,
     And = 6,
     Special = 7,
 }
@@ -114,6 +114,8 @@ pub struct SpecialArgs {
     pub op: SpecialOpcode,
 }
 
+pub const REG_SP: u8 = 0x0C;
+
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
@@ -122,12 +124,15 @@ pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
     Jmp = 1,      // pc <- [24-bit constant ABC]
     Jz = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
-    Copy8 = 3, // regA -> regB
+
+    Copy8 = 0xF, // regA -> regB
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
     TtyIn = 0x12,  // TTY -> RegA
     TtyOut = 0x13, // RegA -> TTY
+    Push8 = 0x14, // Reg_SP -= 1; RegA -> 8-bit MEM[Reg_SP]
+    Pop8 = 0x15, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1; 
 
     Mul8Part1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
     Mul8Part2 = 0x21,

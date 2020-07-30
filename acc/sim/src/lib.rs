@@ -469,6 +469,53 @@ mod tests {
     }
 
     #[test]
+    fn push8() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Push8 as u8);
+        rom.push(0x1);
+        rom.push(Opcode::Push8 as u8);
+        rom.push(0x2);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::with_print(rom, false);
+
+        *c.mem_byte_mut(0x80001) = 0xAA;
+        *c.mem_byte_mut(0x80002) = 0xBB;
+        // set up stack pointer
+        *c.mem_word_mut(0x80000 + REG_SP as u32) = u32::to_le_bytes(0x81001);
+
+        while c.step() {}
+
+        assert_eq!(0x80FFF, u32::from_le_bytes(*c.mem_word_mut(0x80000 + REG_SP as u32)));
+        assert_eq!(0xAA, *c.mem_byte_mut(0x81000));
+        assert_eq!(0xBB, *c.mem_byte_mut(0x80FFF));
+    }
+
+    #[test]
+    fn pop8() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Pop8 as u8);
+        rom.push(0x1);
+        rom.push(Opcode::Pop8 as u8);
+        rom.push(0x2);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::with_print(rom, false);
+
+        *c.mem_byte_mut(0x80FFF) = 0xAA;
+        *c.mem_byte_mut(0x81000) = 0xBB;
+
+        // set up stack pointer
+        *c.mem_word_mut(0x80000 + REG_SP as u32) = u32::to_le_bytes(0x80FFF);
+
+        while c.step() {}
+
+        assert_eq!(0x81001, u32::from_le_bytes(*c.mem_word_mut(0x80000 + REG_SP as u32)));
+        assert_eq!(0xAA, *c.mem_byte_mut(0x80001));
+        assert_eq!(0xBB, *c.mem_byte_mut(0x80002));
+    }
+
+    #[test]
     fn load32() {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm32 as u8);

@@ -558,6 +558,93 @@ impl Ucode {
                     // store value to memory
                     add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
                 }
+
+                Some(Opcode::Push8) => {
+                    self.start_of_ram();
+
+                    // load -1 into In1
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    
+                    // add 0xFFFFFF to REG_SP (and store a copy in WXY)
+                    for i in 0..=3 {
+                        add!(self, Output::Imm(REG_SP + i), Load::Direct(DataBusLoadEdge::Addr0));
+
+                        let addlo = if i == 0 { AluOpcode::AddLoNoCarry } else { AluOpcode::addlo(flags) };
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(addlo));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(Ucode::WXYZ_LOADS[i as usize]));
+
+                        if i != 3 {
+                            let addhi = if i == 0 { AluOpcode::AddHiNoCarry } else { AluOpcode::addhi(flags) };
+                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(addhi));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                        }
+
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i as usize]), Load::Mem(AddressBusOutputLevel::Addr));
+                    }
+
+                    pc_inc!(self);
+
+                    // copy value into Z
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Z));
+
+                    // copy address to addres regs
+                    for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                    }
+
+                    // store value to memory
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
+                }
+                Some(Opcode::Pop8) => {
+                    self.start_of_ram();
+
+                    // copy sp into wxy
+                    for (i, load_edge) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        add!(self, Output::Imm(REG_SP + (i as u8)), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
+                    }
+
+                    // copy address to addres regs
+                    for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
+                    }
+
+                    // copy value into Z
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Z));
+
+                    // store into reg
+                    pc_inc!(self);
+                    self.start_of_ram();
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
+
+
+                    // increment sp
+
+                    // copy address into wxy
+                    for (i, load_edge) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        add!(self, Output::Imm(REG_SP + (i as u8)), Load::Direct(DataBusLoadEdge::Addr0));
+
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+
+                        let addend = if i == 0 { 1 } else { 0 };
+                        let addlo = if i == 0 { AluOpcode::AddLoNoCarry } else { AluOpcode::addlo(flags) };
+                        add!(self, Output::Imm(addend), Load::Alu(addlo));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(*load_edge));
+
+                        if i != 3 {
+                            let addhi = if i == 0 { AluOpcode::AddHiNoCarry } else { AluOpcode::addhi(flags) };
+                            add!(self, Output::Imm(addend), Load::Alu(addhi));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                        }
+
+                        add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Mem(AddressBusOutputLevel::Addr));
+                    }
+
+                }
                 Some(Opcode::Copy8) => {
                     self.start_of_ram();
 

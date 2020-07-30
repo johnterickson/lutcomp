@@ -10,11 +10,18 @@ use std::io::Read;
 use std::collections::{BTreeMap,BTreeSet};
 use std::str::FromStr;
 
+use assemble::*;
 use common::*;
 
 #[derive(Parser)]
 #[grammar = "j.pest"]
 struct ProgramParser;
+
+enum Line {
+    Comment(String),
+    Label(String),
+    Instruction(Instruction)
+}
 
 #[derive(Debug, PartialEq, Eq)]
 enum Operator {
@@ -41,7 +48,7 @@ impl Operator {
 }
 
 struct FunctionContext {
-    pub regs_touched: BTreeSet<Reg>,
+    pub regs_touched: BTreeSet<u8>,
     pub stack: BTreeMap<String, LocalStorage>,
     pub lines: Vec<Line>,
     pub additional_offset: usize,
