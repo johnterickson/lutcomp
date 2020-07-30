@@ -26,9 +26,9 @@ pub enum Value {
 
 #[derive(Clone, Debug)]
 pub struct Instruction {
-    source: String,
-    opcode: Opcode,
-    args: Vec<Value>,
+    pub source: String,
+    pub opcode: Opcode,
+    pub args: Vec<Value>,
     resolved: Option<Vec<u8>>
 }
 

@@ -1026,7 +1026,7 @@ impl Ucode {
                 Some(Opcode::And32) => {
                     self.parallel_op_32(AluOpcode::And);
                 }
-                Some(Opcode::Add32NoCarryOut) => {
+                Some(Opcode::Add32NoCarry) => {
                     self.start_of_ram();
 
                     for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y] {
@@ -1042,9 +1042,11 @@ impl Ucode {
                         add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
 
                         if i != 3 {
-                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addlo(flags)));
+                            let addlo = if i == 0 { AluOpcode::AddLoNoCarry} else { AluOpcode::addlo(flags) };
+                            let addhi = if i == 0 { AluOpcode::AddHiNoCarry} else { AluOpcode::addhi(flags) };
+                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(addlo));
                             add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::addhi(flags)));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(addhi));
                             add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                             if i == 0 {
                                 add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));

@@ -150,7 +150,7 @@ pub enum Opcode {
     Store32Part2 = 0x93, // RegA -> 32-bit MEM[24-bit RegB]
     StoreImm32,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
-    Add32NoCarryOut = 0xA0, // 32-bit carry + regA + regB -> regC
+    Add32NoCarry = 0xA0, // regA + regB -> regC
     Add32Part1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry
     Add32Part2 = 0xA2,      // [none] must follow Part1
 
