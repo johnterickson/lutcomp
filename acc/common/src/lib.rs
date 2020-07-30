@@ -125,7 +125,7 @@ pub enum Opcode {
     Jmp = 1,      // pc <- [24-bit constant ABC]
     Jz = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
     Invert = 3, // ~regA -> regA
-
+    Negate = 4, // (~regA + 1) -> regA
     Copy8 = 0xF, // regA -> regB
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
@@ -138,7 +138,7 @@ pub enum Opcode {
     Mul8Part1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
     Mul8Part2 = 0x21,
     Add8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
-    // Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
+    Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
     // Sub8NoCarry = 0x24, // 8bit regA - 8bit regB -> 8bit regC
 
     AndImm8 = 0x30, // regA &= [8-bit constant B]

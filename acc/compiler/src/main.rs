@@ -8,7 +8,7 @@ use std::io;
 use std::io::ErrorKind;
 use std::io::Read;
 use std::collections::{BTreeMap,BTreeSet};
-use std::str::FromStr;
+use std::{convert::TryInto, str::FromStr};
 
 use assemble::*;
 use common::*;
@@ -30,7 +30,6 @@ enum Operator {
     Multiply,
     Or,
     Equals,
-    NotEquals
 }
 
 impl Operator {
@@ -41,7 +40,6 @@ impl Operator {
             "*" => Operator::Multiply,
             "||" => Operator::Or,
             "==" => Operator::Equals,
-            "!=" => Operator::NotEquals,
             _ => panic!(),
         }
     }
@@ -222,6 +220,14 @@ impl Expression {
                             args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
                         });
                     },
+                    Operator::Or => {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Or8,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
+                        });
+                    },
                     Operator::Multiply => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Mul8Part1,
@@ -236,24 +242,20 @@ impl Expression {
                             args: vec![]
                         });
                     },
-                    Operator::Subtract => {
-                        unimplemented!()
+                    Operator::Subtract | Operator::Equals => {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Negate,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(1)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Add8NoCarry,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
+                        });
                     },
-                    Operator::Equals => {
-                        
-                        //  left == right --> ACC == 0
-                        //  left != right --> ACC != 0
-                        ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::Xor(StackOffset::top())));
-                        //  left ^ right == 0 --> left == right
-                    },
-                    Operator::NotEquals => {
-                        //  left == right --> ACC != 0
-                        //  left != right --> ACC == 0
-                        right.emit(ctxt); // left on top of stack; right in ACC
-
-                        unimplemented!();
-                    }
-                    _ => unimplemented!()
                 }
 
                 ctxt.add_inst(Instruction {
@@ -570,17 +572,17 @@ impl Function {
         let mut offset = (stack_size - 1) as isize;
 
         ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, RESULT)));
-        ctxt.stack.insert(RESULT.to_owned(), LocalStorage::Stack(offset as usize));
+        ctxt.stack.insert(RESULT.to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
         offset -= 1;
 
         for arg in &self.args {
             ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, arg)));
-            ctxt.stack.insert(arg.clone(), LocalStorage::Stack(offset as usize));
+            ctxt.stack.insert(arg.clone(), LocalStorage::Stack(offset as u32));
             offset -= 1;
         }
 
         ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, "RETURN_ADDRESS")));
-        ctxt.stack.insert("RETURN_ADDRESS".to_owned(), LocalStorage::Stack(offset as usize));
+        ctxt.stack.insert("RETURN_ADDRESS".to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
         offset -= 1;
 
         // offset -= register_local_count as isize;
@@ -593,7 +595,7 @@ impl Function {
                     // LocalStorage::Register(reg)
                 },
                 _ => {
-                    let s = LocalStorage::Stack(offset as usize);
+                    let s = LocalStorage::Stack(offset.try_into().unwrap());
                     offset -= 1;
                     s
                 }
@@ -616,7 +618,20 @@ impl Function {
 
         if stack_local_count > 0 {
             ctxt.lines.push(Line::Comment("create stack space".to_owned()));
-            ctxt.add_inst(Instruction::Alloc(StackOffset::new(stack_local_count as u8)));
+            ctxt.add_inst(Instruction {
+                opcode: Opcode::LoadImm8,
+                resolved: None,
+                source: String::new(),
+                args: vec![Value::Constant8(0xCC)]
+            });
+            for _ in 0..stack_local_count {
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Push8,
+                    resolved: None,
+                    source: String::new(),
+                    args: vec![Value::Register(0)]
+                });
+            }
         }
 
         // let mut count = 0;

@@ -306,34 +306,7 @@ mod tests {
         assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
 
-    #[test]
-    fn andimm8() {
-        for a in 0..=3 {
-            for b in 0..=3 {
-                imm8(Opcode::AndImm8, a, b, a & b);
-            }
-        }
-    }
-
-    #[test]
-    fn orimm8() {
-        for a in 0..=3 {
-            for b in 0..=3 {
-                imm8(Opcode::OrImm8, a, b, a | b);
-            }
-        }
-    }
-
-    #[test]
-    fn xorimm8() {
-        for a in 0..=3 {
-            for b in 0..=3 {
-                imm8(Opcode::XorImm8, a, b, a ^ b);
-            }
-        }
-    }
-
-    fn reg8(op: Opcode, reg_a_value: u8, reg_b_value: u8, result: u8) {
+    fn reg8(op: Opcode, carry_in: bool, reg_a_value: u8, reg_b_value: u8, result: u8, carry_out: bool) {
         let reg_a = 3;
         let reg_b = 4;
         let reg_c = 5;
@@ -350,10 +323,14 @@ mod tests {
         *c.mem_byte_mut(0x80000 + reg_a as u32) = reg_a_value;
         *c.mem_byte_mut(0x80000 + reg_b as u32) = reg_b_value;
 
+        if carry_in {
+            c.flags |= Flags::CARRY;
+        }
+
         while c.step() {}
 
         assert_eq!(result, *c.mem_byte_mut(0x80000 + reg_c as u32));
-        assert_eq!(c.flags.contains(Flags::CARRY), false);
+        assert_eq!(c.flags.contains(Flags::CARRY), carry_out);
         assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
 
@@ -361,7 +338,8 @@ mod tests {
     fn and8() {
         for a in 0..=3 {
             for b in 0..=3 {
-                reg8(Opcode::And8, a, b, a & b);
+                imm8(Opcode::AndImm8, a, b, a & b);
+                reg8(Opcode::And8, false, a, b, a & b, false);
             }
         }
     }
@@ -370,7 +348,8 @@ mod tests {
     fn or8() {
         for a in 0..=3 {
             for b in 0..=3 {
-                reg8(Opcode::Or8, a, b, a | b);
+                imm8(Opcode::OrImm8, a, b, a | b);
+                reg8(Opcode::Or8, false, a, b, a | b, false);
             }
         }
     }
@@ -379,7 +358,8 @@ mod tests {
     fn xor8() {
         for a in 0..=3 {
             for b in 0..=3 {
-                reg8(Opcode::Xor8, a, b, a ^ b);
+                imm8(Opcode::XorImm8, a, b, a ^ b);
+                reg8(Opcode::Xor8, false, a, b, a ^ b, false);
             }
         }
     }
@@ -446,20 +426,33 @@ mod tests {
         assert_eq!(0, *c.mem_byte_mut(0x80001));
     }
 
-    #[test]
-    fn invert() {
+    fn modify8(op: Opcode, input: u8, output: u8) {
         let mut rom = Vec::new();
-        rom.push(Opcode::Invert as u8);
-        rom.push(0);
+        rom.push(op as u8);
+        rom.push(3);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
 
-        *c.mem_byte_mut(0x80000) = 0b01010101;
+        *c.mem_byte_mut(0x80003) = input;
 
         while c.step() {}
 
-        assert_eq!(0b10101010, *c.mem_byte_mut(0x80000));
+        assert_eq!(output, *c.mem_byte_mut(0x80003));
+    }
+
+    #[test]
+    fn invert() {
+        for a in 0..=8 {
+            modify8(Opcode::Invert, a, !a);
+        }
+    }
+
+    #[test]
+    fn negate() {
+        for a in 0..=8 {
+            modify8(Opcode::Negate, a, ((-1*(a as i16)) & 0xFF) as u8);
+        }
     }
 
     #[test]
@@ -653,47 +646,41 @@ mod tests {
         assert_eq!(0x4F3F2F1F, u32::from_le_bytes(*c.mem_word_mut(0x8000c)));
     }
 
-    fn add8_helper(carry_in: bool, a: u8, b: u8) {
-        println!("testing {}+{}+{}", carry_in, a, b);
-
-        let mut rom = Vec::new();
-        rom.push(Opcode::Add8 as u8);
-        rom.push(0x0);
-        rom.push(0x1);
-        rom.push(0x2);
-        rom.push(Opcode::Halt as u8);
-
-        let mut sum = (a as u16) + (b as u16);
-
-        let mut c = Computer::new(rom);
-
-        *c.mem_byte_mut(0x80000) = a;
-        *c.mem_byte_mut(0x80001) = b;
-
-        if carry_in {
-            c.flags |= Flags::CARRY;
-            sum += 1;
-        }
-
-        while c.step() {}
-
-        assert_eq!(
-            (sum & 0xFF) as u8,
-            *c.mem_byte_mut(0x80002)
-        );
-        assert_eq!(
-            sum > 0xFF,
-            c.flags.contains(Flags::CARRY)
-        );
-    }
-
     #[test]
     fn add8() {
         let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
         for carry_in in &[false, true] {
             for a in &values {
                 for b in &values {
-                    add8_helper(*carry_in, *a, *b);
+                    let mut sum = (*a as u16) + (*b as u16);
+
+                    if *carry_in {
+                        sum += 1;
+                    }
+
+                    reg8(
+                        Opcode::Add8,
+                        *carry_in, *a, *b,
+                        (sum & 0xFF) as u8,
+                        sum > 0xFF
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn add8_nocarry() {
+        let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
+        for carry_in in &[false, true] {
+            for a in &values {
+                for b in &values {
+                    reg8(
+                        Opcode::Add8NoCarry,
+                        *carry_in, *a, *b,
+                        a.wrapping_add(*b),
+                        *carry_in
+                    );
                 }
             }
         }
