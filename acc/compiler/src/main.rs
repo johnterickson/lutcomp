@@ -194,64 +194,53 @@ impl Expression {
                 }
             },
             Expression::Operation(op, left, right) => {
-                // if left.is_tail() && right.is_tail() {
-                //     left.emit(ctxt, Reg::C);
-                //     right.emit(ctxt, Reg::ACC)
-                // }
-                // else 
-                {
-                    left.emit(ctxt); //store left on the stack
-                }
+                
+                left.emit(ctxt);
+                right.emit(ctxt);
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    resolved: None,
+                    source: String::new(),
+                    args: vec![Value::Register(1)]
+                });
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    resolved: None,
+                    source: String::new(),
+                    args: vec![Value::Register(0)]
+                });
 
-                // left in c; right in acc
+
+                // left in 0; right in 1, result in 2
 
                 match op {
                     Operator::Add => {
-                        right.emit(ctxt);
                         ctxt.add_inst(Instruction {
-                            opcode: Opcode::Pop8,
+                            opcode: Opcode::Add8NoCarry,
                             resolved: None,
                             source: String::new(),
-                            args: vec![Value::Register(0)]
+                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
                         });
-                        ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::Add(StackOffset::top())));
                     },
                     Operator::Multiply => {
-                        right.emit(ctxt); // left on top of stack; right in ACC
-                        ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::Mul(StackOffset::top())));
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Mul8Part1,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Mul8Part2,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![]
+                        });
                     },
                     Operator::Subtract => {
-                        right.emit(ctxt);
-
-                        // sp+0 right
-                        // sp+1 left
-                        
-                        ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::Not(StackOffset::top())));
-
-                        // ACC ~right
-                        
-                        ctxt.add_inst(Instruction::StoreToStack(StackOffset::top()));
-
-                        // sp+0 ~right
-
-                        ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::LoadLo(Target::Absolute(1))));
-
-                        // ACC 1
-
-                        ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::Add(StackOffset::top())));
-
-                        // ACC ~right + 1
-                        ctxt.add_inst(Instruction::StoreToStack(StackOffset::top()));
-
-                        ctxt.add_inst(Instruction::Discard(StackOffset::new(1)));
-                        ctxt.additional_offset -= 1;
-
-                        // ACC left + (~right + 1) == left - right
-                        ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::Add(StackOffset::top())));
+                        unimplemented!()
                     },
                     Operator::Equals => {
-                        right.emit(ctxt); // left on top of stack; right in ACC
-
+                        
                         //  left == right --> ACC == 0
                         //  left != right --> ACC != 0
                         ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::Xor(StackOffset::top())));
@@ -267,8 +256,12 @@ impl Expression {
                     _ => unimplemented!()
                 }
 
-                
-                ctxt.add_inst(Instruction::StoreToStack(StackOffset::top()));
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Push8,
+                    resolved: None,
+                    source: String::new(),
+                    args: vec![Value::Register(2)]
+                });
             }
         }
         

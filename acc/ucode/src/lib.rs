@@ -328,6 +328,31 @@ impl Ucode {
         self.inc_pc = false;
     }
 
+    fn flags_from(&mut self, out: Output) {
+        add!(self, out, Load::Direct(DataBusLoadEdge::In1));
+        add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+    }
+
+    fn parallel_op_8(&mut self, alu_op: AluOpcode) {
+        self.start_of_ram();
+
+        pc_inc!(self);
+        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+
+        pc_inc!(self);
+        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(alu_op));
+
+        pc_inc!(self);
+        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+        self.flags_from(Output::Direct(DataBusOutputLevel::Alu));
+    }
+
+
     fn parallel_op_32(&mut self, alu_op: AluOpcode) {
         self.start_of_ram();
 
@@ -424,6 +449,15 @@ impl Ucode {
 
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
                     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                }
+                Some(Opcode::Invert) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(Opcode::LoadImm32) => {
                     self.start_of_ram();
@@ -712,6 +746,45 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                }
+                Some(Opcode::And8) => self.parallel_op_8(AluOpcode::And),
+                Some(Opcode::Or8) => self.parallel_op_8(AluOpcode::Or),
+                Some(Opcode::Xor8) => {
+                    
+                    self.start_of_ram();
+
+                    // a ^ b == (a | b) & ~( a & b)
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::X));
+
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    // a | b -> regC
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    // a & b -> alu
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Alu(AluOpcode::And));
+
+                    // ~(a & b) -> alu -> in1
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+
+                    // a ^ b == (a | b) & ~( a & b)
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    self.flags_from(Output::Direct(DataBusOutputLevel::Alu));
                 }
                 Some(Opcode::Add8) => {
                     self.start_of_ram();

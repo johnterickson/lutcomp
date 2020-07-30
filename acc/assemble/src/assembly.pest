@@ -23,8 +23,10 @@ load8 = {"load8" ~ register ~ "->" ~ deref_register  }
 store8 = {"store8" ~ deref_register ~ "->" ~ register }
 ttyin = {"ttyin" ~ register }
 ttyout = {"ttyout" ~ register }
+invert = {"invert" ~ register }
 mul8 = { "mul8" ~ register ~ register ~ "->" ~ register }
 add8 = { "add8" ~ register ~ register ~ "->" ~ register }
+add8nocarry = { "add8nocarry" ~ register ~ register ~ "->" ~ register }
 and8 = { "and8" ~ register ~ register ~ "->" ~ register }
 andimm8 = { "andimm8" ~ register ~ "<-" ~ constant8 }
 orimm8 = { "orimm8" ~ register ~ "<-" ~ constant8 }
@@ -37,7 +39,7 @@ copy32 = { "copy32" ~ register ~ "->" ~ register }
 load32 = {"load32" ~ deref_register ~ "->" ~ register  }
 store32 = {"store32" ~ deref_register ~ "->" ~ register }
 storeimm32 = {"storeimm32" ~ deref_register ~ "<-" ~ constant32 }
-add32nocarryout = { "add32nocarryout" ~ register ~ register ~ "->" ~ register }
+add32nocarry = { "add32nocarry" ~ register ~ register ~ "->" ~ register }
 add32 = { "add32" ~ register ~ register ~ "->" ~ register }
 or32 = {"or32" ~ register ~ register ~ "->" ~ register }
 and32 = {"and32" ~ register ~ register ~ "->" ~ register }
@@ -47,13 +49,13 @@ halt = {"halt"}
 op = _{ 
     loadimm8 | copy8 |
     jmp | jz | 
-    load8 | store8 | ttyin | ttyout |
-    mul8 | add8 | 
+    load8 | store8 | ttyin | ttyout | invert |
+    mul8 | add8 | add8nocarry |
     and8 | andimm8 | orimm8 | xorimm8 |
     orimm32 | andimm32 |
     loadimm32 | copy32 |
     load32 | store32 | storeimm32 |
-    add32nocarryout | add32 |
+    add32nocarry | add32 |
     or32 | and32 |
     halt
 }

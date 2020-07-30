@@ -286,74 +286,102 @@ mod tests {
         assert_eq!(0xef, *c.mem_byte_mut(0x80004));
     }
 
-    #[test]
-    fn andimm8() {
+    fn imm8(op: Opcode, reg_value: u8, imm: u8, result: u8) {
+        let reg_index = 3;
         let mut rom = Vec::new();
-        rom.push(Opcode::AndImm8 as u8);
-        rom.push(0x4);
-        rom.push(0b0011);
+        rom.push(op as u8);
+        rom.push(reg_index);
+        rom.push(imm);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
 
-        *c.mem_byte_mut(0x80004) = 0b0101;
+        let reg_addr = 0x80000 + reg_index as u32;
+        *c.mem_byte_mut(reg_addr) = reg_value;
 
         while c.step() {}
 
-        assert_eq!(0b0001, *c.mem_byte_mut(0x80004));
+        assert_eq!(result, *c.mem_byte_mut(reg_addr));
+        assert_eq!(c.flags.contains(Flags::CARRY), false);
+        assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
+    }
+
+    #[test]
+    fn andimm8() {
+        for a in 0..=3 {
+            for b in 0..=3 {
+                imm8(Opcode::AndImm8, a, b, a & b);
+            }
+        }
     }
 
     #[test]
     fn orimm8() {
-        let mut rom = Vec::new();
-        rom.push(Opcode::OrImm8 as u8);
-        rom.push(0x4);
-        rom.push(0b0011);
-        rom.push(Opcode::Halt as u8);
-
-        let mut c = Computer::new(rom);
-
-        *c.mem_byte_mut(0x80004) = 0b0101;
-
-        while c.step() {}
-
-        assert_eq!(0b0111, *c.mem_byte_mut(0x80004));
+        for a in 0..=3 {
+            for b in 0..=3 {
+                imm8(Opcode::OrImm8, a, b, a | b);
+            }
+        }
     }
 
     #[test]
-    fn xorimm8_nonzero() {
+    fn xorimm8() {
+        for a in 0..=3 {
+            for b in 0..=3 {
+                imm8(Opcode::XorImm8, a, b, a ^ b);
+            }
+        }
+    }
+
+    fn reg8(op: Opcode, reg_a_value: u8, reg_b_value: u8, result: u8) {
+        let reg_a = 3;
+        let reg_b = 4;
+        let reg_c = 5;
+
         let mut rom = Vec::new();
-        rom.push(Opcode::XorImm8 as u8);
-        rom.push(0x4);
-        rom.push(0b0011);
+        rom.push(op as u8);
+        rom.push(reg_a);
+        rom.push(reg_b);
+        rom.push(reg_c);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
 
-        *c.mem_byte_mut(0x80004) = 0b0101;
+        *c.mem_byte_mut(0x80000 + reg_a as u32) = reg_a_value;
+        *c.mem_byte_mut(0x80000 + reg_b as u32) = reg_b_value;
 
         while c.step() {}
 
-        assert_eq!(0b0110, *c.mem_byte_mut(0x80004));
-        assert_eq!(c.flags.contains(Flags::ZERO), false);
+        assert_eq!(result, *c.mem_byte_mut(0x80000 + reg_c as u32));
+        assert_eq!(c.flags.contains(Flags::CARRY), false);
+        assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
 
     #[test]
-    fn xorimm8_zero() {
-        let mut rom = Vec::new();
-        rom.push(Opcode::XorImm8 as u8);
-        rom.push(0x4);
-        rom.push(0b01010101);
-        rom.push(Opcode::Halt as u8);
+    fn and8() {
+        for a in 0..=3 {
+            for b in 0..=3 {
+                reg8(Opcode::And8, a, b, a & b);
+            }
+        }
+    }
 
-        let mut c = Computer::new(rom);
+    #[test]
+    fn or8() {
+        for a in 0..=3 {
+            for b in 0..=3 {
+                reg8(Opcode::Or8, a, b, a | b);
+            }
+        }
+    }
 
-        *c.mem_byte_mut(0x80004) = 0b01010101;
-
-        while c.step() {}
-
-        assert_eq!(0b0, *c.mem_byte_mut(0x80004));
-        assert_eq!(c.flags.contains(Flags::ZERO), true);
+    #[test]
+    fn xor8() {
+        for a in 0..=3 {
+            for b in 0..=3 {
+                reg8(Opcode::Xor8, a, b, a ^ b);
+            }
+        }
     }
 
     #[test]
@@ -416,6 +444,22 @@ mod tests {
 
         assert_eq!(0x80 | ('A' as u8), *c.mem_byte_mut(0x80000));
         assert_eq!(0, *c.mem_byte_mut(0x80001));
+    }
+
+    #[test]
+    fn invert() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Invert as u8);
+        rom.push(0);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        *c.mem_byte_mut(0x80000) = 0b01010101;
+
+        while c.step() {}
+
+        assert_eq!(0b10101010, *c.mem_byte_mut(0x80000));
     }
 
     #[test]
