@@ -17,12 +17,14 @@ deref_register = {"*" ~ register}
 
 loadimm8 = {"loadimm8" ~ register ~ "<-" ~ constant8 }
 copy8 = { "copy8" ~ register ~ "->" ~ register }
-jmp = {"jmp" ~ constant24 }
-jz = {"jz" ~ constant24 }
+jmpimm = {"jmpimm" ~ constant24 }
+jzimm = {"jzimm" ~ constant24 }
 load8 = {"load8" ~ register ~ "->" ~ deref_register  }
 store8 = {"store8" ~ deref_register ~ "->" ~ register }
 ttyin = {"ttyin" ~ register }
 ttyout = {"ttyout" ~ register }
+push8 = {"push8" ~ register }
+pop8 = {"pop8" ~ register }
 invert = {"invert" ~ register }
 mul8 = { "mul8" ~ register ~ register ~ "->" ~ register }
 add8 = { "add8" ~ register ~ register ~ "->" ~ register }
@@ -39,8 +41,9 @@ copy32 = { "copy32" ~ register ~ "->" ~ register }
 load32 = {"load32" ~ deref_register ~ "->" ~ register  }
 store32 = {"store32" ~ deref_register ~ "->" ~ register }
 storeimm32 = {"storeimm32" ~ deref_register ~ "<-" ~ constant32 }
-add32nocarry = { "add32nocarry" ~ register ~ register ~ "->" ~ register }
+add32nocarryin = { "add32nocarryin" ~ register ~ register ~ "->" ~ register }
 add32 = { "add32" ~ register ~ register ~ "->" ~ register }
+addimm32ignorecarry = { "addimm32ignorecarry" ~ register ~ "<-" ~ constant32 }
 or32 = {"or32" ~ register ~ register ~ "->" ~ register }
 and32 = {"and32" ~ register ~ register ~ "->" ~ register }
 
@@ -48,20 +51,23 @@ halt = {"halt"}
 
 op = _{ 
     loadimm8 | copy8 |
-    jmp | jz | 
-    load8 | store8 | ttyin | ttyout | invert |
+    jmpimm | jzimm | 
+    load8 | store8 | ttyin | ttyout | invert | push8 | pop8 |
     mul8 | add8 | add8nocarry |
     and8 | andimm8 | orimm8 | xorimm8 |
     orimm32 | andimm32 |
     loadimm32 | copy32 |
     load32 | store32 | storeimm32 |
-    add32nocarry | add32 |
+    add32nocarryin | add32 | addimm32ignorecarry |
     or32 | and32 |
     halt
 }
 
+pseudo_call = {"!call" ~ constant24}
+pseudo_return = {"!return"}
+
 instruction = {!"#" ~ !":" ~ op }
 comment = { "#" ~ (!new_line ~ ANY)* }
-line = _{ comment | label | instruction }
+line = { comment | label | pseudo_call | pseudo_return | instruction }
 
 program = {SOI ~ (line? ~ new_line)* ~ EOI}

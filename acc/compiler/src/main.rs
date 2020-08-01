@@ -13,15 +13,15 @@ use std::{convert::TryInto, str::FromStr};
 use assemble::*;
 use common::*;
 
+fn amount_for_round_up(a: u32, b: u32) -> u32 {
+    b - (a % b)
+}
+
 #[derive(Parser)]
 #[grammar = "j.pest"]
 struct ProgramParser;
 
-enum Line {
-    Comment(String),
-    Label(String),
-    Instruction(Instruction)
-}
+
 
 #[derive(Debug, PartialEq, Eq)]
 enum Operator {
@@ -59,10 +59,9 @@ impl FunctionContext {
         self.lines.push(Line::Instruction(i));
     }
 
-    // fn add_macro(&mut self, s: String) {
-    //     let line = Line::parse(s);
-    //     self.lines.push(line);
-    // }
+    fn add_macro(&mut self, s: String) {
+        self.lines.push(Line::PseudoInstruction(s));
+    }
 
     fn find_local(&mut self, local: &str) -> LocalStorage {
         let local = self.stack
@@ -169,7 +168,7 @@ impl Expression {
 
                         ctxt.add_inst(Instruction {
                             source: String::new(),
-                            opcode: Opcode::Add32NoCarry,
+                            opcode: Opcode::Add32NoCarryIn,
                             args: vec![Value::Register(REG_SP), Value::Register(0), Value::Register(4)],
                             resolved: None,
                         });
@@ -341,23 +340,78 @@ impl Statement {
         ctxt.lines.push(Line::Comment(format!("Begin statement {:?}", self)));
         match self {
             Statement::Load{local, address} => {
-                address.emit(ctxt, false);
-                ctxt.add_inst(Instruction::StoreAddr);
-                ctxt.add_inst(Instruction::WithoutPush(PushableInstruction::LoadMem));
+                unimplemented!();
+                // address.emit(ctxt);
 
-                let local = ctxt.find_local(local);
-                match local {
-                    LocalStorage::Register(r) => {
-                        unimplemented!();
-                    }
-                    LocalStorage::Stack(offset) => {
-                        ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(offset as u8)));
-                    }
-                }
+                // ctxt.add_inst(Instruction {
+                //     opcode: Opcode::Pop8,
+                //     resolved: None,
+                //     source: String::new(),
+                //     args: vec![Value::Register(0)]
+                // });
+
+                // ctxt.add_inst(Instruction {
+                //     opcode: Opcode::Load8,
+                //     resolved: None,
+                //     source: String::new(),
+                //     args: vec![Value::Register(0)]
+                // });
+
+                // let local = ctxt.find_local(local);
+                // match local {
+                //     LocalStorage::Register(r) => {
+                //         unimplemented!();
+                //     }
+                //     LocalStorage::Stack(offset) => {
+                //         ctxt.add_inst(Instruction {
+                //             opcode: Opcode::LoadImm32,
+                //             resolved: None,
+                //             source: String::new(),
+                //             args: vec![Value::Register(4), Value::Constant32(offset as u32)]
+                //         });
+                //         ctxt.add_inst(Instruction {
+                //             opcode: Opcode::Add32NoCarry,
+                //             resolved: None,
+                //             source: String::new(),
+                //             args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
+                //         });
+
+                //         ctxt.add_inst(Instruction {
+                //             opcode: Opcode::Store8,
+                //             resolved: None,
+                //             source: String::new(),
+                //             args: vec![Value::Register(4), Value::Constant32(offset as u32)]
+                //         });
+
+                //         ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(offset as u8)));
+                //     }
+                // }
             },
             Statement::Store{local, address} => {
-                address.emit(ctxt, false);
-                ctxt.add_inst(Instruction::StoreAddr);
+                unimplemented!();
+                // address.emit(ctxt);
+                // ctxt.add_inst(Instruction::StoreAddr);
+
+                // let local = ctxt.find_local(local);
+                // match local {
+                //     LocalStorage::Register(r) => {
+                //         unimplemented!();
+                //     }
+                //     LocalStorage::Stack(offset) => {
+                //         ctxt.add_inst(Instruction::WithoutPush(
+                //             PushableInstruction::LoadFromStack(StackOffset::new(offset as u8))));
+                //     }
+                // }
+                // ctxt.add_inst(Instruction::StoreMem);
+            },
+            Statement::Assign{local, value} => {
+                value.emit(ctxt);
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    resolved: None,
+                    source: String::new(),
+                    args: vec![Value::Register(0)]
+                });
 
                 let local = ctxt.find_local(local);
                 match local {
@@ -365,79 +419,136 @@ impl Statement {
                         unimplemented!();
                     }
                     LocalStorage::Stack(offset) => {
-                        ctxt.add_inst(Instruction::WithoutPush(
-                            PushableInstruction::LoadFromStack(StackOffset::new(offset as u8))));
-                    }
-                }
-                ctxt.add_inst(Instruction::StoreMem);
-            },
-            Statement::Assign{local, value} => {
-                let local = ctxt.find_local(local);
-                match local {
-                    LocalStorage::Register(r) => {
-                        unimplemented!();
-                    }
-                    LocalStorage::Stack(offset) => {
-                        value.emit(ctxt, false);
-                        ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(offset as u8)));
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::LoadImm32,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(4), Value::Constant32(offset as u32)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Add32NoCarryIn,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Store8,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(0), Value::Register(8)]
+                        });
                     }
                 }
             },
             Statement::Return{ value } => {
-                value.emit(ctxt, false);
+                value.emit(ctxt);
 
                 let result_offset = match ctxt.find_local(RESULT) {
                     LocalStorage::Register(_) => unimplemented!(),
                     LocalStorage::Stack(offset) => offset,
                 };
 
-                ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(result_offset as u8)));
+                
 
+                // ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(result_offset as u8)));
 
-                if ctxt.additional_offset != 0 {
-                    ctxt.add_inst(Instruction::Discard(StackOffset::new(ctxt.additional_offset as u8)));
-                }
-                ctxt.add_inst(Instruction::Jmp(Target::Label(
-                    format!(":{}__{}", function_name, EPILOGUE)
-                )));
+                assert_eq!(ctxt.additional_offset, 0);
+                
+                // if ctxt.additional_offset != 0 {
+                //     ctxt.add_inst(Instruction::Discard(StackOffset::new(ctxt.additional_offset as u8)));
+                // }
+                // ctxt.add_inst(Instruction::Jmp(Target::Label(
+                //     format!(":{}__{}", function_name, EPILOGUE)
+                // )));
             },
             Statement::Call{ local, function, parameters} => { 
 
                 assert_eq!(ctxt.additional_offset, 0);
 
-                // save space for result
-                ctxt.add_inst(Instruction::WithPush(PushableInstruction::Not(StackOffset::top())));
+                // put 0xCC in for RESULT
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::LoadImm8,
+                    source: String::new(),
+                    args: vec![Value::Constant8(0xCC)],
+                    resolved: None,
+                });
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Push8,
+                    source: String::new(),
+                    args: vec![Value::Register(0)],
+                    resolved: None,
+                });
                 ctxt.additional_offset += 1;
 
-                let regs_to_save : Vec<Reg> = ctxt.regs_touched.iter().cloned().collect();
-
-                for r in &regs_to_save {
-                    unimplemented!();
-                    // ctxt.add_macro(format!("push {}", r));
-                    // ctxt.additional_offset += 1;
-                }
-
                 for p in parameters {
-                    p.emit(ctxt, true);
+                    p.emit(ctxt);
+                    ctxt.additional_offset += 1;
                 }
 
-                ctxt.add_macro(format!("call :{}", function));
-
-                // discard paramters
-                ctxt.add_inst(Instruction::Discard(StackOffset::new(parameters.len() as u8)));
-                ctxt.additional_offset -= parameters.len();
-
-                for r in regs_to_save.iter().rev() {
-                    unimplemented!();
-                    // ctxt.add_macro(format!("pop {}", r));
-                    // ctxt.additional_offset -= 1;
+                // padding
+                let mut padding = 0;
+                while ctxt.additional_offset % 4 != 0 {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Push8,
+                        source: String::new(),
+                        args: vec![Value::Register(0)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset += 1;
+                    padding += 1;
                 }
 
-                // pop result into b
-                ctxt.add_inst(Instruction::PopDiscard(StackOffset::top()));
+                // store return address
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::AddImm32IgnoreCarry,
+                    source: String::new(),
+                    args: vec![Value::Register(REG_SP), Value::Constant32((-4i32) as u32)],
+                    resolved: None,
+                });
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::StoreImm32,
+                    source: String::new(),
+                    args: vec![Value::Register(REG_SP), Value::PcOffset(4+6)],
+                    resolved: None,
+                });
+                ctxt.additional_offset += 4;
+
+                // call
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::JmpImm,
+                    source: String::new(),
+                    args: vec![Value::Label24(function.to_owned())],
+                    resolved: None,
+                });
+
+                // discard paramters and padding and return address
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::AddImm32IgnoreCarry,
+                    source: String::new(),
+                    args: vec![Value::Register(REG_SP), Value::Constant32(padding + 4)],
+                    resolved: None,
+                });
+                ctxt.additional_offset -= padding + 4;
+
+                // for r in regs_to_save.iter().rev() {
+                //     unimplemented!();
+                //     // ctxt.add_macro(format!("pop {}", r));
+                //     // ctxt.additional_offset -= 1;
+                // }
+
+                // result is now at the top of the stack
+                assert_eq!(ctxt.additional_offset, 1);
+
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Push8,
+                    source: String::new(),
+                    args: vec![Value::Register(0)],
+                    resolved: None,
+                });
                 ctxt.additional_offset -= 1;
 
                 // stack is now back to normal
+                assert_eq!(ctxt.additional_offset, 0);
 
                 let local = ctxt.find_local(local);
                 match local {
@@ -446,29 +557,47 @@ impl Statement {
 
                     },
                     LocalStorage::Stack(offset) => {
-                        ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(offset as u8)));
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::LoadImm32,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(4), Value::Constant32(offset as u32)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Add32NoCarryIn,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Store8,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(0), Value::Register(8)]
+                        });
                     }
                 }
             },
             Statement::If{predicate, when_true} => {
-                let if_skip = "IF_SKIP";
-                predicate.emit(ctxt, false); // result in ACC
+                unimplemented!();
+                // let if_skip = "IF_SKIP";
+                // predicate.emit(ctxt); // result in top of stack
 
-                let jump_label = format!("{}_{}_{}", function_name, if_skip, ctxt.block_counter);
+                // let jump_label = format!("{}_{}_{}", function_name, if_skip, ctxt.block_counter);
 
-                ctxt.block_counter += 1;
+                // ctxt.block_counter += 1;
 
-                // WEIRD: interpret 0 as true
-                ctxt.add_inst(Instruction::Jnz(Target::Label(format!(":{}", &jump_label))));
+                // // WEIRD: interpret 0 as true
+                // ctxt.add_inst(Instruction::Jnz(Target::Label(format!(":{}", &jump_label))));
 
-                // let mut count = 0;
-                for s in when_true {
-                    // let scope = format!("{}_stmt{}", scope, count);
-                    s.emit(ctxt, function_name);
-                    // count += 1;
-                }
+                // // let mut count = 0;
+                // for s in when_true {
+                //     // let scope = format!("{}_stmt{}", scope, count);
+                //     s.emit(ctxt, function_name);
+                //     // count += 1;
+                // }
                 
-                ctxt.lines.push(Line::Label(format!(":{}", &jump_label)));
+                // ctxt.lines.push(Line::Label(format!(":{}", &jump_label)));
             },
         }
         ctxt.lines.push(Line::Comment(format!("Done  statement {:?}", self)));
@@ -509,7 +638,7 @@ impl Function {
         // find locals
         let mut locals = BTreeSet::new();
 
-        fn add_locals(s: &Statement, args: &Vec<String>, locals: &mut BTreeSet<String>) {
+        fn find_locals(s: &Statement, args: &Vec<String>, locals: &mut BTreeSet<String>) {
             match s {
                 Statement::Assign{local, value:_} 
                 | Statement::Load{local, address:_}
@@ -522,14 +651,14 @@ impl Function {
                 Statement::Return{ value:_ } => {},
                 Statement::If{ predicate:_, when_true:ss } => {
                     for s in ss {
-                        add_locals(s, args, locals);
+                        find_locals(s, args, locals);
                     }
                 },
             }
         };
 
         for s in body.iter() {
-            add_locals(s, &args, &mut locals);
+            find_locals(s, &args, &mut locals);
         }
 
         Function { name, args, locals, body }
@@ -539,10 +668,12 @@ impl Function {
 
     stack:
 
-    SP ->   local 3
+    SP ->   [padding so top of stack is 32-bit aligned]
+            local 3
             local 2
             local 1
-            return address
+            32-bit return address
+            [padding so RA is 32-bit aligned]
             arg 2
             arg 1
             RESULT
@@ -559,16 +690,20 @@ impl Function {
         ctxt.lines.push(Line::Comment(format!("# Function: {}", &self.name)));
         ctxt.lines.push(Line::Label(format!(":{}", &self.name)));
 
-        let max_register_locals = 0;
+        let max_register_locals = 0u32;
 
-        let register_local_count = std::cmp::min(max_register_locals, self.locals.len());
-        let stack_local_count = self.locals.len() - register_local_count;
+        let register_local_count = std::cmp::min(max_register_locals, self.locals.len() as u32);
+        let stack_local_count = self.locals.len() as u32 - register_local_count;
 
-        let stack_size = 0
-            + 1 // result
-            + self.args.len()
-            + 1 // return address
-            + stack_local_count;
+        let mut stack_size = 1u32; // result
+        stack_size += self.args.len() as u32;
+        let arg_padding = amount_for_round_up(stack_size, 4);
+        stack_size += arg_padding;
+        stack_size += 4; // return address
+        stack_size += stack_local_count as u32;
+        let local_padding = amount_for_round_up(stack_size, 4);
+        stack_size = local_padding;
+
         let mut offset = (stack_size - 1) as isize;
 
         ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, RESULT)));
@@ -581,6 +716,8 @@ impl Function {
             offset -= 1;
         }
 
+        offset -= arg_padding as isize;
+
         ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, "RETURN_ADDRESS")));
         ctxt.stack.insert("RETURN_ADDRESS".to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
         offset -= 1;
@@ -589,7 +726,7 @@ impl Function {
 
         for (count, l) in self.locals.iter().enumerate() {
             let storage = match count {
-                count if count < register_local_count => {
+                count if (count as u32) < register_local_count => {
                     unimplemented!();
                     // let reg = if count == 0 { Reg::D } else { Reg::E };
                     // LocalStorage::Register(reg)
@@ -605,6 +742,8 @@ impl Function {
             ctxt.stack.insert(l.clone(), storage);
         }
 
+        offset -= local_padding as isize;
+
         assert_eq!(-1, offset);
 
         // assert_eq!(ctxt.regs_used.len(), register_local_count);
@@ -616,7 +755,8 @@ impl Function {
         //     }
         // }
 
-        if stack_local_count > 0 {
+        let locals_with_padding = local_padding + stack_local_count;
+        if locals_with_padding > 0 {
             ctxt.lines.push(Line::Comment("create stack space".to_owned()));
             ctxt.add_inst(Instruction {
                 opcode: Opcode::LoadImm8,
@@ -642,8 +782,13 @@ impl Function {
         }
          
         ctxt.lines.push(Line::Label(format!(":{}__{}", &self.name, EPILOGUE)));
-        if stack_local_count > 0 {
-            ctxt.add_inst(Instruction::Discard(StackOffset::new(stack_local_count as u8)));
+        if locals_with_padding > 0 {
+            ctxt.add_inst(Instruction {
+                opcode: Opcode::AddImm32IgnoreCarry,
+                source: String::new(),
+                args: vec![Value::Register(REG_SP), Value::Constant32(locals_with_padding)],
+                resolved: None,
+            });
         }
 
         // if register_local_count > 0 {
@@ -654,7 +799,7 @@ impl Function {
         //     }
         // }
 
-        ctxt.add_macro(format!("ret"));
+        ctxt.add_macro(format!("!return"));
 
         ctxt
     }
@@ -695,7 +840,12 @@ fn main() -> Result<(), std::io::Error> {
     let mut program = Vec::new();
 
     program.push(Line::Comment(format!("call main")));
-    program.push(Line::Instruction(Instruction::WithPush(PushableInstruction::Not(StackOffset::top()))));
+    program.push(Line::Instruction(Instruction {
+        opcode: Opcode::LoadImm32,
+        source: String::new(),
+        args: vec![Value::Register(REG_SP), Value::Constant32(0x8FFFC)],
+        resolved: None
+    }));
     program.push(Line::parse(format!("call :main")));
     program.push(Line::Instruction(Instruction::WithoutPush(PushableInstruction::LoadFromStack(StackOffset::top()))));
     program.push(Line::parse(format!("halt")));

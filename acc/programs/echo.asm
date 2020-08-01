@@ -15,15 +15,15 @@ ttyout r01
 ttyin r01
 copy8 r01 -> r02
 andimm8 r02 <- $80
-jz :read
+jzimm :read
 andimm8 r01 <- $7f
 ttyout r01
 copy8 r01 -> r02
 xorimm8 r02 <- 'q'
-jz :halt
+jzimm :halt
 copy8 r01 -> r02
 xorimm8 r02 <- $0A
-jz :prompt
-jmp :read
+jzimm :prompt
+jmpimm :read
 :halt
 halt

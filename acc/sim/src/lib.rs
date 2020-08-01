@@ -272,6 +272,80 @@ mod tests {
     }
 
     #[test]
+    fn jmpimm() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::JmpImm as u8);
+        rom.push(0x07);
+        rom.push(0x00);
+        rom.push(0x00);
+        for _ in 0..10 {
+            rom.push(Opcode::Halt as u8);
+        }
+
+        let mut c = Computer::new(rom);
+
+        while c.step() {}
+
+        assert_eq!(7, u32::from_le_bytes(c.pc));
+    }
+
+    #[test]
+    fn jz_zero() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::JzImm as u8);
+        rom.push(0x07);
+        rom.push(0x00);
+        rom.push(0x00);
+        for _ in 0..10 {
+            rom.push(Opcode::Halt as u8);
+        }
+
+        let mut c = Computer::new(rom);
+
+        c.flags |= Flags::ZERO;
+
+        while c.step() {}
+
+        assert_eq!(7, u32::from_le_bytes(c.pc));
+    }
+
+    #[test]
+    fn jz_nonzero() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::JzImm as u8);
+        rom.push(0x07);
+        rom.push(0x00);
+        rom.push(0x00);
+        for _ in 0..10 {
+            rom.push(Opcode::Halt as u8);
+        }
+
+        let mut c = Computer::new(rom);
+
+        while c.step() {}
+
+        assert_eq!(4, u32::from_le_bytes(c.pc));
+    }
+
+    #[test]
+    fn jmp() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Jmp as u8);
+        rom.push(0x04);
+        for _ in 0..20 {
+            rom.push(Opcode::Halt as u8);
+        }
+
+        let mut c = Computer::with_print(rom, true);
+
+        *c.mem_byte_mut(0x80004) = 7;
+
+        while c.step() {}
+
+        assert_eq!(7, u32::from_le_bytes(c.pc));
+    }
+
+    #[test]
     fn loadimm8() {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm8 as u8);
@@ -761,17 +835,17 @@ mod tests {
     }
 
     fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
-        add_tester_with_carry_out(carry_in, in1, in2, sum, carry_out);
-        add_tester_with_carry_out(carry_in, in2, in1, sum, carry_out);
-        if !carry_in {
-            add_tester_without_carry(in1, in2, sum);
-            add_tester_without_carry(in2, in1, sum);
-        }
+        add32_tester(carry_in, in1, in2, sum, carry_out);
+        add32_tester(carry_in, in2, in1, sum, carry_out);
+        add32nocarryin_tester(carry_in, in1, in2);
+        add32nocarryin_tester(carry_in, in2, in1);
+        addimm32nocarry_tester(carry_in, in1, in2);
+        addimm32nocarry_tester(carry_in, in2, in1);
     }
 
-    fn add_tester_with_carry_out(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
+    fn add32_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
         println!(
-            "test case {:?} + {:08x} + {:08x} -> {:08x} + {:?}",
+            "add32_tester test case {:?} + {:08x} + {:08x} -> {:08x} + {:?}",
             carry_in, in1, in2, sum, carry_out
         );
 
@@ -798,15 +872,16 @@ mod tests {
         assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
     }
 
-    fn add_tester_without_carry(in1: u32, in2: u32, sum: u32) {
+    fn add32nocarryin_tester(carry_in: bool, in1: u32, in2: u32) {
+        let sum = in1.wrapping_add(in2);
         println!(
-            "test case {:08x} + {:08x} -> {:08x}",
+            "add32nocarryin_tester test case {:08x} + {:08x} -> {:08x}",
             in1, in2, sum
         );
 
         let mut rom = Vec::new();
 
-        rom.push(Opcode::Add32NoCarry as u8);
+        rom.push(Opcode::Add32NoCarryIn as u8);
         rom.push(0);
         rom.push(4);
         rom.push(8);
@@ -816,12 +891,44 @@ mod tests {
 
         c.mem_word_mut(0x80000).copy_from_slice(&in1.to_le_bytes());
         c.mem_word_mut(0x80004).copy_from_slice(&in2.to_le_bytes());
+        
+        if carry_in {
+            c.flags |= Flags::CARRY;
+        }
 
         while c.step() {}
 
         assert_eq!(in1, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
         assert_eq!(in2, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
         assert_eq!(sum, u32::from_le_bytes(*c.mem_word_mut(0x80008)));
+    }
+
+    fn addimm32nocarry_tester(carry_in: bool, in1: u32, in2: u32) {
+        let sum = in1.wrapping_add(in2);
+
+        println!(
+            "addimm32ignorecarry_tester test case {:08x} + {:08x} -> {:08x}",
+            in1, in2, sum
+        );
+
+        let mut rom = Vec::new();
+
+        rom.push(Opcode::AddImm32IgnoreCarry as u8);
+        rom.push(0);
+        rom.extend_from_slice(&u32::to_le_bytes(in2));
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        c.mem_word_mut(0x80000).copy_from_slice(&in1.to_le_bytes());
+
+        if carry_in {
+            c.flags |= Flags::CARRY;
+        }
+
+        while c.step() {}
+
+        assert_eq!(sum, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
     }
 
     #[test]

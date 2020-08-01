@@ -308,12 +308,7 @@ impl Ucode {
         add!(self, Output::Imm(0x0), Load::Direct(DataBusLoadEdge::Addr1));
     }
 
-    fn jmp_abs(&mut self) {
-        for addr_edge in &Ucode::ADDR_LOADS {
-            pc_inc!(self);
-            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*addr_edge));
-        }
-
+    fn load_pc_from_address_regs(&mut self) {
         self.add_op(
             MicroOp::new(
                 Some(AddressBusOutputLevel::Addr),
@@ -326,6 +321,14 @@ impl Ucode {
             line!());
 
         self.inc_pc = false;
+    }
+
+    fn jmp_abs(&mut self) {
+        for addr_edge in &Ucode::ADDR_LOADS {
+            pc_inc!(self);
+            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(*addr_edge));
+        }
+        self.load_pc_from_address_regs();
     }
 
     fn flags_from(&mut self, out: Output) {
@@ -453,10 +456,32 @@ impl Ucode {
             add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::IR0));
 
             match opcode {
-                Some(Opcode::Jmp) => {
+                Some(Opcode::JmpImm) => {
                     self.jmp_abs();
                 }
-                Some(Opcode::Jz) => {
+                Some(Opcode::Jmp) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    for (i,load) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load));
+
+                        if i != 2 {
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                        }
+                    }
+
+                    for (out, load) in Ucode::WXYZ_OUTS.iter().take(3).zip(&Ucode::ADDR_LOADS) {
+                        add!(self, Output::Direct(*out), Load::Direct(*load));
+                    }
+
+                    self.load_pc_from_address_regs();
+                }
+                Some(Opcode::JzImm) => {
                     if flags.contains(Flags::ZERO) {
                         self.jmp_abs();
                     } else {
@@ -1157,7 +1182,7 @@ impl Ucode {
                 Some(Opcode::And32) => {
                     self.parallel_op_32(AluOpcode::And);
                 }
-                Some(Opcode::Add32NoCarry) => {
+                Some(Opcode::Add32NoCarryIn) => {
                     self.start_of_ram();
 
                     for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y] {
@@ -1201,6 +1226,42 @@ impl Ucode {
                             add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
                         }
                     }
+                }
+                Some(Opcode::AddImm32IgnoreCarry) => {
+
+                    add!(self, Output::Imm(flags.bits()), Load::Direct(DataBusLoadEdge::Z));
+
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    for i in 0..=3 {
+                        pc_inc!(self);
+                        let addlo = if i == 0 { AluOpcode::AddLoNoCarry} else { AluOpcode::addlo(flags) };
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(addlo));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
+
+                        if i != 3 {
+                            let addhi = if i == 0 { AluOpcode::AddHiNoCarry} else { AluOpcode::addhi(flags) };
+                            add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Alu(addhi));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                        }
+
+                        add!(self, Output::Direct(DataBusOutputLevel::X), Load::Mem(AddressBusOutputLevel::Addr));
+
+
+                        if i != 3 {
+                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                        }
+                    }
+
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Flags));
+
                 }
                 Some(Opcode::Add32Part1) => {
                     self.start_of_ram();

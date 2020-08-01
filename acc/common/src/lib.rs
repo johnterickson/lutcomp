@@ -122,10 +122,11 @@ pub const REG_SP: u8 = 0x0C;
 #[strum(serialize_all = "lowercase")]
 pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
-    Jmp = 1,      // pc <- [24-bit constant ABC]
-    Jz = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
+    JmpImm = 1,      // pc <- [24-bit constant ABC]
+    JzImm = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
     Invert = 3, // ~regA -> regA
     Negate = 4, // (~regA + 1) -> regA
+    Jmp = 5, // pc <- [24 LSB of Reg A]
     Copy8 = 0xF, // regA -> regB
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
@@ -156,9 +157,10 @@ pub enum Opcode {
     Store32Part2 = 0x93, // RegA -> 32-bit MEM[24-bit RegB]
     StoreImm32,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
-    Add32NoCarry = 0xA0, // regA + regB -> regC
+    Add32NoCarryIn = 0xA0, // regA + regB -> regC [carry out undefined]
     Add32Part1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry
     Add32Part2 = 0xA2,      // [none] must follow Part1
+    AddImm32IgnoreCarry = 0xA3, // RegA += [32-bit constant BCDE] [carry out unchanged]
 
     Or32 = 0xB0,  // regA | regB -> regC
     And32 = 0xB1, // regA & regB -> regC

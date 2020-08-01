@@ -1,7 +1,7 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
-use pest::Parser;
+use pest::{iterators::Pair, Parser};
 
 extern crate strum;
 
@@ -22,6 +22,7 @@ pub enum Value {
     Register(u8),
     Label24(String),
     Label32(String),
+    PcOffset(u32),
 }
 
 #[derive(Clone, Debug)]
@@ -44,12 +45,13 @@ impl Instruction {
                 Value::Register(_) => 1,
                 Value::Label24(_) => 3,
                 Value::Label32(_) => 4,
+                Value::PcOffset(_) => 4,
             }
         }
         sum
     }
 
-    pub fn resolve(&mut self, labels: &BTreeMap<String, u32>, _current_pc: u32) {
+    pub fn resolve(&mut self, labels: &BTreeMap<String, u32>, current_pc: u32) {
         let mut bytes = Vec::new();
         bytes.push(self.opcode as u8);
         for arg in &self.args {
@@ -66,6 +68,8 @@ impl Instruction {
                     let address =*labels.get(label).expect("label not found");
                     bytes.extend_from_slice(&u32::to_le_bytes(address));
                 },
+                Value::PcOffset(offset) => bytes.extend_from_slice(
+                    &u32::to_le_bytes(offset.wrapping_add(current_pc)))
             }
         }
 
@@ -75,9 +79,145 @@ impl Instruction {
     }
 }
 
-pub fn assemble(input: String) -> Vec<u8> {
-    use pest::iterators::Pair;
+fn parse_unsigned_hex(hex: Pair<Rule>) -> u32 {
+    assert_eq!(hex.as_rule(), Rule::unsigned_hex_constant);
+    u32::from_str_radix(hex.as_str(), 16).unwrap()
+}
 
+fn parse_signed_hex(hex: Pair<Rule>) -> u32 {
+    assert_eq!(hex.as_rule(), Rule::signed_hex_constant);
+    let mut chars = hex.as_str().chars();
+    if chars.next().unwrap() == '-' {
+        let positive =
+            u32::from_str_radix(hex.as_str().trim_start_matches('-'), 16).unwrap();
+        ((positive as i64) * (-1i64)).try_into().expect("does not fit in u32")
+    } else {
+        parse_unsigned_hex(hex.into_inner().next().unwrap())
+    }
+}
+
+fn parse_char(constant: Pair<Rule>) -> u8 {
+    assert_eq!(constant.as_rule(), Rule::char_constant);
+    let mut chars = constant.as_str().chars();
+    assert_eq!('\'', chars.next().unwrap());
+    let c = chars.next().unwrap();
+    assert_eq!('\'', chars.next().unwrap());
+    assert_eq!(None, chars.next());
+    c as u8
+}
+
+fn parse_constant8(constant: Pair<Rule>) -> Value {
+    assert_eq!(constant.as_rule(), Rule::constant8);
+    let constant = constant.into_inner().next().unwrap();
+    match constant.as_rule() {
+        Rule::signed_hex_constant => Value::Constant8(parse_signed_hex(constant).try_into().expect("does not fit in u8")),
+        Rule::char_constant => Value::Constant8(parse_char(constant)),
+        r => panic!("unexpexted {:?}", r),
+    }
+}
+
+fn parse_constant24(constant: Pair<Rule>) -> Value {
+    assert_eq!(constant.as_rule(), Rule::constant24);
+    let constant = constant.into_inner().next().unwrap();
+    match constant.as_rule() {
+        Rule::signed_hex_constant => Value::Constant24(parse_signed_hex(constant)),
+        Rule::char_constant => Value::Constant24(parse_char(constant) as u32),
+        Rule::label => Value::Label24(constant.as_str().to_owned()),
+        r => panic!("unexpexted {:?}", r),
+    }
+}
+
+fn parse_constant32(constant: Pair<Rule>) -> Value {
+    assert_eq!(constant.as_rule(), Rule::constant32);
+    let constant = constant.into_inner().next().unwrap();
+    match constant.as_rule() {
+        Rule::signed_hex_constant => Value::Constant32(parse_signed_hex(constant)),
+        Rule::char_constant => Value::Constant32(parse_char(constant) as u32),
+        Rule::label => Value::Label32(constant.as_str().to_owned()),
+        r => panic!("unexpexted {:?}", r),
+    }
+}
+
+fn parse_instruction(line: Pair<Rule>) -> Instruction {
+    assert_eq!(line.as_rule(), Rule::instruction);
+    let instruction = line.into_inner().next().unwrap();
+    let source = instruction.as_span().as_str().to_owned();
+
+    let mut args = Vec::new();
+
+    let opcode_name = format!("{:?}", instruction.as_rule()); //ew
+    let opcode = match &opcode_name {
+        name => std::str::FromStr::from_str(name)
+            .expect(&format!("Could not parse op {}", name)),
+    };
+
+    let arg_tokens = instruction.into_inner();
+
+    for arg in arg_tokens {
+        let value = match arg.as_rule() {
+            Rule::register => {
+                let reg = parse_unsigned_hex(arg.into_inner().next().unwrap());
+                Value::Register(reg.try_into().expect("invalid register"))
+            }
+            Rule::constant8 => parse_constant8(arg),
+            Rule::constant24 => parse_constant24(arg),
+            Rule::constant32 => parse_constant32(arg),
+            r => panic!("unexpexted {:?}", r),
+        };
+
+        args.push(value);
+    }
+    
+    Instruction {
+        source,
+        opcode,
+        args,
+        resolved: None,
+    }
+}
+
+pub enum AssemblyInputLine {
+    Comment(String),
+    Label(String),
+    Instruction(Instruction),
+    PseudoCall(Value),
+    PseudoReturn(),
+}
+
+impl AssemblyInputLine {
+    pub fn from_str(input: &str) -> AssemblyInputLine {
+        let mut line = AssemblyParser::parse(Rule::line, &input).unwrap();
+        AssemblyInputLine::parse(line.next().unwrap())
+    }
+
+    fn parse(line: Pair<Rule>) -> AssemblyInputLine {
+        assert_eq!(line.as_rule(), Rule::line);
+        let line = line.into_inner().next().unwrap();
+        match line.as_rule() {
+            Rule::instruction => AssemblyInputLine::Instruction(parse_instruction(line)),
+            Rule::label => AssemblyInputLine::Label(line.as_str().to_owned()),
+            Rule::comment => AssemblyInputLine::Comment(line.as_str().to_owned()),
+            Rule::pseudo_call => {
+                let call = line.into_inner().next().unwrap();
+                // let source = call.as_span().as_str();
+
+                let mut arg_tokens = call.into_inner();
+                let arg = arg_tokens.next().unwrap();
+
+                AssemblyInputLine::PseudoCall(parse_constant24(arg))
+            },
+            Rule::pseudo_return => AssemblyInputLine::PseudoReturn(),
+            r => panic!("unexpected {:?}", r),
+        }
+    }
+}
+
+enum AssemblyOutputLine {
+    Comment(String),
+    Instruction(Instruction),
+}
+
+pub fn assemble(input: String) -> Vec<u8> {
     println!("v2.0 raw");
 
     {
@@ -99,71 +239,7 @@ pub fn assemble(input: String) -> Vec<u8> {
         dump_tree(assembly, 0);
     }
 
-    fn parse_unsigned_hex(hex: Pair<Rule>) -> u32 {
-        assert_eq!(hex.as_rule(), Rule::unsigned_hex_constant);
-        u32::from_str_radix(hex.as_str(), 16).unwrap()
-    }
-
-    fn parse_signed_hex(hex: Pair<Rule>) -> u32 {
-        assert_eq!(hex.as_rule(), Rule::signed_hex_constant);
-        let mut chars = hex.as_str().chars();
-        if chars.next().unwrap() == '-' {
-            let positive =
-                u32::from_str_radix(hex.as_str().trim_start_matches('-'), 16).unwrap();
-            ((positive as i64) * (-1i64)).try_into().expect("does not fit in u32")
-        } else {
-            parse_unsigned_hex(hex.into_inner().next().unwrap())
-        }
-    }
-
-    fn parse_char(constant: Pair<Rule>) -> u8 {
-        assert_eq!(constant.as_rule(), Rule::char_constant);
-        let mut chars = constant.as_str().chars();
-        assert_eq!('\'', chars.next().unwrap());
-        let c = chars.next().unwrap();
-        assert_eq!('\'', chars.next().unwrap());
-        assert_eq!(None, chars.next());
-        c as u8
-    }
-
-    fn parse_constant8(constant: Pair<Rule>) -> Value {
-        assert_eq!(constant.as_rule(), Rule::constant8);
-        let constant = constant.into_inner().next().unwrap();
-        match constant.as_rule() {
-            Rule::signed_hex_constant => Value::Constant8(parse_signed_hex(constant).try_into().expect("does not fit in u8")),
-            Rule::char_constant => Value::Constant8(parse_char(constant)),
-            r => panic!("unexpexted {:?}", r),
-        }
-    }
-
-    fn parse_constant24(constant: Pair<Rule>) -> Value {
-        assert_eq!(constant.as_rule(), Rule::constant24);
-        let constant = constant.into_inner().next().unwrap();
-        match constant.as_rule() {
-            Rule::signed_hex_constant => Value::Constant24(parse_signed_hex(constant)),
-            Rule::char_constant => Value::Constant24(parse_char(constant) as u32),
-            Rule::label => Value::Label24(constant.as_str().to_owned()),
-            r => panic!("unexpexted {:?}", r),
-        }
-    }
-
-    fn parse_constant32(constant: Pair<Rule>) -> Value {
-        assert_eq!(constant.as_rule(), Rule::constant32);
-        let constant = constant.into_inner().next().unwrap();
-        match constant.as_rule() {
-            Rule::signed_hex_constant => Value::Constant32(parse_signed_hex(constant)),
-            Rule::char_constant => Value::Constant32(parse_char(constant) as u32),
-            Rule::label => Value::Label32(constant.as_str().to_owned()),
-            r => panic!("unexpexted {:?}", r),
-        }
-    }
-
-    enum SourceLine {
-        Instruction(Instruction),
-        Comment(String),
-    }
-
-    let mut lines : Vec<SourceLine> = Vec::new();
+    let mut lines : Vec<AssemblyOutputLine> = Vec::new();
     let mut labels = BTreeMap::new();
 
     let mut assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
@@ -172,57 +248,70 @@ pub fn assemble(input: String) -> Vec<u8> {
 
     let mut pc = 0u32;
     for line in assembly {
-        match line.as_rule() {
-            Rule::instruction => {
-                let instruction = line.into_inner().next().unwrap();
-                let source = instruction.as_span().as_str().to_owned();
+        if line.as_rule() == Rule::EOI {
+            break;
+        }
 
-                let mut args = Vec::new();
+        let source = format!("{:?}", &line);
+        lines.push(AssemblyOutputLine::Comment(source.to_owned()));
 
-                let opcode_name = format!("{:?}", instruction.as_rule()); //ew
-                let opcode = match &opcode_name {
-                    name => std::str::FromStr::from_str(name)
-                        .expect(&format!("Could not parse op {}", name)),
-                };
-
-                let arg_tokens = instruction.into_inner();
-
-                for arg in arg_tokens {
-                    let value = match arg.as_rule() {
-                        Rule::register => {
-                            let reg = parse_unsigned_hex(arg.into_inner().next().unwrap());
-                            Value::Register(reg.try_into().expect("invalid register"))
-                        }
-                        Rule::constant8 => parse_constant8(arg),
-                        Rule::constant24 => parse_constant24(arg),
-                        Rule::constant32 => parse_constant32(arg),
-                        r => panic!("unexpexted {:?}", r),
-                    };
-
-                    args.push(value);
-                }
-                
+        let parsed_line = AssemblyInputLine::parse(line);
+        match parsed_line {
+            AssemblyInputLine::Instruction(inst) => {
+                pc += inst.size();
+                lines.push(AssemblyOutputLine::Instruction(inst));
+            }
+            AssemblyInputLine::Comment(comment) => {
+                lines.push(AssemblyOutputLine::Comment(comment));
+            }
+            AssemblyInputLine::Label(label) => {
+                labels.insert(label.to_owned(), pc);
+                lines.push(AssemblyOutputLine::Comment(label.to_owned()));
+            }
+            AssemblyInputLine::PseudoReturn() => {
                 let inst = Instruction {
-                    source,
-                    opcode,
-                    args,
+                    opcode: Opcode::Jmp,
+                    source: source.to_owned(),
+                    args: vec![Value::Register(REG_SP), Value::Register(0)],
                     resolved: None,
                 };
-
                 pc += inst.size();
+                lines.push(AssemblyOutputLine::Instruction(inst));
+            }
+            AssemblyInputLine::PseudoCall(value) => {
+                let mut insts = vec![
+                    Instruction {
+                        opcode: Opcode::AddImm32IgnoreCarry,
+                        source: source.to_owned(),
+                        args: vec![Value::Register(REG_SP), Value::Constant32((-4i32) as u32)],
+                        resolved: None,
+                    },
+                    Instruction {
+                        opcode: Opcode::StoreImm32,
+                        source: source.to_owned(),
+                        args: vec![Value::Register(REG_SP), Value::PcOffset(6+4+6)],
+                        resolved: None,
+                    },
+                    Instruction {
+                        source: source.to_owned(),
+                        opcode: Opcode::JmpImm,
+                        args: vec![value],
+                        resolved: None,
+                    },
+                    // remove return address
+                    Instruction {
+                        opcode: Opcode::AddImm32IgnoreCarry,
+                        source: source.to_owned(),
+                        args: vec![Value::Register(REG_SP), Value::Constant32(4)],
+                        resolved: None,
+                    },
+                ];
 
-                println!("# {:?}", &inst);
-                lines.push(SourceLine::Instruction(inst));
+                for inst in insts.drain(..) {
+                    pc += inst.size();
+                    lines.push(AssemblyOutputLine::Instruction(inst));
+                }
             }
-            Rule::label => {
-                labels.insert(line.as_str().to_owned(), pc);
-                lines.push(SourceLine::Comment(line.as_str().to_owned()));
-            }
-            Rule::comment => {
-                lines.push(SourceLine::Comment(line.as_str().to_owned()));
-            }
-            Rule::EOI => {}
-            r => panic!("Unexpected: {:?}", r),
         }
     }
 
@@ -230,10 +319,10 @@ pub fn assemble(input: String) -> Vec<u8> {
     let mut pc = 0u32;
     for line in lines.as_mut_slice() {
         match line {
-            SourceLine::Comment(comment) => {
+            AssemblyOutputLine::Comment(comment) => {
                 println!("# {}", &comment);
             }
-            SourceLine::Instruction(i) => {
+            AssemblyOutputLine::Instruction(i) => {
                 i.resolve(&labels, pc);
                 println!("# {:02x} {:?}", pc, &i);
 
