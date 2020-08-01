@@ -155,7 +155,7 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
 
     for arg in arg_tokens {
         let value = match arg.as_rule() {
-            Rule::register => {
+            Rule::register | Rule::deref_register => {
                 let reg = parse_unsigned_hex(arg.into_inner().next().unwrap());
                 Value::Register(reg.try_into().expect("invalid register"))
             }
@@ -182,6 +182,8 @@ pub enum AssemblyInputLine {
     Instruction(Instruction),
     PseudoCall(Value),
     PseudoReturn(),
+    LiteralString(String),
+    Literal8(u8),
 }
 
 impl AssemblyInputLine {
@@ -198,23 +200,34 @@ impl AssemblyInputLine {
             Rule::label => AssemblyInputLine::Label(line.as_str().to_owned()),
             Rule::comment => AssemblyInputLine::Comment(line.as_str().to_owned()),
             Rule::pseudo_call => {
-                let call = line.into_inner().next().unwrap();
+                let call_arg = line.into_inner().next().unwrap();
                 // let source = call.as_span().as_str();
-
-                let mut arg_tokens = call.into_inner();
-                let arg = arg_tokens.next().unwrap();
-
-                AssemblyInputLine::PseudoCall(parse_constant24(arg))
+                AssemblyInputLine::PseudoCall(parse_constant24(call_arg))
             },
             Rule::pseudo_return => AssemblyInputLine::PseudoReturn(),
+            Rule::literal_string => {
+                let string = line.into_inner().next().unwrap();
+                AssemblyInputLine::LiteralString(string.as_str().to_owned())
+            }
+            Rule::literal8 => {
+                let byte = line.into_inner().next().unwrap();
+                let byte = match parse_constant8(byte) {
+                    Value::Constant8(byte) => byte,
+                    _ => panic!(),
+                };
+                AssemblyInputLine::Literal8(byte)
+            }
             r => panic!("unexpected {:?}", r),
         }
     }
 }
 
+#[derive(Debug)]
 enum AssemblyOutputLine {
     Comment(String),
     Instruction(Instruction),
+    Constant8(u8),
+    String(String),
 }
 
 pub fn assemble(input: String) -> Vec<u8> {
@@ -312,21 +325,44 @@ pub fn assemble(input: String) -> Vec<u8> {
                     lines.push(AssemblyOutputLine::Instruction(inst));
                 }
             }
+            AssemblyInputLine::Literal8(byte) => {
+                pc += 1;
+                lines.push(AssemblyOutputLine::Constant8(byte));
+            }
+            AssemblyInputLine::LiteralString(string) => {
+                pc += string.as_bytes().len() as u32;
+                lines.push(AssemblyOutputLine::String(string));
+            }
         }
     }
 
     let mut rom = Vec::new();
     let mut pc = 0u32;
     for line in lines.as_mut_slice() {
+        println!("# {:05x} {:?}", pc, &line);
+
         match line {
-            AssemblyOutputLine::Comment(comment) => {
-                println!("# {}", &comment);
+            AssemblyOutputLine::Comment(_comment) => {
+                // println!("# {}", &comment);
             }
             AssemblyOutputLine::Instruction(i) => {
                 i.resolve(&labels, pc);
-                println!("# {:02x} {:?}", pc, &i);
 
                 for byte in i.resolved.as_ref().unwrap() {
+                    print!("{:02x} ", byte);
+                    rom.push(*byte);
+                    pc += 1;
+                }
+                println!();
+            }
+            AssemblyOutputLine::Constant8(byte) => {
+                println!("{:02x} ", byte);
+                rom.push(*byte);
+                pc += 1;
+            }
+            AssemblyOutputLine::String(string) => {
+                println!("# '{}'", &string);
+                for byte in string.as_bytes() {
                     print!("{:02x} ", byte);
                     rom.push(*byte);
                     pc += 1;

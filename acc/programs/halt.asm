@@ -1,1 +1,0 @@
-loadimm pc :halt

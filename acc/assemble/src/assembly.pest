@@ -13,14 +13,14 @@ constant24 = {char_constant | "$" ~ signed_hex_constant | label}
 constant32 = {char_constant | "$" ~ signed_hex_constant | label}
 
 register = { "r" ~ unsigned_hex_constant }
-deref_register = {"*" ~ register}
+deref_register = _{"*" ~ register}
 
 loadimm8 = {"loadimm8" ~ register ~ "<-" ~ constant8 }
 copy8 = { "copy8" ~ register ~ "->" ~ register }
 jmpimm = {"jmpimm" ~ constant24 }
 jzimm = {"jzimm" ~ constant24 }
-load8 = {"load8" ~ register ~ "->" ~ deref_register  }
-store8 = {"store8" ~ deref_register ~ "->" ~ register }
+load8 = {"load8" ~ deref_register ~ "->" ~ register  }
+store8 = {"store8" ~ register ~ "->" ~ deref_register }
 ttyin = {"ttyin" ~ register }
 ttyout = {"ttyout" ~ register }
 push8 = {"push8" ~ register }
@@ -68,6 +68,9 @@ pseudo_return = {"!return"}
 
 instruction = {!"#" ~ !":" ~ op }
 comment = { "#" ~ (!new_line ~ ANY)* }
-line = { comment | label | pseudo_call | pseudo_return | instruction }
+literal8 = { "LITERAL8" ~ constant8 }
+literal_string_value = { (!new_line ~ ANY)+ }
+literal_string = {"LITERAL_STRING" ~ literal_string_value }
+line = { comment | label | pseudo_call | pseudo_return | instruction | literal8 | literal_string}
 
 program = {SOI ~ (line? ~ new_line)* ~ EOI}
