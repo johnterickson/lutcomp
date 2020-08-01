@@ -20,7 +20,7 @@ fn main() {
                 file.read_to_string(&mut input).unwrap();
                 input
             };
-            assemble(input);
+            assemble_from_str(&input);
         }
         Some("assemble_sim") => {
             let input = {
@@ -29,7 +29,7 @@ fn main() {
                 file.read_to_string(&mut input).unwrap();
                 input
             };
-            let rom = assemble(input);
+            let rom = assemble_from_str(&input);
             let mut c = Computer::with_print(rom, true);
             while c.step() { }
         }

@@ -9,5 +9,6 @@ edition = "2018"
 [dependencies]
 assemble = { path = "../assemble" }
 common = { path = "../common" }
+sim = { path = "../sim" }
 pest = "*"
 pest_derive = "*"

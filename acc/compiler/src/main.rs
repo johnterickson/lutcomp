@@ -12,9 +12,10 @@ use std::{convert::TryInto, str::FromStr};
 
 use assemble::*;
 use common::*;
+use sim::*;
 
 fn amount_for_round_up(a: u32, b: u32) -> u32 {
-    b - (a % b)
+    (b - (a % b)) % b
 }
 
 #[derive(Parser)]
@@ -48,7 +49,7 @@ impl Operator {
 struct FunctionContext {
     pub regs_touched: BTreeSet<u8>,
     pub stack: BTreeMap<String, LocalStorage>,
-    pub lines: Vec<Line>,
+    pub lines: Vec<AssemblyInputLine>,
     pub additional_offset: u32,
     pub block_counter: usize,
 }
@@ -56,11 +57,11 @@ struct FunctionContext {
 impl FunctionContext {
     fn add_inst(&mut self, i: Instruction) {
         //println!("{:?}",&i);
-        self.lines.push(Line::Instruction(i));
+        self.lines.push(AssemblyInputLine::Instruction(i));
     }
 
     fn add_macro(&mut self, s: String) {
-        self.lines.push(Line::PseudoInstruction(s));
+        self.lines.push(AssemblyInputLine::from_str(&s))
     }
 
     fn find_local(&mut self, local: &str) -> LocalStorage {
@@ -129,7 +130,7 @@ impl Expression {
     }
 
     fn emit(&self, ctxt: &mut FunctionContext) -> () {
-        ctxt.lines.push(Line::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
 
         match self {
             Expression::Number(n) => {
@@ -266,7 +267,7 @@ impl Expression {
             }
         }
         
-        ctxt.lines.push(Line::Comment(format!("Evaluated expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluated expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
     }
 }
 
@@ -337,7 +338,7 @@ impl Statement {
     }
 
     fn emit(&self, ctxt: &mut FunctionContext, function_name: &str) -> () {
-        ctxt.lines.push(Line::Comment(format!("Begin statement {:?}", self)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("Begin statement {:?}", self)));
         match self {
             Statement::Load{local, address} => {
                 unimplemented!();
@@ -442,24 +443,50 @@ impl Statement {
             },
             Statement::Return{ value } => {
                 value.emit(ctxt);
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    resolved: None,
+                    source: String::new(),
+                    args: vec![Value::Register(0)]
+                });
+                ctxt.additional_offset -= 1;
 
                 let result_offset = match ctxt.find_local(RESULT) {
                     LocalStorage::Register(_) => unimplemented!(),
                     LocalStorage::Stack(offset) => offset,
                 };
-
-                
+                ctxt.add_inst(Instruction {
+                            opcode: Opcode::LoadImm32,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(4), Value::Constant32(result_offset as u32)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Add32NoCarryIn,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
+                        });
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Store8,
+                            resolved: None,
+                            source: String::new(),
+                            args: vec![Value::Register(0), Value::Register(8)]
+                        });
 
                 // ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(result_offset as u8)));
 
-                assert_eq!(ctxt.additional_offset, 0);
+                // assert_eq!(ctxt.additional_offset, 0);
                 
                 // if ctxt.additional_offset != 0 {
                 //     ctxt.add_inst(Instruction::Discard(StackOffset::new(ctxt.additional_offset as u8)));
                 // }
-                // ctxt.add_inst(Instruction::Jmp(Target::Label(
-                //     format!(":{}__{}", function_name, EPILOGUE)
-                // )));
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::JmpImm,
+                    source: String::new(),
+                    args: vec![Value::Label24(format!(":{}__{}", function_name, EPILOGUE))],
+                    resolved: None                    
+                });
             },
             Statement::Call{ local, function, parameters} => { 
 
@@ -600,7 +627,7 @@ impl Statement {
                 // ctxt.lines.push(Line::Label(format!(":{}", &jump_label)));
             },
         }
-        ctxt.lines.push(Line::Comment(format!("Done  statement {:?}", self)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("Done  statement {:?}", self)));
     }
 }
 
@@ -687,8 +714,8 @@ impl Function {
             regs_touched: BTreeSet::new(),
             block_counter: 0,
         };
-        ctxt.lines.push(Line::Comment(format!("# Function: {}", &self.name)));
-        ctxt.lines.push(Line::Label(format!(":{}", &self.name)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("# Function: {}", &self.name)));
+        ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &self.name)));
 
         let max_register_locals = 0u32;
 
@@ -698,29 +725,33 @@ impl Function {
         let mut stack_size = 1u32; // result
         stack_size += self.args.len() as u32;
         let arg_padding = amount_for_round_up(stack_size, 4);
+        dbg!(arg_padding);
         stack_size += arg_padding;
         stack_size += 4; // return address
         stack_size += stack_local_count as u32;
         let local_padding = amount_for_round_up(stack_size, 4);
-        stack_size = local_padding;
+        dbg!(local_padding);
+        stack_size += local_padding;
+        dbg!(stack_size);
 
-        let mut offset = (stack_size - 1) as isize;
+        let mut offset = (stack_size as isize) - 1;
 
-        ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, RESULT)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+{} -> {}", offset, RESULT)));
         ctxt.stack.insert(RESULT.to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
         offset -= 1;
 
         for arg in &self.args {
-            ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, arg)));
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+{} -> {}", offset, arg)));
             ctxt.stack.insert(arg.clone(), LocalStorage::Stack(offset as u32));
             offset -= 1;
         }
 
         offset -= arg_padding as isize;
 
-        ctxt.lines.push(Line::Comment(format!("# sp+{} -> {}", offset, "RETURN_ADDRESS")));
+        offset -= 3;
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+{} -> {}", offset, "RETURN_ADDRESS")));
+        dbg!(&ctxt.lines);
         ctxt.stack.insert("RETURN_ADDRESS".to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
-        offset -= 1;
 
         // offset -= register_local_count as isize;
 
@@ -738,13 +769,13 @@ impl Function {
                 }
             };
 
-            ctxt.lines.push(Line::Comment(format!("# {:?} -> {}", storage, l)));
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("# {:?} -> {}", storage, l)));
             ctxt.stack.insert(l.clone(), storage);
         }
 
         offset -= local_padding as isize;
 
-        assert_eq!(-1, offset);
+        assert_eq!(0, offset);
 
         // assert_eq!(ctxt.regs_used.len(), register_local_count);
         // if register_local_count > 0 {
@@ -757,7 +788,7 @@ impl Function {
 
         let locals_with_padding = local_padding + stack_local_count;
         if locals_with_padding > 0 {
-            ctxt.lines.push(Line::Comment("create stack space".to_owned()));
+            ctxt.lines.push(AssemblyInputLine::Comment("create stack space".to_owned()));
             ctxt.add_inst(Instruction {
                 opcode: Opcode::LoadImm8,
                 resolved: None,
@@ -781,7 +812,7 @@ impl Function {
             // count += 1;
         }
          
-        ctxt.lines.push(Line::Label(format!(":{}__{}", &self.name, EPILOGUE)));
+        ctxt.lines.push(AssemblyInputLine::Label(format!(":{}__{}", &self.name, EPILOGUE)));
         if locals_with_padding > 0 {
             ctxt.add_inst(Instruction {
                 opcode: Opcode::AddImm32IgnoreCarry,
@@ -839,28 +870,41 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut program = Vec::new();
 
-    program.push(Line::Comment(format!("call main")));
-    program.push(Line::Instruction(Instruction {
+    program.push(AssemblyInputLine::Comment(format!("set up stack and call main")));
+    program.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
         source: String::new(),
         args: vec![Value::Register(REG_SP), Value::Constant32(0x8FFFC)],
         resolved: None
     }));
-    program.push(Line::parse(format!("call :main")));
-    program.push(Line::Instruction(Instruction::WithoutPush(PushableInstruction::LoadFromStack(StackOffset::top()))));
-    program.push(Line::parse(format!("halt")));
+    program.push(AssemblyInputLine::from_str("!call :main"));
+    program.push(AssemblyInputLine::from_str("halt"));
 
     for f in &functions {
-        program.push(Line::Comment(format!("{:?}", &f.1)));
+        program.push(AssemblyInputLine::Comment(format!("{:?}", &f.1)));
         let f = f.1.emit();
         for l in f.lines {
             program.push(l);
         }
     }
 
+    let program = program;
+
     let rom = assemble(program);
 
-    simulate(&rom, 10000000);
+    let mut c = Computer::with_print(rom, false);
+
+    let mut running: bool = true;
+    while running {
+        running = c.step();
+        let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
+        println!(
+            "pc:{:05x} sp:{:08x} mem[sp]:{:08x}", 
+            u32::from_le_bytes(c.pc),
+            sp,
+            u32::from_le_bytes(*c.mem_word_mut(sp))
+        );
+    }
 
     Ok(())
 }

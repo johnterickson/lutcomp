@@ -30,7 +30,7 @@ pub struct Instruction {
     pub source: String,
     pub opcode: Opcode,
     pub args: Vec<Value>,
-    resolved: Option<Vec<u8>>
+    pub resolved: Option<Vec<u8>>
 }
 
 impl Instruction {
@@ -176,6 +176,7 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
     }
 }
 
+#[derive(Debug)]
 pub enum AssemblyInputLine {
     Comment(String),
     Label(String),
@@ -230,9 +231,7 @@ enum AssemblyOutputLine {
     String(String),
 }
 
-pub fn assemble(input: String) -> Vec<u8> {
-    println!("v2.0 raw");
-
+pub fn assemble_from_str(input: &str) -> Vec<u8> {
     {
         use pest::iterators::Pairs;
         fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
@@ -248,34 +247,46 @@ pub fn assemble(input: String) -> Vec<u8> {
             }
         };
 
-        let assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
+        let assembly = AssemblyParser::parse(Rule::program, input).unwrap();
         dump_tree(assembly, 0);
     }
-
-    let mut lines : Vec<AssemblyOutputLine> = Vec::new();
-    let mut labels = BTreeMap::new();
 
     let mut assembly = AssemblyParser::parse(Rule::program, &input).unwrap();
     let assembly = assembly.next().unwrap();
     let assembly = assembly.into_inner();
 
-    let mut pc = 0u32;
+    let mut assembly_lines = Vec::new();
     for line in assembly {
         if line.as_rule() == Rule::EOI {
             break;
         }
+        let parsed_line = AssemblyInputLine::parse(line);
 
-        let source = format!("{:?}", &line);
+        assembly_lines.push(parsed_line);
+    }
+
+    assemble(assembly_lines)
+}
+
+pub fn assemble(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
+
+    println!("v2.0 raw");
+
+    let mut lines : Vec<AssemblyOutputLine> = Vec::new();
+    let mut labels = BTreeMap::new();
+
+    let mut pc = 0u32;
+    for line in input.drain(..) {
+        let source = format!("{:?}", line);
         lines.push(AssemblyOutputLine::Comment(source.to_owned()));
 
-        let parsed_line = AssemblyInputLine::parse(line);
-        match parsed_line {
+        match line {
             AssemblyInputLine::Instruction(inst) => {
                 pc += inst.size();
                 lines.push(AssemblyOutputLine::Instruction(inst));
             }
             AssemblyInputLine::Comment(comment) => {
-                lines.push(AssemblyOutputLine::Comment(comment));
+                lines.push(AssemblyOutputLine::Comment(comment.to_owned()));
             }
             AssemblyInputLine::Label(label) => {
                 labels.insert(label.to_owned(), pc);
@@ -283,9 +294,9 @@ pub fn assemble(input: String) -> Vec<u8> {
             }
             AssemblyInputLine::PseudoReturn() => {
                 let inst = Instruction {
-                    opcode: Opcode::Jmp,
+                    opcode: Opcode::JmpMem,
                     source: source.to_owned(),
-                    args: vec![Value::Register(REG_SP), Value::Register(0)],
+                    args: vec![Value::Register(REG_SP)],
                     resolved: None,
                 };
                 pc += inst.size();
@@ -302,7 +313,7 @@ pub fn assemble(input: String) -> Vec<u8> {
                     Instruction {
                         opcode: Opcode::StoreImm32,
                         source: source.to_owned(),
-                        args: vec![Value::Register(REG_SP), Value::PcOffset(6+4+6)],
+                        args: vec![Value::Register(REG_SP), Value::PcOffset(6+4)],
                         resolved: None,
                     },
                     Instruction {

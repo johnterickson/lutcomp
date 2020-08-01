@@ -459,7 +459,7 @@ impl Ucode {
                 Some(Opcode::JmpImm) => {
                     self.jmp_abs();
                 }
-                Some(Opcode::Jmp) => {
+                Some(Opcode::JmpReg) => {
                     self.start_of_ram();
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
@@ -481,8 +481,58 @@ impl Ucode {
 
                     self.load_pc_from_address_regs();
                 }
+                Some(Opcode::JmpMem) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    // capture address of address in WXY
+                    for (i,load) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load));
+
+                        if i != 2 {
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                        }
+                    }
+
+                    // load address of address into addrs
+                    for (out, load) in Ucode::WXYZ_OUTS.iter().take(3).zip(&Ucode::ADDR_LOADS) {
+                        add!(self, Output::Direct(*out), Load::Direct(*load));
+                    }
+
+                    // load address into wxy
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                    for (i,load) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load));
+
+                        if i != 2 {
+                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                        }
+                    }
+
+                    // load address into addrs
+                    for (out, load) in Ucode::WXYZ_OUTS.iter().take(3).zip(&Ucode::ADDR_LOADS) {
+                        add!(self, Output::Direct(*out), Load::Direct(*load));
+                    }
+
+                    self.load_pc_from_address_regs();
+                }
                 Some(Opcode::JzImm) => {
                     if flags.contains(Flags::ZERO) {
+                        self.jmp_abs();
+                    } else {
+                        pc_inc!(self);
+                        pc_inc!(self);
+                        pc_inc!(self);
+                    }
+                }
+                Some(Opcode::JzNeg) => {
+                    if flags.contains(Flags::NEG) {
                         self.jmp_abs();
                     } else {
                         pc_inc!(self);
@@ -1034,6 +1084,13 @@ impl Ucode {
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Y));
+
+                    // point memory to product0
+                    add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(Opcode::Mul8Part2) => {
                     self.inc_pc = false; // handle this manually
@@ -1050,8 +1107,6 @@ impl Ucode {
                     }
 
                     //   Z = if b & 1 { 0xFF } else { 0x00 }
-
-                    // point memory to product0, three times to
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
 
                     // store mask in Z

@@ -44,7 +44,7 @@ pub struct Computer<'a> {
     ucode_rom: &'a [(u8, &'static str, u32)],
     regs: [u8; 4],
     addr: [u8; 4],
-    pc: [u8; 4],
+    pub pc: [u8; 4],
     pcr: [u8; 4],
     upc: u8,
     alu: u8,
@@ -76,7 +76,7 @@ impl<'a> Computer<'a> {
     pub fn with_print(rom: Vec<u8>, print: bool) -> Computer<'a> {
         let c = Computer {
             rom,
-            ram: vec![0u8; 1 << MEM_BITS],
+            ram: Vec::new(),
             tty_in: VecDeque::new(),
             tty_out: VecDeque::new(),
             alu_lut: &alu::ALU,
@@ -99,12 +99,28 @@ impl<'a> Computer<'a> {
     }
 
     fn mem_slice_mut(&mut self, addr_bus: u32, len: usize) -> &mut [u8] {
+        self.try_mem_slice_mut(addr_bus, len).unwrap()
+    }
+
+    pub fn try_mem_slice_mut(&mut self, addr_bus: u32, len: usize) -> Option<&mut [u8]> {
         let addr_bus = addr_bus & 0x0FFFFF;
-        match addr_bus as usize {
-            a if ROM_MIN <= a && a <= ROM_MAX => &mut self.rom[a - ROM_MIN..(len + a - ROM_MIN)],
-            a if RAM_MIN <= a && a <= RAM_MAX => &mut self.ram[a - RAM_MIN..(len + a - RAM_MIN)],
-            _ => panic!(format!("Invalid address: {:08x}", addr_bus)),
-        }
+        Some(match addr_bus as usize {
+            a if ROM_MIN <= a && a + len < ROM_MAX => {
+                let end_index = len + a - ROM_MIN;
+                if end_index > self.rom.len() {
+                    self.rom.extend(std::iter::repeat(0xCCu8).take(end_index - self.rom.len()));
+                }
+                &mut self.rom[a - ROM_MIN..(len + a - ROM_MIN)]
+            },
+            a if RAM_MIN <= a && a + len < RAM_MAX => {
+                let end_index = len + a - RAM_MIN;
+                if end_index > self.ram.len() {
+                    self.ram.extend(std::iter::repeat(0xCCu8).take(end_index - self.ram.len()));
+                }
+                &mut self.ram[a - RAM_MIN..(len + a - RAM_MIN)]
+            },
+            _ => return None,
+        })
     }
 
     fn mem_byte_mut(&mut self, addr_bus: u32) -> &mut u8 {
@@ -266,7 +282,7 @@ mod tests {
         let mut rom = Vec::new();
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::with_print(rom, false);
 
         while c.step() {}
     }
@@ -328,17 +344,36 @@ mod tests {
     }
 
     #[test]
-    fn jmp() {
+    fn jmpreg() {
         let mut rom = Vec::new();
-        rom.push(Opcode::Jmp as u8);
+        rom.push(Opcode::JmpReg as u8);
         rom.push(0x04);
         for _ in 0..20 {
             rom.push(Opcode::Halt as u8);
         }
 
-        let mut c = Computer::with_print(rom, true);
+        let mut c = Computer::with_print(rom, false);
 
-        *c.mem_byte_mut(0x80004) = 7;
+        *c.mem_word_mut(0x80004) = u32::to_le_bytes(7);
+
+        while c.step() {}
+
+        assert_eq!(7, u32::from_le_bytes(c.pc));
+    }
+
+    #[test]
+    fn jmpmem() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::JmpMem as u8);
+        rom.push(0x04);
+        for _ in 0..20 {
+            rom.push(Opcode::Halt as u8);
+        }
+
+        let mut c = Computer::with_print(rom, false);
+
+        *c.mem_word_mut(0x80004) = u32::to_le_bytes(0x80008);
+        *c.mem_word_mut(0x80008) = u32::to_le_bytes(7);
 
         while c.step() {}
 
@@ -770,7 +805,7 @@ mod tests {
         rom.push(Opcode::Mul8Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::with_print(rom, false);
 
         *c.mem_byte_mut(0x80004) = a;
         *c.mem_byte_mut(0x80005) = b;
@@ -778,8 +813,8 @@ mod tests {
         while c.step() {}
 
         assert_eq!(
-            (a as u32) * (b as u32),
-            u32::from_le_bytes(*c.mem_word_mut(0x80000))
+            (a as u16) * (b as u16),
+            u16::from_le_bytes(c.mem_word_mut(0x80000)[0..2].try_into().unwrap())
         );
     }
 
@@ -806,14 +841,14 @@ mod tests {
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-        c.ram.as_mut_slice()[4..8].copy_from_slice(&u32::to_le_bytes(0x12345678));
-        c.ram.as_mut_slice()[8..0xc].copy_from_slice(&u32::to_le_bytes(0x11111111));
+        c.mem_word_mut(0x80004).copy_from_slice(&u32::to_le_bytes(0x12345678));
+        c.mem_word_mut(0x80008).copy_from_slice(&u32::to_le_bytes(0x11111111));
 
         while c.step() {}
 
         assert_eq!(
             0x23456789,
-            u32::from_le_bytes(c.ram[0xc..0x10].try_into().unwrap())
+            u32::from_le_bytes(*c.mem_word_mut(0x8000C))
         );
     }
 

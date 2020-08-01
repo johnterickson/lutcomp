@@ -126,7 +126,9 @@ pub enum Opcode {
     JzImm = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
     Invert = 3, // ~regA -> regA
     Negate = 4, // (~regA + 1) -> regA
-    Jmp = 5, // pc <- [24 LSB of Reg A]
+    JmpReg = 5, // pc <- 24 LSB of Reg A
+    JzNeg = 6, // pc <- [24 LSB of Reg A]
+    JmpMem = 7, // pc <- MEM[24 LSB of Reg A]
     Copy8 = 0xF, // regA -> regB
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
