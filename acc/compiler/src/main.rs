@@ -200,7 +200,7 @@ impl Expression {
                     opcode: Opcode::Pop8,
                     resolved: None,
                     source: format!("{:?}", &self),
-                    args: vec![Value::Register(1)]
+                    args: vec![Value::Register(3)]
                 });
                 ctxt.additional_offset -= 1;
 
@@ -208,11 +208,11 @@ impl Expression {
                     opcode: Opcode::Pop8,
                     resolved: None,
                     source: format!("{:?}", &self),
-                    args: vec![Value::Register(0)]
+                    args: vec![Value::Register(2)]
                 });
                 ctxt.additional_offset -= 1;
 
-                // left in 0; right in 1, result in 2
+                // left in 2; right in 3, result in 0 (&1)
 
                 match op {
                     Operator::Add => {
@@ -220,7 +220,7 @@ impl Expression {
                             opcode: Opcode::Add8NoCarry,
                             resolved: None,
                             source: format!("{:?}", &self),
-                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
+                            args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
                         });
                     },
                     Operator::Or => {
@@ -228,7 +228,7 @@ impl Expression {
                             opcode: Opcode::Or8,
                             resolved: None,
                             source: format!("{:?}", &self),
-                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
+                            args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
                         });
                     },
                     Operator::Multiply => {
@@ -236,7 +236,7 @@ impl Expression {
                             opcode: Opcode::Mul8Part1,
                             resolved: None,
                             source: format!("{:?}", &self),
-                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
+                            args: vec![Value::Register(2), Value::Register(3)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Mul8Part2,
@@ -250,13 +250,13 @@ impl Expression {
                             opcode: Opcode::Negate,
                             resolved: None,
                             source: format!("{:?}", &self),
-                            args: vec![Value::Register(1)]
+                            args: vec![Value::Register(3)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Add8NoCarry,
                             resolved: None,
                             source: format!("{:?}", &self),
-                            args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
+                            args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
                         });
                     },
                 }
@@ -265,7 +265,7 @@ impl Expression {
                     opcode: Opcode::Push8,
                     resolved: None,
                     source: format!("{:?}", &self),
-                    args: vec![Value::Register(2)]
+                    args: vec![Value::Register(0)]
                 });
                 ctxt.additional_offset += 1;
             }
@@ -874,13 +874,13 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut c = Computer::with_print(rom, false);
 
-    let mut last_pc = None;
+    let mut last_ir0 = None;
     let mut running: bool = true;
     while running {
         running = c.step();
         let pc = u32::from_le_bytes(c.pc);
 
-        if last_pc != Some(pc) {
+        if last_ir0 != Some(c.ir0) {
             let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
             println!(
                 "pc:{:05x} sp:{:08x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ", 
@@ -897,7 +897,7 @@ fn main() -> Result<(), std::io::Error> {
             );
         }
 
-        last_pc = Some(pc);
+        last_ir0 = Some(c.ir0);
     }
 
     eprintln!("Final R0:{:02x}", u32::from_le_bytes(*c.mem_word_mut(0x80000)));
@@ -1029,5 +1029,15 @@ mod tests {
         let mut c = Computer::with_print(rom, false);
         while c.step() {}
         assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
+
+    #[test]
+    fn fac() {
+        let program = include_str!("../../programs/fac.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(120, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
     }
 }
