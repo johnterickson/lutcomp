@@ -31,7 +31,7 @@ enum Operator {
     Subtract,
     Multiply,
     Or,
-    Equals,
+    NotEquals,
 }
 
 impl Operator {
@@ -41,7 +41,7 @@ impl Operator {
             "-" => Operator::Subtract,
             "*" => Operator::Multiply,
             "||" => Operator::Or,
-            "==" => Operator::Equals,
+            "!=" => Operator::NotEquals,
             _ => panic!(),
         }
     }
@@ -245,7 +245,7 @@ impl Expression {
                             args: vec![]
                         });
                     },
-                    Operator::Subtract | Operator::Equals => {
+                    Operator::Subtract | Operator::NotEquals => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Negate,
                             resolved: None,
@@ -499,7 +499,7 @@ impl Statement {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::LoadImm8,
                     source: format!("{:?} placeholder value for RESULT", &self),
-                    args: vec![Value::Constant8(0xCC)],
+                    args: vec![Value::Register(0), Value::Constant8(0xCC)],
                     resolved: None,
                 });
                 ctxt.add_inst(Instruction {
@@ -618,7 +618,6 @@ impl Statement {
 
                 let source = format!("IF ({:?})  ... ", predicate);
 
-                // WEIRD: interpret 0 as true, so invert it
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Pop8,
                     source: source.to_owned(),
@@ -628,9 +627,9 @@ impl Statement {
                 ctxt.additional_offset -= 1;
 
                 ctxt.add_inst(Instruction {
-                    opcode: Opcode::Invert,
+                    opcode: Opcode::OrImm8,
                     source: source.to_owned(),
-                    args: vec![Value::Register(0)],
+                    args: vec![Value::Register(0), Value::Constant8(0)],
                     resolved: None,
                 });
                 ctxt.add_inst(Instruction {
@@ -639,7 +638,6 @@ impl Statement {
                     args: vec![Value::Label24(format!(":{}", &jump_label))],
                     resolved: None,
                 });
-                    
 
                 // let mut count = 0;
                 for s in when_true {
@@ -951,6 +949,7 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
         }));
     }
     program.push(AssemblyInputLine::from_str("!call :main"));
+    program.push(AssemblyInputLine::from_str("loadimm32 r00 <- $00"));
     program.push(AssemblyInputLine::from_str("pop8 r00"));
     program.push(AssemblyInputLine::from_str("pop8 r00"));
     program.push(AssemblyInputLine::from_str("pop8 r00"));
@@ -984,6 +983,36 @@ mod tests {
     #[test]
     fn add() {
         let program = include_str!("../../programs/add.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
+
+    #[test]
+    fn call_parameterless() {
+        let program = include_str!("../../programs/call_parameterless.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
+
+    #[test]
+    fn idfn() {
+        let program = include_str!("../../programs/idfn.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
+
+    #[test]
+    fn if_ne() {
+        let program = include_str!("../../programs/if_ne.j");
         let assembly = compile(program);
         let rom = assemble(assembly);
         let mut c = Computer::with_print(rom, false);
