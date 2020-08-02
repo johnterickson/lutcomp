@@ -122,14 +122,6 @@ impl Expression {
         }
     }
 
-    fn is_tail(&self) -> bool {
-        match self {
-            Expression::Ident(_) => true,
-            Expression::Number(_) => true,
-            Expression::Operation(_,_,_) => false,
-        }
-    }
-
     fn emit(&self, ctxt: &mut FunctionContext) -> () {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
 
@@ -156,7 +148,7 @@ impl Expression {
             Expression::Ident(n) => {
                 let local = ctxt.find_local(n);
                 match local {
-                    LocalStorage::Register(r) => {
+                    LocalStorage::Register(_r) => {
                         // ctxt.add_inst(Instruction::LoadReg(r));
                         unimplemented!();
                     },
@@ -421,7 +413,7 @@ impl Statement {
 
                 let local = ctxt.find_local(local);
                 match local {
-                    LocalStorage::Register(r) => {
+                    LocalStorage::Register(_r) => {
                         unimplemented!();
                     }
                     LocalStorage::Stack(offset) => {
@@ -748,14 +740,14 @@ impl Function {
         let mut stack_size = 1u32; // result
         stack_size += self.args.len() as u32;
         let arg_padding = amount_for_round_up(stack_size, 4);
-        dbg!(arg_padding);
+        // dbg!(arg_padding);
         stack_size += arg_padding;
         stack_size += 4; // return address
         stack_size += stack_local_count as u32;
         let local_padding = amount_for_round_up(stack_size, 4);
-        dbg!(local_padding);
+        // dbg!(local_padding);
         stack_size += local_padding;
-        dbg!(stack_size);
+        // dbg!(stack_size);
 
         let mut offset = (stack_size as isize) - 1;
 
@@ -773,7 +765,7 @@ impl Function {
 
         offset -= 3;
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, "RETURN_ADDRESS")));
-        dbg!(&ctxt.lines);
+        // dbg!(&ctxt.lines);
         ctxt.stack.insert("RETURN_ADDRESS".to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
         offset -= 1;
 
@@ -860,6 +852,55 @@ impl Function {
     }
 }
 
+fn optimize(assembly: &mut Vec<AssemblyInputLine>) -> usize {
+
+    let mut optimizations_applied = 0;
+
+    let mut instruction_indices = Vec::new();
+    for (i, line) in assembly.as_mut_slice().iter_mut().enumerate() {
+        if let AssemblyInputLine::Instruction(_inst) = line {
+            instruction_indices.push(i);
+        }
+    }
+
+    // dbg!(&instruction_indices);
+
+    for instruction_pairs in instruction_indices.windows(2) {
+        let (slice1, slice2) = assembly.as_mut_slice()[instruction_pairs[0]..].split_at_mut(1);
+        let line1 = &mut slice1[0];
+        let line2 = &mut slice2[instruction_pairs[1] - instruction_pairs[0]- 1];
+
+        let mut comment_out = false;
+
+        match (&line1, &line2) {
+            (AssemblyInputLine::Instruction(i1), 
+             AssemblyInputLine::Instruction(i2)) => {
+                 if (i1.opcode == Opcode::Push8) && (i2.opcode == Opcode::Pop8) || (i2.opcode == Opcode::Pop8 && i1.opcode == Opcode::Push8) {
+                     if let Value::Register(r1) = i1.args[0] {
+                        if let Value::Register(r2) = i2.args[0] {
+                            if r1 == r2 {
+                                // dbg!(i1);
+                                // dbg!(i2);
+                                comment_out = true;
+                            }
+                        }
+                     }
+                 }
+            }
+            _ => {}
+        }
+
+        if comment_out {
+            *line1 = AssemblyInputLine::Comment(format!("optimized away push/pop pair: {:?}", line1));
+            *line2 = AssemblyInputLine::Comment(format!("optimized away push/pop pair: {:?}", line2));
+
+            optimizations_applied += 1;
+        }
+    }
+
+    optimizations_applied
+}
+
 
 fn main() -> Result<(), std::io::Error> {
     let input = {
@@ -884,7 +925,7 @@ fn main() -> Result<(), std::io::Error> {
             let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
             println!(
                 "pc:{:05x} sp:{:08x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ", 
-                u32::from_le_bytes(c.pc),
+                pc,
                 sp,
                 u32::from_le_bytes(*c.mem_word_mut(sp)),
                 u32::from_le_bytes(*c.mem_word_mut(sp+4)),
@@ -923,8 +964,7 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
         }
     }
 
-    let main = functions.get("main");
-    let main = main.expect("main not found.");
+    functions.get("main").expect("main not found.");
 
     let mut program = Vec::new();
 
@@ -963,6 +1003,11 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
         for l in f.lines {
             program.push(l);
         }
+    }
+
+    let mut optimizations_performed : usize;
+    while 0 < {optimizations_performed = optimize(&mut program); optimizations_performed} {
+        println!("performed {} optimizations", optimizations_performed);
     }
 
     program
