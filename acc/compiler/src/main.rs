@@ -1040,4 +1040,14 @@ mod tests {
         while c.step() {}
         assert_eq!(120, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
     }
+
+    #[test]
+    fn fib() {
+        let program = include_str!("../../programs/fib.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(13, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
 }
