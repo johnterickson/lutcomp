@@ -49,7 +49,7 @@ pub struct Computer<'a> {
     upc: u8,
     alu: u8,
     flags: Flags,
-    ir0: u8,
+    pub ir0: u8,
     in1: u8,
     print: bool,
 }

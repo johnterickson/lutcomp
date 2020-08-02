@@ -531,7 +531,7 @@ impl Ucode {
                         pc_inc!(self);
                     }
                 }
-                Some(Opcode::JzNeg) => {
+                Some(Opcode::JnImm) => {
                     if flags.contains(Flags::NEG) {
                         self.jmp_abs();
                     } else {

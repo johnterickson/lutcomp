@@ -1,11 +1,12 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
-
 use pest::Parser;
 
+extern crate strum;
+use strum::IntoEnumIterator;
+
 use std::io;
-use std::io::ErrorKind;
 use std::io::Read;
 use std::collections::{BTreeMap,BTreeSet};
 use std::{convert::TryInto, str::FromStr};
@@ -137,14 +138,14 @@ impl Expression {
                 let n = *n as u8;
 
                 ctxt.add_inst(Instruction {
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     opcode: Opcode::LoadImm8,
                     args: vec![Value::Register(0), Value::Constant8(n)],
                     resolved: None,
                 });
 
                 ctxt.add_inst(Instruction {
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     opcode: Opcode::Push8,
                     args: vec![Value::Register(0)],
                     resolved: None,
@@ -161,32 +162,31 @@ impl Expression {
                     },
                     LocalStorage::Stack(offset) => {
                         ctxt.add_inst(Instruction {
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             opcode: Opcode::LoadImm32,
                             args: vec![Value::Register(0), Value::Constant32(offset)],
                             resolved: None,
                         });
 
                         ctxt.add_inst(Instruction {
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             opcode: Opcode::Add32NoCarryIn,
                             args: vec![Value::Register(REG_SP), Value::Register(0), Value::Register(4)],
                             resolved: None,
                         });
 
                         ctxt.add_inst(Instruction {
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             opcode: Opcode::Load8,
                             args: vec![Value::Register(4), Value::Register(0)],
                             resolved: None,
                         });
                         ctxt.add_inst(Instruction {
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             opcode: Opcode::Push8,
                             args: vec![Value::Register(0)],
                             resolved: None,
                         });
-
                         ctxt.additional_offset += 1;
                     }
                 }
@@ -195,19 +195,22 @@ impl Expression {
                 
                 left.emit(ctxt);
                 right.emit(ctxt);
+
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Pop8,
                     resolved: None,
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     args: vec![Value::Register(1)]
                 });
+                ctxt.additional_offset -= 1;
+
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Pop8,
                     resolved: None,
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     args: vec![Value::Register(0)]
                 });
-
+                ctxt.additional_offset -= 1;
 
                 // left in 0; right in 1, result in 2
 
@@ -216,7 +219,7 @@ impl Expression {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Add8NoCarry,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
                         });
                     },
@@ -224,7 +227,7 @@ impl Expression {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Or8,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
                         });
                     },
@@ -232,13 +235,13 @@ impl Expression {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Mul8Part1,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Mul8Part2,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![]
                         });
                     },
@@ -246,13 +249,13 @@ impl Expression {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Negate,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(1)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Add8NoCarry,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(0), Value::Register(1), Value::Register(2)]
                         });
                     },
@@ -261,9 +264,10 @@ impl Expression {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Push8,
                     resolved: None,
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     args: vec![Value::Register(2)]
                 });
+                ctxt.additional_offset += 1;
             }
         }
         
@@ -410,9 +414,10 @@ impl Statement {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Pop8,
                     resolved: None,
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     args: vec![Value::Register(0)]
                 });
+                ctxt.additional_offset -= 1;
 
                 let local = ctxt.find_local(local);
                 match local {
@@ -423,19 +428,19 @@ impl Statement {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::LoadImm32,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(4), Value::Constant32(offset as u32)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Add32NoCarryIn,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Store8,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(0), Value::Register(8)]
                         });
                     }
@@ -446,7 +451,7 @@ impl Statement {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Pop8,
                     resolved: None,
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     args: vec![Value::Register(0)]
                 });
                 ctxt.additional_offset -= 1;
@@ -458,19 +463,19 @@ impl Statement {
                 ctxt.add_inst(Instruction {
                             opcode: Opcode::LoadImm32,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(4), Value::Constant32(result_offset as u32)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Add32NoCarryIn,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Store8,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?}", &self),
                             args: vec![Value::Register(0), Value::Register(8)]
                         });
 
@@ -483,25 +488,23 @@ impl Statement {
                 // }
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JmpImm,
-                    source: String::new(),
+                    source: format!("{:?}", &self),
                     args: vec![Value::Label24(format!(":{}__{}", function_name, EPILOGUE))],
                     resolved: None                    
                 });
             },
             Statement::Call{ local, function, parameters} => { 
 
-                assert_eq!(ctxt.additional_offset, 0);
-
                 // put 0xCC in for RESULT
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::LoadImm8,
-                    source: String::new(),
+                    source: format!("{:?} placeholder value for RESULT", &self),
                     args: vec![Value::Constant8(0xCC)],
                     resolved: None,
                 });
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Push8,
-                    source: String::new(),
+                    source: format!("{:?} placeholder value for RESULT", &self),
                     args: vec![Value::Register(0)],
                     resolved: None,
                 });
@@ -517,7 +520,7 @@ impl Statement {
                 while ctxt.additional_offset % 4 != 0 {
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Push8,
-                        source: String::new(),
+                        source: format!("{:?} padding", &self),
                         args: vec![Value::Register(0)],
                         resolved: None,
                     });
@@ -528,13 +531,13 @@ impl Statement {
                 // store return address
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::AddImm32IgnoreCarry,
-                    source: String::new(),
+                    source: format!("{:?} return address", &self),
                     args: vec![Value::Register(REG_SP), Value::Constant32((-4i32) as u32)],
                     resolved: None,
                 });
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::StoreImm32,
-                    source: String::new(),
+                    source: format!("{:?} return address", &self),
                     args: vec![Value::Register(REG_SP), Value::PcOffset(4+6)],
                     resolved: None,
                 });
@@ -543,15 +546,15 @@ impl Statement {
                 // call
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JmpImm,
-                    source: String::new(),
-                    args: vec![Value::Label24(function.to_owned())],
+                    source: format!("{:?} call {}", &self, function),
+                    args: vec![Value::Label24(format!(":{}",function))],
                     resolved: None,
                 });
 
                 // discard paramters and padding and return address
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::AddImm32IgnoreCarry,
-                    source: String::new(),
+                    source: format!("{:?} clean up stack", &self),
                     args: vec![Value::Register(REG_SP), Value::Constant32(padding + 4)],
                     resolved: None,
                 });
@@ -564,18 +567,18 @@ impl Statement {
                 // }
 
                 // result is now at the top of the stack
-                assert_eq!(ctxt.additional_offset, 1);
+                // assert_eq!(ctxt.additional_offset, 1);
 
                 ctxt.add_inst(Instruction {
-                    opcode: Opcode::Push8,
-                    source: String::new(),
+                    opcode: Opcode::Pop8,
+                    source: format!("{:?} pop result off stack", &self),
                     args: vec![Value::Register(0)],
                     resolved: None,
                 });
                 ctxt.additional_offset -= 1;
 
                 // stack is now back to normal
-                assert_eq!(ctxt.additional_offset, 0);
+                // assert_eq!(ctxt.additional_offset, 0);
 
                 let local = ctxt.find_local(local);
                 match local {
@@ -587,44 +590,65 @@ impl Statement {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::LoadImm32,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?} store result", &self),
                             args: vec![Value::Register(4), Value::Constant32(offset as u32)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Add32NoCarryIn,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?} store result", &self),
                             args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Store8,
                             resolved: None,
-                            source: String::new(),
+                            source: format!("{:?} store result", &self),
                             args: vec![Value::Register(0), Value::Register(8)]
                         });
                     }
                 }
             },
             Statement::If{predicate, when_true} => {
-                unimplemented!();
-                // let if_skip = "IF_SKIP";
-                // predicate.emit(ctxt); // result in top of stack
+                let if_skip = "IF_SKIP";
+                predicate.emit(ctxt); // result in top of stack
 
-                // let jump_label = format!("{}_{}_{}", function_name, if_skip, ctxt.block_counter);
+                let jump_label = format!("{}_{}_{}", function_name, if_skip, ctxt.block_counter);
 
-                // ctxt.block_counter += 1;
+                ctxt.block_counter += 1;
 
-                // // WEIRD: interpret 0 as true
-                // ctxt.add_inst(Instruction::Jnz(Target::Label(format!(":{}", &jump_label))));
+                let source = format!("IF ({:?})  ... ", predicate);
 
-                // // let mut count = 0;
-                // for s in when_true {
-                //     // let scope = format!("{}_stmt{}", scope, count);
-                //     s.emit(ctxt, function_name);
-                //     // count += 1;
-                // }
+                // WEIRD: interpret 0 as true, so invert it
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    source: source.to_owned(),
+                    args: vec![Value::Register(0)],
+                    resolved: None,
+                });
+                ctxt.additional_offset -= 1;
+
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Invert,
+                    source: source.to_owned(),
+                    args: vec![Value::Register(0)],
+                    resolved: None,
+                });
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::JzImm,
+                    source: source.to_owned(),
+                    args: vec![Value::Label24(format!(":{}", &jump_label))],
+                    resolved: None,
+                });
+                    
+
+                // let mut count = 0;
+                for s in when_true {
+                    // let scope = format!("{}_stmt{}", scope, count);
+                    s.emit(ctxt, function_name);
+                    // count += 1;
+                }
                 
-                // ctxt.lines.push(Line::Label(format!(":{}", &jump_label)));
+                ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &jump_label)));
             },
         }
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Done  statement {:?}", self)));
@@ -736,12 +760,12 @@ impl Function {
 
         let mut offset = (stack_size as isize) - 1;
 
-        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+{} -> {}", offset, RESULT)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, RESULT)));
         ctxt.stack.insert(RESULT.to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
         offset -= 1;
 
         for arg in &self.args {
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+{} -> {}", offset, arg)));
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, arg)));
             ctxt.stack.insert(arg.clone(), LocalStorage::Stack(offset as u32));
             offset -= 1;
         }
@@ -749,9 +773,10 @@ impl Function {
         offset -= arg_padding as isize;
 
         offset -= 3;
-        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+{} -> {}", offset, "RETURN_ADDRESS")));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, "RETURN_ADDRESS")));
         dbg!(&ctxt.lines);
         ctxt.stack.insert("RETURN_ADDRESS".to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
+        offset -= 1;
 
         // offset -= register_local_count as isize;
 
@@ -775,7 +800,7 @@ impl Function {
 
         offset -= local_padding as isize;
 
-        assert_eq!(0, offset);
+        assert_eq!(-1, offset);
 
         // assert_eq!(ctxt.regs_used.len(), register_local_count);
         // if register_local_count > 0 {
@@ -792,14 +817,14 @@ impl Function {
             ctxt.add_inst(Instruction {
                 opcode: Opcode::LoadImm8,
                 resolved: None,
-                source: String::new(),
-                args: vec![Value::Constant8(0xCC)]
+                source: format!("filler for allocated stack space"),
+                args: vec![Value::Register(0), Value::Constant8(0xBB)]
             });
-            for _ in 0..stack_local_count {
+            for _ in 0..locals_with_padding {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Push8,
                     resolved: None,
-                    source: String::new(),
+                    source: format!("locals and padding"),
                     args: vec![Value::Register(0)]
                 });
             }
@@ -816,7 +841,7 @@ impl Function {
         if locals_with_padding > 0 {
             ctxt.add_inst(Instruction {
                 opcode: Opcode::AddImm32IgnoreCarry,
-                source: String::new(),
+                source: format!("get stack pointing to RA"),
                 args: vec![Value::Register(REG_SP), Value::Constant32(locals_with_padding)],
                 resolved: None,
             });
@@ -844,7 +869,44 @@ fn main() -> Result<(), std::io::Error> {
         stdin.lock().read_to_string(&mut s)?;
         s
     };
+    let assembly = compile(&input);
 
+    let rom = assemble(assembly);
+
+    let mut c = Computer::with_print(rom, false);
+
+    let mut last_pc = None;
+    let mut running: bool = true;
+    while running {
+        running = c.step();
+        let pc = u32::from_le_bytes(c.pc);
+
+        if last_pc != Some(pc) {
+            let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
+            println!(
+                "pc:{:05x} sp:{:08x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ", 
+                u32::from_le_bytes(c.pc),
+                sp,
+                u32::from_le_bytes(*c.mem_word_mut(sp)),
+                u32::from_le_bytes(*c.mem_word_mut(sp+4)),
+                u32::from_le_bytes(*c.mem_word_mut(sp+8)),
+                u32::from_le_bytes(*c.mem_word_mut(sp+0xC)),
+                u32::from_le_bytes(*c.mem_word_mut(0x80000)),
+                u32::from_le_bytes(*c.mem_word_mut(0x80004)),
+                u32::from_le_bytes(*c.mem_word_mut(0x80008)),
+                Opcode::iter().filter(|o| *o as u8 == c.ir0).next(),
+            );
+        }
+
+        last_pc = Some(pc);
+    }
+
+    eprintln!("Final R0:{:02x}", u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+
+    Ok(())
+}
+
+fn compile(input: &str) -> Vec<AssemblyInputLine> {
     let mut functions = BTreeMap::new();
 
     let mut program = ProgramParser::parse(Rule::program, &input).unwrap();
@@ -863,10 +925,7 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     let main = functions.get("main");
-    if main.is_none() {
-        println!("main not found!");
-        return Err(std::io::Error::from(ErrorKind::NotFound));
-    }
+    let main = main.expect("main not found.");
 
     let mut program = Vec::new();
 
@@ -874,10 +933,28 @@ fn main() -> Result<(), std::io::Error> {
     program.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
         source: String::new(),
-        args: vec![Value::Register(REG_SP), Value::Constant32(0x8FFFC)],
+        args: vec![Value::Register(REG_SP), Value::Constant32(0x8FFF0)],
         resolved: None
     }));
+    program.push(AssemblyInputLine::Instruction(Instruction {
+        opcode: Opcode::LoadImm8,
+        source: String::new(),
+        args: vec![Value::Register(0), Value::Constant8(0xAA)],
+        resolved: None
+    }));
+    for _ in 0..4 {
+        program.push(AssemblyInputLine::Instruction(Instruction {
+            opcode: Opcode::Push8,
+            source: String::new(),
+            args: vec![Value::Register(0)],
+            resolved: None
+        }));
+    }
     program.push(AssemblyInputLine::from_str("!call :main"));
+    program.push(AssemblyInputLine::from_str("pop8 r00"));
+    program.push(AssemblyInputLine::from_str("pop8 r00"));
+    program.push(AssemblyInputLine::from_str("pop8 r00"));
+    program.push(AssemblyInputLine::from_str("pop8 r00"));
     program.push(AssemblyInputLine::from_str("halt"));
 
     for f in &functions {
@@ -888,23 +965,29 @@ fn main() -> Result<(), std::io::Error> {
         }
     }
 
-    let program = program;
+    program
+}
 
-    let rom = assemble(program);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let mut c = Computer::with_print(rom, false);
-
-    let mut running: bool = true;
-    while running {
-        running = c.step();
-        let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
-        println!(
-            "pc:{:05x} sp:{:08x} mem[sp]:{:08x}", 
-            u32::from_le_bytes(c.pc),
-            sp,
-            u32::from_le_bytes(*c.mem_word_mut(sp))
-        );
+    #[test]
+    fn halt() {
+        let program = include_str!("../../programs/halt.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
     }
 
-    Ok(())
+    #[test]
+    fn add() {
+        let program = include_str!("../../programs/add.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
 }

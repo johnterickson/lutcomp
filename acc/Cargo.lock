@@ -93,6 +93,7 @@ dependencies = [
  "pest",
  "pest_derive",
  "sim",
+ "strum",
 ]
 
 [[package]]

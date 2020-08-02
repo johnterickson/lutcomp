@@ -127,7 +127,7 @@ pub enum Opcode {
     Invert = 3, // ~regA -> regA
     Negate = 4, // (~regA + 1) -> regA
     JmpReg = 5, // pc <- 24 LSB of Reg A
-    JzNeg = 6, // pc <- [24 LSB of Reg A]
+    JnImm = 6, // pc <- [24 LSB of Reg A]
     JmpMem = 7, // pc <- MEM[24 LSB of Reg A]
     Copy8 = 0xF, // regA -> regB
 

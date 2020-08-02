@@ -61,7 +61,7 @@ impl Instruction {
                 Value::Constant32(c) => bytes.extend_from_slice(&u32::to_le_bytes(*c)),
                 Value::Register(r) => bytes.push(*r),
                 Value::Label24(label) => {
-                    let address =*labels.get(label).expect("label not found");
+                    let address =*labels.get(label).expect(&format!("label not found: {}", label));
                     bytes.extend_from_slice(&u32::to_le_bytes(address)[0..=2]);
                 },
                 Value::Label32(label) => {

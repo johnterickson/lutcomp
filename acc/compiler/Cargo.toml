@@ -12,3 +12,4 @@ common = { path = "../common" }
 sim = { path = "../sim" }
 pest = "*"
 pest_derive = "*"
+strum = "*"

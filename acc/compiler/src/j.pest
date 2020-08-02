@@ -22,11 +22,12 @@ if_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" }
 assign = { "ASSIGN" ~ ident ~ ":=" ~ expression ~ ";" }
 load = { "LOAD" ~ ident ~ "<-" ~ "*" ~ expression ~ ";"}
 store = { "STORE" ~ ident ~ "->" ~ "*" ~ expression ~ ";"}
+ttyout = { "TTYOUT" ~ expression ~ ";" }
 return_statement = { "RETURN" ~ expression ~ ";" }
 
 call = { "CALL" ~ ident ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-statement = { assign | if_statement | return_statement | call | load | store}
+statement = { assign | if_statement | ttyout | return_statement | call | load | store}
 body = { (statement)+ }
 paramters = { ident? ~ ("," ~ ident)* }
 function = {"FUNCTION " ~ ident ~ "(" ~ paramters ~ ")" ~ "{" ~ body ~ "}"}
