@@ -510,9 +510,10 @@ impl Statement {
                 });
                 ctxt.additional_offset += 1;
 
+                let mut args = 0;
                 for p in parameters {
                     p.emit(ctxt);
-                    ctxt.additional_offset += 1;
+                    args += 1;
                 }
 
                 // padding
@@ -520,7 +521,7 @@ impl Statement {
                 while ctxt.additional_offset % 4 != 0 {
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Push8,
-                        source: format!("{:?} padding", &self),
+                        source: format!("{:?} padding additional_offset:{}", &self, ctxt.additional_offset),
                         args: vec![Value::Register(0)],
                         resolved: None,
                     });
@@ -555,10 +556,10 @@ impl Statement {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::AddImm32IgnoreCarry,
                     source: format!("{:?} clean up stack", &self),
-                    args: vec![Value::Register(REG_SP), Value::Constant32(padding + 4)],
+                    args: vec![Value::Register(REG_SP), Value::Constant32(args + padding + 4)],
                     resolved: None,
                 });
-                ctxt.additional_offset -= padding + 4;
+                ctxt.additional_offset -= args + padding + 4;
 
                 // for r in regs_to_save.iter().rev() {
                 //     unimplemented!();
@@ -1013,6 +1014,16 @@ mod tests {
     #[test]
     fn if_ne() {
         let program = include_str!("../../programs/if_ne.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
+
+    #[test]
+    fn plusone() {
+        let program = include_str!("../../programs/plusone.j");
         let assembly = compile(program);
         let rom = assemble(assembly);
         let mut c = Computer::with_print(rom, false);
