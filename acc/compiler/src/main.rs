@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 use std::io;
 use std::io::Read;
 use std::collections::{BTreeMap,BTreeSet};
-use std::{convert::TryInto, str::FromStr};
+use std::{convert::TryInto, str::FromStr, ops::Deref};
 
 use assemble::*;
 use common::*;
@@ -23,14 +23,13 @@ fn amount_for_round_up(a: u32, b: u32) -> u32 {
 #[grammar = "j.pest"]
 struct ProgramParser;
 
-
-
 #[derive(Debug, PartialEq, Eq)]
 enum Operator {
     Add,
     Subtract,
     Multiply,
     Or,
+    // Equals,
     NotEquals,
 }
 
@@ -41,15 +40,28 @@ impl Operator {
             "-" => Operator::Subtract,
             "*" => Operator::Multiply,
             "||" => Operator::Or,
+            // "==" => Operator::Equals,
             "!=" => Operator::NotEquals,
             _ => panic!(),
         }
     }
 }
 
+enum VariableType {
+    Bool,
+    InvertedBool,
+    U8,
+    Addr
+}
+
+struct Variable {
+    variable_type: VariableType,
+    storage: Storage,
+}
+
 struct FunctionContext {
     pub regs_touched: BTreeSet<u8>,
-    pub stack: BTreeMap<String, LocalStorage>,
+    pub variables: BTreeMap<String, Variable>,
     pub lines: Vec<AssemblyInputLine>,
     pub additional_offset: u32,
     pub block_counter: usize,
@@ -65,17 +77,17 @@ impl FunctionContext {
         self.lines.push(AssemblyInputLine::from_str(&s))
     }
 
-    fn find_local(&mut self, local: &str) -> LocalStorage {
-        let local = self.stack
+    fn find_local(&mut self, local: &str) -> Storage {
+        let local = self.variables
             .get(local)
             .expect(&format!("could not find {}", local));
-        match local {
-            LocalStorage::Stack(offset) => {
-                LocalStorage::Stack(*offset + self.additional_offset)
+        match &local.storage {
+            Storage::Stack(offset) => {
+                Storage::Stack(*offset + self.additional_offset)
             },
-            LocalStorage::Register(r) => {
+            Storage::Register(r) => {
                 self.regs_touched.insert(*r);
-                LocalStorage::Register(*r)
+                Storage::Register(*r)
             }
         }
     }
@@ -167,11 +179,11 @@ impl Expression {
             Expression::Ident(n) => {
                 let local = ctxt.find_local(n);
                 match local {
-                    LocalStorage::Register(_r) => {
+                    Storage::Register(_r) => {
                         // ctxt.add_inst(Instruction::LoadReg(r));
                         unimplemented!();
                     },
-                    LocalStorage::Stack(offset) => {
+                    Storage::Stack(offset) => {
                         ctxt.add_inst(Instruction {
                             source: format!("{:?}", &self),
                             opcode: Opcode::LoadImm32,
@@ -441,10 +453,10 @@ impl Statement {
 
                 let local = ctxt.find_local(local);
                 match local {
-                    LocalStorage::Register(_r) => {
+                    Storage::Register(_r) => {
                         unimplemented!();
                     }
-                    LocalStorage::Stack(offset) => {
+                    Storage::Stack(offset) => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::LoadImm32,
                             resolved: None,
@@ -477,8 +489,8 @@ impl Statement {
                 ctxt.additional_offset -= 1;
 
                 let result_offset = match ctxt.find_local(RESULT) {
-                    LocalStorage::Register(_) => unimplemented!(),
-                    LocalStorage::Stack(offset) => offset,
+                    Storage::Register(_) => unimplemented!(),
+                    Storage::Stack(offset) => offset,
                 };
                 ctxt.add_inst(Instruction {
                             opcode: Opcode::LoadImm32,
@@ -603,11 +615,11 @@ impl Statement {
 
                 let local = ctxt.find_local(local);
                 match local {
-                    LocalStorage::Register(r) => {
+                    Storage::Register(r) => {
                         unimplemented!();
 
                     },
-                    LocalStorage::Stack(offset) => {
+                    Storage::Stack(offset) => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::LoadImm32,
                             resolved: None,
@@ -685,7 +697,7 @@ impl Statement {
 }
 
 #[derive(Clone, Copy, Debug)]
-enum LocalStorage {
+enum Storage {
     Register(u8),
     Stack(u32),
 }
@@ -761,7 +773,7 @@ impl Function {
 
     fn emit(&self) -> FunctionContext {
         let mut ctxt = FunctionContext {
-            stack: BTreeMap::new(),
+            variables: BTreeMap::new(),
             lines: Vec::new(),
             additional_offset: 0,
             regs_touched: BTreeSet::new(),
@@ -790,12 +802,18 @@ impl Function {
         let mut offset = (stack_size as isize) - 1;
 
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, RESULT)));
-        ctxt.stack.insert(RESULT.to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
+        ctxt.variables.insert(RESULT.to_owned(), Variable {
+            variable_type: VariableType::U8,
+            storage: Storage::Stack(offset.try_into().unwrap())
+        });
         offset -= 1;
 
         for arg in &self.args {
             ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, arg)));
-            ctxt.stack.insert(arg.clone(), LocalStorage::Stack(offset as u32));
+            ctxt.variables.insert(arg.clone(), Variable {
+                variable_type: VariableType::U8,
+                storage: Storage::Stack(offset as u32)
+            });
             offset -= 1;
         }
 
@@ -804,7 +822,10 @@ impl Function {
         offset -= 3;
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, "RETURN_ADDRESS")));
         // dbg!(&ctxt.lines);
-        ctxt.stack.insert("RETURN_ADDRESS".to_owned(), LocalStorage::Stack(offset.try_into().unwrap()));
+        ctxt.variables.insert("RETURN_ADDRESS".to_owned(), Variable {
+            variable_type: VariableType::Addr,
+            storage: Storage::Stack(offset.try_into().unwrap())
+        });
         offset -= 1;
 
         // offset -= register_local_count as isize;
@@ -817,14 +838,17 @@ impl Function {
                     // LocalStorage::Register(reg)
                 },
                 _ => {
-                    let s = LocalStorage::Stack(offset.try_into().unwrap());
+                    let s = Storage::Stack(offset.try_into().unwrap());
                     offset -= 1;
                     s
                 }
             };
 
             ctxt.lines.push(AssemblyInputLine::Comment(format!("# {:?} -> {}", storage, l)));
-            ctxt.stack.insert(l.clone(), storage);
+            ctxt.variables.insert(l.clone(), Variable {
+                variable_type: VariableType::U8,
+                storage
+            });
         }
 
         offset -= local_padding as isize;
