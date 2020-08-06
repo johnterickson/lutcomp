@@ -85,6 +85,7 @@ impl FunctionContext {
 enum Expression {
     Ident(String),
     Number(i32),
+    TtyIn(),
     Operation(Operator, Box<Expression>, Box<Expression>)
 }
 
@@ -118,6 +119,9 @@ impl Expression {
                 let right = Expression::parse(pairs.next().unwrap());
                 Expression::Operation(op, Box::new(left), Box::new(right))
             },
+            Rule::ttyin => {
+                Expression::TtyIn()
+            }
             _ => unimplemented!()
         }
     }
@@ -142,9 +146,24 @@ impl Expression {
                     args: vec![Value::Register(0)],
                     resolved: None,
                 });
-
                 ctxt.additional_offset += 1;
             },
+            Expression::TtyIn() => {
+                ctxt.add_inst(Instruction {
+                    source: format!("{:?}", &self),
+                    opcode: Opcode::TtyIn,
+                    args: vec![Value::Register(0)],
+                    resolved: None,
+                });
+
+                ctxt.add_inst(Instruction {
+                    source: format!("{:?}", &self),
+                    opcode: Opcode::Push8,
+                    args: vec![Value::Register(0)],
+                    resolved: None,
+                });
+                ctxt.additional_offset += 1;
+            }
             Expression::Ident(n) => {
                 let local = ctxt.find_local(n);
                 match local {
@@ -274,7 +293,7 @@ const EPILOGUE : &'static str = "EPILOGUE";
 enum Statement {
     Assign {local: String, value: Expression},
     Call { local: String, function: String, parameters: Vec<Expression> },
-    If {predicate: Expression, when_true: Vec<Statement> },
+    IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     Return { value: Expression},
     Load {local: String, address: Expression },
     Store {local: String, address: Expression },
@@ -304,14 +323,23 @@ impl Statement {
 
                 Statement::Call { local, function, parameters }
             },
-            Rule::if_statement => {
+            Rule::if_else_statement => {
                 let mut pairs = pair.into_inner();
                 let predicate = Expression::parse(pairs.next().unwrap());
                 let mut when_true = Vec::new();
-                while let Some(stmt) = pairs.next() {
-                    when_true.push(Statement::parse(stmt));
+                let mut when_false = Vec::new();
+                while let Some(pair) = pairs.next() {
+                    if Rule::else_clause == pair.as_rule() {
+                        let mut else_pairs = pair.into_inner();
+                        while let Some(pair) = else_pairs.next() {
+                            when_false.push(Statement::parse(pair));
+                        }
+                    } else {
+                        when_true.push(Statement::parse(pair));
+                    }
                 }
-                Statement::If { predicate, when_true }
+            
+                Statement::IfElse { predicate, when_true, when_false }
             },
             Rule::return_statement => {
                 let expr = pair.into_inner().next().unwrap();
@@ -601,11 +629,11 @@ impl Statement {
                     }
                 }
             },
-            Statement::If{predicate, when_true} => {
-                let if_skip = "IF_SKIP";
+            Statement::IfElse{predicate, when_true, when_false} => {
                 predicate.emit(ctxt); // result in top of stack
 
-                let jump_label = format!("{}_{}_{}", function_name, if_skip, ctxt.block_counter);
+                let false_start = format!("{}_IF_FAlSE_START_{}", function_name, ctxt.block_counter);
+                let block_end = format!("{}_IF_END_{}", function_name, ctxt.block_counter);
 
                 ctxt.block_counter += 1;
 
@@ -628,18 +656,28 @@ impl Statement {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JzImm,
                     source: source.to_owned(),
-                    args: vec![Value::Label24(format!(":{}", &jump_label))],
+                    args: vec![Value::Label24(format!(":{}", &false_start))],
                     resolved: None,
                 });
 
-                // let mut count = 0;
                 for s in when_true {
-                    // let scope = format!("{}_stmt{}", scope, count);
                     s.emit(ctxt, function_name);
-                    // count += 1;
                 }
+
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::JzImm,
+                    source: source.to_owned(),
+                    args: vec![Value::Label24(format!(":{}", &block_end))],
+                    resolved: None,
+                });
                 
-                ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &jump_label)));
+                ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &false_start)));
+
+                for s in when_false {
+                    s.emit(ctxt, function_name);
+                }
+
+                ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &block_end)));
             },
         }
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Done  statement {:?}", self)));
@@ -691,8 +729,8 @@ impl Function {
                     }
                 },
                 Statement::Return{ value:_ } => {},
-                Statement::If{ predicate:_, when_true:ss } => {
-                    for s in ss {
+                Statement::IfElse{ predicate:_, when_true, when_false } => {
+                    for s in when_true.iter().chain(when_false.iter()) {
                         find_locals(s, args, locals);
                     }
                 },

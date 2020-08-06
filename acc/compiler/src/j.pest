@@ -6,6 +6,7 @@ alpha = { lower | 'A'..'Z' }
 digit = { '0'..'9' }
 number = { digit+ }
 ident = { lower ~ (alpha | digit)* }
+ttyin = { "ttyin" }
 
 operation = _{ add | subtract | multiply | or | equals | notequals}
 add      = { "+" }
@@ -16,9 +17,10 @@ equals = { "==" }
 notequals = { "!=" }
 
 operator_expression = { "(" ~ expression ~ operation ~ expression ~ ")" }
-expression = { ident | number |  operator_expression }
+expression = { ttyin | ident | number |  operator_expression }
 
-if_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" }
+else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
+if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
 assign = { "ASSIGN" ~ ident ~ ":=" ~ expression ~ ";" }
 load = { "LOAD" ~ ident ~ "<-" ~ "*" ~ expression ~ ";"}
 store = { "STORE" ~ ident ~ "->" ~ "*" ~ expression ~ ";"}
@@ -27,7 +29,7 @@ return_statement = { "RETURN" ~ expression ~ ";" }
 
 call = { "CALL" ~ ident ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-statement = { assign | if_statement | ttyout | return_statement | call | load | store}
+statement = { assign | if_else_statement | ttyout | return_statement | call | load | store}
 body = { (statement)+ }
 paramters = { ident? ~ ("," ~ ident)* }
 function = {"FUNCTION " ~ ident ~ "(" ~ paramters ~ ")" ~ "{" ~ body ~ "}"}
