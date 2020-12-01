@@ -36,11 +36,10 @@ https://www.alliancememory.com/wp-content/uploads/pdf/AS6C4008.pdf
 
 Decoder:
 --------
-SN74HCT138N
+CD74HCT138E
 Decoder/Demultiplexer 1 x 3:8 16-PDIP
-https://www.digikey.com/product-detail/en/texas-instruments/SN74HCT138N/296-1608-5-ND/277254
-138N - selected is high - others are low
-238N - selected is low - others are high
+138N - selected is high - others are low https://www.digikey.com/en/products/detail/texas-instruments/CD74HCT138E/38262
+238N - selected is low - others are high https://www.digikey.com/en/products/detail/texas-instruments/CD74HCT238E/38430
 
 Adder:
 ------
@@ -55,13 +54,29 @@ CD74HCT40103E
 Counter IC Binary Counter 1 Element 8 Bit Positive Edge 16-PDIP
 https://www.digikey.com/product-detail/en/texas-instruments/CD74HCT40103E/296-2159-5-ND/38561
 
-SN74LS593N
+SN74LS593N ($$$)
 Counter IC Binary Counter 1 Element 8 Bit Positive Edge 20-PDIP
 https://www.digikey.com/product-detail/en/texas-instruments/SN74LS593N/296-3719-5-ND/377750
 also http://pdf.datasheetcatalog.com/datasheet/SGSThomsonMicroelectronics/mXtwrtw.pdf
+
+https://www.digikey.com/en/products/detail/CD74HCT161E/296-2096-5-ND/38338?itemSeq=346381521 
+https://www.ti.com/lit/ds/symlink/cd74hct163.pdf?HQS=TI-null-null-digikeymode-df-pf-null-wwe&ts=1606696934129
 
 Inverter:
 ---------
 SN74HCT14N
 Inverter IC 6 Channel Schmitt Trigger 14-PDIP
 https://www.digikey.com/product-detail/en/texas-instruments/SN74HCT14N/296-8394-5-ND/376852
+
+
+4 channel x 2-input AND:
+------------------------
+SN74HCT08N‎
+https://www.digikey.com/en/products/detail/SN74HCT08N/296-1606-5-ND/277252
+
+LED segment:
+------------
+https://www.digikey.com/en/products/filter/leds-circuit-board-indicators-arrays-light-bars-bar-graphs/106?s=N4IgjCBcoGwJxVAYygMwIYBsDOBTANCAPZQDaIALGGABxwDsIAuoQA4AuUIAyuwE4BLAHYBzEAF9CAJgAMjaCBSQMOAsTIgAzGHpwamkIW26aFQ1p17GRy3AMsQHLr0GiJhMHoQKlKvIRJIchlmNk5IHn5hMUkQAFpvZCh%2BAFc1QPIIBycI93ipREVkvjSAjQBWUMdwkAlYmEKBABMuOLAZCDCuc3YAT1ZcLnRsFHFxIA
+e.g. https://www.digikey.com/en/products/detail/lite-on-inc/LTA-1000HR/153273
+
+w/resistors https://www.digikey.com/en/products/detail/dialight/5555009F/2430761
