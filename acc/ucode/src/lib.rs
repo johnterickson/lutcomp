@@ -26,7 +26,7 @@ pub enum DataBusLoadEdge {
     Alu = 3,
     Mem = 4,
     TtyIn = 5,
-    PcR = 6,
+    //PcR = 6,
     Flags = 7,
     W = 8,
     X = 9,
@@ -70,7 +70,7 @@ pub enum DataBusOutputLevel {
     Alu = 3,
     Mem = 4,
     TtyIn = 5,
-    Pc = 6,
+    PcSPE = 6,
     Reserved7 = 7,
     W = 8,
     X = 9,
@@ -158,7 +158,7 @@ impl MicroOp {
     }
 
     fn new(address_bus_out: Option<AddressBusOutputLevel>, data_bus_out: DataBusOutputLevel, alu_opcode: Option<AluOpcode>, data_bus_load: DataBusLoadEdge, immediate: Option<u8>) -> MicroOp {
-        if data_bus_out != DataBusOutputLevel::Pc {
+        if data_bus_out != DataBusOutputLevel::PcSPE {
             assert_eq!(data_bus_load == DataBusLoadEdge::Mem || data_bus_out == DataBusOutputLevel::Mem, address_bus_out.is_some());
         }
         assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
@@ -181,9 +181,6 @@ impl MicroOp {
             _ => {}
         }
 
-        if data_bus_load == DataBusLoadEdge::PcR {
-            assert_eq!(address_bus_out, AddressBusOutputLevel::Addr);
-        }
         let alu_opcode = alu_opcode.unwrap_or(AluOpcode::AddLoNoCarry);
         let immediate = immediate.unwrap_or_default().into();
         MicroOp {
@@ -312,9 +309,9 @@ impl Ucode {
         self.add_op(
             MicroOp::new(
                 Some(AddressBusOutputLevel::Addr),
-                DataBusOutputLevel::Pc,
+                DataBusOutputLevel::PcSPE,
                 None,
-                DataBusLoadEdge::PcR,
+                DataBusLoadEdge::PcInc,
                 None,
             ), 
             file!(),

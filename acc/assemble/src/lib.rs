@@ -232,6 +232,8 @@ enum AssemblyOutputLine {
 }
 
 pub fn assemble_from_str(input: &str) -> Vec<u8> {
+    println!("v2.0 raw");
+
     {
         use pest::iterators::Pairs;
         fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
@@ -265,12 +267,15 @@ pub fn assemble_from_str(input: &str) -> Vec<u8> {
         assembly_lines.push(parsed_line);
     }
 
-    assemble(assembly_lines)
+    assemble_inner(assembly_lines)
 }
 
-pub fn assemble(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
-
+pub fn assemble(input: Vec<AssemblyInputLine>) -> Vec<u8> {
     println!("v2.0 raw");
+    assemble_inner(input)
+}
+
+fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
 
     let mut lines : Vec<AssemblyOutputLine> = Vec::new();
     let mut labels = BTreeMap::new();

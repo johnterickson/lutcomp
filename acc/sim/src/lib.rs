@@ -45,7 +45,6 @@ pub struct Computer<'a> {
     regs: [u8; 4],
     addr: [u8; 4],
     pub pc: [u8; 4],
-    pcr: [u8; 4],
     upc: u8,
     alu: u8,
     flags: Flags,
@@ -58,7 +57,6 @@ impl<'a> Debug for Computer<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "upc:{:02x}", self.upc)?;
         write!(f, " pc:{:05x}", u32::from_le_bytes(self.pc))?;
-        write!(f, " pcr:{:08x}", u32::from_le_bytes(self.pcr))?;
         write!(f, " regs:{:08x}", u32::from_le_bytes(self.regs))?;
         write!(f, " addr:{:05x}", u32::from_le_bytes(self.addr))?;
         write!(f, " ir0:{:02x}", self.ir0)?;
@@ -84,7 +82,6 @@ impl<'a> Computer<'a> {
             regs: [0u8; 4],
             addr: [0u8; 4],
             pc: [0u8; 4],
-            pcr: [0u8; 4],
             upc: 0,
             alu: 0,
             flags: Flags::empty(),
@@ -180,8 +177,8 @@ impl<'a> Computer<'a> {
                 self.upc = 0;
                 return true;
             }
-            DataBusOutputLevel::Pc => {
-                self.pc = self.pcr;
+            DataBusOutputLevel::PcSPE => {
+                //self.pc = self.pcr;
                 None
             }
             DataBusOutputLevel::TtyIn => {
@@ -241,10 +238,11 @@ impl<'a> Computer<'a> {
                 *self.mem_byte_mut(addr_bus) = data_bus.unwrap();
             }
             DataBusLoadEdge::PcInc => {
-                self.pc = (u32::from_le_bytes(self.pc) + 1).to_le_bytes();
-            }
-            DataBusLoadEdge::PcR => {
-                self.pcr = self.addr;
+                self.pc = if urom_op.data_bus_out == DataBusOutputLevel::PcSPE {
+                    addr_bus.to_le_bytes()
+                } else {
+                    (u32::from_le_bytes(self.pc) + 1).to_le_bytes()
+                };
             }
             DataBusLoadEdge::TtyIn => {
                 let _ = self.tty_in.pop_front();
@@ -259,10 +257,6 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::X => self.regs[1] = data_bus.unwrap(),
             DataBusLoadEdge::Y => self.regs[2] = data_bus.unwrap(),
             DataBusLoadEdge::Z => self.regs[3] = data_bus.unwrap(),
-        }
-
-        if urom_op.data_bus_out == DataBusOutputLevel::Pc {
-            self.pc = self.pcr;
         }
 
         self.upc += 2;
