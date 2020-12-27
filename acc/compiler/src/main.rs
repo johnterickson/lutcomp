@@ -59,17 +59,15 @@ impl ComparisonOperator {
             "==" => ComparisonOperator::Equals,
             "!=" => ComparisonOperator::NotEquals,
             ">" => ComparisonOperator::GreaterThan,
-            ">=" => ComparisonOperator::GreaterThanOrEqual,
+            "@gte" => ComparisonOperator::GreaterThanOrEqual,
             "<" => ComparisonOperator::LessThan,
-            "<=" => ComparisonOperator::LessThanOrEqual,
+            "@lte" => ComparisonOperator::LessThanOrEqual,
             op => panic!(format!("Unknown op: {}", op)),
         }
     }
 }
 
 enum VariableType {
-    Bool,
-    InvertedBool,
     U8,
     Addr
 }
@@ -161,8 +159,17 @@ impl Expression {
             },
             Rule::ttyin => {
                 Expression::TtyIn()
+            },
+            Rule::char_literal => {
+                let pairs = pair.into_inner();
+                Expression::Number(pairs.as_str().chars().next().unwrap() as u8 as i32)
+            },
+            r => {
+                dbg!(&pair);
+                dbg!(pair.into_inner().as_str());
+                // dbg!(r.into_inner().as_str());
+                unimplemented!();
             }
-            _ => unimplemented!()
         }
     }
 
@@ -667,9 +674,8 @@ impl Statement {
 
                 let local = ctxt.find_local(local);
                 match local {
-                    Storage::Register(r) => {
+                    Storage::Register(_r) => {
                         unimplemented!();
-
                     },
                     Storage::Stack(offset) => {
                         ctxt.add_inst(Instruction {
@@ -1262,18 +1268,48 @@ mod tests {
     }
 
     #[test]
+    fn if_eq() {
+        test_inputs(
+            include_str!("../../programs/if_eq.j"),
+            &[(6,7,0), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
+    }
+
+    #[test]
+    fn if_gt_signed() {
+        test_inputs(
+            include_str!("../../programs/if_gt.j"),
+            &[(6,7,0), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 0), (7,7,0)]);
+    }
+
+    #[test]
+    fn if_gte_signed() {
+        test_inputs(
+            include_str!("../../programs/if_gte.j"),
+            &[(6,7,0), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 0), (7,7,1)]);
+    }
+
+    #[test]
+    fn if_lt_signed() {
+        test_inputs(
+            include_str!("../../programs/if_lt.j"),
+            &[(6,7,1), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 1), (7,7,0)]);
+    }
+
+    #[test]
+    fn if_lte_signed() {
+        test_inputs(
+            include_str!("../../programs/if_lte.j"),
+            &[(6,7,1), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 1), (7,7,1)]);
+    }
+
+    #[test]
     fn if_ne() {
         test_inputs(
             include_str!("../../programs/if_ne.j"),
             &[(6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
     }
 
-    #[test]
-    fn if_eq() {
-        test_inputs(
-            include_str!("../../programs/if_eq.j"),
-            &[(6,7,0), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
-    }
+   
 
     #[test]
     fn plusone() {

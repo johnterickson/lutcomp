@@ -7,6 +7,8 @@ digit = { '0'..'9' }
 number = { digit+ }
 ident = { lower ~ (alpha | digit)* }
 ttyin = { "ttyin" }
+char_literal_value = { ANY }
+char_literal = { "'" ~ char_literal_value ~ "'" }
 
 arithmetic = _{ add | subtract | multiply | or }
 add      = { "+" }
@@ -18,13 +20,13 @@ comparison = _{ equals | notequals | greater_than | greater_than_or_equal | less
 equals = { "==" }
 notequals = { "!=" }
 greater_than = { ">" }
-greater_than_or_equal = { ">=" }
+greater_than_or_equal = { "@gte" }
 less_than = { "<" }
-less_than_or_equal = { "<=" }
+less_than_or_equal = { "@lte" }
 
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
-expression = { ttyin | ident | number |  arithmetic_expression | comparison_expression}
+expression = { char_literal | ttyin | ident | number |  arithmetic_expression | comparison_expression}
 
 else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
 if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
