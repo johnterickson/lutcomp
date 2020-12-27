@@ -249,9 +249,7 @@ impl<'a> Computer<'a> {
             }
             DataBusLoadEdge::TtyOut => {
                 self.tty_out.push_back(data_bus.unwrap());
-                if self.print {
-                    eprint!("{}", data_bus.unwrap() as char);
-                }
+                eprint!("{}", data_bus.unwrap() as char);
             }
             DataBusLoadEdge::W => self.regs[0] = data_bus.unwrap(),
             DataBusLoadEdge::X => self.regs[1] = data_bus.unwrap(),
@@ -547,14 +545,14 @@ mod tests {
     #[test]
     fn invert() {
         for a in 0..=8 {
-            modify8(Opcode::Invert, a, !a);
+            modify8(Opcode::Invert8, a, !a);
         }
     }
 
     #[test]
     fn negate() {
         for a in 0..=8 {
-            modify8(Opcode::Negate, a, ((-1*(a as i16)) & 0xFF) as u8);
+            modify8(Opcode::Negate8, a, ((-1*(a as i16)) & 0xFF) as u8);
         }
     }
 

@@ -8,16 +8,20 @@ number = { digit+ }
 ident = { lower ~ (alpha | digit)* }
 ttyin = { "ttyin" }
 
-operation = _{ add | subtract | multiply | or | equals | notequals}
+arithmetic = _{ add | subtract | multiply | or }
 add      = { "+" }
 subtract = { "-" }
 multiply = { "*" }
 or = { "||" }
+
+comparison = _{ equals | notequals | greater_than}
 equals = { "==" }
 notequals = { "!=" }
+greater_than = { ">" }
 
-operator_expression = { "(" ~ expression ~ operation ~ expression ~ ")" }
-expression = { ttyin | ident | number |  operator_expression }
+comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
+arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
+expression = { ttyin | ident | number |  arithmetic_expression | comparison_expression}
 
 else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
 if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }

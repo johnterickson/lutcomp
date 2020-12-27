@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 use std::io;
 use std::io::Read;
 use std::collections::{BTreeMap,BTreeSet};
-use std::{convert::TryInto, str::FromStr, ops::Deref};
+use std::{convert::TryInto, str::FromStr};
 
 use assemble::*;
 use common::*;
@@ -24,25 +24,39 @@ fn amount_for_round_up(a: u32, b: u32) -> u32 {
 struct ProgramParser;
 
 #[derive(Debug, PartialEq, Eq)]
-enum Operator {
+enum ArithmeticOperator {
     Add,
     Subtract,
     Multiply,
     Or,
-    // Equals,
-    NotEquals,
 }
 
-impl Operator {
-    fn parse(pair: pest::iterators::Pair<Rule>) -> Operator {
+impl ArithmeticOperator {
+    fn parse(pair: pest::iterators::Pair<Rule>) -> ArithmeticOperator {
         match pair.as_str() {
-            "+" => Operator::Add,
-            "-" => Operator::Subtract,
-            "*" => Operator::Multiply,
-            "||" => Operator::Or,
-            // "==" => Operator::Equals,
-            "!=" => Operator::NotEquals,
-            _ => panic!(),
+            "+" => ArithmeticOperator::Add,
+            "-" => ArithmeticOperator::Subtract,
+            "*" => ArithmeticOperator::Multiply,
+            "||" => ArithmeticOperator::Or,
+            op => panic!(format!("Unknown op: {}", op)),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum ComparisonOperator {
+    // Equals,
+    NotEquals,
+    // GreaterThan,
+}
+
+impl ComparisonOperator {
+    fn parse(pair: pest::iterators::Pair<Rule>) -> ComparisonOperator {
+        match pair.as_str() {
+            "==" => unimplemented!("== not implemented"), //Operator::Equals,
+            "!=" => ComparisonOperator::NotEquals,
+            //">" => Operator::GreaterThan,
+            op => panic!(format!("Unknown op: {}", op)),
         }
     }
 }
@@ -98,7 +112,8 @@ enum Expression {
     Ident(String),
     Number(i32),
     TtyIn(),
-    Operation(Operator, Box<Expression>, Box<Expression>)
+    Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
+    Comparison(ComparisonOperator, Box<Expression>, Box<Expression>),
 }
 
 impl Expression {
@@ -124,12 +139,19 @@ impl Expression {
                 }
                 Expression::Ident(label)
             },
-            Rule::operator_expression => {
+            Rule::comparison_expression => {
                 let mut pairs = pair.into_inner();
                 let left = Expression::parse(pairs.next().unwrap());
-                let op = Operator::parse(pairs.next().unwrap());
+                let op = ComparisonOperator::parse(pairs.next().unwrap());
                 let right = Expression::parse(pairs.next().unwrap());
-                Expression::Operation(op, Box::new(left), Box::new(right))
+                Expression::Comparison(op, Box::new(left), Box::new(right))
+            },
+            Rule::arithmetic_expression => {
+                let mut pairs = pair.into_inner();
+                let left = Expression::parse(pairs.next().unwrap());
+                let op = ArithmeticOperator::parse(pairs.next().unwrap());
+                let right = Expression::parse(pairs.next().unwrap());
+                Expression::Arithmetic(op, Box::new(left), Box::new(right))
             },
             Rule::ttyin => {
                 Expression::TtyIn()
@@ -214,7 +236,7 @@ impl Expression {
                     }
                 }
             },
-            Expression::Operation(op, left, right) => {
+            Expression::Arithmetic(op, left, right) => {
                 
                 left.emit(ctxt);
                 right.emit(ctxt);
@@ -238,7 +260,7 @@ impl Expression {
                 // left in 2; right in 3, result in 0 (&1)
 
                 match op {
-                    Operator::Add => {
+                    ArithmeticOperator::Add => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Add8NoCarry,
                             resolved: None,
@@ -246,7 +268,7 @@ impl Expression {
                             args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
                         });
                     },
-                    Operator::Or => {
+                    ArithmeticOperator::Or => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Or8,
                             resolved: None,
@@ -254,7 +276,7 @@ impl Expression {
                             args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
                         });
                     },
-                    Operator::Multiply => {
+                    ArithmeticOperator::Multiply => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Mul8Part1,
                             resolved: None,
@@ -268,9 +290,9 @@ impl Expression {
                             args: vec![]
                         });
                     },
-                    Operator::Subtract | Operator::NotEquals => {
+                    ArithmeticOperator::Subtract => {
                         ctxt.add_inst(Instruction {
-                            opcode: Opcode::Negate,
+                            opcode: Opcode::Negate8,
                             resolved: None,
                             source: format!("{:?}", &self),
                             args: vec![Value::Register(3)]
@@ -291,7 +313,8 @@ impl Expression {
                     args: vec![Value::Register(0)]
                 });
                 ctxt.additional_offset += 1;
-            }
+            },
+            Expression::Comparison(_,_,_) => panic!("cannot evaluate comparison expression.")
         }
         
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluated expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
@@ -309,6 +332,7 @@ enum Statement {
     Return { value: Expression},
     Load {local: String, address: Expression },
     Store {local: String, address: Expression },
+    TtyOut {value: Expression},
 }
 
 impl Statement {
@@ -368,6 +392,11 @@ impl Statement {
                 let local = pairs.next().unwrap().as_str().trim().to_owned();
                 let address = Expression::parse(pairs.next().unwrap());
                 Statement::Store { local, address }
+            },
+            Rule::ttyout => {
+                let mut pairs = pair.into_inner();
+                let value = Expression::parse(pairs.next().unwrap());
+                Statement::TtyOut { value }
             }
             _ => panic!("Unexpected {:?}", pair)
         }
@@ -440,6 +469,23 @@ impl Statement {
                 //     }
                 // }
                 // ctxt.add_inst(Instruction::StoreMem);
+            },
+            Statement::TtyOut{value} => {
+                value.emit(ctxt);
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    resolved: None,
+                    source: format!("{:?}", &self),
+                    args: vec![Value::Register(0)]
+                });
+                ctxt.additional_offset -= 1;
+
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::TtyOut,
+                    resolved: None,
+                    source: format!("{:?}", &self),
+                    args: vec![Value::Register(0)]
+                });
             },
             Statement::Assign{local, value} => {
                 value.emit(ctxt);
@@ -642,7 +688,48 @@ impl Statement {
                 }
             },
             Statement::IfElse{predicate, when_true, when_false} => {
-                predicate.emit(ctxt); // result in top of stack
+                let (fallthrough, jmp_target, jmp_opcode) = match predicate {
+                    Expression::Comparison(op, left, right) => {
+                        left.emit(ctxt);
+                        right.emit(ctxt);
+
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Pop8,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(3)]
+                        });
+                        ctxt.additional_offset -= 1;
+
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Pop8,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(2)]
+                        });
+                        ctxt.additional_offset -= 1;
+
+                        // left in 2; right in 3
+                        match op {
+                            ComparisonOperator::NotEquals => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Negate8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(3)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add8NoCarry,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                });
+                                (when_true,when_false,Opcode::JzImm)
+                            },
+                        }
+                    }
+                    _ => panic!("expected comparison expression")
+                };
 
                 let false_start = format!("{}_IF_FAlSE_START_{}", function_name, ctxt.block_counter);
                 let block_end = format!("{}_IF_END_{}", function_name, ctxt.block_counter);
@@ -652,32 +739,18 @@ impl Statement {
                 let source = format!("IF ({:?})  ... ", predicate);
 
                 ctxt.add_inst(Instruction {
-                    opcode: Opcode::Pop8,
-                    source: source.to_owned(),
-                    args: vec![Value::Register(0)],
-                    resolved: None,
-                });
-                ctxt.additional_offset -= 1;
-
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::OrImm8,
-                    source: source.to_owned(),
-                    args: vec![Value::Register(0), Value::Constant8(0)],
-                    resolved: None,
-                });
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::JzImm,
+                    opcode: jmp_opcode,
                     source: source.to_owned(),
                     args: vec![Value::Label24(format!(":{}", &false_start))],
                     resolved: None,
                 });
 
-                for s in when_true {
+                for s in fallthrough {
                     s.emit(ctxt, function_name);
                 }
 
                 ctxt.add_inst(Instruction {
-                    opcode: Opcode::JzImm,
+                    opcode: Opcode::JmpImm,
                     source: source.to_owned(),
                     args: vec![Value::Label24(format!(":{}", &block_end))],
                     resolved: None,
@@ -685,7 +758,7 @@ impl Statement {
                 
                 ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &false_start)));
 
-                for s in when_false {
+                for s in jmp_target {
                     s.emit(ctxt, function_name);
                 }
 
@@ -740,7 +813,7 @@ impl Function {
                         locals.insert(local.clone()); 
                     }
                 },
-                Statement::Return{ value:_ } => {},
+                Statement::Return{ value:_ } | Statement::TtyOut{ value:_ } => {},
                 Statement::IfElse{ predicate:_, when_true, when_false } => {
                     for s in when_true.iter().chain(when_false.iter()) {
                         find_locals(s, args, locals);

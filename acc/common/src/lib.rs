@@ -124,8 +124,8 @@ pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
     JmpImm = 1,      // pc <- [24-bit constant ABC]
     JzImm = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
-    Invert = 3, // ~regA -> regA
-    Negate = 4, // (~regA + 1) -> regA
+    Invert8 = 3, // ~regA -> regA
+    Negate8 = 4, // (~regA + 1) -> regA
     JmpReg = 5, // pc <- 24 LSB of Reg A
     JnImm = 6, // pc <- [24 LSB of Reg A]
     JmpMem = 7, // pc <- MEM[24 LSB of Reg A]
