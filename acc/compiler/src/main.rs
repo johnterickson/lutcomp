@@ -45,17 +45,23 @@ impl ArithmeticOperator {
 
 #[derive(Debug, PartialEq, Eq)]
 enum ComparisonOperator {
-    // Equals,
+    Equals,
     NotEquals,
-    // GreaterThan,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
 }
 
 impl ComparisonOperator {
     fn parse(pair: pest::iterators::Pair<Rule>) -> ComparisonOperator {
         match pair.as_str() {
-            "==" => unimplemented!("== not implemented"), //Operator::Equals,
+            "==" => ComparisonOperator::Equals,
             "!=" => ComparisonOperator::NotEquals,
-            //">" => Operator::GreaterThan,
+            ">" => ComparisonOperator::GreaterThan,
+            ">=" => ComparisonOperator::GreaterThanOrEqual,
+            "<" => ComparisonOperator::LessThan,
+            "<=" => ComparisonOperator::LessThanOrEqual,
             op => panic!(format!("Unknown op: {}", op)),
         }
     }
@@ -711,7 +717,7 @@ impl Statement {
 
                         // left in 2; right in 3
                         match op {
-                            ComparisonOperator::NotEquals => {
+                            ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Negate8,
                                     resolved: None,
@@ -724,8 +730,50 @@ impl Statement {
                                     source: format!("{:?}", &self),
                                     args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
                                 });
-                                (when_true,when_false,Opcode::JzImm)
+                                if op == &ComparisonOperator::NotEquals {
+                                    (when_true,when_false,Opcode::JzImm)
+                                } else {
+                                    (when_false,when_true,Opcode::JzImm)
+                                }
                             },
+                            ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Negate8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(2)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add8NoCarry,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                });
+                                if op == &ComparisonOperator::GreaterThan {
+                                    (when_false,when_true,Opcode::JnImm)
+                                } else {
+                                    (when_true,when_false,Opcode::JnImm)
+                                }
+                            },
+                            ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Negate8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(3)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add8NoCarry,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                });
+                                if op == &ComparisonOperator::LessThan {
+                                    (when_false,when_true,Opcode::JnImm)
+                                } else {
+                                    (when_true,when_false,Opcode::JnImm)
+                                }
+                            }
                         }
                     }
                     _ => panic!("expected comparison expression")
@@ -1048,7 +1096,21 @@ fn main() -> Result<(), std::io::Error> {
 
     let rom = assemble(assembly);
 
+    for a in std::env::args() { dbg!(a);}
+
+    let args : Vec<_> = std::env::args().skip(1).map(|arg| u8::from_str_radix(&arg, 16).unwrap()).collect();
+
     let mut c = Computer::with_print(rom, false);
+
+    *c.mem_word_mut(0x80000) = u32::to_le_bytes(0xAABBCCDD);
+
+    if args.len() > 3 {
+        panic!("main can take a max of three args.");
+    }
+
+    for (i,arg) in args.iter().enumerate() {
+        *c.mem_byte_mut(0x80002 - i as u32) = *arg;
+    }
 
     let mut last_ir0 = None;
     let mut running: bool = true;
@@ -1110,17 +1172,11 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
         args: vec![Value::Register(REG_SP), Value::Constant32(0x8FFF0)],
         resolved: None
     }));
-    program.push(AssemblyInputLine::Instruction(Instruction {
-        opcode: Opcode::LoadImm8,
-        source: String::new(),
-        args: vec![Value::Register(0), Value::Constant8(0xAA)],
-        resolved: None
-    }));
-    for _ in 0..4 {
+    for i in (0..4).rev() {
         program.push(AssemblyInputLine::Instruction(Instruction {
             opcode: Opcode::Push8,
             source: String::new(),
-            args: vec![Value::Register(0)],
+            args: vec![Value::Register(i)],
             resolved: None
         }));
     }
@@ -1191,14 +1247,32 @@ mod tests {
         assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
     }
 
-    #[test]
-    fn if_ne() {
-        let program = include_str!("../../programs/if_ne.j");
+    fn test_inputs(program: &str, pairs: &[(u8,u8,u8)]) {
         let assembly = compile(program);
         let rom = assemble(assembly);
-        let mut c = Computer::with_print(rom, false);
-        while c.step() {}
-        assert_eq!(7, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+        for (input1, input2, expected) in pairs {
+            dbg!((input1, input2, expected));
+            let mut c = Computer::with_print(rom.clone(), false);
+            *c.mem_byte_mut(0x80002) = *input1;
+            *c.mem_byte_mut(0x80001) = *input2;
+            *c.mem_byte_mut(0x80000) = 0xCC;
+            while c.step() {}
+            assert_eq!(*expected, *c.mem_byte_mut(0x80000));
+        }
+    }
+
+    #[test]
+    fn if_ne() {
+        test_inputs(
+            include_str!("../../programs/if_ne.j"),
+            &[(6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
+    }
+
+    #[test]
+    fn if_eq() {
+        test_inputs(
+            include_str!("../../programs/if_eq.j"),
+            &[(6,7,0), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
     }
 
     #[test]

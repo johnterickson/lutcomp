@@ -14,10 +14,13 @@ subtract = { "-" }
 multiply = { "*" }
 or = { "||" }
 
-comparison = _{ equals | notequals | greater_than}
+comparison = _{ equals | notequals | greater_than | greater_than_or_equal | less_than | less_than_or_equal}
 equals = { "==" }
 notequals = { "!=" }
 greater_than = { ">" }
+greater_than_or_equal = { ">=" }
+less_than = { "<" }
+less_than_or_equal = { "<=" }
 
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }

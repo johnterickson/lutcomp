@@ -1,5 +1,5 @@
-FUNCTION main(x) {
-    IF (x != 7) {
+FUNCTION main(x, y) {
+    IF (x == y) {
         RETURN 1;
     } ELSE {
         RETURN 0;

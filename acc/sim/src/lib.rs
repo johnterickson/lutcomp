@@ -120,7 +120,7 @@ impl<'a> Computer<'a> {
         })
     }
 
-    fn mem_byte_mut(&mut self, addr_bus: u32) -> &mut u8 {
+    pub fn mem_byte_mut(&mut self, addr_bus: u32) -> &mut u8 {
         &mut self.mem_slice_mut(addr_bus, 1)[0]
     }
 
