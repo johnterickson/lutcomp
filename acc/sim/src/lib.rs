@@ -47,7 +47,7 @@ pub struct Computer<'a> {
     pub pc: [u8; 4],
     upc: u8,
     alu: u8,
-    flags: Flags,
+    pub flags: Flags,
     pub ir0: u8,
     in1: u8,
     print: bool,
@@ -407,28 +407,37 @@ mod tests {
         assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
 
-    fn reg8(op: Opcode, carry_in: bool, reg_a_value: u8, reg_b_value: u8, result: u8, carry_out: bool) {
+    fn run(flags: Flags, op: Opcode, args: &[(u8, u8)]) -> Computer {
+        let mut rom = Vec::new();
+        rom.push(op as u8);
+        for (i, arg) in args.iter().enumerate() {
+            rom.push(arg.0);
+        }
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::with_print(rom, true);
+        for arg in args {
+            *c.mem_byte_mut(0x80000 + arg.0 as u32) = arg.1;
+        }
+
+        c.flags = flags;
+
+        while c.step() {}
+
+        c
+    }
+
+    fn reg8(op: Opcode, carry_in: bool, arg1_value: u8, arg2_value: u8, result: u8, carry_out: bool) {
         let reg_a = 3;
         let reg_b = 4;
         let reg_c = 5;
 
-        let mut rom = Vec::new();
-        rom.push(op as u8);
-        rom.push(reg_a);
-        rom.push(reg_b);
-        rom.push(reg_c);
-        rom.push(Opcode::Halt as u8);
-
-        let mut c = Computer::new(rom);
-
-        *c.mem_byte_mut(0x80000 + reg_a as u32) = reg_a_value;
-        *c.mem_byte_mut(0x80000 + reg_b as u32) = reg_b_value;
-
-        if carry_in {
-            c.flags |= Flags::CARRY;
-        }
-
-        while c.step() {}
+        let args = [(reg_a,arg1_value),(reg_b, arg2_value), (reg_c, 0xFF)];
+        let mut c = run(
+            if carry_in {Flags::CARRY} else { Flags::empty() },
+            op,
+            &args
+        );
 
         assert_eq!(result, *c.mem_byte_mut(0x80000 + reg_c as u32));
         assert_eq!(c.flags.contains(Flags::CARRY), carry_out);
@@ -748,6 +757,40 @@ mod tests {
     }
 
     #[test]
+    fn cmp8() {
+        let values = [0u8, 1, 2, 3, 4, 7, 0x7F, 0x80, 0xFE, 0xFF];
+        for carry_in in &[false, true] {
+            for a in &values {
+                for b in &values {
+
+                    let args = [(3,*b),(2,*a)];
+                    let c = run(
+                        if *carry_in { Flags::CARRY } else { Flags::empty() },
+                        Opcode::Cmp8,
+                        &args
+                    );
+
+                    let neg_b = ((*b as u16) ^ 0xFF) + 1u16;
+                    let neg_b_carry = ((neg_b >> 8) & 0x1) != 0;
+                    let sum = (*a as u16) + neg_b;
+
+                    let carry_out = ((sum >> 8) & 0x1) != 0;
+                    let zero = (sum & 0xFF) == 0;
+                    let neg = ((sum >> 7) & 0x1) != 0;
+
+                    dbg!((a,b,neg_b,neg_b_carry,sum,carry_out,zero,neg, c.flags));
+                    
+                    // Jump if below <==> CF==1
+                    assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
+                    assert_eq!(!carry_out, *a < *b);
+                    assert_eq!(zero, c.flags.contains(Flags::ZERO));
+                    assert_eq!(zero , *a == *b);
+                }
+            }
+        }
+    }
+
+    #[test]
     fn add8() {
         let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
         for carry_in in &[false, true] {
@@ -761,6 +804,24 @@ mod tests {
 
                     reg8(
                         Opcode::Add8,
+                        *carry_in, *a, *b,
+                        (sum & 0xFF) as u8,
+                        sum > 0xFF
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn add8_nocarryin() {
+        let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
+        for carry_in in &[false, true] {
+            for a in &values {
+                for b in &values {
+                    let sum = (*a as u16) + (*b as u16);
+                    reg8(
+                        Opcode::Add8NoCarryIn,
                         *carry_in, *a, *b,
                         (sum & 0xFF) as u8,
                         sum > 0xFF

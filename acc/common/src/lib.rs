@@ -122,13 +122,8 @@ pub const REG_SP: u8 = 0x0C;
 #[strum(serialize_all = "lowercase")]
 pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
-    JmpImm = 1,      // pc <- [24-bit constant ABC]
-    JzImm = 2,       // if Flags & ZERO { px <- [24-bit constant ABC]}
     Invert8 = 3, // ~regA -> regA
-    Negate8 = 4, // (~regA + 1) -> regA
-    JmpReg = 5, // pc <- 24 LSB of Reg A
-    JnImm = 6, // pc <- [24 LSB of Reg A]
-    JmpMem = 7, // pc <- MEM[24 LSB of Reg A]
+    Negate8 = 4, // (~regA + 1) -> regA + FLAGS
     Copy8 = 0xF, // regA -> regB
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
@@ -142,14 +137,23 @@ pub enum Opcode {
     Mul8Part2 = 0x21,
     Add8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
     Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
+    Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
+    Cmp8 = 0x25, // 8bit regB - 8bit regA -> FLAGS
     // Sub8NoCarry = 0x24, // 8bit regA - 8bit regB -> 8bit regC
 
     AndImm8 = 0x30, // regA &= [8-bit constant B]
     OrImm8 = 0x31, // regA |= [8-bit constant B]
     XorImm8 = 0x32, // regA ^= [8-bit constant B]
-    And8 = 0x33, // regA & regB -> regC
-    Or8 = 0x34, // regA | regB -> regC
-    Xor8 = 0x35, // regA ^ regB -> regC
+    And8 = 0x33, // regA & regB -> regC + FLAGS
+    Or8 = 0x34, // regA | regB -> regC + FLAGS
+    Xor8 = 0x35, // regA ^ regB -> regC + FLAGS
+
+    JmpImm = 0x40, // pc <- [24-bit constant ABC]
+    JcImm = 0x41,  // if Flags & CARRY { pc <- [24-bit constant ABC] }
+    JzImm = 0x42,  // if Flags & ZERO { px <- [24-bit constant ABC] }
+    JnImm = 0x43,  // if Flags & NEG { pc <- [24 LSB of Reg A] }
+    JmpReg = 0x48, // pc <- 24 LSB of Reg A
+    JmpMem = 0x49, // pc <- MEM[24 LSB of Reg A]
 
     LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
     Copy32 = 0x81,    // regA -> regB

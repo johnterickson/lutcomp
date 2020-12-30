@@ -514,6 +514,15 @@ impl Ucode {
 
                     self.load_pc_from_address_regs();
                 }
+                Some(Opcode::JcImm) => {
+                    if flags.contains(Flags::CARRY) {
+                        self.jmp_abs();
+                    } else {
+                        pc_inc!(self);
+                        pc_inc!(self);
+                        pc_inc!(self);
+                    }
+                }
                 Some(Opcode::JzImm) => {
                     if flags.contains(Flags::ZERO) {
                         self.jmp_abs();
@@ -561,11 +570,12 @@ impl Ucode {
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
                     
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
-                    self.some_flags_from(Output::Direct(DataBusOutputLevel::Alu), flags,
-                        Flags::ZERO | Flags::NEG);
+
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                 }
                 Some(Opcode::LoadImm32) => {
                     self.start_of_ram();
@@ -911,6 +921,41 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::addhi(flags)));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                 }
+                Some(Opcode::Cmp8) => {
+                    self.start_of_ram();
+
+                    // grab B
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    
+                    // invert it
+                    add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+
+                    // add 1 so W = ~B + 1 (and FLAGS)
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+
+                    // step to A and load in into In1
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    
+                    // add A and W
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddHiNoCarry));
+
+                    if flags.contains(Flags::CARRY) {
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Imm(Flags::CARRY.bits()), Load::Alu(AluOpcode::Or));
+                    } else {
+                        self.add_op(noop, file!(), line!());
+                        self.add_op(noop, file!(), line!());
+                    }
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                }
                 Some(Opcode::Add8NoCarry) => {
                     self.start_of_ram();
                     pc_inc!(self);
@@ -929,7 +974,26 @@ impl Ucode {
                     // capture the zero bit
                     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddHiNoCarry));
                     self.some_flags_from_preceding_addhi(flags, Flags::ZERO | Flags::NEG);
-                }
+                },
+                Some(Opcode::Add8NoCarryIn) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+                    
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddLoNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    // capture the zero bit
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                },
                 Some(Opcode::TtyIn) => {
                     self.start_of_ram();
                     pc_inc!(self);

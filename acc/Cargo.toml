@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "alu", 
+    "alu",
+    "alu_exp",
     "app",
     "assemble",
     "common",

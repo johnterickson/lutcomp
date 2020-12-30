@@ -725,16 +725,10 @@ impl Statement {
                         match op {
                             ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Negate8,
+                                    opcode: Opcode::Cmp8,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(3)]
-                                });
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Add8NoCarry,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                    args: vec![Value::Register(3), Value::Register(2)]
                                 });
                                 if op == &ComparisonOperator::NotEquals {
                                     (when_true,when_false,Opcode::JzImm)
@@ -744,40 +738,28 @@ impl Statement {
                             },
                             ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Negate8,
+                                    opcode: Opcode::Cmp8,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2)]
-                                });
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Add8NoCarry,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                    args: vec![Value::Register(2), Value::Register(3)]
                                 });
                                 if op == &ComparisonOperator::GreaterThan {
-                                    (when_false,when_true,Opcode::JnImm)
+                                    (when_true,when_false,Opcode::JcImm)
                                 } else {
-                                    (when_true,when_false,Opcode::JnImm)
+                                    (when_false,when_true,Opcode::JcImm)
                                 }
                             },
                             ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Negate8,
+                                    opcode: Opcode::Cmp8,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(3)]
-                                });
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Add8NoCarry,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                    args: vec![Value::Register(3), Value::Register(2)]
                                 });
                                 if op == &ComparisonOperator::LessThan {
-                                    (when_false,when_true,Opcode::JnImm)
+                                    (when_true,when_false,Opcode::JcImm)
                                 } else {
-                                    (when_true,when_false,Opcode::JnImm)
+                                    (when_false,when_true,Opcode::JcImm)
                                 }
                             }
                         }
@@ -1090,6 +1072,24 @@ fn optimize(assembly: &mut Vec<AssemblyInputLine>) -> usize {
     optimizations_applied
 }
 
+fn print_state(c: &mut Computer) {
+    let pc = u32::from_le_bytes(c.pc);
+    let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
+    println!(
+        "pc:{:05x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ", 
+        pc,
+        sp,
+        c.flags.bits(),
+        u32::from_le_bytes(*c.mem_word_mut(sp)),
+        u32::from_le_bytes(*c.mem_word_mut(sp+4)),
+        u32::from_le_bytes(*c.mem_word_mut(sp+8)),
+        u32::from_le_bytes(*c.mem_word_mut(sp+0xC)),
+        u32::from_le_bytes(*c.mem_word_mut(0x80000)),
+        u32::from_le_bytes(*c.mem_word_mut(0x80004)),
+        u32::from_le_bytes(*c.mem_word_mut(0x80008)),
+        Opcode::iter().filter(|o| *o as u8 == c.ir0).next(),
+    );
+}
 
 fn main() -> Result<(), std::io::Error> {
     let input = {
@@ -1125,20 +1125,7 @@ fn main() -> Result<(), std::io::Error> {
         let pc = u32::from_le_bytes(c.pc);
 
         if last_ir0 != Some(c.ir0) {
-            let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
-            println!(
-                "pc:{:05x} sp:{:08x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ", 
-                pc,
-                sp,
-                u32::from_le_bytes(*c.mem_word_mut(sp)),
-                u32::from_le_bytes(*c.mem_word_mut(sp+4)),
-                u32::from_le_bytes(*c.mem_word_mut(sp+8)),
-                u32::from_le_bytes(*c.mem_word_mut(sp+0xC)),
-                u32::from_le_bytes(*c.mem_word_mut(0x80000)),
-                u32::from_le_bytes(*c.mem_word_mut(0x80004)),
-                u32::from_le_bytes(*c.mem_word_mut(0x80008)),
-                Opcode::iter().filter(|o| *o as u8 == c.ir0).next(),
-            );
+            print_state(&mut c);
         }
 
         last_ir0 = Some(c.ir0);
@@ -1262,7 +1249,14 @@ mod tests {
             *c.mem_byte_mut(0x80002) = *input1;
             *c.mem_byte_mut(0x80001) = *input2;
             *c.mem_byte_mut(0x80000) = 0xCC;
-            while c.step() {}
+
+            let mut last_pc = None;
+            while c.step() {
+                if last_pc != Some(c.pc) {
+                    print_state(&mut c);
+                }
+                last_pc = Some(c.pc);
+            }
             assert_eq!(*expected, *c.mem_byte_mut(0x80000));
         }
     }
@@ -1275,31 +1269,39 @@ mod tests {
     }
 
     #[test]
-    fn if_gt_signed() {
+    fn if_gt_unsigned() {
         test_inputs(
             include_str!("../../programs/if_gt.j"),
-            &[(6,7,0), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 0), (7,7,0)]);
+            &[
+                (0,1,0),
+                (1,2,0),
+                (8,7,1), 
+                (0,0xFF,0),
+                (0x7F,7,1), (0xFF, 7, 1), (7,7,0)]);
     }
 
     #[test]
-    fn if_gte_signed() {
+    fn if_gte_unsigned() {
         test_inputs(
             include_str!("../../programs/if_gte.j"),
-            &[(6,7,0), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 0), (7,7,1)]);
+            &[(6,7,0), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 1), (7,7,1)]);
     }
 
     #[test]
-    fn if_lt_signed() {
+    fn if_lt_unsigned() {
         test_inputs(
             include_str!("../../programs/if_lt.j"),
-            &[(6,7,1), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 1), (7,7,0)]);
+            &[
+            (0,0,0),
+            (0,1,1),    
+            (6,7,1), (8,7,0), (0,7,1), (7,0,0), (0x7F,7,0), (0xFF, 7, 0), (7,7,0)]);
     }
 
     #[test]
-    fn if_lte_signed() {
+    fn if_lte_unsigned() {
         test_inputs(
             include_str!("../../programs/if_lte.j"),
-            &[(6,7,1), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 1), (7,7,1)]);
+            &[(6,7,1), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 0), (7,7,1)]);
     }
 
     #[test]
