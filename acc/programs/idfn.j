@@ -1,8 +1,8 @@
 FUNCTION main() {
-    CALL sum := identity(7);
+    CALL sum:U8 := identity(7);
     RETURN sum;
 }
 
-FUNCTION identity(a) {
+FUNCTION identity(a:U8) {
     RETURN a;
 }

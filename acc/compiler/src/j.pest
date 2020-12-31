@@ -29,20 +29,23 @@ comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
 expression = { char_literal | ttyin | ident | number |  arithmetic_expression | comparison_expression}
 
+variable_type = {"U8" | "UPTR" }
+variable_decl = {ident ~ ":" ~ variable_type}
+
 else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
 if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
 while_loop = { "WHILE" ~ expression ~ "{" ~ statement* ~ "}" }
-assign = { "ASSIGN" ~ ident ~ ":=" ~ expression ~ ";" }
+assign = { "ASSIGN" ~ variable_decl ~ ":=" ~ expression ~ ";" }
 load = { "LOAD" ~ ident ~ "<-" ~ "*" ~ expression ~ ";"}
 store = { "STORE" ~ ident ~ "->" ~ "*" ~ expression ~ ";"}
 ttyout = { "TTYOUT" ~ expression ~ ";" }
 return_statement = { "RETURN" ~ expression ~ ";" }
 
-call = { "CALL" ~ ident ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
+call = { "CALL" ~ variable_decl ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
 statement = { assign | if_else_statement | ttyout | return_statement | call | while_loop | load | store}
 body = { (statement)+ }
-paramters = { ident? ~ ("," ~ ident)* }
+paramters = { variable_decl? ~ ("," ~ variable_decl)* }
 function = {"FUNCTION " ~ ident ~ "(" ~ paramters ~ ")" ~ "{" ~ body ~ "}"}
 
 program = {

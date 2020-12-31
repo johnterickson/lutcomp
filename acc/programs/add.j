@@ -1,5 +1,5 @@
 FUNCTION main() {
-    ASSIGN sum := (2 + 5);
+    ASSIGN sum:U8 := (2 + 5);
     RETURN sum;
 }
 

@@ -1,9 +1,9 @@
 FUNCTION main() {
-    CALL res := plusone(6);
+    CALL res:U8 := plusone(6);
     RETURN res;
 }
 
-FUNCTION plusone(x) {
-    ASSIGN sum := (x + 1);
+FUNCTION plusone(x:U8) {
+    ASSIGN sum:U8 := (x + 1);
     RETURN sum;
 }

@@ -1,5 +1,5 @@
 FUNCTION main() {
-    CALL sum := seven();
+    CALL sum:U8 := seven();
     RETURN sum;
 }
 

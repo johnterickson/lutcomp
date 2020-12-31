@@ -78,11 +78,23 @@ impl ComparisonOperator {
     // }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum VariableType {
     U8,
-    Addr
+    UPTR,
 }
 
+impl VariableType {
+    fn parse(s: &str) -> VariableType {
+        match  s {
+            "U8" => VariableType::U8,
+            "UPTR" => VariableType::UPTR,
+            other => panic!(format!("unknown type {}", other)),
+        }
+    }
+}
+
+#[derive(Debug)]
 struct Variable {
     variable_type: VariableType,
     storage: Storage,
@@ -434,8 +446,8 @@ const EPILOGUE : &'static str = "EPILOGUE";
 
 #[derive(Debug)]
 enum Statement {
-    Assign {local: String, value: Expression},
-    Call { local: String, function: String, parameters: Vec<Expression> },
+    Assign {local: String, var_type: VariableType, value: Expression},
+    Call { local: String, var_type: VariableType, function: String, parameters: Vec<Expression> },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
@@ -452,13 +464,23 @@ impl Statement {
         match pair.as_rule() {
             Rule::assign => {
                 let mut pairs = pair.into_inner();
-                let local = pairs.next().unwrap().as_str().trim().to_owned();
+                let mut decl = pairs.next().unwrap().into_inner();
+                let var_name = decl.next().unwrap().as_str().trim().to_owned();
+                let var_type = VariableType::parse(decl.next().unwrap().as_str().trim());
+
                 let value = Expression::parse(pairs.next().unwrap());
-                Statement::Assign { local, value }
+                Statement::Assign { 
+                    local: var_name,
+                    var_type,
+                    value
+                }
             },
             Rule::call => {
                 let mut pairs = pair.into_inner();
-                let local = pairs.next().unwrap().as_str().trim().to_owned();
+                let mut decl = pairs.next().unwrap().into_inner();
+                let var_name = decl.next().unwrap().as_str().trim().to_owned();
+                let var_type = VariableType::parse(decl.next().unwrap().as_str().trim());
+
                 let function = pairs.next().unwrap().as_str().to_owned();
 
                 let mut parameters = Vec::new();
@@ -466,7 +488,7 @@ impl Statement {
                     parameters.push(Expression::parse(arg));
                 }
 
-                Statement::Call { local, function, parameters }
+                Statement::Call { local:var_name, var_type, function, parameters }
             },
             Rule::if_else_statement => {
                 let mut pairs = pair.into_inner();
@@ -605,7 +627,7 @@ impl Statement {
                     args: vec![Value::Register(0)]
                 });
             },
-            Statement::Assign{local, value} => {
+            Statement::Assign{local, var_type, value} => {
                 value.emit(ctxt);
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Pop8,
@@ -689,7 +711,7 @@ impl Statement {
                     resolved: None                    
                 });
             },
-            Statement::Call{ local, function, parameters} => { 
+            Statement::Call{ local, var_type, function, parameters} => { 
 
                 // put 0xCC in for RESULT
                 ctxt.add_inst(Instruction {
@@ -878,8 +900,8 @@ enum Storage {
 #[derive(Debug)]
 struct Function {
     name: String,
-    args: Vec<String>,
-    locals: BTreeSet<String>,
+    args: BTreeMap<String,VariableType>,
+    locals: BTreeMap<String,VariableType>,
     body: Vec<Statement>,
 }
 
@@ -887,49 +909,86 @@ impl Function {
     fn parse(pair: pest::iterators::Pair<Rule>) -> Function {
         assert_eq!(Rule::function, pair.as_rule());
 
-        let mut args = Vec::new();
+        let mut args = BTreeMap::new();
 
         let mut pairs = pair.into_inner();
 
         let name = pairs.next().unwrap().as_str().to_owned();
 
         for arg in pairs.next().unwrap().into_inner() {
-            let arg = arg.as_str();
-            args.push(arg.to_owned());
+            let mut arg_tokens = arg.into_inner();
+            let arg_name = arg_tokens.next().unwrap().as_str().to_owned();
+            let arg_var_type = VariableType::parse(arg_tokens.next().unwrap().as_str());
+            args.insert(arg_name, arg_var_type);
         }
 
         let body : Vec<Statement> = pairs.next().unwrap().into_inner().map(|p| Statement::parse(p)).collect();
 
         // find locals
-        let mut locals = BTreeSet::new();
+        let mut locals = BTreeMap::new();
 
-        fn find_locals(s: &Statement, args: &Vec<String>, locals: &mut BTreeSet<String>) {
+        // find declared
+        fn find_decls(s: &Statement, args: &BTreeMap<String,VariableType>, locals: &mut BTreeMap<String,VariableType>) {
             match s {
-                Statement::Assign{local, value:_} 
-                | Statement::Load{local, address:_}
-                | Statement::Store{local, address:_ }
-                | Statement::Call{ local, function:_, parameters:_ } => { 
-                    if !args.contains(local) {
-                        locals.insert(local.clone()); 
+                Statement::Assign{local, var_type, value:_} |
+                Statement::Call{ local, var_type, function:_, parameters:_ }  => {
+                    if !args.contains_key(local) {
+                        if let Some(existing) = locals.insert(local.clone(), *var_type) {
+                            if existing != *var_type {
+                                panic!(format!("Variable '{}' is declared twice.", local));
+                            }
+                        }
                     }
-                },
-                Statement::Return{ value:_ } | Statement::TtyOut{ value:_ } => {},
+                }
                 Statement::IfElse{ predicate:_, when_true, when_false } => {
                     for s in when_true.iter().chain(when_false.iter()) {
-                        find_locals(s, args, locals);
+                        find_decls(s, args, locals);
                     }
                 },
                 Statement::While{predicate: _, while_true} => {
                     for s in while_true {
-                        find_locals(s, args, locals);
+                        find_decls(s, args, locals);
                     }
-                }
+                },
+                Statement::Return{ value:_ } | 
+                Statement::TtyOut{ value:_ } |
+                Statement::Load{local:_, address:_} |
+                Statement::Store{local:_, address:_}
+                => {}
             }
-        };
+        }
 
         for s in body.iter() {
-            find_locals(s, &args, &mut locals);
+            find_decls(s, &args, &mut locals);
         }
+
+        // fn check_refs(s: &Statement, args: &Vec<String>, locals: &mut BTreeSet<String>) {
+        //     match s {
+        //         Statement::Assign{local, var_type:_, value:_} 
+        //         | Statement::Load{local, address:_}
+        //         | Statement::Store{local, address:_ }
+        //         | Statement::Call{ local, function:_, parameters:_ } => { 
+        //             if !args.contains(local) {
+        //                 locals.insert(local.clone()); 
+        //             }
+        //         },
+        //         Statement::Return{ value:_ } | Statement::TtyOut{ value:_ } => {},
+        //         Statement::IfElse{ predicate:_, when_true, when_false } => {
+        //             for s in when_true.iter().chain(when_false.iter()) {
+        //                 find_locals(s, args, locals);
+        //             }
+        //         },
+        //         Statement::While{predicate: _, while_true} => {
+        //             for s in while_true {
+        //                 find_locals(s, args, locals);
+        //             }
+        //         }
+        //     }
+        // };
+
+        // for s in body.iter() {
+        //     find_locals(s, &args, &mut locals);
+        // }
 
         Function { name, args, locals, body }
     }
@@ -987,9 +1046,9 @@ impl Function {
         offset -= 1;
 
         for arg in &self.args {
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, arg)));
-            ctxt.variables.insert(arg.clone(), Variable {
-                variable_type: VariableType::U8,
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {:?}", offset, arg)));
+            ctxt.variables.insert(arg.0.clone(), Variable {
+                variable_type: *arg.1,
                 storage: Storage::Stack(offset as u32)
             });
             offset -= 1;
@@ -1001,7 +1060,7 @@ impl Function {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, "RETURN_ADDRESS")));
         // dbg!(&ctxt.lines);
         ctxt.variables.insert("RETURN_ADDRESS".to_owned(), Variable {
-            variable_type: VariableType::Addr,
+            variable_type: VariableType::UPTR,
             storage: Storage::Stack(offset.try_into().unwrap())
         });
         offset -= 1;
@@ -1022,9 +1081,9 @@ impl Function {
                 }
             };
 
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("# {:?} -> {}", storage, l)));
-            ctxt.variables.insert(l.clone(), Variable {
-                variable_type: VariableType::U8,
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("# {:?} -> {:?}", storage, l)));
+            ctxt.variables.insert(l.0.clone(), Variable {
+                variable_type: *l.1,
                 storage
             });
         }
@@ -1170,8 +1229,6 @@ fn main() -> Result<(), std::io::Error> {
     let assembly = compile(&input);
 
     let rom = assemble(assembly);
-
-    for a in std::env::args() { dbg!(a);}
 
     let args : Vec<_> = std::env::args().skip(1).map(|arg| u8::from_str_radix(&arg, 16).unwrap()).collect();
 
