@@ -805,20 +805,36 @@ impl Statement {
                 }
             },
             Statement::While{predicate, while_true} => {
-                unimplemented!();
+                let source = format!("WHILE ({:?})  ... ", predicate);
+
+                let while_start = format!(":{}_IF_WHILE_START_{}", function_name, ctxt.block_counter);
+                let while_body = format!(":{}_IF_WHILE_BODY_{}", function_name, ctxt.block_counter);
+                let while_end = format!(":{}_WHILE_END_{}", function_name, ctxt.block_counter);
+                ctxt.block_counter += 1;
+
+                ctxt.lines.push(AssemblyInputLine::Label(while_start.to_owned()));
+                predicate.emit_branch(ctxt, &while_body, &while_end);
+                ctxt.lines.push(AssemblyInputLine::Label(while_body.to_owned()));
+                for s in while_true {
+                    s.emit(ctxt, function_name);
+                }
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::JmpImm,
+                    source: source.to_owned(),
+                    args: vec![Value::Label24(while_start.to_owned())],
+                    resolved: None,
+                });
+                ctxt.lines.push(AssemblyInputLine::Label(while_end.to_owned()));
             },
             Statement::IfElse{predicate, when_true, when_false} => {
-                
-                
+                let source = format!("IF ({:?})  ... ", predicate);
+
                 let true_start = format!(":{}_IF_TRUE_START_{}", function_name, ctxt.block_counter);
                 let false_start = format!(":{}_IF_FAlSE_START_{}", function_name, ctxt.block_counter);
                 let block_end = format!(":{}_IF_END_{}", function_name, ctxt.block_counter);
-
-                predicate.emit_branch(ctxt, &true_start, &false_start);
-
                 ctxt.block_counter += 1;
 
-                let source = format!("IF ({:?})  ... ", predicate);
+                predicate.emit_branch(ctxt, &true_start, &false_start);              
 
                 ctxt.lines.push(AssemblyInputLine::Label(true_start.to_owned()));
 
@@ -1377,8 +1393,18 @@ mod tests {
     }
 
     #[test]
-    fn fac() {
-        let program = include_str!("../../programs/fac.j");
+    fn fac_rec() {
+        let program = include_str!("../../programs/fac_rec.j");
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let mut c = Computer::with_print(rom, false);
+        while c.step() {}
+        assert_eq!(120, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    }
+
+    #[test]
+    fn fac_iter() {
+        let program = include_str!("../../programs/fac_iter.j");
         let assembly = compile(program);
         let rom = assemble(assembly);
         let mut c = Computer::with_print(rom, false);
