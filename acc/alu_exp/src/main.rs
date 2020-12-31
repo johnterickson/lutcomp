@@ -1,7 +1,7 @@
 fn main() {
     let ints = [0u16, 1, 7, 0x7F, 0x80, 0xFE, 0xFF];
-    for (ii,i) in ints.iter().enumerate() {
-        for (jj,j) in ints.iter().enumerate() {
+    for (_ii,i) in ints.iter().enumerate() {
+        for (_jj,j) in ints.iter().enumerate() {
 
             let (i,j) = (*i,*j);
 

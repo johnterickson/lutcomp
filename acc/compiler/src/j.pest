@@ -10,11 +10,12 @@ ttyin = { "ttyin" }
 char_literal_value = { ANY }
 char_literal = { "'" ~ char_literal_value ~ "'" }
 
-arithmetic = _{ add | subtract | multiply | or }
+arithmetic = _{ add | subtract | multiply | or | and }
 add      = { "+" }
 subtract = { "-" }
 multiply = { "*" }
-or = { "||" }
+or = { "|" }
+and = { "&" }
 
 comparison = _{ equals | notequals | greater_than | greater_than_or_equal | less_than | less_than_or_equal}
 equals = { "==" }
@@ -30,6 +31,7 @@ expression = { char_literal | ttyin | ident | number |  arithmetic_expression | 
 
 else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
 if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
+while_loop = { "WHILE" ~ expression ~ "{" ~ statement* ~ "}" }
 assign = { "ASSIGN" ~ ident ~ ":=" ~ expression ~ ";" }
 load = { "LOAD" ~ ident ~ "<-" ~ "*" ~ expression ~ ";"}
 store = { "STORE" ~ ident ~ "->" ~ "*" ~ expression ~ ";"}
@@ -38,7 +40,7 @@ return_statement = { "RETURN" ~ expression ~ ";" }
 
 call = { "CALL" ~ ident ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-statement = { assign | if_else_statement | ttyout | return_statement | call | load | store}
+statement = { assign | if_else_statement | ttyout | return_statement | call | while_loop | load | store}
 body = { (statement)+ }
 paramters = { ident? ~ ("," ~ ident)* }
 function = {"FUNCTION " ~ ident ~ "(" ~ paramters ~ ")" ~ "{" ~ body ~ "}"}

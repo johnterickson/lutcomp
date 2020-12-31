@@ -31,4 +31,3 @@ FUNCTION main(a,b,c) {
     CALL b := printHex(a);
     TTYOUT 10;
 }
-

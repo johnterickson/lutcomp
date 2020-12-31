@@ -65,6 +65,17 @@ impl ComparisonOperator {
             op => panic!(format!("Unknown op: {}", op)),
         }
     }
+
+    // fn invert(&self) -> ComparisonOperator {
+    //     match self {
+    //         ComparisonOperator::Equals => ComparisonOperator::NotEquals,
+    //         ComparisonOperator::NotEquals => ComparisonOperator::Equals,
+    //         ComparisonOperator::GreaterThan => ComparisonOperator::LessThanOrEqual,
+    //         ComparisonOperator::GreaterThanOrEqual => ComparisonOperator::LessThan,
+    //         ComparisonOperator::LessThan => ComparisonOperator::GreaterThanOrEqual,
+    //         ComparisonOperator::LessThanOrEqual => ComparisonOperator::GreaterThan,
+    //     }
+    // }
 }
 
 enum VariableType {
@@ -165,12 +176,96 @@ impl Expression {
                 Expression::Number(pairs.as_str().chars().next().unwrap() as u8 as i32)
             },
             r => {
+                dbg!(r);
                 dbg!(&pair);
                 dbg!(pair.into_inner().as_str());
                 // dbg!(r.into_inner().as_str());
                 unimplemented!();
             }
         }
+    }
+
+    fn emit_branch(&self, ctxt: &mut FunctionContext, when_true:&str, when_false: &str) {
+        if let Expression::Comparison(op, left, right) = self {
+            left.emit(ctxt);
+            right.emit(ctxt);
+
+            ctxt.add_inst(Instruction {
+                opcode: Opcode::Pop8,
+                resolved: None,
+                source: format!("{:?}", &self),
+                args: vec![Value::Register(3)]
+            });
+            ctxt.additional_offset -= 1;
+
+            ctxt.add_inst(Instruction {
+                opcode: Opcode::Pop8,
+                resolved: None,
+                source: format!("{:?}", &self),
+                args: vec![Value::Register(2)]
+            });
+            ctxt.additional_offset -= 1;
+
+            // left in 2; right in 3
+            let (cond, uncond, jmp_op) = match op {
+                ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Cmp8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(3), Value::Register(2)]
+                    });
+                    if op == &ComparisonOperator::Equals {
+                        (when_true, when_false, Opcode::JzImm)
+                    } else {
+                        (when_false,when_true, Opcode::JzImm)
+                    }
+                },
+                ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Cmp8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(2), Value::Register(3)]
+                    });
+                    if op == &ComparisonOperator::LessThanOrEqual {
+                        (when_true,when_false,Opcode::JcImm)
+                    } else {
+                        (when_false,when_true,Opcode::JcImm)
+                    }
+                },
+                ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Cmp8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(3), Value::Register(2)]
+                    });
+                    if op == &ComparisonOperator::GreaterThanOrEqual {
+                        (when_true,when_false,Opcode::JcImm)
+                    } else {
+                        (when_false,when_true,Opcode::JcImm)
+                    }
+                }
+            };
+
+            ctxt.add_inst(Instruction {
+                opcode: jmp_op,
+                source: format!("{:?}", &self),
+                args: vec![Value::Label24(cond.to_owned())],
+                resolved: None,
+            });
+            ctxt.add_inst(Instruction {
+                opcode: Opcode::JmpImm,
+                source: format!("{:?}", &self),
+                args: vec![Value::Label24(uncond.to_owned())],
+                resolved: None,
+            });
+        } else {
+            panic!("expected comparison expression");
+        }
+
+        
     }
 
     fn emit(&self, ctxt: &mut FunctionContext) -> () {
@@ -342,6 +437,7 @@ enum Statement {
     Assign {local: String, value: Expression},
     Call { local: String, function: String, parameters: Vec<Expression> },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
+    While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
     Load {local: String, address: Expression },
     Store {local: String, address: Expression },
@@ -410,7 +506,16 @@ impl Statement {
                 let mut pairs = pair.into_inner();
                 let value = Expression::parse(pairs.next().unwrap());
                 Statement::TtyOut { value }
-            }
+            },
+            Rule::while_loop => {
+                let mut pairs = pair.into_inner();
+                let predicate = Expression::parse(pairs.next().unwrap());
+                let mut while_true = Vec::new();
+                while let Some(pair) = pairs.next() {
+                    while_true.push(Statement::parse(pair));
+                }
+                Statement::While { predicate, while_true }
+            },
             _ => panic!("Unexpected {:?}", pair)
         }
     }
@@ -699,106 +804,49 @@ impl Statement {
                     }
                 }
             },
+            Statement::While{predicate, while_true} => {
+                unimplemented!();
+            },
             Statement::IfElse{predicate, when_true, when_false} => {
-                let (fallthrough, jmp_target, jmp_opcode) = match predicate {
-                    Expression::Comparison(op, left, right) => {
-                        left.emit(ctxt);
-                        right.emit(ctxt);
+                
+                
+                let true_start = format!(":{}_IF_TRUE_START_{}", function_name, ctxt.block_counter);
+                let false_start = format!(":{}_IF_FAlSE_START_{}", function_name, ctxt.block_counter);
+                let block_end = format!(":{}_IF_END_{}", function_name, ctxt.block_counter);
 
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Pop8,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(3)]
-                        });
-                        ctxt.additional_offset -= 1;
-
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Pop8,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(2)]
-                        });
-                        ctxt.additional_offset -= 1;
-
-                        // left in 2; right in 3
-                        match op {
-                            ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Cmp8,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(3), Value::Register(2)]
-                                });
-                                if op == &ComparisonOperator::NotEquals {
-                                    (when_true,when_false,Opcode::JzImm)
-                                } else {
-                                    (when_false,when_true,Opcode::JzImm)
-                                }
-                            },
-                            ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Cmp8,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2), Value::Register(3)]
-                                });
-                                if op == &ComparisonOperator::GreaterThan {
-                                    (when_true,when_false,Opcode::JcImm)
-                                } else {
-                                    (when_false,when_true,Opcode::JcImm)
-                                }
-                            },
-                            ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Cmp8,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(3), Value::Register(2)]
-                                });
-                                if op == &ComparisonOperator::LessThan {
-                                    (when_true,when_false,Opcode::JcImm)
-                                } else {
-                                    (when_false,when_true,Opcode::JcImm)
-                                }
-                            }
-                        }
-                    }
-                    _ => panic!("expected comparison expression")
-                };
-
-                let false_start = format!("{}_IF_FAlSE_START_{}", function_name, ctxt.block_counter);
-                let block_end = format!("{}_IF_END_{}", function_name, ctxt.block_counter);
+                predicate.emit_branch(ctxt, &true_start, &false_start);
 
                 ctxt.block_counter += 1;
 
                 let source = format!("IF ({:?})  ... ", predicate);
 
-                ctxt.add_inst(Instruction {
-                    opcode: jmp_opcode,
-                    source: source.to_owned(),
-                    args: vec![Value::Label24(format!(":{}", &false_start))],
-                    resolved: None,
-                });
+                ctxt.lines.push(AssemblyInputLine::Label(true_start.to_owned()));
 
-                for s in fallthrough {
+                for s in when_true {
                     s.emit(ctxt, function_name);
                 }
 
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JmpImm,
                     source: source.to_owned(),
-                    args: vec![Value::Label24(format!(":{}", &block_end))],
+                    args: vec![Value::Label24(block_end.to_owned())],
                     resolved: None,
                 });
-                
-                ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &false_start)));
 
-                for s in jmp_target {
+                ctxt.lines.push(AssemblyInputLine::Label(false_start.to_owned()));
+                
+                for s in when_false {
                     s.emit(ctxt, function_name);
                 }
 
-                ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &block_end)));
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::JmpImm,
+                    source: source.to_owned(),
+                    args: vec![Value::Label24(block_end.to_owned())],
+                    resolved: None,
+                });
+
+                ctxt.lines.push(AssemblyInputLine::Label(block_end.to_owned()));
             },
         }
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Done  statement {:?}", self)));
@@ -855,6 +903,11 @@ impl Function {
                         find_locals(s, args, locals);
                     }
                 },
+                Statement::While{predicate: _, while_true} => {
+                    for s in while_true {
+                        find_locals(s, args, locals);
+                    }
+                }
             }
         };
 
