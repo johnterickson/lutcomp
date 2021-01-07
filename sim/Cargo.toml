@@ -1,0 +1,16 @@
+[package]
+name = "sim"
+version = "0.1.0"
+authors = ["John Erickson <john.t.erickson@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+strum = "0.18.0"
+packed_struct = "*"
+itertools = "0.9"
+lazy_static = "1.4.0"
+alu = { path = "../alu" }
+common = { path = "../common" }
+ucode = { path = "../ucode" }

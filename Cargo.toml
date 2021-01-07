@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "alu",
+    "alu_exp",
+    "app",
+    "assemble",
+    "common",
+    "compiler",
+    "sim",
+    "ucode"
+    ]
