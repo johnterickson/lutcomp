@@ -4,8 +4,6 @@ FUNCTION main(x:U8) {
 }
 
 FUNCTION fib(n:U8) {
-    ASSIGN sum1:U8 := 0;
-    ASSIGN sum2:U8 := 0;
     IF (n != 0) {
         IF (n != 1) {
             CALL sum1:U8 := fib((n - 1));

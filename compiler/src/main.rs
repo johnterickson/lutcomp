@@ -475,16 +475,12 @@ impl Expression {
                     _ => panic!()
                 };
 
-                let left_reg = 4;
-                for i in 0..(left_type.byte_count()) {
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Pop8,
-                        resolved: None,
-                        source: format!("{:?}", &self),
-                        args: vec![Value::Register(left_reg + i)]
-                    });
-                    ctxt.additional_offset -= 1;
-                }
+                let result_type = match (left_type, right_type) {
+                    (NumberType::U8, NumberType::U8) => NumberType::U8,
+                    (NumberType::UPTR, _) => NumberType::UPTR,
+                    (_, NumberType::UPTR) => NumberType::UPTR,
+                    _ => panic!(),
+                };
 
                 let right_reg = 8;
                 for i in 0..(right_type.byte_count()) {
@@ -497,27 +493,31 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                let result_type = match (left_type, right_type) {
-                    (NumberType::U8, NumberType::U8) => NumberType::U8,
-                    (NumberType::UPTR, _) => NumberType::UPTR,
-                    (_, NumberType::UPTR) => NumberType::UPTR,
-                    _ => panic!(),
-                };
+                for i in right_type.byte_count()..result_type.byte_count() {
+                    ctxt.add_inst(Instruction {
+                        source: format!("zero ext {:?}", &self),
+                        opcode: Opcode::LoadImm8,
+                        args: vec![Value::Register(right_reg+i), Value::Constant8(0)],
+                        resolved: None,
+                    });
+                }
+
+                let left_reg = 4;
+                for i in 0..(left_type.byte_count()) {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Pop8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(left_reg + i)]
+                    });
+                    ctxt.additional_offset -= 1;
+                }
 
                 for i in left_type.byte_count()..result_type.byte_count() {
                     ctxt.add_inst(Instruction {
                         source: format!("zero ext {:?}", &self),
                         opcode: Opcode::LoadImm8,
                         args: vec![Value::Register(left_reg+i), Value::Constant8(0)],
-                        resolved: None,
-                    });
-                }
-
-                for i in right_type.byte_count()..result_type.byte_count() {
-                    ctxt.add_inst(Instruction {
-                        source: format!("zero ext {:?}", &self),
-                        opcode: Opcode::LoadImm8,
-                        args: vec![Value::Register(right_reg+i), Value::Constant8(0)],
                         resolved: None,
                     });
                 }
@@ -552,7 +552,7 @@ impl Expression {
                                     opcode: Opcode::Or8,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
                                 });
                             }
                             NumberType::UPTR => unimplemented!(),
@@ -561,11 +561,12 @@ impl Expression {
                     ArithmeticOperator::Multiply => {
                         match result_type {
                             NumberType::U8 => {
+                                assert_eq!(0, result_reg);
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Mul8Part1,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2), Value::Register(3)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg)]
                                 });
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Mul8Part2,
@@ -584,13 +585,13 @@ impl Expression {
                                     opcode: Opcode::Negate8,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(3)]
+                                    args: vec![Value::Register(right_reg)]
                                 });
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Add8NoCarry,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
                                 });
                             }
                             NumberType::UPTR => unimplemented!()
@@ -1558,11 +1559,14 @@ mod tests {
             *c.mem_byte_mut(0x80000) = 0xCC;
 
             let mut last_pc = None;
+            let mut step_count = 0;
             while c.step() {
                 if last_pc != Some(c.pc) {
                     print_state(&mut c);
                 }
                 last_pc = Some(c.pc);
+                step_count += 1;
+                assert!(step_count < 10000000);
             }
             assert_eq!(*expected, *c.mem_byte_mut(0x80000));
         }
@@ -1632,22 +1636,16 @@ mod tests {
 
     #[test]
     fn fac_rec() {
-        let program = include_str!("../../programs/fac_rec.j");
-        let assembly = compile(program);
-        let rom = assemble(assembly);
-        let mut c = Computer::with_print(rom, false);
-        while c.step() {}
-        assert_eq!(120, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+        test_inputs(
+            include_str!("../../programs/fac_rec.j"),
+            &[(0xCC,0xCC,120)]);
     }
 
     #[test]
     fn fac_iter() {
-        let program = include_str!("../../programs/fac_iter.j");
-        let assembly = compile(program);
-        let rom = assemble(assembly);
-        let mut c = Computer::with_print(rom, false);
-        while c.step() {}
-        assert_eq!(120, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+        test_inputs(
+            include_str!("../../programs/fac_iter.j"),
+            &[(0xCC,0xCC,120)]);
     }
 
     #[test]
@@ -1655,8 +1653,11 @@ mod tests {
         test_inputs(
             include_str!("../../programs/fib.j"),
             &[
-                //(0,0xCC,0),(1,0xCC,1),
-                (2,0xCC,2)
+                (0,0xCC,0),
+                (1,0xCC,1),
+                (2,0xCC,1),
+                (3,0xCC,2),
+                (13,0xCC,233)
                 ]);
     }
 }
