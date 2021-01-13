@@ -4,7 +4,10 @@ COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 lower = { 'a'..'z' }
 alpha = { lower | 'A'..'Z' }
 digit = { '0'..'9' }
-number = { digit+ }
+decimal_number = { digit+ }
+hex_number = { "@" ~ hex_digit+ }
+number = { decimal_number | hex_number | char_literal }
+hex_digit = { digit | 'a'..'f' | 'A'..'F' }
 ident = { lower ~ (alpha | digit)* }
 ttyin = { "ttyin" }
 char_literal_value = { ANY }
@@ -27,7 +30,7 @@ less_than_or_equal = { "@lte" }
 
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
-expression = { char_literal | ttyin | ident | number |  arithmetic_expression | comparison_expression}
+expression = { ttyin | ident | number | arithmetic_expression | comparison_expression}
 
 variable_type = {"U8" | "UPTR" }
 variable_decl = {ident ~ ":" ~ variable_type}

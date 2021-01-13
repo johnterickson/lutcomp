@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 use std::io;
 use std::io::Read;
 use std::collections::{BTreeMap,BTreeSet};
-use std::{convert::TryInto, str::FromStr};
+use std::{convert::TryInto};
 
 use assemble::*;
 use common::*;
@@ -79,24 +79,66 @@ impl ComparisonOperator {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-enum VariableType {
+enum NumberType {
     U8,
     UPTR,
 }
 
-impl VariableType {
-    fn parse(s: &str) -> VariableType {
+impl NumberType {
+    fn parse(s: &str) -> NumberType {
         match  s {
-            "U8" => VariableType::U8,
-            "UPTR" => VariableType::UPTR,
+            "U8" => NumberType::U8,
+            "UPTR" => NumberType::UPTR,
             other => panic!(format!("unknown type {}", other)),
         }
     }
 }
 
+impl ByteSize for NumberType {
+    fn byte_count(&self) -> u8 {
+        match self {
+            NumberType::U8 => 1,
+            NumberType::UPTR => 4,
+        }
+    }
+}
+
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+enum Type {
+    Number(NumberType),
+}
+
+trait ByteSize {
+    fn byte_count(&self) -> u8;
+}
+
+impl ByteSize for Type {
+    fn byte_count(&self) -> u8 {
+        match self {
+            Type::Number(nt) => nt.byte_count()
+        }
+    }
+}
+
+
+#[derive(Clone, Copy, Debug)]
+enum Storage {
+    Register(u8),
+    Stack(u32),
+}
+
+#[derive(Clone, Copy, Debug)]
+enum Declaration {
+    Local,
+    Arg,
+    Return,
+    ReturnAddress,
+}
 #[derive(Debug)]
 struct Variable {
-    variable_type: VariableType,
+    var_type: Type,
+    decl: Declaration,
     storage: Storage,
 }
 
@@ -118,17 +160,20 @@ impl FunctionContext {
         self.lines.push(AssemblyInputLine::from_str(&s))
     }
 
-    fn find_local(&mut self, local: &str) -> Storage {
-        let local = self.variables
+    fn find_local(&mut self, local: &str) -> &Variable {
+        self.variables
             .get(local)
-            .expect(&format!("could not find {}", local));
-        match &local.storage {
+            .expect(&format!("could not find {}", local))
+    }
+
+    fn find_storage(&mut self, local: &str) -> Storage {
+        match self.find_local(local).storage {
             Storage::Stack(offset) => {
-                Storage::Stack(*offset + self.additional_offset)
+                Storage::Stack(offset + self.additional_offset)
             },
             Storage::Register(r) => {
-                self.regs_touched.insert(*r);
-                Storage::Register(*r)
+                self.regs_touched.insert(r);
+                Storage::Register(r)
             }
         }
     }
@@ -137,7 +182,7 @@ impl FunctionContext {
 #[derive(Debug)]
 enum Expression {
     Ident(String),
-    Number(i32),
+    Number(NumberType, i64),
     TtyIn(),
     Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
     Comparison(ComparisonOperator, Box<Expression>, Box<Expression>),
@@ -149,14 +194,34 @@ impl Expression {
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
             Rule::number => {
-                let mut n = 0;
-                let mut digits = pair.into_inner();
-                while let Some(digit) = digits.next() {
-                    let digit = i32::from_str(digit.as_str()).expect("Couldn't parse integer.");
-                    n *= 10;
-                    n += digit;
+                let mut number = pair.into_inner();
+                let number = number.next().unwrap();
+                match number.as_rule() {
+                    Rule::decimal_number => {
+                        Expression::Number(
+                            NumberType::U8,
+                            i64::from_str_radix(number.as_str().trim(), 10)
+                                .expect(&format!("Couldn't parse decimal integer '{}'", number.as_str().trim())))
+                    }
+                    Rule::hex_number => {
+                        Expression::Number(
+                            NumberType::UPTR,
+                            i64::from_str_radix(number.as_str(), 16)
+                                .expect(&format!("Couldn't parse hex integer {}", number.as_str())))
+                    }
+                    Rule::char_literal => {
+                        Expression::Number(NumberType::U8, number.as_str().chars().next().unwrap() as u8 as i64)
+                    }
+                    r => panic!(format!("unexpected {:?}", &r))
                 }
-                Expression::Number(n)
+                // let mut n = 0;
+                // let mut digits = pair.into_inner();
+                // while let Some(digit) = digits.next() {
+                //     let digit = u8::from_str(digit.as_str()).expect("Couldn't parse integer.");
+                //     n *= 10;
+                //     n += digit;
+                // }
+                // Expression::Number(n)
             },
             Rule::ident => {
                 let mut label = String::new();
@@ -182,10 +247,6 @@ impl Expression {
             },
             Rule::ttyin => {
                 Expression::TtyIn()
-            },
-            Rule::char_literal => {
-                let pairs = pair.into_inner();
-                Expression::Number(pairs.as_str().chars().next().unwrap() as u8 as i32)
             },
             r => {
                 dbg!(r);
@@ -280,27 +341,49 @@ impl Expression {
         
     }
 
-    fn emit(&self, ctxt: &mut FunctionContext) -> () {
+    fn emit(&self, ctxt: &mut FunctionContext) -> Type {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
 
-        match self {
-            Expression::Number(n) => {
-                let n = *n as u8;
-
-                ctxt.add_inst(Instruction {
-                    source: format!("{:?}", &self),
-                    opcode: Opcode::LoadImm8,
-                    args: vec![Value::Register(0), Value::Constant8(n)],
-                    resolved: None,
-                });
-
-                ctxt.add_inst(Instruction {
-                    source: format!("{:?}", &self),
-                    opcode: Opcode::Push8,
-                    args: vec![Value::Register(0)],
-                    resolved: None,
-                });
-                ctxt.additional_offset += 1;
+        let result = match self {
+            Expression::Number(t, n) => {
+                match t {
+                    NumberType::U8 => {
+                        let n: u8 = (*n).try_into().expect(&format!("Couldn't cast {} to U8", *n));
+                        ctxt.add_inst(Instruction {
+                            source: format!("{:?}", &self),
+                            opcode: Opcode::LoadImm8,
+                            args: vec![Value::Register(0), Value::Constant8(n)],
+                            resolved: None,
+                        });
+    
+                        ctxt.add_inst(Instruction {
+                            source: format!("{:?}", &self),
+                            opcode: Opcode::Push8,
+                            args: vec![Value::Register(0)],
+                            resolved: None,
+                        });
+                        ctxt.additional_offset += 1;
+                    }
+                    NumberType::UPTR => {
+                        let n: u32 = (*n).try_into().expect(&format!("Couldn't cast {} to UPTR", *n));
+                        ctxt.add_inst(Instruction {
+                            source: format!("{:?}", &self),
+                            opcode: Opcode::LoadImm32,
+                            args: vec![Value::Register(0), Value::Constant32(n)],
+                            resolved: None,
+                        });
+                        for r in (0..4).rev() {
+                            ctxt.add_inst(Instruction {
+                                source: format!("{:?}", &self),
+                                opcode: Opcode::Push8,
+                                args: vec![Value::Register(r)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset += 1;
+                        }
+                    }
+                }
+                Type::Number(*t)
             },
             Expression::TtyIn() => {
                 ctxt.add_inst(Instruction {
@@ -317,10 +400,12 @@ impl Expression {
                     resolved: None,
                 });
                 ctxt.additional_offset += 1;
+                Type::Number(NumberType::U8)
             }
             Expression::Ident(n) => {
                 let local = ctxt.find_local(n);
-                match local {
+                let local_type = local.var_type;
+                match local.storage {
                     Storage::Register(_r) => {
                         // ctxt.add_inst(Instruction::LoadReg(r));
                         unimplemented!();
@@ -340,104 +425,211 @@ impl Expression {
                             resolved: None,
                         });
 
-                        ctxt.add_inst(Instruction {
-                            source: format!("{:?}", &self),
-                            opcode: Opcode::Load8,
-                            args: vec![Value::Register(4), Value::Register(0)],
-                            resolved: None,
-                        });
-                        ctxt.add_inst(Instruction {
-                            source: format!("{:?}", &self),
-                            opcode: Opcode::Push8,
-                            args: vec![Value::Register(0)],
-                            resolved: None,
-                        });
-                        ctxt.additional_offset += 1;
+                        let size = local_type.byte_count();
+                        match size {
+                            1 => {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("{:?}", &self),
+                                    opcode: Opcode::Load8,
+                                    args: vec![Value::Register(4), Value::Register(0)],
+                                    resolved: None,
+                                });
+                                ctxt.add_inst(Instruction {
+                                    source: format!("{:?}", &self),
+                                    opcode: Opcode::Push8,
+                                    args: vec![Value::Register(0)],
+                                    resolved: None,
+                                });
+                                ctxt.additional_offset += 1;
+                            }
+                            4 => {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("{:?}", &self),
+                                    opcode: Opcode::Load32,
+                                    args: vec![Value::Register(4), Value::Register(0)],
+                                    resolved: None,
+                                });
+                                for r in (0..4).rev() {
+                                    ctxt.add_inst(Instruction {
+                                        source: format!("{:?}", &self),
+                                        opcode: Opcode::Push8,
+                                        args: vec![Value::Register(r)],
+                                        resolved: None,
+                                    });
+                                    ctxt.additional_offset += 1;
+                                }
+                            },
+                            _ => panic!(),
+                        }
                     }
-                }
+                };
+                local_type
             },
             Expression::Arithmetic(op, left, right) => {
                 
-                left.emit(ctxt);
-                right.emit(ctxt);
+                let left_type = left.emit(ctxt);
+                let left_type = match left_type {
+                    Type::Number(nt) => nt,
+                    _ => panic!()
+                };
 
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Pop8,
-                    resolved: None,
-                    source: format!("{:?}", &self),
-                    args: vec![Value::Register(3)]
-                });
-                ctxt.additional_offset -= 1;
+                let right_type = right.emit(ctxt);
+                let right_type = match right_type {
+                    Type::Number(nt) => nt,
+                    _ => panic!()
+                };
 
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Pop8,
-                    resolved: None,
-                    source: format!("{:?}", &self),
-                    args: vec![Value::Register(2)]
-                });
-                ctxt.additional_offset -= 1;
+                let result_type = match (left_type, right_type) {
+                    (NumberType::U8, NumberType::U8) => NumberType::U8,
+                    (NumberType::UPTR, _) => NumberType::UPTR,
+                    (_, NumberType::UPTR) => NumberType::UPTR,
+                    _ => panic!(),
+                };
 
                 // left in 2; right in 3, result in 0 (&1)
+                let result_reg = 0;
+
+                let left_reg = 4;
+                let left_zero_extends = result_type.byte_count() - left_type.byte_count();
+                match left_zero_extends {
+                    0 => {},
+                    3 => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("{:?}", &self),
+                            opcode: Opcode::LoadImm32,
+                            args: vec![Value::Register(left_reg), Value::Constant32(0)],
+                            resolved: None,
+                        });
+                    }
+                    _ => unimplemented!()
+                };
+
+                for i in 0..(left_type.byte_count()) {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Pop8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(left_reg + i)]
+                    });
+                    ctxt.additional_offset -= 1;
+                }
+
+                let right_reg = 8;
+                let right_zero_extends = result_type.byte_count() - right_type.byte_count();
+                match right_zero_extends {
+                    0 => {},
+                    3 => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("{:?}", &self),
+                            opcode: Opcode::LoadImm32,
+                            args: vec![Value::Register(right_reg), Value::Constant32(0)],
+                            resolved: None,
+                        });
+                    }
+                    _ => unimplemented!()
+                };
+
+                for i in 0..(right_type.byte_count()) {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Pop8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(right_reg + i)]
+                    });
+                    ctxt.additional_offset -= 1;
+                }
 
                 match op {
                     ArithmeticOperator::Add => {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Add8NoCarry,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
-                        });
+                        match result_type {
+                            NumberType::U8 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add8NoCarry,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                });
+                            }
+                            NumberType::UPTR => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add32NoCarryIn,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                });
+                            }
+                        }
                     },
                     ArithmeticOperator::Or => {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Or8,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
-                        });
+                        match result_type {
+                            NumberType::U8 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Or8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                });
+                            }
+                            NumberType::UPTR => unimplemented!(),
+                        }
                     },
                     ArithmeticOperator::Multiply => {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Mul8Part1,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(2), Value::Register(3)]
-                        });
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Mul8Part2,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![]
-                        });
+                        match result_type {
+                            NumberType::U8 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Mul8Part1,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(2), Value::Register(3)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Mul8Part2,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![]
+                                });
+                            }
+                            NumberType::UPTR => unimplemented!()
+                        }
                     },
                     ArithmeticOperator::Subtract => {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Negate8,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(3)]
-                        });
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Add8NoCarry,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
-                        });
+                        match result_type {
+                            NumberType::U8 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Negate8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(3)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add8NoCarry,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(2), Value::Register(3), Value::Register(0)]
+                                });
+                            }
+                            NumberType::UPTR => unimplemented!()
+                        }
                     },
                 }
 
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Push8,
-                    resolved: None,
-                    source: format!("{:?}", &self),
-                    args: vec![Value::Register(0)]
-                });
-                ctxt.additional_offset += 1;
+                for i in (0..result_type.byte_count()).rev() {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Push8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(result_reg + i)]
+                    });
+                    ctxt.additional_offset += 1;
+                }
+
+                Type::Number(result_type)
             },
             Expression::Comparison(_,_,_) => panic!("cannot evaluate comparison expression.")
-        }
+        };
         
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluated expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
+        result
     }
 }
 
@@ -446,8 +638,8 @@ const EPILOGUE : &'static str = "EPILOGUE";
 
 #[derive(Debug)]
 enum Statement {
-    Assign {local: String, var_type: VariableType, value: Expression},
-    Call { local: String, var_type: VariableType, function: String, parameters: Vec<Expression> },
+    Assign {local: String, var_type: NumberType, value: Expression},
+    Call { local: String, var_type: NumberType, function: String, parameters: Vec<Expression> },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
@@ -466,7 +658,7 @@ impl Statement {
                 let mut pairs = pair.into_inner();
                 let mut decl = pairs.next().unwrap().into_inner();
                 let var_name = decl.next().unwrap().as_str().trim().to_owned();
-                let var_type = VariableType::parse(decl.next().unwrap().as_str().trim());
+                let var_type = NumberType::parse(decl.next().unwrap().as_str().trim());
 
                 let value = Expression::parse(pairs.next().unwrap());
                 Statement::Assign { 
@@ -479,7 +671,7 @@ impl Statement {
                 let mut pairs = pair.into_inner();
                 let mut decl = pairs.next().unwrap().into_inner();
                 let var_name = decl.next().unwrap().as_str().trim().to_owned();
-                let var_type = VariableType::parse(decl.next().unwrap().as_str().trim());
+                let var_type = NumberType::parse(decl.next().unwrap().as_str().trim());
 
                 let function = pairs.next().unwrap().as_str().to_owned();
 
@@ -638,7 +830,7 @@ impl Statement {
                 ctxt.additional_offset -= 1;
 
                 let local = ctxt.find_local(local);
-                match local {
+                match local.storage {
                     Storage::Register(_r) => {
                         unimplemented!();
                     }
@@ -674,7 +866,7 @@ impl Statement {
                 });
                 ctxt.additional_offset -= 1;
 
-                let result_offset = match ctxt.find_local(RESULT) {
+                let result_offset = match ctxt.find_local(RESULT).storage {
                     Storage::Register(_) => unimplemented!(),
                     Storage::Stack(offset) => offset,
                 };
@@ -799,7 +991,7 @@ impl Statement {
                 // stack is now back to normal
                 // assert_eq!(ctxt.additional_offset, 0);
 
-                let local = ctxt.find_local(local);
+                let local = ctxt.find_storage(local);
                 match local {
                     Storage::Register(_r) => {
                         unimplemented!();
@@ -891,17 +1083,11 @@ impl Statement {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-enum Storage {
-    Register(u8),
-    Stack(u32),
-}
-
 #[derive(Debug)]
 struct Function {
     name: String,
-    args: BTreeMap<String,VariableType>,
-    locals: BTreeMap<String,VariableType>,
+    args: BTreeMap<String,NumberType>,
+    locals: BTreeMap<String,NumberType>,
     body: Vec<Statement>,
 }
 
@@ -918,7 +1104,7 @@ impl Function {
         for arg in pairs.next().unwrap().into_inner() {
             let mut arg_tokens = arg.into_inner();
             let arg_name = arg_tokens.next().unwrap().as_str().to_owned();
-            let arg_var_type = VariableType::parse(arg_tokens.next().unwrap().as_str());
+            let arg_var_type = NumberType::parse(arg_tokens.next().unwrap().as_str());
             args.insert(arg_name, arg_var_type);
         }
 
@@ -928,7 +1114,7 @@ impl Function {
         let mut locals = BTreeMap::new();
 
         // find declared
-        fn find_decls(s: &Statement, args: &BTreeMap<String,VariableType>, locals: &mut BTreeMap<String,VariableType>) {
+        fn find_decls(s: &Statement, args: &BTreeMap<String,NumberType>, locals: &mut BTreeMap<String,NumberType>) {
             match s {
                 Statement::Assign{local, var_type, value:_} |
                 Statement::Call{ local, var_type, function:_, parameters:_ }  => {
@@ -1040,7 +1226,8 @@ impl Function {
 
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, RESULT)));
         ctxt.variables.insert(RESULT.to_owned(), Variable {
-            variable_type: VariableType::U8,
+            decl: Declaration::Return,
+            var_type: Type::Number(NumberType::U8),
             storage: Storage::Stack(offset.try_into().unwrap())
         });
         offset -= 1;
@@ -1048,7 +1235,8 @@ impl Function {
         for arg in &self.args {
             ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {:?}", offset, arg)));
             ctxt.variables.insert(arg.0.clone(), Variable {
-                variable_type: *arg.1,
+                var_type: Type::Number(*arg.1),
+                decl: Declaration::Arg,
                 storage: Storage::Stack(offset as u32)
             });
             offset -= 1;
@@ -1060,7 +1248,8 @@ impl Function {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, "RETURN_ADDRESS")));
         // dbg!(&ctxt.lines);
         ctxt.variables.insert("RETURN_ADDRESS".to_owned(), Variable {
-            variable_type: VariableType::UPTR,
+            decl: Declaration::ReturnAddress,
+            var_type: Type::Number(NumberType::UPTR),
             storage: Storage::Stack(offset.try_into().unwrap())
         });
         offset -= 1;
@@ -1083,7 +1272,8 @@ impl Function {
 
             ctxt.lines.push(AssemblyInputLine::Comment(format!("# {:?} -> {:?}", storage, l)));
             ctxt.variables.insert(l.0.clone(), Variable {
-                variable_type: *l.1,
+                decl: Declaration::Local,
+                var_type: Type::Number(*l.1),
                 storage
             });
         }
@@ -1202,10 +1392,12 @@ fn optimize(assembly: &mut Vec<AssemblyInputLine>) -> usize {
 
 fn print_state(c: &mut Computer) {
     let pc = u32::from_le_bytes(c.pc);
+    let pc_byte = *c.mem_byte_mut(pc);
     let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
     println!(
-        "pc:{:05x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ", 
+        "pc:{:05x}={:02x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ", 
         pc,
+        pc_byte,
         sp,
         c.flags.bits(),
         u32::from_le_bytes(*c.mem_word_mut(sp)),
