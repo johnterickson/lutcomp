@@ -1,5 +1,5 @@
-FUNCTION main() {
-    CALL result : U8 := fib(7);
+FUNCTION main(x:U8) {
+    CALL result : U8 := fib(x);
     RETURN result;
 }
 
@@ -8,7 +8,7 @@ FUNCTION fib(n:U8) {
     ASSIGN sum2:U8 := 0;
     IF (n != 0) {
         IF (n != 1) {
-            CALL sum1: U8 := fib((n - 1));
+            CALL sum1:U8 := fib((n - 1));
             CALL sum2:U8 := fib((n - 2));
             RETURN (sum1 + sum2);
         }
