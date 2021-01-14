@@ -8,7 +8,7 @@ use strum::IntoEnumIterator;
 
 use std::{io, unimplemented};
 use std::io::Read;
-use std::collections::{BTreeMap,BTreeSet};
+use std::collections::BTreeMap;
 use std::{convert::TryInto};
 
 use assemble::*;
@@ -137,10 +137,10 @@ impl ByteSize for Type {
         }
     }
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 struct BaseOffset(u32);
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 enum Storage {
     // Register(u8),
     Stack(BaseOffset),
@@ -150,7 +150,7 @@ enum Storage {
 enum Declaration {
     Local,
     Arg,
-    Return,
+    Result,
     ReturnAddress,
 }
 #[derive(Debug)]
@@ -160,15 +160,15 @@ struct Variable {
     storage: Storage,
 }
 
-struct FunctionContext {
-    pub regs_touched: BTreeSet<u8>,
-    pub variables: BTreeMap<String, Variable>,
+struct FunctionContext<'a> {
+    program: &'a ProgramContext,
+    function: &'a Function,
     pub lines: Vec<AssemblyInputLine>,
     pub additional_offset: u32,
     pub block_counter: usize,
 }
 
-impl FunctionContext {
+impl<'a> FunctionContext<'a> {
     fn add_inst(&mut self, i: Instruction) {
         //println!("{:?}",&i);
         self.lines.push(AssemblyInputLine::Instruction(i));
@@ -179,7 +179,7 @@ impl FunctionContext {
     }
 
     fn find_local(&self, local: &str) -> &Variable {
-        self.variables
+        self.function.variables
             .get(local)
             .expect(&format!("could not find {}", local))
     }
@@ -781,74 +781,9 @@ impl Statement {
         }
     }
 
-    fn emit(&self, ctxt: &mut FunctionContext, function_name: &str) -> () {
+    fn emit(&self, ctxt: &mut FunctionContext) -> () {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Begin statement {:?}", self)));
         match self {
-            // Statement::Load{local, address} => {
-            //     unimplemented!();
-                // address.emit(ctxt);
-
-                // ctxt.add_inst(Instruction {
-                //     opcode: Opcode::Pop8,
-                //     resolved: None,
-                //     source: String::new(),
-                //     args: vec![Value::Register(0)]
-                // });
-
-                // ctxt.add_inst(Instruction {
-                //     opcode: Opcode::Load8,
-                //     resolved: None,
-                //     source: String::new(),
-                //     args: vec![Value::Register(0)]
-                // });
-
-                // let local = ctxt.find_local(local);
-                // match local {
-                //     LocalStorage::Register(r) => {
-                //         unimplemented!();
-                //     }
-                //     LocalStorage::Stack(offset) => {
-                //         ctxt.add_inst(Instruction {
-                //             opcode: Opcode::LoadImm32,
-                //             resolved: None,
-                //             source: String::new(),
-                //             args: vec![Value::Register(4), Value::Constant32(offset as u32)]
-                //         });
-                //         ctxt.add_inst(Instruction {
-                //             opcode: Opcode::Add32NoCarry,
-                //             resolved: None,
-                //             source: String::new(),
-                //             args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
-                //         });
-
-                //         ctxt.add_inst(Instruction {
-                //             opcode: Opcode::Store8,
-                //             resolved: None,
-                //             source: String::new(),
-                //             args: vec![Value::Register(4), Value::Constant32(offset as u32)]
-                //         });
-
-                //         ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(offset as u8)));
-                //     }
-                // }
-            // },
-            // Statement::Store{local, address} => {
-            //     unimplemented!();
-                // address.emit(ctxt);
-                // ctxt.add_inst(Instruction::StoreAddr);
-
-                // let local = ctxt.find_local(local);
-                // match local {
-                //     LocalStorage::Register(r) => {
-                //         unimplemented!();
-                //     }
-                //     LocalStorage::Stack(offset) => {
-                //         ctxt.add_inst(Instruction::WithoutPush(
-                //             PushableInstruction::LoadFromStack(StackOffset::new(offset as u8))));
-                //     }
-                // }
-                // ctxt.add_inst(Instruction::StoreMem);
-            // },
             Statement::TtyOut{value} => {
                 value.emit(ctxt);
                 ctxt.add_inst(Instruction {
@@ -984,11 +919,17 @@ impl Statement {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JmpImm,
                     source: format!("{:?}", &self),
-                    args: vec![Value::Label24(format!(":{}__{}", function_name, EPILOGUE))],
+                    args: vec![Value::Label24(format!(":{}__{}", &ctxt.function.name, EPILOGUE))],
                     resolved: None                    
                 });
             },
             Statement::Call{ local, var_type, function, parameters} => { 
+
+                let f = ctxt.program.functions
+                    .get(function)
+                    .expect(&format!("could not find function '{}'", &function));
+
+                assert_eq!(f.args.len(), parameters.len());
 
                 match var_type {
                     Type::Number(NumberType::U8) => {},
@@ -1013,8 +954,9 @@ impl Statement {
                 }
 
                 for (i,p) in parameters.iter().enumerate() {
-                    let arg_type = p.emit(ctxt);
-                    match arg_type.byte_count() {
+                    let param_type = p.emit(ctxt);
+                    assert_eq!(f.args[i].1, param_type);
+                    match param_type.byte_count() {
                         4 => {}
                         1 => {
                             ctxt.add_inst(Instruction {
@@ -1140,16 +1082,16 @@ impl Statement {
             Statement::While{predicate, while_true} => {
                 let source = format!("WHILE ({:?})  ... ", predicate);
 
-                let while_start = format!(":{}_IF_WHILE_START_{}", function_name, ctxt.block_counter);
-                let while_body = format!(":{}_IF_WHILE_BODY_{}", function_name, ctxt.block_counter);
-                let while_end = format!(":{}_WHILE_END_{}", function_name, ctxt.block_counter);
+                let while_start = format!(":{}_IF_WHILE_START_{}", &ctxt.function.name, ctxt.block_counter);
+                let while_body = format!(":{}_IF_WHILE_BODY_{}", &ctxt.function.name, ctxt.block_counter);
+                let while_end = format!(":{}_WHILE_END_{}", &ctxt.function.name, ctxt.block_counter);
                 ctxt.block_counter += 1;
 
                 ctxt.lines.push(AssemblyInputLine::Label(while_start.to_owned()));
                 predicate.emit_branch(ctxt, &while_body, &while_end);
                 ctxt.lines.push(AssemblyInputLine::Label(while_body.to_owned()));
                 for s in while_true {
-                    s.emit(ctxt, function_name);
+                    s.emit(ctxt);
                 }
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JmpImm,
@@ -1162,9 +1104,9 @@ impl Statement {
             Statement::IfElse{predicate, when_true, when_false} => {
                 let source = format!("IF ({:?})  ... ", predicate);
 
-                let true_start = format!(":{}_IF_TRUE_START_{}", function_name, ctxt.block_counter);
-                let false_start = format!(":{}_IF_FAlSE_START_{}", function_name, ctxt.block_counter);
-                let block_end = format!(":{}_IF_END_{}", function_name, ctxt.block_counter);
+                let true_start = format!(":{}_IF_TRUE_START_{}", &ctxt.function.name, ctxt.block_counter);
+                let false_start = format!(":{}_IF_FAlSE_START_{}", &ctxt.function.name, ctxt.block_counter);
+                let block_end = format!(":{}_IF_END_{}", &ctxt.function.name, ctxt.block_counter);
                 ctxt.block_counter += 1;
 
                 predicate.emit_branch(ctxt, &true_start, &false_start);              
@@ -1174,7 +1116,7 @@ impl Statement {
                 let true_start_stack_offset = ctxt.additional_offset;
 
                 for s in when_true {
-                    s.emit(ctxt, function_name);
+                    s.emit(ctxt);
                 }
 
                 let true_end_stack_offset = ctxt.additional_offset;
@@ -1191,7 +1133,7 @@ impl Statement {
                 ctxt.additional_offset = true_start_stack_offset;
 
                 for s in when_false {
-                    s.emit(ctxt, function_name);
+                    s.emit(ctxt);
                 }
 
                 let false_end_stack_offset = ctxt.additional_offset;
@@ -1214,17 +1156,21 @@ impl Statement {
 #[derive(Debug)]
 struct Function {
     name: String,
-    args: BTreeMap<String,Type>,
+    args: Vec<(String,Type)>,
     locals: BTreeMap<String,Type>,
+    variables: BTreeMap<String,Variable>,
     return_type: Type,
     body: Vec<Statement>,
+    caller_stack_size: u32,
+    callee_stack_size: u32,
 }
 
 impl Function {
     fn parse(pair: pest::iterators::Pair<Rule>) -> Function {
         assert_eq!(Rule::function, pair.as_rule());
 
-        let mut args = BTreeMap::new();
+        let mut args = Vec::new();
+        let mut variables = BTreeMap::new();
 
         let mut pairs = pair.into_inner();
 
@@ -1234,7 +1180,7 @@ impl Function {
             let mut arg_tokens = arg.into_inner();
             let arg_name = arg_tokens.next().unwrap().as_str().to_owned();
             let arg_var_type = Type::parse(arg_tokens.next().unwrap());
-            args.insert(arg_name, arg_var_type);
+            args.push((arg_name, arg_var_type));
         }
 
         let mut return_type = None;
@@ -1258,11 +1204,16 @@ impl Function {
         let mut locals = BTreeMap::new();
 
         // find declared
-        fn find_decls(s: &Statement, args: &BTreeMap<String,Type>, locals: &mut BTreeMap<String,Type>) {
+        fn find_decls(
+            s: &Statement, 
+            args: &Vec<(String,Type)>, 
+            locals: &mut BTreeMap<String,Type>,
+            variables: &mut BTreeMap<String,Variable>) 
+        {
             match s {
                 Statement::Assign{local, var_type, value:_} |
                 Statement::Call{ local, var_type, function:_, parameters:_ }  => {
-                    if !args.contains_key(local) {
+                    if !variables.contains_key(local) && !args.iter().any(|a|&a.0 == local) {
                         if let Some(existing) = locals.insert(local.clone(), var_type.clone()) {
                             if existing != *var_type {
                                 panic!(format!("Variable '{}' is declared with different types: {:?} and {:?}", local, existing, var_type));
@@ -1272,12 +1223,12 @@ impl Function {
                 }
                 Statement::IfElse{ predicate:_, when_true, when_false } => {
                     for s in when_true.iter().chain(when_false.iter()) {
-                        find_decls(s, args, locals);
+                        find_decls(s, args, locals, variables);
                     }
                 },
                 Statement::While{predicate: _, while_true} => {
                     for s in while_true {
-                        find_decls(s, args, locals);
+                        find_decls(s, args, locals, variables);
                     }
                 },
                 Statement::Return{ value:_ } | 
@@ -1287,40 +1238,8 @@ impl Function {
         }
 
         for s in body.iter() {
-            find_decls(s, &args, &mut locals);
+            find_decls(s, &args, &mut locals, &mut variables);
         }
-
-        // fn check_refs(s: &Statement, args: &Vec<String>, locals: &mut BTreeSet<String>) {
-        //     match s {
-        //         Statement::Assign{local, var_type:_, value:_} 
-        //         | Statement::Load{local, address:_}
-        //         | Statement::Store{local, address:_ }
-        //         | Statement::Call{ local, function:_, parameters:_ } => { 
-        //             if !args.contains(local) {
-        //                 locals.insert(local.clone()); 
-        //             }
-        //         },
-        //         Statement::Return{ value:_ } | Statement::TtyOut{ value:_ } => {},
-        //         Statement::IfElse{ predicate:_, when_true, when_false } => {
-        //             for s in when_true.iter().chain(when_false.iter()) {
-        //                 find_locals(s, args, locals);
-        //             }
-        //         },
-        //         Statement::While{predicate: _, while_true} => {
-        //             for s in while_true {
-        //                 find_locals(s, args, locals);
-        //             }
-        //         }
-        //     }
-        // };
-
-        // for s in body.iter() {
-        //     find_locals(s, &args, &mut locals);
-        // }
-
-        Function { name, args, locals, return_type, body }
-    }
-
     /*
 
     stack:
@@ -1334,46 +1253,26 @@ impl Function {
             RESULT (padded to 4 bytes)
     */
 
-    fn emit(&self) -> FunctionContext {
-        let mut ctxt = FunctionContext {
-            variables: BTreeMap::new(),
-            lines: Vec::new(),
-            additional_offset: 0,
-            regs_touched: BTreeSet::new(),
-            block_counter: 0,
-        };
-        ctxt.lines.push(AssemblyInputLine::Comment(format!("# Function: {}", &self.name)));
-        ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &self.name)));
-
-        // let max_register_local_count = 0u32;
-        // let mut register_local_count = 0;
-        // while register_local_count < max_register_local_count {
-        //     register_local_count += 1;
-        //     unimplemented!();
-        // }
 
         let mut caller_stack_size: u32 = 0;
         caller_stack_size += 4;// RESULT
-        caller_stack_size += self.args.len() as u32 * 4;
+        caller_stack_size += args.len() as u32 * 4;
         caller_stack_size += 4; // return address
-        let caller_stack_size = caller_stack_size;
 
-        let callee_stack_size  = self.locals.len() as u32 * 4;
+        let callee_stack_size  = locals.len() as u32 * 4;
 
         let mut offset = (caller_stack_size + callee_stack_size) as isize;
 
         offset -= 4;
-        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, RESULT)));
-        ctxt.variables.insert(RESULT.to_owned(), Variable {
-            decl: Declaration::Return,
-            var_type: self.return_type.clone(),
+        variables.insert(RESULT.to_owned(), Variable {
+            decl: Declaration::Result,
+            var_type: return_type.clone(),
             storage: Storage::Stack(BaseOffset(offset.try_into().unwrap()))
         });
 
-        for arg in &self.args {
+        for arg in &args {
             offset -= 4;
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {:?}", offset, arg)));
-            ctxt.variables.insert(arg.0.clone(), Variable {
+            variables.insert(arg.0.clone(), Variable {
                 var_type: arg.1.clone(),
                 decl: Declaration::Arg,
                 storage: Storage::Stack(BaseOffset(offset as u32))
@@ -1381,15 +1280,13 @@ impl Function {
         }
 
         offset -= 4;
-        ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, RETURN_ADDRESS)));
-        // dbg!(&ctxt.lines);
-        ctxt.variables.insert(RETURN_ADDRESS.to_owned(), Variable {
+        variables.insert(RETURN_ADDRESS.to_owned(), Variable {
             decl: Declaration::ReturnAddress,
             var_type: Type::Number(NumberType::UPTR),
             storage: Storage::Stack(BaseOffset(offset.try_into().unwrap()))
         });
 
-        for (count, l) in self.locals.iter().enumerate() {
+        for (count, l) in locals.iter().enumerate() {
             let storage = match count {
                 // count if (count as u32) < register_local_count => {
                 //     unimplemented!();
@@ -1402,27 +1299,50 @@ impl Function {
                 }
             };
 
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("# {:?} -> {:?}", storage, l)));
-            ctxt.variables.insert(l.0.clone(), Variable {
+            variables.insert(l.0.clone(), Variable {
                 decl: Declaration::Local,
                 var_type: l.1.clone(),
                 storage
             });
         }
 
-
         assert_eq!(0, offset);
 
-        // assert_eq!(ctxt.regs_used.len(), register_local_count);
-        // if register_local_count > 0 {
-        //     ctxt.lines.push(Line::Comment(format!("save regs: {:?}", ctxt.regs_used)));
-        //     let regs : Vec<Reg> = ctxt.regs_used.iter().cloned().collect();
-        //     for r in regs {
-        //         ctxt.add_macro(format!("push {}", r));
-        //     }
+        Function { name, args, locals, variables, return_type, body, caller_stack_size, callee_stack_size}
+    }
+
+
+
+    fn emit<'a>(&'a self, program: &'a ProgramContext) -> FunctionContext<'a> {
+        let mut ctxt = FunctionContext {
+            program,
+            function: &self,
+            lines: Vec::new(),
+            additional_offset: 0,
+            block_counter: 0,
+        };
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("# Function: {}", &self.name)));
+        ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &self.name)));
+
+        // let max_register_local_count = 0u32;
+        // let mut register_local_count = 0;
+        // while register_local_count < max_register_local_count {
+        //     register_local_count += 1;
+        //     unimplemented!();
         // }
 
-        if callee_stack_size > 0 {
+        let mut stack_objects: Vec<_> = self.variables.iter().collect();
+        stack_objects.sort_by_key(|k| k.1.storage);
+
+        for (name, var) in stack_objects {
+            match var.storage {
+                Storage::Stack(offset) => {
+                    ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:02x} -> {} {:?} {:?}", offset.0, name, var.decl, var.var_type)));
+                }
+            }
+        }
+
+        if self.callee_stack_size > 0 {
             ctxt.lines.push(AssemblyInputLine::Comment("create stack space".to_owned()));
             ctxt.add_inst(Instruction {
                 opcode: Opcode::LoadImm8,
@@ -1430,7 +1350,7 @@ impl Function {
                 source: format!("filler for allocated stack space"),
                 args: vec![Value::Register(0), Value::Constant8(0xBB)]
             });
-            for _ in 0..callee_stack_size {
+            for _ in 0..self.callee_stack_size {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Push8,
                     resolved: None,
@@ -1443,16 +1363,16 @@ impl Function {
         // let mut count = 0;
         for stmt in self.body.iter() {
             // let scope = format!("_function{}_", count);
-            stmt.emit(&mut ctxt, &self.name);
+            stmt.emit(&mut ctxt);
             // count += 1;
         }
          
         ctxt.lines.push(AssemblyInputLine::Label(format!(":{}__{}", &self.name, EPILOGUE)));
-        if callee_stack_size > 0 {
+        if self.callee_stack_size > 0 {
             ctxt.add_inst(Instruction {
                 opcode: Opcode::AddImm32IgnoreCarry,
                 source: format!("get stack pointing to RA"),
-                args: vec![Value::Register(REG_SP), Value::Constant32(callee_stack_size)],
+                args: vec![Value::Register(REG_SP), Value::Constant32(self.callee_stack_size)],
                 resolved: None,
             });
         }
@@ -1586,8 +1506,12 @@ fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
+struct ProgramContext {
+    functions: BTreeMap<String, Function>,
+}
+
 fn compile(input: &str) -> Vec<AssemblyInputLine> {
-    let mut functions = BTreeMap::new();
+    let mut ctxt = ProgramContext { functions: BTreeMap::new()};
 
     let mut program = ProgramParser::parse(Rule::program, &input).unwrap();
     let pairs = program.next().unwrap().into_inner();
@@ -1595,7 +1519,7 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
         match pair.as_rule() {
             Rule::function => {
                 let f = Function::parse(pair);
-                functions.insert(f.name.clone(), f);
+                ctxt.functions.insert(f.name.clone(), f);
             },
             Rule::EOI => { },
             _ => {
@@ -1604,7 +1528,7 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
         }
     }
 
-    let main = functions.get("main").expect("main not found.");
+    let main = ctxt.functions.get("main").expect("main not found.");
 
     let mut program = Vec::new();
 
@@ -1669,9 +1593,9 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
     }
     program.push(AssemblyInputLine::from_str("halt"));
 
-    for f in &functions {
+    for f in &ctxt.functions {
         program.push(AssemblyInputLine::Comment(format!("{:?}", &f.1)));
-        let f = f.1.emit();
+        let f = f.1.emit(&ctxt);
         for l in f.lines {
             program.push(l);
         }
