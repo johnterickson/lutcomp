@@ -410,7 +410,7 @@ mod tests {
     fn run(flags: Flags, op: Opcode, args: &[(u8, u8)]) -> Computer {
         let mut rom = Vec::new();
         rom.push(op as u8);
-        for (i, arg) in args.iter().enumerate() {
+        for arg in args {
             rom.push(arg.0);
         }
         rom.push(Opcode::Halt as u8);

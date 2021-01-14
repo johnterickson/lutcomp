@@ -4,11 +4,12 @@ COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 lower = { 'a'..'z' }
 alpha = { lower | 'A'..'Z' }
 digit = { '0'..'9' }
+ident_char = {alpha | digit | "_" }
 decimal_number = { digit+ }
 hex_number = { "@" ~ hex_digit+ }
 number = { decimal_number | hex_number | char_literal }
 hex_digit = { digit | 'a'..'f' | 'A'..'F' }
-ident = { lower ~ (alpha | digit)* }
+ident = { lower ~ ident_char* }
 ttyin = { "ttyin" }
 char_literal_value = { ANY }
 char_literal = { "'" ~ char_literal_value ~ "'" }
@@ -19,6 +20,7 @@ subtract = { "-" }
 multiply = { "*" }
 or = { "|" }
 and = { "&" }
+deref_operator = { "*" }
 
 comparison = _{ equals | notequals | greater_than | greater_than_or_equal | less_than | less_than_or_equal}
 equals = { "==" }
@@ -30,23 +32,24 @@ less_than_or_equal = { "@lte" }
 
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
-expression = { ttyin | ident | number | arithmetic_expression | comparison_expression}
+deref_expression = { deref_operator ~ expression }
+expression = { ttyin | ident | number | arithmetic_expression | comparison_expression | deref_expression }
 
-variable_type = {"U8" | "UPTR" }
+pointer_type = { "&<" ~ variable_type ~ ">" }
+number_type = {"U8" | "UPTR"}
+variable_type = {number_type | pointer_type }
 variable_decl = {ident ~ ":" ~ variable_type}
 
 else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
 if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
 while_loop = { "WHILE" ~ expression ~ "{" ~ statement* ~ "}" }
-assign = { "ASSIGN" ~ variable_decl ~ ":=" ~ expression ~ ";" }
-load = { "LOAD" ~ ident ~ "<-" ~ "*" ~ expression ~ ";"}
-store = { "STORE" ~ ident ~ "->" ~ "*" ~ expression ~ ";"}
+assign = { "ASSIGN" ~ deref_operator? ~ variable_decl ~ ":=" ~ expression ~ ";" }
 ttyout = { "TTYOUT" ~ expression ~ ";" }
 return_statement = { "RETURN" ~ expression ~ ";" }
 
 call = { "CALL" ~ variable_decl ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-statement = { assign | if_else_statement | ttyout | return_statement | call | while_loop | load | store}
+statement = { assign | if_else_statement | ttyout | return_statement | call | while_loop}
 body = { (statement)+ }
 paramters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}

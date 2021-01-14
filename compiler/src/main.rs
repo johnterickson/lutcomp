@@ -15,10 +15,6 @@ use assemble::*;
 use common::*;
 use sim::*;
 
-fn amount_for_round_up(a: u32, b: u32) -> u32 {
-    (b - (a % b)) % b
-}
-
 #[derive(Parser)]
 #[grammar = "j.pest"]
 struct ProgramParser;
@@ -104,9 +100,29 @@ impl ByteSize for NumberType {
 }
 
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum Type {
     Number(NumberType),
+    Ptr(Box<Type>),
+}
+
+impl Type {
+    fn parse(pair: pest::iterators::Pair<Rule>) -> Type {
+        assert_eq!(pair.as_rule(), Rule::variable_type);
+        let mut tokens = pair.into_inner();
+        let variable = tokens.next().unwrap();
+        assert!(tokens.next().is_none());
+        match variable.as_rule() {
+            Rule::pointer_type => {
+                let mut tokens = variable.into_inner();
+                Type::Ptr(Box::new(Type::parse(tokens.next().unwrap())))
+            }
+            Rule::number_type => {
+                Type::Number(NumberType::parse(variable.as_str().trim()))
+            }
+            r => panic!(format!("unexpected {:?}", r))
+        }
+    }
 }
 
 trait ByteSize {
@@ -116,7 +132,8 @@ trait ByteSize {
 impl ByteSize for Type {
     fn byte_count(&self) -> u32 {
         match self {
-            Type::Number(nt) => nt.byte_count()
+            Type::Number(nt) => nt.byte_count(),
+            Type::Ptr(_) => 4,
         }
     }
 }
@@ -125,7 +142,7 @@ struct BaseOffset(u32);
 
 #[derive(Clone, Copy, Debug)]
 enum Storage {
-    Register(u8),
+    // Register(u8),
     Stack(BaseOffset),
 }
 
@@ -179,6 +196,7 @@ enum Expression {
     TtyIn(),
     Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
     Comparison(ComparisonOperator, Box<Expression>, Box<Expression>),
+    Deref(Box<Expression>),
 }
 
 impl Expression {
@@ -186,6 +204,13 @@ impl Expression {
         assert_eq!(Rule::expression, pair.as_rule());
         let pair = pair.into_inner().next().unwrap();
         match pair.as_rule() {
+            Rule::deref_expression => {
+                let mut pairs = pair.into_inner();
+                assert_eq!(pairs.next().unwrap().as_rule(), Rule::deref_operator);
+                let inner = Expression::parse(pairs.next().unwrap());
+                assert!(pairs.next().is_none());
+                Expression::Deref(Box::new(inner))
+            }
             Rule::number => {
                 let mut number = pair.into_inner();
                 let number = number.next().unwrap();
@@ -347,6 +372,42 @@ impl Expression {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
 
         let result = match self {
+            Expression::Deref(inner) => {
+                let ptr_type = inner.emit(ctxt); 
+                let inner_type = match ptr_type {
+                    Type::Ptr(inner) => inner.as_ref().clone(),
+                    other => panic!("Expected a pointer but found {:?}", other),
+                };
+
+                for r in 4..8 {
+                    ctxt.add_inst(Instruction {
+                        source: format!("popping address off stack {:?}", &self),
+                        opcode: Opcode::Pop8,
+                        args: vec![Value::Register(r)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset -= 1;
+                }
+
+                ctxt.add_inst(Instruction {
+                    source: format!("fetching deref {:?}", &self),
+                    opcode: Opcode::Load32,
+                    args: vec![Value::Register(4), Value::Register(0)],
+                    resolved: None,
+                });
+
+                for r in (0..inner_type.byte_count()).rev() {
+                    ctxt.add_inst(Instruction {
+                        source: format!("pushing deref result {:?}", &self),
+                        opcode: Opcode::Push8,
+                        args: vec![Value::Register(r.try_into().unwrap())],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset += 1;
+                }
+
+                inner_type
+            }
             Expression::Number(t, n) => {
                 match t {
                     NumberType::U8 => {
@@ -406,12 +467,12 @@ impl Expression {
             }
             Expression::Ident(n) => {
                 let local = ctxt.find_local(n);
-                let local_type = local.var_type;
+                let local_type = local.var_type.clone();
                 match local.storage {
-                    Storage::Register(_r) => {
-                        // ctxt.add_inst(Instruction::LoadReg(r));
-                        unimplemented!();
-                    },
+                    // Storage::Register(_r) => {
+                    //     // ctxt.add_inst(Instruction::LoadReg(r));
+                    //     unimplemented!();
+                    // },
                     Storage::Stack(base_offset) => {
                         let offset = ctxt.get_stack_offset(base_offset);
                         ctxt.add_inst(Instruction {
@@ -475,20 +536,19 @@ impl Expression {
                 let left_type = left.emit(ctxt);
                 let left_type = match left_type {
                     Type::Number(nt) => nt,
-                    _ => panic!()
+                    Type::Ptr(_) => NumberType::UPTR,
                 };
 
                 let right_type = right.emit(ctxt);
                 let right_type = match right_type {
                     Type::Number(nt) => nt,
-                    _ => panic!()
+                    Type::Ptr(_) => NumberType::UPTR,
                 };
 
                 let result_type = match (left_type, right_type) {
                     (NumberType::U8, NumberType::U8) => NumberType::U8,
                     (NumberType::UPTR, _) => NumberType::UPTR,
                     (_, NumberType::UPTR) => NumberType::UPTR,
-                    _ => panic!(),
                 };
 
                 let right_reg: u8 = 8;
@@ -639,13 +699,11 @@ const EPILOGUE : &'static str = "EPILOGUE";
 
 #[derive(Debug)]
 enum Statement {
-    Assign {local: String, var_type: NumberType, value: Expression},
-    Call { local: String, var_type: NumberType, function: String, parameters: Vec<Expression> },
+    Assign {local: String, var_type: Type, value: Expression},
+    Call { local: String, var_type: Type, function: String, parameters: Vec<Expression> },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
-    Load {local: String, address: Expression },
-    Store {local: String, address: Expression },
     TtyOut {value: Expression},
 }
 
@@ -659,7 +717,7 @@ impl Statement {
                 let mut pairs = pair.into_inner();
                 let mut decl = pairs.next().unwrap().into_inner();
                 let var_name = decl.next().unwrap().as_str().trim().to_owned();
-                let var_type = NumberType::parse(decl.next().unwrap().as_str().trim());
+                let var_type = Type::parse(decl.next().unwrap());
 
                 let value = Expression::parse(pairs.next().unwrap());
                 Statement::Assign { 
@@ -672,7 +730,7 @@ impl Statement {
                 let mut pairs = pair.into_inner();
                 let mut decl = pairs.next().unwrap().into_inner();
                 let var_name = decl.next().unwrap().as_str().trim().to_owned();
-                let var_type = NumberType::parse(decl.next().unwrap().as_str().trim());
+                let var_type = Type::parse(decl.next().unwrap());
 
                 let function = pairs.next().unwrap().as_str().to_owned();
 
@@ -705,18 +763,6 @@ impl Statement {
                 let expr = pair.into_inner().next().unwrap();
                 Statement::Return { value: Expression::parse(expr) }
             },
-            Rule::load => {
-                let mut pairs = pair.into_inner();
-                let local = pairs.next().unwrap().as_str().trim().to_owned();
-                let address = Expression::parse(pairs.next().unwrap());
-                Statement::Load { local, address }
-            },
-            Rule::store => {
-                let mut pairs = pair.into_inner();
-                let local = pairs.next().unwrap().as_str().trim().to_owned();
-                let address = Expression::parse(pairs.next().unwrap());
-                Statement::Store { local, address }
-            },
             Rule::ttyout => {
                 let mut pairs = pair.into_inner();
                 let value = Expression::parse(pairs.next().unwrap());
@@ -738,8 +784,8 @@ impl Statement {
     fn emit(&self, ctxt: &mut FunctionContext, function_name: &str) -> () {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Begin statement {:?}", self)));
         match self {
-            Statement::Load{local, address} => {
-                unimplemented!();
+            // Statement::Load{local, address} => {
+            //     unimplemented!();
                 // address.emit(ctxt);
 
                 // ctxt.add_inst(Instruction {
@@ -785,9 +831,9 @@ impl Statement {
                 //         ctxt.add_inst(Instruction::StoreToStack(StackOffset::new(offset as u8)));
                 //     }
                 // }
-            },
-            Statement::Store{local, address} => {
-                unimplemented!();
+            // },
+            // Statement::Store{local, address} => {
+            //     unimplemented!();
                 // address.emit(ctxt);
                 // ctxt.add_inst(Instruction::StoreAddr);
 
@@ -802,7 +848,7 @@ impl Statement {
                 //     }
                 // }
                 // ctxt.add_inst(Instruction::StoreMem);
-            },
+            // },
             Statement::TtyOut{value} => {
                 value.emit(ctxt);
                 ctxt.add_inst(Instruction {
@@ -822,7 +868,7 @@ impl Statement {
             },
             Statement::Assign{local, var_type, value} => {
                 let eval_type = value.emit(ctxt);
-                assert_eq!(eval_type, Type::Number(*var_type));
+                assert_eq!(var_type, &eval_type);
 
                 for r in 0..var_type.byte_count() {
                     ctxt.add_inst(Instruction {
@@ -836,9 +882,9 @@ impl Statement {
 
                 let local = ctxt.find_local(local);
                 match local.storage {
-                    Storage::Register(_r) => {
-                        unimplemented!();
-                    }
+                    // Storage::Register(_r) => {
+                    //     unimplemented!();
+                    // }
                     Storage::Stack(offset) => {
                         let offset = ctxt.get_stack_offset(offset);
                         ctxt.add_inst(Instruction {
@@ -871,7 +917,7 @@ impl Statement {
             Statement::Return{ value } => {
                 let expression_type = value.emit(ctxt);
                 let byte_count = expression_type.byte_count();
-                for i in (0..4) {
+                for i in 0..4 {
                     let r = i.try_into().unwrap();
                     if i < byte_count {
                         ctxt.add_inst(Instruction {
@@ -892,12 +938,12 @@ impl Statement {
                 }
 
                 let return_var = ctxt.find_local(RESULT);
-                let return_type = return_var.var_type;
+                let return_type = return_var.var_type.clone();
 
                 assert_eq!(return_type, expression_type);
 
                 let result_offset = match return_var.storage {
-                    Storage::Register(_) => unimplemented!(),
+                    // Storage::Register(_) => unimplemented!(),
                     Storage::Stack(offset) => offset,
                 };
                 let result_offset = ctxt.get_stack_offset(result_offset);
@@ -945,7 +991,7 @@ impl Statement {
             Statement::Call{ local, var_type, function, parameters} => { 
 
                 match var_type {
-                    NumberType::U8 => {},
+                    Type::Number(NumberType::U8) => {},
                     _ => unimplemented!(),
                 }
 
@@ -1065,9 +1111,9 @@ impl Statement {
 
                 let local = ctxt.find_local(local);
                 match local.storage {
-                    Storage::Register(_r) => {
-                        unimplemented!();
-                    },
+                    // Storage::Register(_r) => {
+                    //     unimplemented!();
+                    // },
                     Storage::Stack(offset) => {
                         let offset = ctxt.get_stack_offset(offset);
                         ctxt.add_inst(Instruction {
@@ -1168,9 +1214,9 @@ impl Statement {
 #[derive(Debug)]
 struct Function {
     name: String,
-    args: BTreeMap<String,NumberType>,
-    locals: BTreeMap<String,NumberType>,
-    return_type: NumberType,
+    args: BTreeMap<String,Type>,
+    locals: BTreeMap<String,Type>,
+    return_type: Type,
     body: Vec<Statement>,
 }
 
@@ -1187,7 +1233,7 @@ impl Function {
         for arg in pairs.next().unwrap().into_inner() {
             let mut arg_tokens = arg.into_inner();
             let arg_name = arg_tokens.next().unwrap().as_str().to_owned();
-            let arg_var_type = NumberType::parse(arg_tokens.next().unwrap().as_str());
+            let arg_var_type = Type::parse(arg_tokens.next().unwrap());
             args.insert(arg_name, arg_var_type);
         }
 
@@ -1197,7 +1243,7 @@ impl Function {
         let body = if Rule::function_return_type == return_or_body.as_rule() {
             let mut return_type_tokens = return_or_body.into_inner();
             assert!(return_type.is_none());
-            return_type = Some(NumberType::parse(return_type_tokens.next().unwrap().as_str()));
+            return_type = Some(Type::parse(return_type_tokens.next().unwrap()));
             pairs.next().unwrap()
         } else {
             return_or_body
@@ -1206,18 +1252,18 @@ impl Function {
         let body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
 
 
-        let return_type = return_type.unwrap_or(NumberType::U8);
+        let return_type = return_type.unwrap_or(Type::Number(NumberType::U8));
 
         // find locals
         let mut locals = BTreeMap::new();
 
         // find declared
-        fn find_decls(s: &Statement, args: &BTreeMap<String,NumberType>, locals: &mut BTreeMap<String,NumberType>) {
+        fn find_decls(s: &Statement, args: &BTreeMap<String,Type>, locals: &mut BTreeMap<String,Type>) {
             match s {
                 Statement::Assign{local, var_type, value:_} |
                 Statement::Call{ local, var_type, function:_, parameters:_ }  => {
                     if !args.contains_key(local) {
-                        if let Some(existing) = locals.insert(local.clone(), *var_type) {
+                        if let Some(existing) = locals.insert(local.clone(), var_type.clone()) {
                             if existing != *var_type {
                                 panic!(format!("Variable '{}' is declared with different types: {:?} and {:?}", local, existing, var_type));
                             }
@@ -1235,9 +1281,7 @@ impl Function {
                     }
                 },
                 Statement::Return{ value:_ } | 
-                Statement::TtyOut{ value:_ } |
-                Statement::Load{local:_, address:_} |
-                Statement::Store{local:_, address:_}
+                Statement::TtyOut{ value:_ } 
                 => {}
             }
         }
@@ -1301,12 +1345,12 @@ impl Function {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# Function: {}", &self.name)));
         ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &self.name)));
 
-        let max_register_local_count = 0u32;
-        let mut register_local_count = 0;
-        while register_local_count < max_register_local_count {
-            register_local_count += 1;
-            unimplemented!();
-        }
+        // let max_register_local_count = 0u32;
+        // let mut register_local_count = 0;
+        // while register_local_count < max_register_local_count {
+        //     register_local_count += 1;
+        //     unimplemented!();
+        // }
 
         let mut caller_stack_size: u32 = 0;
         caller_stack_size += 4;// RESULT
@@ -1322,7 +1366,7 @@ impl Function {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {}", offset, RESULT)));
         ctxt.variables.insert(RESULT.to_owned(), Variable {
             decl: Declaration::Return,
-            var_type: Type::Number(self.return_type),
+            var_type: self.return_type.clone(),
             storage: Storage::Stack(BaseOffset(offset.try_into().unwrap()))
         });
 
@@ -1330,7 +1374,7 @@ impl Function {
             offset -= 4;
             ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:x} -> {:?}", offset, arg)));
             ctxt.variables.insert(arg.0.clone(), Variable {
-                var_type: Type::Number(*arg.1),
+                var_type: arg.1.clone(),
                 decl: Declaration::Arg,
                 storage: Storage::Stack(BaseOffset(offset as u32))
             });
@@ -1347,11 +1391,11 @@ impl Function {
 
         for (count, l) in self.locals.iter().enumerate() {
             let storage = match count {
-                count if (count as u32) < register_local_count => {
-                    unimplemented!();
-                    // let reg = if count == 0 { Reg::D } else { Reg::E };
-                    // LocalStorage::Register(reg)
-                },
+                // count if (count as u32) < register_local_count => {
+                //     unimplemented!();
+                //     // let reg = if count == 0 { Reg::D } else { Reg::E };
+                //     // LocalStorage::Register(reg)
+                // },
                 _ => {
                     offset -= 4;
                     Storage::Stack(BaseOffset(offset.try_into().unwrap()))
@@ -1361,7 +1405,7 @@ impl Function {
             ctxt.lines.push(AssemblyInputLine::Comment(format!("# {:?} -> {:?}", storage, l)));
             ctxt.variables.insert(l.0.clone(), Variable {
                 decl: Declaration::Local,
-                var_type: Type::Number(*l.1),
+                var_type: l.1.clone(),
                 storage
             });
         }
@@ -1528,7 +1572,7 @@ fn main() -> Result<(), std::io::Error> {
     let mut running: bool = true;
     while running {
         running = c.step();
-        let pc = u32::from_le_bytes(c.pc);
+        // let pc = u32::from_le_bytes(c.pc);
 
         if last_ir0 != Some(c.ir0) {
             print_state(&mut c);
@@ -1645,26 +1689,64 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
 mod tests {
     use super::*;
 
+    
+    struct TestComputer<'a>(pub Computer<'a>);
+
+    impl<'a> TestComputer<'a> {
+        fn from_program(program: &str) -> TestComputer {
+            let assembly = compile(program);
+            let rom = assemble(assembly);
+            TestComputer(Computer::with_print(rom.clone(), false))
+        }
+
+        fn from_rom(rom: &[u8]) -> TestComputer {
+            TestComputer(Computer::with_print(rom.to_vec(), false))
+        }
+
+        fn run(&mut self, in1: u32, in2: u32, out: u32) {
+            *self.0.mem_word_mut(0x80004) = in1.to_le_bytes();
+            *self.0.mem_word_mut(0x80000) = in2.to_le_bytes();
+
+            let mut last_pc = None;
+            let mut step_count = 0;
+            while self.0.step() {
+                if last_pc != Some(self.0.pc) {
+                    print_state(&mut self.0);
+                }
+                last_pc = Some(self.0.pc);
+                step_count += 1;
+                assert!(step_count < 100000000);
+            }
+            assert_eq!(out, u32::from_le_bytes(*self.0.mem_word_mut(0x80000)));
+        }
+    }
+
     fn test_inputs(program: &str, pairs: &[(u32,u32,u32)]) {
         let assembly = compile(program);
         let rom = assemble(assembly);
         for (input1, input2, expected) in pairs {
+            let mut c = TestComputer::from_rom(&rom);
             dbg!((input1, input2, expected));
-            let mut c = Computer::with_print(rom.clone(), false);
-            *c.mem_word_mut(0x80004) = input1.to_le_bytes();
-            *c.mem_word_mut(0x80000) = input2.to_le_bytes();
+            c.run(*input1, *input2, *expected);
+        }
+    }
 
-            let mut last_pc = None;
-            let mut step_count = 0;
-            while c.step() {
-                if last_pc != Some(c.pc) {
-                    print_state(&mut c);
-                }
-                last_pc = Some(c.pc);
-                step_count += 1;
-                assert!(step_count < 100000000);
+    fn test_ptr_inputs(program: &str, pairs: &[(&[u8],&[u8],u32)]) {
+        let assembly = compile(program);
+        let rom = assemble(assembly);
+        let addr1 = 0x8100;
+        let addr2 = 0x8200;
+
+        for (input1, input2, expected) in pairs {
+            let mut c = TestComputer::from_rom(&rom);
+            dbg!((input1, input2, expected));
+            for (i,b) in input1.iter().enumerate() {
+                *c.0.mem_byte_mut(addr1 + i as u32) = *b;
             }
-            assert_eq!(*expected, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+            for (i,b) in input2.iter().enumerate() {
+                *c.0.mem_byte_mut(addr2 + i as u32) = *b;
+            }
+            c.run(addr1, addr2, *expected);
         }
     }
 
@@ -1747,8 +1829,6 @@ mod tests {
             &[(6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
     }
 
-   
-
     #[test]
     fn plusone() {
         test_inputs(
@@ -1799,7 +1879,22 @@ mod tests {
                 (0x1,0x1,0x2),
                 (0x1,0xFF,0x100),
                 (0xAABBCCDD, 0x0, 0xAABBCCDD),
-                (0xAABBCCDD, 0x11111111, 0xBBCCDDEE)
+                (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
+                (0xFFFFFFFF, 0x1, 0x0),
                 ]);
+    }
+
+    #[test]
+    fn ptr() {
+        test_ptr_inputs(
+            include_str!("../../programs/ptr.j"),
+            &[
+                (&0u32.to_le_bytes(), &0u32.to_le_bytes(), 0u32),
+                (&0u32.to_le_bytes(), &1u32.to_le_bytes(), 1u32),
+                (&1u32.to_le_bytes(), &2u32.to_le_bytes(), 3u32),
+                (&0xAABBCCDDu32.to_le_bytes(), &0x11111111u32.to_le_bytes(), 0xBBCCDDEEu32),
+                (&0xFFFFFFFFu32.to_le_bytes(), &0x1u32.to_le_bytes(), 0x0u32),
+            ]
+        );
     }
 }
