@@ -1,5 +1,5 @@
-FUNCTION main() {
-    CALL res:U8 := fac(5);
+FUNCTION main(x:U8) {
+    CALL res:U8 := fac(x);
     RETURN res;
 }
 
