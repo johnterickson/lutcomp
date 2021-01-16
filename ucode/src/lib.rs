@@ -193,7 +193,7 @@ impl MicroOp {
     }
 
     fn emit(&self) -> (u8, u8) {
-        let bytes = self.pack();
+        let bytes = self.pack().unwrap();
         (bytes[0], bytes[1])
     }
 
@@ -213,7 +213,7 @@ pub struct MicroEntry {
 
 impl MicroEntry {
     pub fn pack_lsb(&self) -> [u8; 2] {
-        let bytes = self.pack();
+        let bytes = self.pack().unwrap();
         [bytes[1], bytes[0]]
     }
 

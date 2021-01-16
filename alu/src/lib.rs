@@ -26,7 +26,7 @@ pub struct LutEntry {
 
 impl LutEntry {
     pub fn pack_lsb(&self) -> [u8; 3] {
-        let bytes = self.pack();
+        let bytes = self.pack().unwrap();
         [bytes[2], bytes[1], bytes[0]]
     }
 
@@ -188,7 +188,7 @@ mod tests {
                 op: SpecialOpcode::MicroHelper,
                 mode_args: (op as u8).into(),
             })
-            .pack()[0],
+            .pack().unwrap()[0],
             op: AluOpcode::Special,
         };
 

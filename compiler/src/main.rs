@@ -1617,13 +1617,7 @@ mod tests {
     struct TestComputer<'a>(pub Computer<'a>);
 
     impl<'a> TestComputer<'a> {
-        fn from_program(program: &str) -> TestComputer {
-            let assembly = compile(program);
-            let rom = assemble(assembly);
-            TestComputer(Computer::with_print(rom.clone(), false))
-        }
-
-        fn from_rom(rom: &[u8]) -> TestComputer {
+        fn from_rom(rom: &[u8]) -> TestComputer<'a> {
             TestComputer(Computer::with_print(rom.to_vec(), false))
         }
 
