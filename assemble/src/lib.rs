@@ -283,7 +283,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
     let mut pc = 0u32;
     for line in input.drain(..) {
         let source = format!("{:?}", line);
-        lines.push(AssemblyOutputLine::Comment(source.to_owned()));
+        //lines.push(AssemblyOutputLine::Comment(source.to_owned()));
 
         match line {
             AssemblyInputLine::Instruction(inst) => {
@@ -291,7 +291,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
                 lines.push(AssemblyOutputLine::Instruction(inst));
             }
             AssemblyInputLine::Comment(comment) => {
-                lines.push(AssemblyOutputLine::Comment(comment.to_owned()));
+                lines.push(AssemblyOutputLine::Comment(comment));
             }
             AssemblyInputLine::Label(label) => {
                 labels.insert(label.to_owned(), pc);
@@ -355,13 +355,12 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
     let mut rom = Vec::new();
     let mut pc = 0u32;
     for line in lines.as_mut_slice() {
-        println!("# {:05x} {:?}", pc, &line);
-
         match line {
-            AssemblyOutputLine::Comment(_comment) => {
-                // println!("# {}", &comment);
+            AssemblyOutputLine::Comment(comment) => {
+                println!("# {}", &comment);
             }
             AssemblyOutputLine::Instruction(i) => {
+                println!("# {:05x} {:?}", pc, i);
                 i.resolve(&labels, pc);
 
                 for byte in i.resolved.as_ref().unwrap() {

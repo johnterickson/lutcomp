@@ -1,10 +1,10 @@
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
-lower = { 'a'..'z' }
-alpha = { lower | 'A'..'Z' }
+lower = _{ 'a'..'z' }
+alpha = _{ lower | 'A'..'Z' }
 digit = { '0'..'9' }
-ident_char = {alpha | digit | "_" }
+ident_char = _{alpha | digit | "_" }
 decimal_number = { digit+ }
 hex_number = { "@" ~ hex_digit+ }
 number = { decimal_number | hex_number | char_literal }
@@ -21,6 +21,7 @@ multiply = { "*" }
 or = { "|" }
 and = { "&" }
 deref_operator = { "*" }
+address_of_operator = {"&"}
 
 comparison = _{ equals | notequals | greater_than | greater_than_or_equal | less_than | less_than_or_equal}
 equals = { "==" }
@@ -33,30 +34,42 @@ less_than_or_equal = { "@lte" }
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
 deref_expression = { deref_operator ~ expression }
-expression = { ttyin | ident | number | arithmetic_expression | comparison_expression | deref_expression }
+local_field_expression = {ident ~ "." ~ ident}
+ptr_field_expression = {ident ~ "->" ~ ident}
+address_of_expression = {address_of_operator ~ expression}
+expression = { local_field_expression | ptr_field_expression | ttyin | ident | number | arithmetic_expression | comparison_expression | deref_expression | address_of_expression}
 
 pointer_type = { "&<" ~ variable_type ~ ">" }
 number_type = {"U8" | "UPTR"}
-variable_type = {number_type | pointer_type }
+variable_type = {number_type | pointer_type | ident}
 variable_decl = {ident ~ ":" ~ variable_type}
 
 else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
 if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
+declare_statement = {"DECLARE" ~ variable_decl ~ ";"}
 while_loop = { "WHILE" ~ expression ~ "{" ~ statement* ~ "}" }
-assign = { "ASSIGN" ~ deref_operator? ~ variable_decl ~ ":=" ~ expression ~ ";" }
+assign_declare = { variable_decl | ident }
+assign_deref = { deref_operator ~ ident }
+assign_target = { local_field_expression | ptr_field_expression | assign_deref | assign_declare }
+assign = { "ASSIGN" ~ assign_target ~ ":=" ~ expression ~ ";" }
 ttyout = { "TTYOUT" ~ expression ~ ";" }
 return_statement = { "RETURN" ~ expression ~ ";" }
 
 call = { "CALL" ~ variable_decl ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-statement = { assign | if_else_statement | ttyout | return_statement | call | while_loop}
+statement = { assign | if_else_statement | ttyout | return_statement | call | while_loop | declare_statement}
 body = { (statement)+ }
 paramters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}
 function = {"FUNCTION " ~ ident ~ "(" ~ paramters ~ ")" ~ function_return_type? ~ "{" ~ body ~ "}"}
 
+field = { variable_decl }
+fields = { (field ~ ";")+ }
+struct_decl = {"STRUCT " ~ ident ~ "{" ~ fields ~ "}"}
+
 program = {
     SOI ~
+    struct_decl * ~
     function+ ~
     EOI
 }

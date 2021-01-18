@@ -91,7 +91,7 @@ impl NumberType {
 }
 
 impl ByteSize for NumberType {
-    fn byte_count(&self) -> u32 {
+    fn byte_count(&self, ctxt: &ProgramContext) -> u32 {
         match self {
             NumberType::U8 => 1,
             NumberType::UPTR => 4,
@@ -100,14 +100,37 @@ impl ByteSize for NumberType {
 }
 
 
+#[derive(Debug)]
+struct StructDefinition {
+    fields: Vec<(String,Type)>
+}
+
+impl StructDefinition {
+    fn get_field(&self, field_name: &str) -> (u32, &Type) {
+        let (index, field) = self.fields
+            .iter().enumerate()
+            .filter(|f| &f.1.0 == field_name)
+            .next()
+            .expect(&format!("could not find field {} in struct {:?}", field_name, &self));
+        (4 * index as u32, &field.1)
+    }
+}
+
+impl ByteSize for StructDefinition {
+    fn byte_count(&self, ctxt: &ProgramContext) -> u32 {
+        self.fields.iter().map(|f| f.1.byte_count(ctxt)).sum()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Type {
     Number(NumberType),
     Ptr(Box<Type>),
+    Struct(String),
 }
 
 impl Type {
-    fn parse(pair: pest::iterators::Pair<Rule>) -> Type {
+    fn parse(pair: pest::iterators::Pair<Rule>, is_decl: bool) -> Type {
         assert_eq!(pair.as_rule(), Rule::variable_type);
         let mut tokens = pair.into_inner();
         let variable = tokens.next().unwrap();
@@ -115,10 +138,13 @@ impl Type {
         match variable.as_rule() {
             Rule::pointer_type => {
                 let mut tokens = variable.into_inner();
-                Type::Ptr(Box::new(Type::parse(tokens.next().unwrap())))
+                Type::Ptr(Box::new(Type::parse(tokens.next().unwrap(), is_decl)))
             }
             Rule::number_type => {
                 Type::Number(NumberType::parse(variable.as_str().trim()))
+            },
+            Rule::ident => {
+                Type::Struct(variable.as_str().to_owned())
             }
             r => panic!(format!("unexpected {:?}", r))
         }
@@ -126,14 +152,15 @@ impl Type {
 }
 
 trait ByteSize {
-    fn byte_count(&self) -> u32;
+    fn byte_count(&self, ctxt: &ProgramContext) -> u32;
 }
 
 impl ByteSize for Type {
-    fn byte_count(&self) -> u32 {
+    fn byte_count(&self, ctxt: &ProgramContext ) -> u32 {
         match self {
-            Type::Number(nt) => nt.byte_count(),
+            Type::Number(nt) => nt.byte_count(ctxt),
             Type::Ptr(_) => 4,
+            Type::Struct(struct_name) => ctxt.types[struct_name].byte_count(ctxt),
         }
     }
 }
@@ -181,7 +208,7 @@ impl<'a> FunctionContext<'a> {
     fn find_local(&self, local: &str) -> &Variable {
         self.function.variables
             .get(local)
-            .expect(&format!("could not find {}", local))
+            .expect(&format!("could not find '{}'", local))
     }
 
     fn get_stack_offset(&self, offset: BaseOffset) -> u32 {
@@ -197,19 +224,42 @@ enum Expression {
     Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
     Comparison(ComparisonOperator, Box<Expression>, Box<Expression>),
     Deref(Box<Expression>),
+    LocalFieldDeref(String,String),
+    PtrFieldDeref(String,String),
+    AddressOf(Box<Expression>),
 }
 
 impl Expression {
     fn parse(pair: pest::iterators::Pair<Rule>) -> Expression {
         assert_eq!(Rule::expression, pair.as_rule());
         let pair = pair.into_inner().next().unwrap();
-        match pair.as_rule() {
-            Rule::deref_expression => {
+        let rule = pair.as_rule();
+        match rule {
+            Rule::local_field_expression | Rule::ptr_field_expression => {
                 let mut pairs = pair.into_inner();
-                assert_eq!(pairs.next().unwrap().as_rule(), Rule::deref_operator);
+                let local_name = pairs.next().unwrap().as_str().trim().to_owned();
+                let field_name = pairs.next().unwrap().as_str().trim().to_owned();
+                if rule == Rule::local_field_expression {
+                    Expression::LocalFieldDeref(local_name, field_name)
+                } else {
+                    Expression::PtrFieldDeref(local_name, field_name)
+                }
+            }
+            Rule::deref_expression | Rule::address_of_expression => {
+                let mut pairs = pair.into_inner();
+                let expected_op = if rule == Rule::deref_expression {
+                    Rule::deref_operator
+                } else {
+                    Rule::address_of_operator
+                };
+                assert_eq!(pairs.next().unwrap().as_rule(), expected_op);
                 let inner = Expression::parse(pairs.next().unwrap());
                 assert!(pairs.next().is_none());
-                Expression::Deref(Box::new(inner))
+                if rule == Rule::deref_expression {
+                    Expression::Deref(Box::new(inner))
+                } else {
+                    Expression::AddressOf(Box::new(inner))
+                }
             }
             Rule::number => {
                 let mut number = pair.into_inner();
@@ -243,12 +293,7 @@ impl Expression {
                 // Expression::Number(n)
             },
             Rule::ident => {
-                let mut label = String::new();
-                let mut chars = pair.into_inner();
-                while let Some(c) = chars.next() {
-                    label += c.as_str();
-                }
-                Expression::Ident(label)
+                Expression::Ident(pair.as_str().trim().to_owned())
             },
             Rule::comparison_expression => {
                 let mut pairs = pair.into_inner();
@@ -368,11 +413,94 @@ impl Expression {
         
     }
 
+    fn emit_ref(&self, ctxt: &mut FunctionContext, reference: &LogicalReference, local_name: &str) -> Type {
+        let ptr_type = reference.emit_local_address_to_reg0(ctxt, local_name);
+        match ptr_type {
+            Type::Ptr(inner) => {
+                let size = inner.byte_count(ctxt.program);
+                match size {
+                    1 => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("loading final value from memory {:?}", &self),
+                            opcode: Opcode::Load8,
+                            args: vec![Value::Register(0), Value::Register(4)],
+                            resolved: None,
+                        });
+                        ctxt.add_inst(Instruction {
+                            source: format!("storing loaded value {:?}", &self),
+                            opcode: Opcode::Push8,
+                            args: vec![Value::Register(4)],
+                            resolved: None,
+                        });
+                        ctxt.additional_offset += 1;
+                    }
+                    4 => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("loading final value from memory {:?}", &self),
+                            opcode: Opcode::Load32,
+                            args: vec![Value::Register(0), Value::Register(4)],
+                            resolved: None,
+                        });
+
+                        for r in (0..4).rev() {
+                            ctxt.add_inst(Instruction {
+                                source: format!("storing loaded value {:?}", &self),
+                                opcode: Opcode::Push8,
+                                args: vec![Value::Register(4 + r)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset += 1;
+                        }
+                    }
+                    _ => panic!("don't know how to handle size {}", size)
+                }
+                *inner
+            }
+            _ => panic!("Expected a pointer but found {:?}", ptr_type)
+        }
+    }
+
+    fn emit_address(&self, ctxt: &mut FunctionContext) -> Type {
+        match self {
+            Expression::Ident(local_name) => {
+                let t = LogicalReference::Local.emit_local_address_to_reg0(ctxt, local_name);
+                for r in (0..4).rev() {
+                    ctxt.add_inst(Instruction {
+                        source: format!("storing address to stack {:?}", &self),
+                        opcode: Opcode::Push8,
+                        args: vec![Value::Register(r)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset += 1;
+                }
+                t
+            }
+            _ => {
+                panic!(format!("Don't know how to emit address of {:?}", self));
+            }
+        }
+    }
+
     fn emit(&self, ctxt: &mut FunctionContext) -> Type {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
-
         let result = match self {
+            Expression::AddressOf(inner) => {
+                inner.emit_address(ctxt)
+            }
+            Expression::Ident(local_name) => {
+                self.emit_ref(ctxt, &LogicalReference::Local, local_name)
+            },
+            Expression::LocalFieldDeref(local_name, field_name) => {
+                let reference = LogicalReference::LocalField(field_name.to_owned());
+                self.emit_ref(ctxt, &reference, local_name)
+            }
+            Expression::PtrFieldDeref(local_name, field_name) => {
+                let reference = LogicalReference::DerefField(field_name.to_owned());
+                self.emit_ref(ctxt, &reference, local_name)
+            }
             Expression::Deref(inner) => {
+                // self.emit_ref(ctxt, &Reference::Deref, local_name)
+
                 let ptr_type = inner.emit(ctxt); 
                 let inner_type = match ptr_type {
                     Type::Ptr(inner) => inner.as_ref().clone(),
@@ -396,7 +524,7 @@ impl Expression {
                     resolved: None,
                 });
 
-                for r in (0..inner_type.byte_count()).rev() {
+                for r in (0..inner_type.byte_count(ctxt.program)).rev() {
                     ctxt.add_inst(Instruction {
                         source: format!("pushing deref result {:?}", &self),
                         opcode: Opcode::Push8,
@@ -465,70 +593,6 @@ impl Expression {
                 ctxt.additional_offset += 1;
                 Type::Number(NumberType::U8)
             }
-            Expression::Ident(n) => {
-                let local = ctxt.find_local(n);
-                let local_type = local.var_type.clone();
-                match local.storage {
-                    // Storage::Register(_r) => {
-                    //     // ctxt.add_inst(Instruction::LoadReg(r));
-                    //     unimplemented!();
-                    // },
-                    Storage::Stack(base_offset) => {
-                        let offset = ctxt.get_stack_offset(base_offset);
-                        ctxt.add_inst(Instruction {
-                            source: format!("stack offset for {} is {:x}: {:?}", n, offset, &self),
-                            opcode: Opcode::LoadImm32,
-                            args: vec![Value::Register(0), Value::Constant32(offset)],
-                            resolved: None,
-                        });
-
-                        ctxt.add_inst(Instruction {
-                            source: format!("{:?}", &self),
-                            opcode: Opcode::Add32NoCarryIn,
-                            args: vec![Value::Register(REG_SP), Value::Register(0), Value::Register(4)],
-                            resolved: None,
-                        });
-
-                        let size = local_type.byte_count();
-                        match size {
-                            1 => {
-                                ctxt.add_inst(Instruction {
-                                    source: format!("{:?}", &self),
-                                    opcode: Opcode::Load8,
-                                    args: vec![Value::Register(4), Value::Register(0)],
-                                    resolved: None,
-                                });
-                                ctxt.add_inst(Instruction {
-                                    source: format!("{:?}", &self),
-                                    opcode: Opcode::Push8,
-                                    args: vec![Value::Register(0)],
-                                    resolved: None,
-                                });
-                                ctxt.additional_offset += 1;
-                            }
-                            4 => {
-                                ctxt.add_inst(Instruction {
-                                    source: format!("{:?}", &self),
-                                    opcode: Opcode::Load32,
-                                    args: vec![Value::Register(4), Value::Register(0)],
-                                    resolved: None,
-                                });
-                                for r in (0..4).rev() {
-                                    ctxt.add_inst(Instruction {
-                                        source: format!("{:?}", &self),
-                                        opcode: Opcode::Push8,
-                                        args: vec![Value::Register(r)],
-                                        resolved: None,
-                                    });
-                                    ctxt.additional_offset += 1;
-                                }
-                            },
-                            _ => panic!(),
-                        }
-                    }
-                };
-                local_type
-            },
             Expression::Arithmetic(op, left, right) => {
                 
                 // left in 4..8; right in 8..C, result in 0 (&1)
@@ -537,12 +601,14 @@ impl Expression {
                 let left_type = match left_type {
                     Type::Number(nt) => nt,
                     Type::Ptr(_) => NumberType::UPTR,
+                    Type::Struct(_) => panic!("can't do math on struct {:?}", left_type),
                 };
 
                 let right_type = right.emit(ctxt);
                 let right_type = match right_type {
                     Type::Number(nt) => nt,
                     Type::Ptr(_) => NumberType::UPTR,
+                    Type::Struct(_) => panic!("can't do math on struct {:?}", right_type),
                 };
 
                 let result_type = match (left_type, right_type) {
@@ -552,7 +618,7 @@ impl Expression {
                 };
 
                 let right_reg: u8 = 8;
-                for i in 0..(right_type.byte_count()) {
+                for i in 0..(right_type.byte_count(ctxt.program)) {
                     let r = (right_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Pop8,
@@ -563,7 +629,7 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                for i in right_type.byte_count()..result_type.byte_count() {
+                for i in right_type.byte_count(ctxt.program)..result_type.byte_count(ctxt.program) {
                     let r = (right_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         source: format!("zero ext right {:?}", &self),
@@ -574,7 +640,7 @@ impl Expression {
                 }
 
                 let left_reg: u8 = 4;
-                for i in 0..(left_type.byte_count()) {
+                for i in 0..(left_type.byte_count(ctxt.program)) {
                     let r = (left_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Pop8,
@@ -585,7 +651,7 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                for i in left_type.byte_count()..result_type.byte_count() {
+                for i in left_type.byte_count(ctxt.program)..result_type.byte_count(ctxt.program) {
                     let r = (left_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         source: format!("zero ext left {:?}", &self),
@@ -672,7 +738,7 @@ impl Expression {
                     },
                 }
 
-                for i in (0..result_type.byte_count()).rev() {
+                for i in (0..result_type.byte_count(ctxt.program)).rev() {
                     let r = (result_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Push8,
@@ -698,8 +764,112 @@ const RETURN_ADDRESS : &'static str = "RETURN_ADDRESS";
 const EPILOGUE : &'static str = "EPILOGUE";
 
 #[derive(Debug)]
+enum LogicalReference {
+    Local,
+    Deref,
+    LocalField(String),
+    DerefField(String),
+}
+
+struct MemoryRefernce {
+    local_offset: u32,
+    deref_offset: Option<u32>
+}
+
+impl LogicalReference {
+    fn get_offset_for_field<'a>(ctxt: &'a FunctionContext, struct_name: &str, field_name: &str) -> (u32, &'a Type){
+        let struct_type = ctxt.program.types.get(struct_name)
+            .expect(&format!("Could not find struct '{}'", struct_name));
+        struct_type.get_field(field_name)
+    }
+
+    fn get_deref_offset<'a>(&self, ctxt: &'a FunctionContext, var_type: &'a Type) -> (MemoryRefernce, &'a Type) {
+        match (self, var_type) {
+            (LogicalReference::Deref, Type::Ptr(inner)) => {
+                (MemoryRefernce{local_offset:0, deref_offset: Some(0)}, inner.as_ref())
+            }
+            (LogicalReference::Local, var_type) => {
+                (MemoryRefernce{local_offset:0, deref_offset: None}, var_type)
+            }
+            (LogicalReference::LocalField(field_name), Type::Struct(struct_name)) => {
+                let (field_offset, target_type) = LogicalReference::get_offset_for_field(ctxt, struct_name, field_name);
+                (MemoryRefernce {local_offset:field_offset, deref_offset: None}, target_type)
+            }
+            (LogicalReference::DerefField(field_name), Type::Ptr(inner)) => {
+                if let Type::Struct(struct_name) = inner.as_ref() {
+                    let (field_offset, target_type) = LogicalReference::get_offset_for_field(ctxt, struct_name, field_name);
+                    (MemoryRefernce {local_offset:0, deref_offset: Some(field_offset)}, target_type)
+                } else {
+                    panic!(format!("'{}' is accessed as a struct but it is '{:?}'", field_name, inner));
+                }
+            }
+            _ => panic!(format!("Don't know how to reference '{:?}' via '{:?}'", var_type, &self))
+        }
+    }
+
+    fn emit_local_address_to_reg0(&self, ctxt: &mut FunctionContext, local_name: &str) -> Type {
+        let local = ctxt.find_local(local_name);
+
+        let (mem_ref, final_type) = self.get_deref_offset(ctxt, &local.var_type);
+        let final_type = final_type.clone();
+
+        match local.storage {
+            // Storage::Register(_r) => {
+            //     // ctxt.add_inst(Instruction::LoadReg(r));
+            //     unimplemented!();
+            // },
+            Storage::Stack(base_offset) => {
+                let offset = ctxt.get_stack_offset(base_offset) + mem_ref.local_offset;
+
+                ctxt.add_inst(Instruction {
+                    source: format!("stack offset for {} is {:x}: {:?}", local_name, offset, &self),
+                    opcode: Opcode::LoadImm32,
+                    args: vec![Value::Register(8), Value::Constant32(offset)],
+                    resolved: None,
+                });
+
+                if let Some(deref_offset) = mem_ref.deref_offset {
+                    ctxt.add_inst(Instruction {
+                        source: format!("calculating stack address for deref {:?}", &self),
+                        opcode: Opcode::Add32NoCarryIn,
+                        args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(4)],
+                        resolved: None,
+                    });
+                    ctxt.add_inst(Instruction {
+                        source: format!("reading base address from stack {:?}", &self),
+                        opcode: Opcode::Load32,
+                        args: vec![Value::Register(4), Value::Register(0)],
+                        resolved: None,
+                    });
+
+                    if deref_offset != 0 {
+                        ctxt.add_inst(Instruction {
+                            source: format!("offseting pointer for field access {:?}", &self),
+                            opcode: Opcode::AddImm32IgnoreCarry,
+                            args: vec![Value::Register(0), Value::Constant32(deref_offset)],
+                            resolved: None,
+                        });
+                    }
+                } else {
+                    ctxt.add_inst(Instruction {
+                        source: format!("calculating stack address {:?}", &self),
+                        opcode: Opcode::Add32NoCarryIn,
+                        args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(0)],
+                        resolved: None,
+                    });
+                }
+            }
+        };
+        Type::Ptr(Box::new(final_type))
+    }
+}
+
+
+
+#[derive(Debug)]
 enum Statement {
-    Assign {local: String, var_type: Type, value: Expression},
+    Declare { local: String, var_type: Type },
+    Assign { local: String, target: LogicalReference, var_type: Option<Type>, value: Expression},
     Call { local: String, var_type: Type, function: String, parameters: Vec<Expression> },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
@@ -713,15 +883,75 @@ impl Statement {
         let pair = pair.into_inner().next().unwrap();
 
         match pair.as_rule() {
+            Rule::declare_statement => {
+                let mut pairs = pair.into_inner();
+                let decl = pairs.next().unwrap();
+                match decl.as_rule() {
+                    Rule::variable_decl => {
+                        let mut decl = decl.into_inner();
+                        let var_name = decl.next().unwrap().as_str().trim().to_owned();
+                        let var_type = Type::parse(decl.next().unwrap(),true);
+                        Statement::Declare {local: var_name, var_type }
+                    }
+                    _ => panic!("Unexpected {:?}", decl)
+                }
+            }
             Rule::assign => {
                 let mut pairs = pair.into_inner();
-                let mut decl = pairs.next().unwrap().into_inner();
-                let var_name = decl.next().unwrap().as_str().trim().to_owned();
-                let var_type = Type::parse(decl.next().unwrap());
+                let target = pairs.next().unwrap();
+                assert_eq!(Rule::assign_target, target.as_rule());
+                let target = target.into_inner().next().unwrap();
+                let target_rule = target.as_rule();
+                let (name, target, var_type) = match target_rule {
+                    Rule::local_field_expression | Rule::ptr_field_expression => {
+                        let mut tokens = target.into_inner();
+                        let struct_name = tokens.next().unwrap();
+                        assert_eq!(struct_name.as_rule(), Rule::ident);
+                        let struct_name = struct_name.as_str().trim().to_owned();
+                        let field_name = tokens.next().unwrap();
+                        assert_eq!(field_name.as_rule(), Rule::ident);
+                        let field_name = field_name.as_str().trim().to_owned();
+                        (
+                            struct_name, 
+                            if target_rule == Rule::local_field_expression {
+                                LogicalReference::LocalField(field_name)
+                            } else {
+                                LogicalReference::DerefField(field_name)
+                            }, None)
+                    },
+                    Rule::assign_deref => {
+                        let mut tokens = target.into_inner();
+                        assert_eq!(tokens.next().unwrap().as_rule(), Rule::deref_operator);
+                        let name = tokens.next().unwrap();
+                        assert_eq!(name.as_rule(), Rule::ident);
+                        (name.as_str().trim().to_owned(), LogicalReference::Deref, None)
+                    },
+                    Rule::assign_declare => {
+                        let mut tokens = target.into_inner();
+                        let decl = tokens.next().unwrap();
+                        match decl.as_rule() {
+                            Rule::variable_decl => {
+                                let mut decl_tokens = decl.into_inner();
+                                let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
+                                let var_type = Type::parse(decl_tokens.next().unwrap(), false);
+                                (var_name, LogicalReference::Local, Some(var_type))
+                            }
+                            Rule::ident => {
+                                let var_name = decl.as_str().trim().to_owned();
+                                (var_name, LogicalReference::Local, None)
+                            }
+                            _ => panic!("Unexpected {:?}", &decl)
+                        }
+                        
+                        
+                    },
+                    _ => panic!("Unexpected {:?}", &target)
+                };
 
                 let value = Expression::parse(pairs.next().unwrap());
                 Statement::Assign { 
-                    local: var_name,
+                    local: name,
+                    target,
                     var_type,
                     value
                 }
@@ -730,7 +960,7 @@ impl Statement {
                 let mut pairs = pair.into_inner();
                 let mut decl = pairs.next().unwrap().into_inner();
                 let var_name = decl.next().unwrap().as_str().trim().to_owned();
-                let var_type = Type::parse(decl.next().unwrap());
+                let var_type = Type::parse(decl.next().unwrap(), false);
 
                 let function = pairs.next().unwrap().as_str().to_owned();
 
@@ -801,44 +1031,48 @@ impl Statement {
                     args: vec![Value::Register(0)]
                 });
             },
-            Statement::Assign{local, var_type, value} => {
-                let eval_type = value.emit(ctxt);
-                assert_eq!(var_type, &eval_type);
+            Statement::Declare{local:_, var_type:_} => {}
+            Statement::Assign{local, target, var_type, value} => {
+                let value_type = value.emit(ctxt); // calculate value
+                let ptr_type = target.emit_local_address_to_reg0(ctxt, local);
+                match ptr_type {
+                    Type::Ptr(inner) => assert_eq!(&value_type, inner.as_ref()),
+                    _ => panic!("expected pointer")
+                };
 
-                for r in 0..var_type.byte_count() {
+                let value_size = value_type.byte_count(ctxt.program);
+                assert!(value_size <= 4);
+                let value_size = value_size as u8;
+
+                if let Some(explicit_type) = var_type {
+                    assert_eq!(explicit_type, &value_type);
+                }
+
+                for r in 0..value_size {
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Pop8,
                         resolved: None,
-                        source: format!("{:?}", &self),
-                        args: vec![Value::Register(r.try_into().unwrap())]
+                        source: format!("reading value from stack {:?}", &self),
+                        args: vec![Value::Register(4 + r)]
                     });
                     ctxt.additional_offset -= 1;
                 }
 
-                let local = ctxt.find_local(local);
-                match local.storage {
-                    // Storage::Register(_r) => {
-                    //     unimplemented!();
-                    // }
-                    Storage::Stack(offset) => {
-                        let offset = ctxt.get_stack_offset(offset);
+                match value_size {
+                    1 => {
                         ctxt.add_inst(Instruction {
-                            opcode: Opcode::LoadImm32,
+                            opcode: Opcode::Store8,
                             resolved: None,
                             source: format!("{:?}", &self),
-                            args: vec![Value::Register(4), Value::Constant32(offset)]
+                            args: vec![Value::Register(4), Value::Register(0)]
                         });
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Add32NoCarryIn,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
-                        });
+                    }
+                    4 => {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Store32Part1,
                             resolved: None,
                             source: format!("{:?}", &self),
-                            args: vec![Value::Register(0), Value::Register(8)]
+                            args: vec![Value::Register(4), Value::Register(0)]
                         });
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Store32Part2,
@@ -847,11 +1081,12 @@ impl Statement {
                             args: vec![]
                         });
                     }
+                    s => panic!(format!("Unexpected size {}", s))
                 }
             },
             Statement::Return{ value } => {
                 let expression_type = value.emit(ctxt);
-                let byte_count = expression_type.byte_count();
+                let byte_count = expression_type.byte_count(ctxt.program);
                 for i in 0..4 {
                     let r = i.try_into().unwrap();
                     if i < byte_count {
@@ -956,7 +1191,7 @@ impl Statement {
                 for (i,p) in parameters.iter().enumerate() {
                     let param_type = p.emit(ctxt);
                     assert_eq!(f.args[i].1, param_type);
-                    match param_type.byte_count() {
+                    match param_type.byte_count(ctxt.program) {
                         4 => {}
                         1 => {
                             ctxt.add_inst(Instruction {
@@ -1166,11 +1401,10 @@ struct Function {
 }
 
 impl Function {
-    fn parse(pair: pest::iterators::Pair<Rule>) -> Function {
+    fn parse(ctxt: &ProgramContext, pair: pest::iterators::Pair<Rule>) -> Function {
         assert_eq!(Rule::function, pair.as_rule());
 
         let mut args = Vec::new();
-        let mut variables = BTreeMap::new();
 
         let mut pairs = pair.into_inner();
 
@@ -1179,7 +1413,7 @@ impl Function {
         for arg in pairs.next().unwrap().into_inner() {
             let mut arg_tokens = arg.into_inner();
             let arg_name = arg_tokens.next().unwrap().as_str().to_owned();
-            let arg_var_type = Type::parse(arg_tokens.next().unwrap());
+            let arg_var_type = Type::parse(arg_tokens.next().unwrap(), false);
             args.push((arg_name, arg_var_type));
         }
 
@@ -1189,7 +1423,7 @@ impl Function {
         let body = if Rule::function_return_type == return_or_body.as_rule() {
             let mut return_type_tokens = return_or_body.into_inner();
             assert!(return_type.is_none());
-            return_type = Some(Type::parse(return_type_tokens.next().unwrap()));
+            return_type = Some(Type::parse(return_type_tokens.next().unwrap(), false));
             pairs.next().unwrap()
         } else {
             return_or_body
@@ -1203,32 +1437,28 @@ impl Function {
         // find locals
         let mut locals = BTreeMap::new();
 
-        // find declared
-        fn find_decls(
-            s: &Statement, 
-            args: &Vec<(String,Type)>, 
-            locals: &mut BTreeMap<String,Type>,
-            variables: &mut BTreeMap<String,Variable>) 
+        fn walk_decls<F>(s: &Statement, visitor: &mut F) 
+            where F : FnMut(&String, Option<&Type>),
         {
             match s {
-                Statement::Assign{local, var_type, value:_} |
+                Statement::Assign{local, target:_, var_type, value:_} => {
+                    visitor(local, var_type.as_ref());
+                }
+                Statement::Declare {local, var_type} |
                 Statement::Call{ local, var_type, function:_, parameters:_ }  => {
-                    if !variables.contains_key(local) && !args.iter().any(|a|&a.0 == local) {
-                        if let Some(existing) = locals.insert(local.clone(), var_type.clone()) {
-                            if existing != *var_type {
-                                panic!(format!("Variable '{}' is declared with different types: {:?} and {:?}", local, existing, var_type));
-                            }
-                        }
-                    }
+                    visitor(local, Some(var_type));
                 }
                 Statement::IfElse{ predicate:_, when_true, when_false } => {
-                    for s in when_true.iter().chain(when_false.iter()) {
-                        find_decls(s, args, locals, variables);
+                    for s in when_true {
+                        walk_decls(s, visitor);
+                    }
+                    for s in when_false {
+                        walk_decls(s, visitor);
                     }
                 },
                 Statement::While{predicate: _, while_true} => {
                     for s in while_true {
-                        find_decls(s, args, locals, variables);
+                        walk_decls(s, visitor);
                     }
                 },
                 Statement::Return{ value:_ } | 
@@ -1237,9 +1467,41 @@ impl Function {
             }
         }
 
-        for s in body.iter() {
-            find_decls(s, &args, &mut locals, &mut variables);
+
+        let mut find_locals  = |name: &String, var_type: Option<&Type>| {
+            if let Some(var_type) = var_type {
+                if !locals.contains_key(name) && !args.iter().any(|a|&a.0 == name) {
+                    locals.insert(name.clone(), var_type.clone());
+                }
+            }
+        };
+
+        for s in &body {
+            walk_decls(s, &mut find_locals);
         }
+
+        let mut validate_no_mismatch = |name: &String, var_type: Option<&Type>| {
+            if let Some(declared_type) = var_type {
+                let existing = locals.get(name)
+                    .or_else(|| args.iter().filter(|(n,_)| n == name).map(|a| &a.1).next());
+                match existing {
+                    Some(existing) => {
+                        if existing != declared_type {
+                            panic!(format!("Variable '{}' is declared with different types: {:?} and {:?}", name, existing, declared_type));
+                        }
+                    }
+                    None => {
+                        assert_eq!(var_type, None);
+                        panic!(format!("No type found for '{}'", name));
+                    }
+                }
+            }
+        };
+
+        for s in &body {
+            walk_decls(s, &mut validate_no_mismatch);
+        }
+
     /*
 
     stack:
@@ -1253,13 +1515,24 @@ impl Function {
             RESULT (padded to 4 bytes)
     */
 
+        let mut variables = BTreeMap::new();
+
 
         let mut caller_stack_size: u32 = 0;
         caller_stack_size += 4;// RESULT
-        caller_stack_size += args.len() as u32 * 4;
+        caller_stack_size += args.iter().map(|a| match &a.1 {
+            Type::Struct(struct_name) => ctxt.types[struct_name].byte_count(ctxt),
+            _ => 4,
+        }).sum::<u32>();
         caller_stack_size += 4; // return address
 
-        let callee_stack_size  = locals.len() as u32 * 4;
+        let callee_stack_size  = locals
+            .iter()
+            .map(|a| match &a.1 {
+                Type::Struct(struct_name) => ctxt.types[struct_name].byte_count(ctxt),
+                _ => 4,
+            })
+            .sum::<u32>();
 
         let mut offset = (caller_stack_size + callee_stack_size) as isize;
 
@@ -1288,13 +1561,9 @@ impl Function {
 
         for (count, l) in locals.iter().enumerate() {
             let storage = match count {
-                // count if (count as u32) < register_local_count => {
-                //     unimplemented!();
-                //     // let reg = if count == 0 { Reg::D } else { Reg::E };
-                //     // LocalStorage::Register(reg)
-                // },
                 _ => {
-                    offset -= 4;
+                    let size = l.1.byte_count(ctxt);
+                    offset -= std::cmp::max(size,4) as isize;
                     Storage::Stack(BaseOffset(offset.try_into().unwrap()))
                 }
             };
@@ -1508,29 +1777,18 @@ fn main() -> Result<(), std::io::Error> {
 
 struct ProgramContext {
     functions: BTreeMap<String, Function>,
+    types: BTreeMap<String, StructDefinition>
 }
 
-fn compile(input: &str) -> Vec<AssemblyInputLine> {
-    let mut ctxt = ProgramContext { functions: BTreeMap::new()};
-
-    let mut program = ProgramParser::parse(Rule::program, &input).unwrap();
-    let pairs = program.next().unwrap().into_inner();
-    for pair in pairs {
-        match pair.as_rule() {
-            Rule::function => {
-                let f = Function::parse(pair);
-                ctxt.functions.insert(f.name.clone(), f);
-            },
-            Rule::EOI => { },
-            _ => {
-                panic!("Unexpected rule: {:?}", pair);
-            }
-        }
-    }
-
+fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
     let main = ctxt.functions.get("main").expect("main not found.");
 
     let mut program = Vec::new();
+
+    program.push(AssemblyInputLine::Comment("Types:".to_owned()));
+    for (name, t) in &ctxt.types {
+        program.push(AssemblyInputLine::Comment(format!("{} {:?}", name, t)));
+    }
 
     program.push(AssemblyInputLine::Comment(format!("set up stack and call main")));
     let initial_stack = 0x8FFF0;
@@ -1607,6 +1865,41 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
     }
 
     program
+}
+
+fn compile(input: &str) -> Vec<AssemblyInputLine> {
+    let mut ctxt = ProgramContext { functions: BTreeMap::new(), types: BTreeMap::new() };
+
+    let mut program = ProgramParser::parse(Rule::program, &input).unwrap();
+    let pairs = program.next().unwrap().into_inner();
+    for pair in pairs {
+        match pair.as_rule() {
+            Rule::struct_decl => {
+                let mut pairs = pair.into_inner();
+
+                let name = pairs.next().unwrap().as_str().to_owned();
+
+                let mut fields = Vec::new();
+                for arg in pairs.next().unwrap().into_inner() {
+                    let mut field_tokens = arg.into_inner();
+                    let mut field_tokens = field_tokens.next().unwrap().into_inner();
+                    let field_name = field_tokens.next().unwrap().as_str().to_owned();
+                    let field_type = Type::parse(field_tokens.next().unwrap(), false);
+                    fields.push((field_name, field_type));
+                }
+
+                ctxt.types.insert(name, StructDefinition{fields});
+            },
+            Rule::function => {
+                let f = Function::parse(&ctxt, pair);
+                ctxt.functions.insert(f.name.clone(), f);
+            },
+            Rule::EOI => {},
+            _ => panic!("Unexpected rule: {:?}", pair)
+        }
+    }
+
+    emit(ctxt)
 }
 
 #[cfg(test)]
@@ -1814,5 +2107,21 @@ mod tests {
                 (&0xFFFFFFFFu32.to_le_bytes(), &0x1u32.to_le_bytes(), 0x0u32),
             ]
         );
+    }
+
+    #[test]
+    fn structs() {
+        test_inputs(
+            include_str!("../../programs/struct.j"),
+            &[
+                (0x0,0x0,0x0),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0x1,0x2),
+                (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
+                (0x1,0xFF,0x100),
+                (0xAABBCCDD, 0x0, 0xAABBCCDD),
+                (0xFFFFFFFF, 0x1, 0x0),
+                ]);
     }
 }
