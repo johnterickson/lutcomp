@@ -93,38 +93,46 @@ pub fn alu(print: bool) -> Vec<u8> {
                         .filter(|o| *o as u8 == *special_mode.mode_args)
                         .next()
                     {
-                        Some(SpecialMicroHelper::AllBitsIfOdd) => {
-                            if entry.in1 & 0x1 == 0 {
-                                0x00
-                            } else {
-                                0xFF
+                        Some(helper) => {
+                            match helper {
+                                SpecialMicroHelper::AllBitsIfOdd => {
+                                    if entry.in1 & 0x1 == 0 {
+                                        0x00
+                                    } else {
+                                        0xFF
+                                    }
+                                }
+                                SpecialMicroHelper::LeftShiftByOne => entry.in1 << 1,
+                                SpecialMicroHelper::RightShiftByOne => entry.in1 >> 1,
+                                SpecialMicroHelper::SwapNibbles => {
+                                    (entry.in1 >> 4) | (entry.in1 << 4)
+                                }
+                                SpecialMicroHelper::Decrement => entry.in1.wrapping_add(0xFF),
+                                SpecialMicroHelper::Negate => (entry.in1 ^ 0xFF).wrapping_add(0x01),
+                                SpecialMicroHelper::Pow2Mask => {
+                                    ((1u64 << (entry.in1 & 0x1F)) - 1) as u8
+                                }
+                                SpecialMicroHelper::Invert => (entry.in1 ^ 0xFF),
+                                SpecialMicroHelper::Max => {
+                                    panic!();
+                                }
                             }
                         }
-                        Some(SpecialMicroHelper::LeftShiftByOne) => entry.in1 << 1,
-                        Some(SpecialMicroHelper::RightShiftByOne) => entry.in1 >> 1,
-                        Some(SpecialMicroHelper::SwapNibbles) => {
-                            (entry.in1 >> 4) | (entry.in1 << 4)
-                        }
-                        Some(SpecialMicroHelper::Decrement) => entry.in1.wrapping_add(0xFF),
-                        Some(SpecialMicroHelper::Negate) => (entry.in1 ^ 0xFF).wrapping_add(0x01),
-                        Some(SpecialMicroHelper::Pow2Mask) => {
-                            ((1u64 << (entry.in1 & 0x1F)) - 1) as u8
-                        }
-                        Some(SpecialMicroHelper::Invert) => (entry.in1 ^ 0xFF),
                         None => 0xFF,
                     },
                     SpecialOpcode::Shift => {
                         let args = ShiftArgs::unpack(&[*special_mode.mode_args]).unwrap();
+                        let left_amount = args.left_amount();
                         if print {
-                            println!("# {:?}", &args);
+                            println!("# {:?} left_amount_signed:{}", &args, &left_amount);
                         }
-                        let left_amount = *args.left_amount;
                         let abs_amount = left_amount.abs();
-                        if abs_amount >= 8 {
+                        if left_amount < -8 || left_amount > 8 {
                             0xFF
-                        } else if abs_amount == 0 {
+                        } else if abs_amount == 0 || abs_amount == 8 {
                             entry.in1
                         } else {
+                            assert!(abs_amount <= 7);
                             match args.mode {
                                 ShiftMode::Rotate => {
                                     if left_amount > 0 {
@@ -133,14 +141,14 @@ pub fn alu(print: bool) -> Vec<u8> {
                                         (entry.in1 >> abs_amount) | (entry.in1 << (8 - abs_amount))
                                     }
                                 }
-                                ShiftMode::Arithmetic => {
+                                ShiftMode::Logical => {
                                     if left_amount > 0 {
                                         entry.in1 << abs_amount
                                     } else {
                                         entry.in1 >> abs_amount
                                     }
                                 }
-                                ShiftMode::Logical => {
+                                ShiftMode::Arithmetic => {
                                     let signed = entry.in1 as i8;
                                     (if left_amount > 0 {
                                         signed << abs_amount
@@ -226,25 +234,62 @@ mod tests {
         test_special_micro(SpecialMicroHelper::Negate, 0xFF, 0x01);
     }
 
-    // #[test]
-    // fn rotate() {
-    //     let shift_args = ShiftArgs {
-    //         mode: ShiftMode::Rotate,
-    //         amount: 4.into()
-    //     };
+    fn test_shift(mode: ShiftMode, left_amount: i8, in1: u8, expected: u8) {
+        let shift_args = ShiftArgs {
+            mode,
+            unsigned_left_amount: left_amount.into()
+        };
 
-    //     let args = SpecialArgs {
-    //         op: SpecialOpcode::Shift,
-    //         mode_args: shift_args.pack()[0].into(),
-    //     };
+        let args = SpecialArgs {
+            op: SpecialOpcode::Shift,
+            mode_args: shift_args.pack().unwrap()[0].into(),
+        };
 
-    //     let lut_entry = LutEntry {
-    //         in1: 0x0F,
-    //         in2: args.pack()[0],
-    //         op: AluOpcode::Special,
-    //     };
+        let lut_entry = LutEntry {
+            in1,
+            in2: args.pack().unwrap()[0],
+            op: AluOpcode::Special,
+        };
 
-    //     assert_eq!(0x04, lut_entry.to_index() & 0xFF);
-    //     assert_eq!(0xF0, ALU[lut_entry.to_index() as usize]);
-    // }
+        let index = lut_entry.to_index() as usize;
+        let actual = ALU[index];
+        assert_eq!(
+            expected, actual,
+            "{:?} {} {:02x} -> Expected {:02x} but found {:02x} at ALU[{:05x}]",
+            mode, left_amount, in1, expected, actual, index);
+    }
+
+    #[test]
+    fn rotate() {
+        test_shift(ShiftMode::Rotate, 0, 0x0F, 0x0F);
+        test_shift(ShiftMode::Rotate, 1, 0x0F, 0x1E);
+        test_shift(ShiftMode::Rotate, 2, 0x0F, 0x3C);
+        test_shift(ShiftMode::Rotate, 3, 0x0F, 0x78);
+        test_shift(ShiftMode::Rotate, 4, 0x0F, 0xF0);
+        test_shift(ShiftMode::Rotate, 5, 0x0F, 0xE1);
+        test_shift(ShiftMode::Rotate, 6, 0x0F, 0xC3);
+        test_shift(ShiftMode::Rotate, 7, 0x0F, 0x87);
+        test_shift(ShiftMode::Rotate, 8, 0x0F, 0x0F);
+
+        test_shift(ShiftMode::Rotate, -8, 0x0F, 0x0F);
+        test_shift(ShiftMode::Rotate, -7, 0x0F, 0x1E);
+        test_shift(ShiftMode::Rotate, -6, 0x0F, 0x3C);
+        test_shift(ShiftMode::Rotate, -5, 0x0F, 0x78);
+        test_shift(ShiftMode::Rotate, -4, 0x0F, 0xF0);
+        test_shift(ShiftMode::Rotate, -3, 0x0F, 0xE1);
+        test_shift(ShiftMode::Rotate, -2, 0x0F, 0xC3);
+        test_shift(ShiftMode::Rotate, -1, 0x0F, 0x87);
+        test_shift(ShiftMode::Rotate,  0, 0x0F, 0x0F);
+
+        test_shift(ShiftMode::Rotate, 4, 0x23, 0x32);
+        test_shift(ShiftMode::Rotate, -4, 0x23, 0x32);
+    }
+
+    #[test]
+    fn shift() {
+        test_shift(ShiftMode::Arithmetic, -1, 0x84, 0xC2);
+        test_shift(ShiftMode::Logical,-1, 0x84, 0x42);
+        test_shift(ShiftMode::Arithmetic, 1, 0x42, 0x84);
+        test_shift(ShiftMode::Logical,1, 0x42, 0x84);
+    }
 }

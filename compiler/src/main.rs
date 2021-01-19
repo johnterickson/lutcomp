@@ -91,7 +91,7 @@ impl NumberType {
 }
 
 impl ByteSize for NumberType {
-    fn byte_count(&self, ctxt: &ProgramContext) -> u32 {
+    fn byte_count(&self, _ctxt: &ProgramContext) -> u32 {
         match self {
             NumberType::U8 => 1,
             NumberType::UPTR => 4,
@@ -2122,6 +2122,18 @@ mod tests {
                 (0x1,0xFF,0x100),
                 (0xAABBCCDD, 0x0, 0xAABBCCDD),
                 (0xFFFFFFFF, 0x1, 0x0),
+                ]);
+    }
+
+    #[test]
+    fn divide() {
+        test_inputs(
+            include_str!("../../programs/divide.j"),
+            &[
+                (0x1,0x1,0x1),
+                (0x2,0x1,0x2),
+                (0x1,0x2,0x0),
+                (100,10,10),
                 ]);
     }
 }

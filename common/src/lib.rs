@@ -76,12 +76,18 @@ pub enum ShiftMode {
 #[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
 pub struct ShiftArgs {
     #[packed_field(bits = "0..=3")]
-    pub left_amount: Integer<i8, packed_bits::Bits4>,
+    pub unsigned_left_amount: Integer<i8, packed_bits::Bits4>,
     #[packed_field(bits = "4..=5", ty = "enum")]
     pub mode: ShiftMode,
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+impl ShiftArgs {
+    pub fn left_amount(&self) -> i8 {
+        (*self.unsigned_left_amount << 4) >> 4
+    }
+}
+
+#[derive(Clone, Copy, Display, Debug, PartialEq, PartialOrd)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum SpecialMicroHelper {
@@ -93,6 +99,7 @@ pub enum SpecialMicroHelper {
     Negate = 5,
     Pow2Mask = 6,
     Invert = 7,
+    Max=0x40,
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -139,7 +146,6 @@ pub enum Opcode {
     Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
     Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
     Cmp8 = 0x25, // 8bit regB - 8bit regA -> FLAGS
-    // Sub8NoCarry = 0x24, // 8bit regA - 8bit regB -> 8bit regC
 
     AndImm8 = 0x30, // regA &= [8-bit constant B]
     OrImm8 = 0x31, // regA |= [8-bit constant B]
@@ -147,6 +153,7 @@ pub enum Opcode {
     And8 = 0x33, // regA & regB -> regC + FLAGS
     Or8 = 0x34, // regA | regB -> regC + FLAGS
     Xor8 = 0x35, // regA ^ regB -> regC + FLAGS
+    ShiftImm8 = 0x36,  // shift((ShiftMode)regA, (left_amount)regB, regC)
 
     JmpImm = 0x40, // pc <- [24-bit constant ABC]
     JcImm = 0x41,  // if Flags & CARRY { pc <- [24-bit constant ABC] }

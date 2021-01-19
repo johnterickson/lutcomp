@@ -475,6 +475,23 @@ mod tests {
     }
 
     #[test]
+    fn shiftimm8() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::ShiftImm8 as u8);
+        rom.push(ShiftMode::Arithmetic as u8);
+        rom.push((-1i8) as u8);
+        rom.push(4);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::with_print(rom, false);
+        *c.mem_byte_mut(0x80004) = 0x84;
+        while c.step() {
+        }
+
+        assert_eq!(0xC2, *c.mem_byte_mut(0x80004));
+    }
+
+    #[test]
     fn loadimm32() {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm32 as u8);

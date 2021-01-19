@@ -197,7 +197,7 @@ impl MicroOp {
         (bytes[0], bytes[1])
     }
 
-    fn print(&self) {
+    pub fn print(&self) {
         println!("{:02x} {:02x}", self.emit().1, self.emit().0);
     }
 }
@@ -868,7 +868,6 @@ impl Ucode {
                 Some(Opcode::And8) => self.parallel_op_8(AluOpcode::And),
                 Some(Opcode::Or8) => self.parallel_op_8(AluOpcode::Or),
                 Some(Opcode::Xor8) => {
-                    
                     self.start_of_ram();
 
                     // a ^ b == (a | b) & ~( a & b)
@@ -903,6 +902,34 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
                     self.flags_from(Output::Direct(DataBusOutputLevel::Alu));
+                }
+                Some(Opcode::ShiftImm8) => { // shift((ShiftMode)regA, (left_amount)regB, regC)
+                    pc_inc!(self);
+                    self.start_of_ram();
+                    
+                    // create internal shift cmd in Z
+
+                    // grab shiftmode and put it in the upper nibble
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm((SpecialOpcode::Shift as u8) << 2), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+
+                    // or in (left_amount & 0xF)
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0xF), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+
+                    // apply shift command to register
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(Opcode::Add8) => {
                     self.start_of_ram();

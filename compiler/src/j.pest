@@ -31,13 +31,14 @@ greater_than_or_equal = { "@gte" }
 less_than = { "<" }
 less_than_or_equal = { "@lte" }
 
+rotate_right_expression = { "(" ~ expression ~ "@ROR" ~ number ~ ")" }
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
 deref_expression = { deref_operator ~ expression }
 local_field_expression = {ident ~ "." ~ ident}
 ptr_field_expression = {ident ~ "->" ~ ident}
 address_of_expression = {address_of_operator ~ expression}
-expression = { local_field_expression | ptr_field_expression | ttyin | ident | number | arithmetic_expression | comparison_expression | deref_expression | address_of_expression}
+expression = { local_field_expression | ptr_field_expression | ttyin | ident | number | arithmetic_expression | comparison_expression | deref_expression | address_of_expression | rotate_right_expression }
 
 pointer_type = { "&<" ~ variable_type ~ ">" }
 number_type = {"U8" | "UPTR"}

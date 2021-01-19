@@ -1,13 +1,13 @@
-FUNCTION divide(x,y) {
-    ASSIGN q := 0;
-    WHILE (x > y) {
+FUNCTION divide(x:U8, y:U8) {
+    ASSIGN q:U8 := 0;
+    WHILE (x @gte y) {
         ASSIGN q := (q + 1);
         ASSIGN x := (x - y);
     }
     RETURN q;
 }
 
-FUNCTION main(a,b,c) {
-    CALL c := divide(a,b);
+FUNCTION main(a:U8, b:U8) {
+    CALL c:U8 := divide(a,b);
     RETURN c;
 }
