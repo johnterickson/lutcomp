@@ -11,4 +11,4 @@ common = { path = "../common" }
 strum = "0.18.0"
 pest = "*"
 pest_derive = "*"
-packed_struct = "*"
+packed_struct = { git = "https://github.com/johnterickson/packed_struct.rs" }

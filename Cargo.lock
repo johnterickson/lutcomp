@@ -6,7 +6,7 @@ version = "0.1.0"
 dependencies = [
  "common",
  "lazy_static",
- "packed_struct",
+ "packed_struct 0.4.0 (git+https://github.com/johnterickson/packed_struct.rs)",
  "packed_struct_codegen",
  "strum",
 ]
@@ -32,7 +32,7 @@ name = "assemble"
 version = "0.1.0"
 dependencies = [
  "common",
- "packed_struct",
+ "packed_struct 0.4.0 (git+https://github.com/johnterickson/packed_struct.rs)",
  "pest",
  "pest_derive",
  "strum",
@@ -82,7 +82,7 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "bitflags",
- "packed_struct",
+ "packed_struct 0.4.0 (git+https://github.com/johnterickson/packed_struct.rs)",
  "packed_struct_codegen",
  "strum",
  "strum_macros",
@@ -176,12 +176,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "packed_struct"
+version = "0.4.0"
+source = "git+https://github.com/johnterickson/packed_struct.rs#cd617c6d0141eaad80130becdf3db8c852e6f6ba"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "packed_struct_codegen"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed66227d7ae4cb8b13b822ea5bb76f47bf62938522326b5feffed7b3f6562f54"
+source = "git+https://github.com/johnterickson/packed_struct.rs#cd617c6d0141eaad80130becdf3db8c852e6f6ba"
 dependencies = [
- "packed_struct",
+ "packed_struct 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2",
  "quote",
  "syn",
@@ -274,7 +281,7 @@ dependencies = [
  "common",
  "itertools",
  "lazy_static",
- "packed_struct",
+ "packed_struct 0.4.0 (git+https://github.com/johnterickson/packed_struct.rs)",
  "strum",
  "ucode",
 ]
@@ -326,7 +333,7 @@ version = "0.1.0"
 dependencies = [
  "common",
  "lazy_static",
- "packed_struct",
+ "packed_struct 0.4.0 (git+https://github.com/johnterickson/packed_struct.rs)",
  "packed_struct_codegen",
  "strum",
  "strum_macros",

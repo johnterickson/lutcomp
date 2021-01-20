@@ -76,15 +76,9 @@ pub enum ShiftMode {
 #[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
 pub struct ShiftArgs {
     #[packed_field(bits = "0..=3")]
-    pub unsigned_left_amount: Integer<i8, packed_bits::Bits4>,
+    pub left_amount: Integer<i8, packed_bits::Bits4>,
     #[packed_field(bits = "4..=5", ty = "enum")]
     pub mode: ShiftMode,
-}
-
-impl ShiftArgs {
-    pub fn left_amount(&self) -> i8 {
-        (*self.unsigned_left_amount << 4) >> 4
-    }
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq, PartialOrd)]

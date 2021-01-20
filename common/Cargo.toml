@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 strum = "0.18.0"
 strum_macros = "0.18.0"
-packed_struct = "*"
-packed_struct_codegen = "*"
+packed_struct = { git = "https://github.com/johnterickson/packed_struct.rs" }
+packed_struct_codegen = { git = "https://github.com/johnterickson/packed_struct.rs" }
 bitflags = "*"

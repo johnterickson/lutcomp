@@ -122,10 +122,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                     },
                     SpecialOpcode::Shift => {
                         let args = ShiftArgs::unpack(&[*special_mode.mode_args]).unwrap();
-                        let left_amount = args.left_amount();
-                        if print {
-                            println!("# {:?} left_amount_signed:{}", &args, &left_amount);
-                        }
+                        let left_amount = *args.left_amount;
                         let abs_amount = left_amount.abs();
                         if left_amount < -8 || left_amount > 8 {
                             0xFF
@@ -237,7 +234,7 @@ mod tests {
     fn test_shift(mode: ShiftMode, left_amount: i8, in1: u8, expected: u8) {
         let shift_args = ShiftArgs {
             mode,
-            unsigned_left_amount: left_amount.into()
+            left_amount: left_amount.into()
         };
 
         let args = SpecialArgs {
