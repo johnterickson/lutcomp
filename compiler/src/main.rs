@@ -55,9 +55,9 @@ impl ComparisonOperator {
             "==" => ComparisonOperator::Equals,
             "!=" => ComparisonOperator::NotEquals,
             ">" => ComparisonOperator::GreaterThan,
-            "@gte" => ComparisonOperator::GreaterThanOrEqual,
+            ">=" => ComparisonOperator::GreaterThanOrEqual,
             "<" => ComparisonOperator::LessThan,
-            "@lte" => ComparisonOperator::LessThanOrEqual,
+            "<=" => ComparisonOperator::LessThanOrEqual,
             op => panic!(format!("Unknown op: {}", op)),
         }
     }

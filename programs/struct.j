@@ -12,7 +12,7 @@ FUNCTION main(x: UPTR, y: UPTR) -> UPTR {
     RETURN r.sum;
 }
 
-FUNCTION add(r: &<request>) -> U8 {
+FUNCTION add(r: &request) -> U8 {
     ASSIGN r->sum := (r->in1 + r->in2);
     RETURN 0;
 }

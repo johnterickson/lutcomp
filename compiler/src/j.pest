@@ -23,13 +23,13 @@ and = { "&" }
 deref_operator = { "*" }
 address_of_operator = {"&"}
 
-comparison = _{ equals | notequals | greater_than | greater_than_or_equal | less_than | less_than_or_equal}
+comparison = _{ equals | notequals | greater_than_or_equal | greater_than | less_than_or_equal | less_than }
 equals = { "==" }
 notequals = { "!=" }
 greater_than = { ">" }
-greater_than_or_equal = { "@gte" }
+greater_than_or_equal = { ">=" }
 less_than = { "<" }
-less_than_or_equal = { "@lte" }
+less_than_or_equal = { "<=" }
 
 rotate_right_expression = { "(" ~ expression ~ "@ROR" ~ number ~ ")" }
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
@@ -40,7 +40,7 @@ ptr_field_expression = {ident ~ "->" ~ ident}
 address_of_expression = {address_of_operator ~ expression}
 expression = { local_field_expression | ptr_field_expression | ttyin | ident | number | arithmetic_expression | comparison_expression | deref_expression | address_of_expression | rotate_right_expression }
 
-pointer_type = { "&<" ~ variable_type ~ ">" }
+pointer_type = { "&" ~ variable_type }
 number_type = {"U8" | "UPTR"}
 variable_type = {number_type | pointer_type | ident}
 variable_decl = {ident ~ ":" ~ variable_type}

@@ -1,6 +1,6 @@
 FUNCTION divide(x:U8, y:U8) -> U8 {
     ASSIGN q:U8 := 0;
-    WHILE (x @gte y) {
+    WHILE (x >= y) {
         ASSIGN q := (q + 1);
         ASSIGN x := (x - y);
     }
