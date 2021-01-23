@@ -1,13 +1,13 @@
-FUNCTION divide(x:U8,y:U8) {
-    IF (x < y) {
-        RETURN 0;
-    } ELSE {
-        CALL z:U8 := divide((x-y),y);
-        RETURN (1 + z);
+FUNCTION divide(x:U8, y:U8) -> U8 {
+    ASSIGN q:U8 := 0;
+    WHILE (x @gte y) {
+        ASSIGN q := (q + 1);
+        ASSIGN x := (x - y);
     }
+    RETURN q;
 }
 
-FUNCTION printHexDigit(a) {
+FUNCTION printHexDigit(a:U8) {
     IF (a < 10) {
         TTYOUT (a + '0');
     } ELSE {
@@ -17,17 +17,18 @@ FUNCTION printHexDigit(a) {
     }
 }
 
-FUNCTION printHex(a) {
+FUNCTION printHex(a:U8) {
     IF (a > 15) {
         CALL b := divide(a,16);
-        CALL c := printHex(b);
+        CALL printHex(b);
         ASSIGN a := (a - (b*16));
     }
 
-    CALL b := printHexDigit(a);
+    CALL printHexDigit(a);
 }
 
-FUNCTION main(a,b,c) {
-    CALL b := printHex(a);
+FUNCTION main(a:U8, b:U8) -> U8 {
+    CALL printHex(a);
     TTYOUT 10;
+    RETURN 0;
 }

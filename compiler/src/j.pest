@@ -55,8 +55,9 @@ assign_target = { local_field_expression | ptr_field_expression | assign_deref |
 assign = { "ASSIGN" ~ assign_target ~ ":=" ~ expression ~ ";" }
 ttyout = { "TTYOUT" ~ expression ~ ";" }
 return_statement = { "RETURN" ~ expression ~ ";" }
+call_return_value = {ident ~ (":" ~ variable_type)? ~ ":="}
 
-call = { "CALL" ~ variable_decl ~ ":=" ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
+call = { "CALL" ~ call_return_value? ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
 statement = { assign | if_else_statement | ttyout | return_statement | call | while_loop | declare_statement}
 body = { (statement)+ }

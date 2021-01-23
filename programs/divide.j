@@ -1,4 +1,4 @@
-FUNCTION divide(x:U8, y:U8) {
+FUNCTION divide(x:U8, y:U8) -> U8 {
     ASSIGN q:U8 := 0;
     WHILE (x @gte y) {
         ASSIGN q := (q + 1);
@@ -7,7 +7,7 @@ FUNCTION divide(x:U8, y:U8) {
     RETURN q;
 }
 
-FUNCTION main(a:U8, b:U8) {
+FUNCTION main(a:U8, b:U8) -> U8 {
     CALL c:U8 := divide(a,b);
     RETURN c;
 }

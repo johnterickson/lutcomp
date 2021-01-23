@@ -38,8 +38,8 @@ const RAM_MAX: usize = RAM_MIN + RAM_SIZE - 1;
 pub struct Computer<'a> {
     rom: Vec<u8>,
     ram: Vec<u8>,
-    tty_in: VecDeque<u8>,
-    tty_out: VecDeque<u8>,
+    pub tty_in: VecDeque<u8>,
+    pub tty_out: VecDeque<u8>,
     alu_lut: &'a [u8],
     ucode_rom: &'a [(u8, &'static str, u32)],
     regs: [u8; 4],
