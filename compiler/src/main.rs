@@ -243,10 +243,68 @@ enum Expression {
     PtrFieldDeref(String,String),
     AddressOf(Box<Expression>),
     Index(String,Box<Expression>),
-    Cast{old_type: Type, new_type: Type, value:Box<Expression>},
+    Cast{old_type: Option<Type>, new_type: Type, value:Box<Expression>},
+    Optimized{original: Box<Expression>, optimized: Box<Expression>},
 }
 
 impl Expression {
+    fn try_get_const(&self) -> Option<i64> {
+        match self {
+            Expression::Number(_, val) => Some(*val),
+            Expression::Cast{old_type:_, new_type:_, value} => value.try_get_const(),
+            _ => None
+        }
+    }
+
+    fn optimize(&mut self, ctxt: &ProgramContext) -> bool {
+        dbg!(&self);
+         let (optimized, new_self) = match self {
+            Expression::Arithmetic(op, left, right) => {
+                let inner = left.optimize(ctxt) || right.optimize(ctxt);
+                if inner {
+                    (true, None)
+                } else {
+                    let (left_val, right_val) = (left.try_get_const(), right.try_get_const());
+                    match (op, left_val, right_val) {
+                        (ArithmeticOperator::Add, Some(0), _) => {
+                            (true, Some((*right).clone()))
+                        }
+                        (ArithmeticOperator::Add, _, Some(0)) => {
+                            (true, Some((*left).clone()))
+                        }
+                        _ => (false, None)
+                    }
+                }
+            }
+            Expression::Comparison(_op, left, right) => {
+                (left.optimize(ctxt) || right.optimize(ctxt), None)
+
+            }
+            Expression::Deref(inner) => {
+                (inner.optimize(ctxt), None)
+            }
+            Expression::AddressOf(inner) => {
+                (inner.optimize(ctxt), None)
+            }
+            Expression::Index(_, index_exp) => {
+                (index_exp.optimize(ctxt), None)
+            }
+            Expression::Cast{old_type:_, new_type:_, value} => {
+                (value.optimize(ctxt), None)
+            }
+            Expression::Optimized{original:_, optimized} => {
+                (optimized.optimize(ctxt), None)
+            }
+            _ => (false, None)
+        };
+
+        if let Some(new_self) = new_self {
+            *self = Expression::Optimized{original: Box::new(self.clone()), optimized: new_self};
+        }
+
+        optimized
+    }
+
     fn parse(pair: pest::iterators::Pair<Rule>) -> Expression {
         assert_eq!(Rule::expression, pair.as_rule());
         let pair = pair.into_inner().next().unwrap();
@@ -590,6 +648,9 @@ impl Expression {
         dbg!(&self);
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
         let result = match self {
+            Expression::Optimized{original:_, optimized} => {
+                optimized.emit(ctxt)
+            }
             Expression::AddressOf(inner) => {
                 let inner_type = inner.emit_address_to_reg0(ctxt);
 
@@ -607,21 +668,23 @@ impl Expression {
             }
             Expression::Cast{old_type, new_type, value} => {
                 let emitted_type = value.emit(ctxt);
-                assert_eq!(old_type, &emitted_type);
+                if let Some(old_type) = old_type {
+                    assert_eq!(old_type, &emitted_type);
+                }
                 new_type.clone()
             }
             Expression::Ident(local_name) => {
                 self.emit_ref(ctxt, &LogicalReference::Local, local_name)
             },
             Expression::Index(local_name, index) => {
-                let entry_type = {
+                let (local_is_ptr, entry_type) = {
                     let local = ctxt.find_local(&local_name);
                     match &local.var_type {
                         Type::Ptr(value_type) => {
-                            value_type.as_ref().clone()
+                            (true, value_type.as_ref().clone())
                         },
                         Type::Array(entry_type, _count) => {
-                            entry_type.as_ref().clone()
+                            (false, entry_type.as_ref().clone())
                         }
                         t => panic!(format!("Expected a Ptr, but found {:?}", &t))
                     }
@@ -637,7 +700,17 @@ impl Expression {
                         (*index).clone()))
                 };
 
-                let array_start_address = Box::new(Expression::AddressOf(Box::new(Expression::Ident(local_name.clone()))));
+                let array_start_address = if local_is_ptr {
+                    Box::new(Expression::Ident(local_name.clone()))
+                } else {
+                    Box::new(Expression::AddressOf(Box::new(Expression::Ident(local_name.clone()))))
+                };
+
+                let array_start_address = Box::new(Expression::Cast{
+                    old_type: None, //TODO
+                    new_type: Type::Number(NumberType::UPTR),
+                    value: array_start_address
+                });
                 let ptr = Expression::Arithmetic(
                     ArithmeticOperator::Add,
                     array_start_address,
@@ -645,10 +718,12 @@ impl Expression {
                 );
 
                 let cast = Expression::Cast{
-                    old_type: Type::Number(NumberType::UPTR),
+                    old_type: Some(Type::Number(NumberType::UPTR)),
                     new_type: Type::Ptr(Box::new(entry_type)), 
                     value: Box::new(ptr)};
-                let deref = Expression::Deref(Box::new(cast));
+                let mut deref = Expression::Deref(Box::new(cast));
+
+                deref.optimize(ctxt.program);
 
                 deref.emit(ctxt)
             },
@@ -760,14 +835,12 @@ impl Expression {
                 let left_type = left.emit(ctxt);
                 let left_type = match left_type {
                     Type::Number(nt) => nt,
-                    Type::Ptr(_) => NumberType::UPTR,
                     _ => panic!("can't do math on {:?}", left_type),
                 };
 
                 let right_type = right.emit(ctxt);
                 let right_type = match right_type {
                     Type::Number(nt) => nt,
-                    Type::Ptr(_) => NumberType::UPTR,
                     _ => panic!("can't do math on {:?}", right_type),
                 };
 
@@ -1071,6 +1144,19 @@ enum Statement {
 }
 
 impl Statement {
+    fn optimize(&mut self, ctxt: &ProgramContext) {
+        match self {
+            Statement::Assign { target, var_type:_, value} => {
+                while target.optimize(ctxt) {}
+                while value.optimize(ctxt) {}
+            }
+            Statement::Return {value} => {
+                while value.optimize(ctxt) {}
+            }
+            _ => {}
+        }
+    }
+
     fn parse(pair: pest::iterators::Pair<Rule>) -> Statement {
         assert_eq!(Rule::statement, pair.as_rule());
         let pair = pair.into_inner().next().unwrap();
@@ -1675,7 +1761,7 @@ impl Function {
             return_or_body
         };
 
-        let body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
+        let mut body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
 
         // find locals
         let mut locals = BTreeMap::new();
@@ -1756,6 +1842,10 @@ impl Function {
 
         for s in &body {
             walk_decls(ctxt, s, &mut validate_no_mismatch);
+        }
+
+        for s in body.iter_mut() {
+            s.optimize(ctxt);
         }
 
     /*
@@ -2442,11 +2532,38 @@ mod tests {
     }
 
     #[test]
-    fn array() {
+    fn local_array() {
         test_inputs(
             include_str!("../../programs/local_array.j"),
             &[
                 (0x0,0x0,0x0),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0xFF,0x0),
+                ]);
+    }
+
+    #[test]
+    fn array_to_ptr() {
+        test_inputs(
+            include_str!("../../programs/array_to_ptr.j"),
+            &[
+                (0x0,0x0,0x0),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0xFF,0x0),
+                ]);
+    }
+
+    #[test]
+    fn array_loop() {
+        test_inputs(
+            include_str!("../../programs/array_loop.j"),
+            &[
+                (0x0,0x0,0x0),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0xFF,0x0),
                 ]);
     }
 }
