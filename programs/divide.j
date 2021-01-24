@@ -1,8 +1,8 @@
 FUNCTION divide(x:U8, y:U8) -> U8 {
-    ASSIGN q:U8 := 0;
+    q:U8 := 0;
     WHILE (x >= y) {
-        ASSIGN q := (q + 1);
-        ASSIGN x := (x - y);
+        q := (q + 1);
+        x := (x - y);
     }
     RETURN q;
 }

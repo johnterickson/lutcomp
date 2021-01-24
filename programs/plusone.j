@@ -4,6 +4,6 @@ FUNCTION main() -> U8 {
 }
 
 FUNCTION plusone(x:U8) -> U8 {
-    ASSIGN sum:U8 := (x + 1);
+    sum:U8 := (x + 1);
     RETURN sum;
 }

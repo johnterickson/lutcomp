@@ -7,10 +7,10 @@ FUNCTION fac(x:U8) -> U8 {
     IF (x == 0) {
         RETURN 1;
     }
-    ASSIGN product:U8 := x;
+    product:U8 := x;
     WHILE (x > 2) {
-        ASSIGN x := (x - 1);
-        ASSIGN product := (product * x);
+        x := (x - 1);
+        product := (product * x);
     }
     RETURN product;
 }
