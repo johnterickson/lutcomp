@@ -6,9 +6,9 @@ alpha = _{ lower | 'A'..'Z' }
 digit = { '0'..'9' }
 ident_char = _{alpha | digit | "_" }
 decimal_number = { digit+ }
-hex_number = { "@" ~ hex_digit+ }
-number = { decimal_number | hex_number | char_literal }
-hex_digit = { digit | 'a'..'f' | 'A'..'F' }
+hex_number = { "0x" ~ hex_digit+ }
+number = { hex_number | decimal_number | char_literal }
+hex_digit = _{ digit | 'a'..'f' | 'A'..'F' }
 ident = { lower ~ ident_char* }
 ttyin = { "ttyin" }
 char_literal_value = { ANY }
@@ -31,18 +31,24 @@ greater_than_or_equal = { ">=" }
 less_than = { "<" }
 less_than_or_equal = { "<=" }
 
-rotate_right_expression = { "(" ~ expression ~ "@ROR" ~ number ~ ")" }
+rotate_right_expression = { "(" ~ expression ~ ">>>" ~ number ~ ")" }
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
 deref_expression = { deref_operator ~ expression }
 local_field_expression = {ident ~ "." ~ ident}
 ptr_field_expression = {ident ~ "->" ~ ident}
 address_of_expression = {address_of_operator ~ expression}
-expression = { local_field_expression | ptr_field_expression | ttyin | ident | number | arithmetic_expression | comparison_expression | deref_expression | address_of_expression | rotate_right_expression }
+index_expression = {ident ~ "[" ~ expression ~ "]" }
+expression = { 
+    index_expression | local_field_expression | ptr_field_expression | 
+    ttyin | ident | number | arithmetic_expression | rotate_right_expression | 
+    comparison_expression | deref_expression | address_of_expression
+    }
 
 pointer_type = { "&" ~ variable_type }
 number_type = {"U8" | "UPTR"}
-variable_type = {number_type | pointer_type | ident}
+array_type = { number_type ~ "[" ~ number ~ "]" }
+variable_type = {array_type | number_type | pointer_type | ident}
 variable_decl = {ident ~ ":" ~ variable_type}
 
 else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
@@ -51,7 +57,7 @@ declare_statement = {"DECLARE" ~ variable_decl ~ ";"}
 while_loop = { "WHILE" ~ expression ~ "{" ~ statement* ~ "}" }
 assign_declare = { variable_decl | ident }
 assign_deref = { deref_operator ~ ident }
-assign_target = { local_field_expression | ptr_field_expression | assign_deref | assign_declare }
+assign_target = { index_expression | local_field_expression | ptr_field_expression | assign_deref | assign_declare }
 assign = { "ASSIGN" ~ assign_target ~ ":=" ~ expression ~ ";" }
 ttyout = { "TTYOUT" ~ expression ~ ";" }
 return_statement = { "RETURN" ~ expression ~ ";" }

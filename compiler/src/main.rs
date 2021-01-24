@@ -19,7 +19,7 @@ use sim::*;
 #[grammar = "j.pest"]
 struct ProgramParser;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum ArithmeticOperator {
     Add,
     Subtract,
@@ -39,7 +39,7 @@ impl ArithmeticOperator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum ComparisonOperator {
     Equals,
     NotEquals,
@@ -127,6 +127,7 @@ enum Type {
     Number(NumberType),
     Ptr(Box<Type>),
     Struct(String),
+    Array(Box<Type>,u32),
 }
 
 impl Type {
@@ -146,7 +147,20 @@ impl Type {
             Rule::ident => {
                 Type::Struct(variable.as_str().to_owned())
             }
-            r => panic!(format!("unexpected {:?}", r))
+            Rule::array_type => {
+                assert!(is_decl);
+                let mut tokens = variable.into_inner();
+                let val_type = NumberType::parse(tokens.next().unwrap().as_str().trim());
+                let count: u32 = match Expression::parse_inner(tokens.next().unwrap()) {
+                    Expression::Number(_, v) => {
+                        v.try_into().unwrap()
+                    }
+                    e => panic!(format!("Expected array size but found {:?}", &e))
+                };
+                assert!(tokens.next().is_none());
+                Type::Array(Box::new(Type::Number(val_type)), count)
+            }
+            _ => panic!(format!("unexpected {:?}", variable))
         }
     }
 }
@@ -161,6 +175,7 @@ impl ByteSize for Type {
             Type::Number(nt) => nt.byte_count(ctxt),
             Type::Ptr(_) => 4,
             Type::Struct(struct_name) => ctxt.types[struct_name].byte_count(ctxt),
+            Type::Array(nt, count) => nt.byte_count(ctxt) * count
         }
     }
 }
@@ -216,7 +231,7 @@ impl<'a> FunctionContext<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Expression {
     Ident(String),
     Number(NumberType, i64),
@@ -227,12 +242,18 @@ enum Expression {
     LocalFieldDeref(String,String),
     PtrFieldDeref(String,String),
     AddressOf(Box<Expression>),
+    Index(String,Box<Expression>),
+    Cast{old_type: Type, new_type: Type, value:Box<Expression>},
 }
 
 impl Expression {
     fn parse(pair: pest::iterators::Pair<Rule>) -> Expression {
         assert_eq!(Rule::expression, pair.as_rule());
         let pair = pair.into_inner().next().unwrap();
+        Expression::parse_inner(pair)
+    }
+
+    fn parse_inner(pair: pest::iterators::Pair<Rule>) -> Expression {
         let rule = pair.as_rule();
         match rule {
             Rule::local_field_expression | Rule::ptr_field_expression => {
@@ -272,7 +293,8 @@ impl Expression {
                                 .expect(&format!("Couldn't parse decimal integer '{}'", number.as_str().trim())))
                     }
                     Rule::hex_number => {
-                        let s = number.as_str().trim().trim_start_matches('@');
+                        let number = number.into_inner();
+                        let s = number.as_str().trim();
                         Expression::Number(
                             NumberType::UPTR,
                             i64::from_str_radix(s, 16)
@@ -313,11 +335,16 @@ impl Expression {
             Rule::ttyin => {
                 Expression::TtyIn()
             },
+            Rule::index_expression => {
+                let mut pairs = pair.into_inner();
+                let ident = pairs.next().unwrap().as_str().trim().to_owned();
+                let index = Expression::parse(pairs.next().unwrap());
+                Expression::Index(ident, Box::new(index))
+            }
             r => {
                 dbg!(r);
                 dbg!(&pair);
                 dbg!(pair.into_inner().as_str());
-                // dbg!(r.into_inner().as_str());
                 unimplemented!();
             }
         }
@@ -326,41 +353,83 @@ impl Expression {
     fn emit_branch(&self, ctxt: &mut FunctionContext, when_true:&str, when_false: &str) {
         if let Expression::Comparison(op, left, right) = self {
             let left_type = left.emit(ctxt);
-            if left_type != Type::Number(NumberType::U8) {
-                unimplemented!();
-            }
             let right_type = right.emit(ctxt);
-            if right_type != Type::Number(NumberType::U8) {
-                unimplemented!();
+
+            let size = match (left_type, right_type, op) {
+                (Type::Number(left_type), Type::Number(right_type), op) => {
+                    match (left_type, right_type, op) {
+                        (NumberType::U8, NumberType::U8, _) => { }
+                        (NumberType::UPTR, NumberType::UPTR, ComparisonOperator::Equals) |
+                        (NumberType::UPTR, NumberType::UPTR, ComparisonOperator::NotEquals) => { },
+                        _ => unimplemented!(),
+                    }
+                    left_type.byte_count(ctxt.program) as u8
+                }
+                _ => unimplemented!()
+            };
+
+            let right_reg = 8;
+            for r in 0..size {
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    resolved: None,
+                    source: format!("{:?}", &self),
+                    args: vec![Value::Register(right_reg + r)]
+                });
+                ctxt.additional_offset -= 1;
             }
 
-            let right_reg = 3;
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::Pop8,
-                resolved: None,
-                source: format!("{:?}", &self),
-                args: vec![Value::Register(right_reg)]
-            });
-            ctxt.additional_offset -= 1;
+            let left_reg = 4;
+            for r in 0..size {
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    resolved: None,
+                    source: format!("{:?}", &self),
+                    args: vec![Value::Register(left_reg + r)]
+                });
+                ctxt.additional_offset -= 1;
+            }
 
-            let left_reg = 2;
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::Pop8,
-                resolved: None,
-                source: format!("{:?}", &self),
-                args: vec![Value::Register(left_reg)]
-            });
-            ctxt.additional_offset -= 1;
-
-            // left in 2; right in 3
             let (cond, uncond, jmp_op) = match op {
                 ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Cmp8,
-                        resolved: None,
-                        source: format!("{:?}", &self),
-                        args: vec![Value::Register(right_reg), Value::Register(left_reg)]
-                    });
+                    if size == 1 {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Cmp8,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(right_reg), Value::Register(left_reg)]
+                        });
+                    } else {
+                        for r in 0..size {
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Invert8,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(right_reg + r)]
+                            });
+                        }
+
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::AddImm32IgnoreCarry,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(right_reg), Value::Constant32(1)]
+                        });
+
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Add32NoCarryIn,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(left_reg)]
+                        });
+
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::OrImm32,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(left_reg), Value::Constant32(0)]
+                        });
+                    }
                     if op == &ComparisonOperator::Equals {
                         (when_true, when_false, Opcode::JzImm)
                     } else {
@@ -461,35 +530,127 @@ impl Expression {
         }
     }
 
-    fn emit_address(&self, ctxt: &mut FunctionContext) -> Type {
-        match self {
+    fn emit_address_to_reg0(&self, ctxt: &mut FunctionContext) -> Type {
+        let t = match self {
             Expression::Ident(local_name) => {
-                let t = LogicalReference::Local.emit_local_address_to_reg0(ctxt, local_name);
+                LogicalReference::Local.emit_local_address_to_reg0(ctxt, local_name)
+            }
+            Expression::Index(local_name, index_exp) => {
+                let index_type = index_exp.emit(ctxt);
+
+                assert_eq!(index_type.byte_count(ctxt.program), 4);
+
+                for r in 0..4 {
+                    ctxt.add_inst(Instruction {
+                        source: format!("popping index off stack {:?}", &self),
+                        opcode: Opcode::Pop8,
+                        args: vec![Value::Register(r)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset -= 1;
+                }
+
+                LogicalReference::ArrayIndex{
+                    index_reg: Register(0),
+                    multiplier: 1
+                }.emit_local_address_to_reg0(ctxt, local_name)
+            },
+            Expression::Deref(inner) => {
+                let inner_type = inner.emit(ctxt);
+
+                for r in 0..4 {
+                    ctxt.add_inst(Instruction {
+                        source: format!("popping address off stack {:?}", &self),
+                        opcode: Opcode::Pop8,
+                        args: vec![Value::Register(r)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset -= 1;
+                }
+
+                inner_type
+            },
+            Expression::LocalFieldDeref(local_name, field_name) => {
+                LogicalReference::LocalField(field_name.to_owned()).emit_local_address_to_reg0(ctxt, local_name)
+            }
+            Expression::PtrFieldDeref(local_name, field_name) => {
+                LogicalReference::DerefField(field_name.to_owned()).emit_local_address_to_reg0(ctxt, local_name)
+            }
+            _ => {
+                panic!(format!("Don't know how to emit address of {:?}", self));
+            }
+        };
+
+        dbg!(&t);
+
+        t
+    }
+
+    fn emit(&self, ctxt: &mut FunctionContext) -> Type {
+        dbg!(&self);
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
+        let result = match self {
+            Expression::AddressOf(inner) => {
+                let inner_type = inner.emit_address_to_reg0(ctxt);
+
                 for r in (0..4).rev() {
                     ctxt.add_inst(Instruction {
-                        source: format!("storing address to stack {:?}", &self),
+                        source: format!("pushing deref result {:?}", &self),
                         opcode: Opcode::Push8,
                         args: vec![Value::Register(r)],
                         resolved: None,
                     });
                     ctxt.additional_offset += 1;
                 }
-                t
-            }
-            _ => {
-                panic!(format!("Don't know how to emit address of {:?}", self));
-            }
-        }
-    }
 
-    fn emit(&self, ctxt: &mut FunctionContext) -> Type {
-        ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
-        let result = match self {
-            Expression::AddressOf(inner) => {
-                inner.emit_address(ctxt)
+                inner_type
+            }
+            Expression::Cast{old_type, new_type, value} => {
+                let emitted_type = value.emit(ctxt);
+                assert_eq!(old_type, &emitted_type);
+                new_type.clone()
             }
             Expression::Ident(local_name) => {
                 self.emit_ref(ctxt, &LogicalReference::Local, local_name)
+            },
+            Expression::Index(local_name, index) => {
+                let entry_type = {
+                    let local = ctxt.find_local(&local_name);
+                    match &local.var_type {
+                        Type::Ptr(value_type) => {
+                            value_type.as_ref().clone()
+                        },
+                        Type::Array(entry_type, _count) => {
+                            entry_type.as_ref().clone()
+                        }
+                        t => panic!(format!("Expected a Ptr, but found {:?}", &t))
+                    }
+                };
+
+                let entry_size = entry_type.byte_count(ctxt.program); 
+                let ptr_offset_expression: Box<Expression> = if entry_size == 1 {
+                    (*index).clone()
+                } else {
+                    Box::new(Expression::Arithmetic(
+                        ArithmeticOperator::Multiply,
+                        Box::new(Expression::Number(NumberType::UPTR, entry_size.into())),
+                        (*index).clone()))
+                };
+
+                let array_start_address = Box::new(Expression::AddressOf(Box::new(Expression::Ident(local_name.clone()))));
+                let ptr = Expression::Arithmetic(
+                    ArithmeticOperator::Add,
+                    array_start_address,
+                    ptr_offset_expression    
+                );
+
+                let cast = Expression::Cast{
+                    old_type: Type::Number(NumberType::UPTR),
+                    new_type: Type::Ptr(Box::new(entry_type)), 
+                    value: Box::new(ptr)};
+                let deref = Expression::Deref(Box::new(cast));
+
+                deref.emit(ctxt)
             },
             Expression::LocalFieldDeref(local_name, field_name) => {
                 let reference = LogicalReference::LocalField(field_name.to_owned());
@@ -500,8 +661,6 @@ impl Expression {
                 self.emit_ref(ctxt, &reference, local_name)
             }
             Expression::Deref(inner) => {
-                // self.emit_ref(ctxt, &Reference::Deref, local_name)
-
                 let ptr_type = inner.emit(ctxt); 
                 let inner_type = match ptr_type {
                     Type::Ptr(inner) => inner.as_ref().clone(),
@@ -602,14 +761,14 @@ impl Expression {
                 let left_type = match left_type {
                     Type::Number(nt) => nt,
                     Type::Ptr(_) => NumberType::UPTR,
-                    Type::Struct(_) => panic!("can't do math on struct {:?}", left_type),
+                    _ => panic!("can't do math on {:?}", left_type),
                 };
 
                 let right_type = right.emit(ctxt);
                 let right_type = match right_type {
                     Type::Number(nt) => nt,
                     Type::Ptr(_) => NumberType::UPTR,
-                    Type::Struct(_) => panic!("can't do math on struct {:?}", right_type),
+                    _ => panic!("can't do math on {:?}", right_type),
                 };
 
                 let result_type = match (left_type, right_type) {
@@ -764,17 +923,27 @@ const RESULT : &'static str = "RESULT";
 const RETURN_ADDRESS : &'static str = "RETURN_ADDRESS";
 const EPILOGUE : &'static str = "EPILOGUE";
 
+#[derive(Debug, Copy, Clone)]
+struct Register(u8);
+
 #[derive(Debug)]
 enum LogicalReference {
     Local,
     Deref,
     LocalField(String),
     DerefField(String),
+    ArrayIndex{multiplier: u32, index_reg: Register},
 }
 
-struct MemoryRefernce {
+enum DerefOffset {
+    None,
+    Constant(u32),
+    Register(u32, Register)
+}
+
+struct MemoryReference {
     local_offset: u32,
-    deref_offset: Option<u32>
+    deref_offset: DerefOffset,
 }
 
 impl LogicalReference {
@@ -784,25 +953,30 @@ impl LogicalReference {
         struct_type.get_field(field_name)
     }
 
-    fn get_deref_offset<'a>(&self, ctxt: &'a FunctionContext, var_type: &'a Type) -> (MemoryRefernce, &'a Type) {
+    fn get_deref_offset<'a>(&self, ctxt: &'a FunctionContext, var_type: &'a Type) -> (MemoryReference, &'a Type) {
         match (self, var_type) {
             (LogicalReference::Deref, Type::Ptr(inner)) => {
-                (MemoryRefernce{local_offset:0, deref_offset: Some(0)}, inner.as_ref())
+                (MemoryReference{local_offset:0, deref_offset: DerefOffset::Constant(0)}, inner.as_ref())
             }
             (LogicalReference::Local, var_type) => {
-                (MemoryRefernce{local_offset:0, deref_offset: None}, var_type)
+                (MemoryReference{local_offset:0, deref_offset: DerefOffset::None}, var_type)
             }
             (LogicalReference::LocalField(field_name), Type::Struct(struct_name)) => {
                 let (field_offset, target_type) = LogicalReference::get_offset_for_field(ctxt, struct_name, field_name);
-                (MemoryRefernce {local_offset:field_offset, deref_offset: None}, target_type)
+                (MemoryReference {local_offset:field_offset, deref_offset: DerefOffset::None}, target_type)
             }
             (LogicalReference::DerefField(field_name), Type::Ptr(inner)) => {
                 if let Type::Struct(struct_name) = inner.as_ref() {
                     let (field_offset, target_type) = LogicalReference::get_offset_for_field(ctxt, struct_name, field_name);
-                    (MemoryRefernce {local_offset:0, deref_offset: Some(field_offset)}, target_type)
+                    (MemoryReference {local_offset:0, deref_offset: DerefOffset::Constant(field_offset)}, target_type)
                 } else {
                     panic!(format!("'{}' is accessed as a struct but it is '{:?}'", field_name, inner));
                 }
+            }
+            (LogicalReference::ArrayIndex{multiplier, index_reg}, Type::Array(num_type, _)) => {
+                assert_eq!(*multiplier, 1);
+                assert_eq!(num_type.as_ref(), &Type::Number(NumberType::U8));
+                (MemoryReference {local_offset:0, deref_offset: DerefOffset::Register(*multiplier, *index_reg)}, num_type.as_ref())
             }
             _ => panic!(format!("Don't know how to reference '{:?}' via '{:?}'", var_type, &self))
         }
@@ -814,11 +988,9 @@ impl LogicalReference {
         let (mem_ref, final_type) = self.get_deref_offset(ctxt, &local.var_type);
         let final_type = final_type.clone();
 
+        dbg!(&final_type);
+
         match local.storage {
-            // Storage::Register(_r) => {
-            //     // ctxt.add_inst(Instruction::LoadReg(r));
-            //     unimplemented!();
-            // },
             Storage::Stack(base_offset) => {
                 let offset = ctxt.get_stack_offset(base_offset) + mem_ref.local_offset;
 
@@ -829,35 +1001,55 @@ impl LogicalReference {
                     resolved: None,
                 });
 
-                if let Some(deref_offset) = mem_ref.deref_offset {
-                    ctxt.add_inst(Instruction {
-                        source: format!("calculating stack address for deref {:?}", &self),
-                        opcode: Opcode::Add32NoCarryIn,
-                        args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(4)],
-                        resolved: None,
-                    });
-                    ctxt.add_inst(Instruction {
-                        source: format!("reading base address from stack {:?}", &self),
-                        opcode: Opcode::Load32,
-                        args: vec![Value::Register(4), Value::Register(0)],
-                        resolved: None,
-                    });
+                match mem_ref.deref_offset {
+                    DerefOffset::Register(multiplier, index_reg) => {
+                        assert_eq!(multiplier, 1);
+                        assert_eq!(index_reg.0, 0);
 
-                    if deref_offset != 0 {
                         ctxt.add_inst(Instruction {
-                            source: format!("offseting pointer for field access {:?}", &self),
-                            opcode: Opcode::AddImm32IgnoreCarry,
-                            args: vec![Value::Register(0), Value::Constant32(deref_offset)],
+                            source: format!("calculating stack address for deref {:?}", &self),
+                            opcode: Opcode::Add32NoCarryIn,
+                            args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(8)],
+                            resolved: None,
+                        });
+                        ctxt.add_inst(Instruction {
+                            source: format!("adding array index {:?}", &self),
+                            opcode: Opcode::Add32NoCarryIn,
+                            args: vec![Value::Register(8), Value::Register(index_reg.0), Value::Register(0)],
                             resolved: None,
                         });
                     }
-                } else {
-                    ctxt.add_inst(Instruction {
-                        source: format!("calculating stack address {:?}", &self),
-                        opcode: Opcode::Add32NoCarryIn,
-                        args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(0)],
-                        resolved: None,
-                    });
+                    DerefOffset::Constant(deref_offset) => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("calculating stack address for deref {:?}", &self),
+                            opcode: Opcode::Add32NoCarryIn,
+                            args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(4)],
+                            resolved: None,
+                        });
+                        ctxt.add_inst(Instruction {
+                            source: format!("reading base address from stack {:?}", &self),
+                            opcode: Opcode::Load32,
+                            args: vec![Value::Register(4), Value::Register(0)],
+                            resolved: None,
+                        });
+
+                        if deref_offset != 0 {
+                            ctxt.add_inst(Instruction {
+                                source: format!("offseting pointer for field access {:?}", &self),
+                                opcode: Opcode::AddImm32IgnoreCarry,
+                                args: vec![Value::Register(0), Value::Constant32(deref_offset)],
+                                resolved: None,
+                            });
+                        }
+                    }
+                    DerefOffset::None => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("calculating stack address {:?}", &self),
+                            opcode: Opcode::Add32NoCarryIn,
+                            args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(0)],
+                            resolved: None,
+                        });
+                    }
                 }
             }
         };
@@ -870,7 +1062,7 @@ impl LogicalReference {
 #[derive(Debug)]
 enum Statement {
     Declare { local: String, var_type: Type },
-    Assign { local: String, target: LogicalReference, var_type: Option<Type>, value: Expression},
+    Assign { target: Expression, var_type: Option<Type>, value: Expression},
     Call { local: Option<String>, var_type: Option<Type>, function: String, parameters: Vec<Expression> },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
@@ -903,7 +1095,7 @@ impl Statement {
                 assert_eq!(Rule::assign_target, target.as_rule());
                 let target = target.into_inner().next().unwrap();
                 let target_rule = target.as_rule();
-                let (name, target, var_type) = match target_rule {
+                let (target, var_type) = match target_rule {
                     Rule::local_field_expression | Rule::ptr_field_expression => {
                         let mut tokens = target.into_inner();
                         let struct_name = tokens.next().unwrap();
@@ -913,45 +1105,57 @@ impl Statement {
                         assert_eq!(field_name.as_rule(), Rule::ident);
                         let field_name = field_name.as_str().trim().to_owned();
                         (
-                            struct_name, 
                             if target_rule == Rule::local_field_expression {
-                                LogicalReference::LocalField(field_name)
+                                Expression::LocalFieldDeref(struct_name, field_name)
                             } else {
-                                LogicalReference::DerefField(field_name)
-                            }, None)
+                                Expression::PtrFieldDeref(struct_name, field_name)
+                            },
+                            None
+                        )
                     },
                     Rule::assign_deref => {
                         let mut tokens = target.into_inner();
                         assert_eq!(tokens.next().unwrap().as_rule(), Rule::deref_operator);
                         let name = tokens.next().unwrap();
                         assert_eq!(name.as_rule(), Rule::ident);
-                        (name.as_str().trim().to_owned(), LogicalReference::Deref, None)
+                        (
+                            Expression::Deref(Box::new(Expression::Ident(name.as_str().trim().to_owned()))),
+                            None
+                        )
                     },
                     Rule::assign_declare => {
                         let mut tokens = target.into_inner();
                         let decl = tokens.next().unwrap();
-                        match decl.as_rule() {
+                        let (name, var_type) = match decl.as_rule() {
                             Rule::variable_decl => {
                                 let mut decl_tokens = decl.into_inner();
                                 let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
                                 let var_type = Type::parse(decl_tokens.next().unwrap(), false);
-                                (var_name, LogicalReference::Local, Some(var_type))
+                                (var_name, Some(var_type))
                             }
                             Rule::ident => {
                                 let var_name = decl.as_str().trim().to_owned();
-                                (var_name, LogicalReference::Local, None)
+                                (var_name, None)
                             }
                             _ => panic!("Unexpected {:?}", &decl)
-                        }
-                        
-                        
+                        };
+                        ( Expression::Ident(name), var_type)
                     },
+                    Rule::index_expression => {
+                        let mut tokens = target.into_inner();
+                        let name = tokens.next().unwrap().as_str().trim().to_owned();
+                        let index_exp = Expression::parse(tokens.next().unwrap());
+                        assert!(tokens.next().is_none());
+                        (
+                            Expression::Index(name, Box::new(index_exp)),
+                            None
+                        )
+                    }
                     _ => panic!("Unexpected {:?}", &target)
                 };
 
                 let value = Expression::parse(pairs.next().unwrap());
                 Statement::Assign { 
-                    local: name,
                     target,
                     var_type,
                     value
@@ -1031,6 +1235,7 @@ impl Statement {
 
     fn emit(&self, ctxt: &mut FunctionContext) -> () {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Begin statement {:?}", self)));
+        dbg!(&self);
         match self {
             Statement::TtyOut{value} => {
                 value.emit(ctxt);
@@ -1050,9 +1255,10 @@ impl Statement {
                 });
             },
             Statement::Declare{local:_, var_type:_} => {}
-            Statement::Assign{local, target, var_type, value} => {
+            Statement::Assign{target, var_type, value} => {
                 let value_type = value.emit(ctxt); // calculate value
-                let ptr_type = target.emit_local_address_to_reg0(ctxt, local);
+
+                let ptr_type = target.emit_address_to_reg0(ctxt);
                 match ptr_type {
                     Type::Ptr(inner) => assert_eq!(&value_type, inner.as_ref()),
                     _ => panic!("expected pointer")
@@ -1478,8 +1684,13 @@ impl Function {
             where F : FnMut(&String, Option<&Type>),
         {
             match s {
-                Statement::Assign{local, target:_, var_type, value:_} => {
-                    visitor(local, var_type.as_ref());
+                Statement::Assign{target, var_type, value:_} => {
+                    match target {
+                        Expression::Ident(name) => {
+                            visitor(name, var_type.as_ref());
+                        }
+                        _ => {}
+                    }
                 }
                 Statement::Declare {local, var_type} => {
                     visitor(local, Some(var_type));
@@ -2227,6 +2438,15 @@ mod tests {
                 (0xF,0x0,"F"),
                 (0x10,0x0,"10"),
                 (0xFF,0x0,"FF"),
+                ]);
+    }
+
+    #[test]
+    fn array() {
+        test_inputs(
+            include_str!("../../programs/local_array.j"),
+            &[
+                (0x0,0x0,0x0),
                 ]);
     }
 }

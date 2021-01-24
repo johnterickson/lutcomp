@@ -407,6 +407,29 @@ mod tests {
         assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
 
+    fn imm32(op: Opcode, reg_value: u32, imm: u32, result: u32) {
+        let reg_index = 3;
+        let mut rom = Vec::new();
+        rom.push(op as u8);
+        rom.push(reg_index);
+        rom.push(((imm >> 00) & 0xFF) as u8);
+        rom.push(((imm >> 08) & 0xFF) as u8);
+        rom.push(((imm >> 16) & 0xFF) as u8);
+        rom.push(((imm >> 24) & 0xFF) as u8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+
+        let reg_addr = 0x80000 + reg_index as u32;
+        *c.mem_word_mut(reg_addr) = u32::to_le_bytes(reg_value);
+
+        while c.step() {}
+
+        assert_eq!(result, u32::from_le_bytes(*c.mem_word_mut(reg_addr)));
+        assert_eq!(c.flags.contains(Flags::CARRY), false);
+        assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
+    }
+
     fn run(flags: Flags, op: Opcode, args: &[(u8, u8)]) -> Computer {
         let mut rom = Vec::new();
         rom.push(op as u8);
@@ -507,6 +530,16 @@ mod tests {
         while c.step() {}
 
         assert_eq!(0x89abcdef, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
+    }
+
+    #[test]
+    fn orimm32() {
+        let values = [0,1,0xFF,0xAABBCCDD];
+        for a in &values {
+            for b in &values {
+                imm32(Opcode::OrImm32, *a, *b, a | b);
+            }
+        }
     }
 
     #[test]
@@ -679,18 +712,17 @@ mod tests {
         assert_eq!(0xBB, *c.mem_byte_mut(0x80002));
     }
 
-    #[test]
-    fn load32() {
+    fn load32_test(addr_reg: u8, dest_reg: u8) {
         let mut rom = Vec::new();
         rom.push(Opcode::LoadImm32 as u8);
-        rom.push(4);
+        rom.push(addr_reg);
         rom.push(0x34);
         rom.push(0x12);
         rom.push(0x08);
         rom.push(0x00);
         rom.push(Opcode::Load32 as u8);
-        rom.push(4);
-        rom.push(8);
+        rom.push(addr_reg);
+        rom.push(dest_reg);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
@@ -700,7 +732,13 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(0xDEADBEEF, u32::from_le_bytes(*c.mem_word_mut(0x80008)));
+        assert_eq!(0xDEADBEEF, u32::from_le_bytes(*c.mem_word_mut(0x80000 + dest_reg as u32)));
+    }
+
+    #[test]
+    fn load32() {
+        load32_test(4, 8);
+        load32_test(4, 4);
     }
 
     #[test]
@@ -942,8 +980,10 @@ mod tests {
     fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
         add32_tester(carry_in, in1, in2, sum, carry_out);
         add32_tester(carry_in, in2, in1, sum, carry_out);
-        add32nocarryin_tester(carry_in, in1, in2);
-        add32nocarryin_tester(carry_in, in2, in1);
+        add32nocarryin_tester(carry_in, in1, in2, 0, 4, 8);
+        add32nocarryin_tester(carry_in, in2, in1, 0, 4, 8);
+        add32nocarryin_tester(carry_in, in1, in2, 0, 4, 0); //re-use reg1
+        add32nocarryin_tester(carry_in, in1, in2, 0, 4, 4); //re-use reg2
         addimm32nocarry_tester(carry_in, in1, in2);
         addimm32nocarry_tester(carry_in, in2, in1);
     }
@@ -977,7 +1017,7 @@ mod tests {
         assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
     }
 
-    fn add32nocarryin_tester(carry_in: bool, in1: u32, in2: u32) {
+    fn add32nocarryin_tester(carry_in: bool, in1: u32, in2: u32, reg1: u8, reg2: u8, reg_sum: u8) {
         let sum = in1.wrapping_add(in2);
         println!(
             "add32nocarryin_tester test case {:08x} + {:08x} -> {:08x}",
@@ -987,15 +1027,19 @@ mod tests {
         let mut rom = Vec::new();
 
         rom.push(Opcode::Add32NoCarryIn as u8);
-        rom.push(0);
-        rom.push(4);
-        rom.push(8);
+        rom.push(reg1);
+        rom.push(reg2);
+        rom.push(reg_sum);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
 
-        c.mem_word_mut(0x80000).copy_from_slice(&in1.to_le_bytes());
-        c.mem_word_mut(0x80004).copy_from_slice(&in2.to_le_bytes());
+        let reg1_addr = 0x80000 + reg1 as u32;
+        let reg2_addr = 0x80000 + reg2 as u32;
+        let reg_sum_addr = 0x80000 + reg_sum as u32;
+
+        c.mem_word_mut(reg1_addr).copy_from_slice(&in1.to_le_bytes());
+        c.mem_word_mut(reg2_addr).copy_from_slice(&in2.to_le_bytes());
         
         if carry_in {
             c.flags |= Flags::CARRY;
@@ -1003,9 +1047,13 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(in1, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
-        assert_eq!(in2, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
-        assert_eq!(sum, u32::from_le_bytes(*c.mem_word_mut(0x80008)));
+        if reg1 != reg_sum {
+            assert_eq!(in1, u32::from_le_bytes(*c.mem_word_mut(reg1_addr)));
+        }
+        if reg2 != reg_sum {
+            assert_eq!(in2, u32::from_le_bytes(*c.mem_word_mut(reg2_addr)));
+        }
+        assert_eq!(sum, u32::from_le_bytes(*c.mem_word_mut(reg_sum_addr)));
     }
 
     fn addimm32nocarry_tester(carry_in: bool, in1: u32, in2: u32) {
