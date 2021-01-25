@@ -9,11 +9,11 @@ fn divide(x:U8, y:U8) -> U8 {
 
 fn printHexDigit(a:U8) {
     if (a < 10) {
-        TTYOUT (a + '0');
+        ttyout((a + '0'));
     } else {
         a := (a - 10);
         a := (a + 'A');
-        TTYOUT a;
+        ttyout(a);
     }
 }
 
@@ -29,6 +29,6 @@ fn printHex(a:U8) {
 
 fn main(a:U8, b:U8) -> U8 {
     printHex(a);
-    TTYOUT 10;
+    ttyout(10);
     return 0;
 }

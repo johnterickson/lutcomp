@@ -59,7 +59,7 @@ assign_declare = { variable_decl | ident }
 assign_deref = { deref_operator ~ ident }
 assign_target = { index_expression | local_field_expression | ptr_field_expression | assign_deref | assign_declare }
 assign = { assign_target ~ ":=" ~ expression ~ ";" }
-ttyout = { "TTYOUT" ~ expression ~ ";" }
+ttyout = { "ttyout" ~ "(" ~ expression ~ ")" ~ ";" }
 return_statement = { "return" ~ expression ~ ";" }
 call_return_value = {ident ~ (":" ~ variable_type)? ~ ":="}
 
