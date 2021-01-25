@@ -61,17 +61,6 @@ impl ComparisonOperator {
             op => panic!(format!("Unknown op: {}", op)),
         }
     }
-
-    // fn invert(&self) -> ComparisonOperator {
-    //     match self {
-    //         ComparisonOperator::Equals => ComparisonOperator::NotEquals,
-    //         ComparisonOperator::NotEquals => ComparisonOperator::Equals,
-    //         ComparisonOperator::GreaterThan => ComparisonOperator::LessThanOrEqual,
-    //         ComparisonOperator::GreaterThanOrEqual => ComparisonOperator::LessThan,
-    //         ComparisonOperator::LessThan => ComparisonOperator::GreaterThanOrEqual,
-    //         ComparisonOperator::LessThanOrEqual => ComparisonOperator::GreaterThan,
-    //     }
-    // }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -83,7 +72,7 @@ enum NumberType {
 impl NumberType {
     fn parse(s: &str) -> NumberType {
         match  s {
-            "u8" => NumberType::U8,
+            "u8" | "char" => NumberType::U8,
             "usize" => NumberType::USIZE,
             other => panic!(format!("unknown type {}", other)),
         }
@@ -124,6 +113,7 @@ impl ByteSize for StructDefinition {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Type {
+    Void,
     Number(NumberType),
     Ptr(Box<Type>),
     Struct(String),
@@ -172,6 +162,7 @@ trait ByteSize {
 impl ByteSize for Type {
     fn byte_count(&self, ctxt: &ProgramContext ) -> u32 {
         match self {
+            Type::Void => panic!(),
             Type::Number(nt) => nt.byte_count(ctxt),
             Type::Ptr(_) => 4,
             Type::Struct(struct_name) => ctxt.types.get(struct_name)
@@ -234,6 +225,138 @@ impl<'a> FunctionContext<'a> {
 }
 
 #[derive(Debug, Clone)]
+struct Call {
+    function: String, 
+    parameters: Vec<Expression>,
+}
+
+impl Call {
+    fn parse(pair: pest::iterators::Pair<Rule>) -> Call {
+        assert_eq!(pair.as_rule(), Rule::call_expression);
+
+        let mut tokens = pair.into_inner();
+        let token = tokens.next().unwrap();
+        assert_eq!(Rule::ident, token.as_rule());
+        let function = token.as_str().to_owned();
+
+        let mut parameters = Vec::new();
+        while let Some(arg) = tokens.next() {
+            parameters.push(Expression::parse(arg));
+        }
+
+        Call{function, parameters}
+    }
+
+    fn emit(&self, ctxt: &mut FunctionContext) -> Type {
+        let f = ctxt.program.functions
+            .get(&self.function)
+            .expect(&format!("could not find function '{}'", &self.function));
+
+        assert_eq!(f.args.len(), self.parameters.len());
+
+        if f.return_type != Type::Void {
+            // put 0xCC in for RESULT
+            ctxt.add_inst(Instruction {
+                opcode: Opcode::LoadImm8,
+                source: format!("{:?} placeholder value for RESULT", &self),
+                args: vec![Value::Register(0), Value::Constant8(0xCC)],
+                resolved: None,
+            });
+            for _ in 0..4 {
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Push8,
+                    source: format!("{:?} placeholder value for RESULT", &self),
+                    args: vec![Value::Register(0)],
+                    resolved: None,
+                });
+                ctxt.additional_offset += 1;
+            }
+        }
+        
+        for (i,p) in self.parameters.iter().enumerate() {
+            let param_type = p.emit(ctxt);
+            assert_eq!(f.args[i].1, param_type);
+            match param_type.byte_count(ctxt.program) {
+                4 => {}
+                1 => {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Pop8,
+                        source: format!("{:?} padding for arg{}", &self, i),
+                        args: vec![Value::Register(4)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset -= 1;
+
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::LoadImm8,
+                        source: format!("{:?} padding for arg{}", &self, i),
+                        args: vec![Value::Register(0), Value::Constant8(0xCC)],
+                        resolved: None,
+                    });
+                    for b in 1..4 {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Push8,
+                            source: format!("{:?} padding byte {} for arg{}", &self, b, i),
+                            args: vec![Value::Register(0)],
+                            resolved: None,
+                        });
+                        ctxt.additional_offset += 1;
+                    }
+
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Push8,
+                        source: format!("{:?} padded byte for arg{}", &self, i),
+                        args: vec![Value::Register(4)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset += 1;
+                }
+                _ => panic!()
+            };
+        }
+
+        // store return address
+        ctxt.add_inst(Instruction {
+            opcode: Opcode::AddImm32IgnoreCarry,
+            source: format!("{:?} compute return address", &self),
+            args: vec![Value::Register(REG_SP), Value::Constant32((-4i32) as u32)],
+            resolved: None,
+        });
+        ctxt.add_inst(Instruction {
+            opcode: Opcode::StoreImm32,
+            source: format!("{:?} store return address", &self),
+            args: vec![Value::Register(REG_SP), Value::PcOffset(4+6)],
+            resolved: None,
+        });
+        ctxt.additional_offset += 4;
+
+        // call
+        ctxt.add_inst(Instruction {
+            opcode: Opcode::JmpImm,
+            source: format!("{:?} call {}", &self, &self.function),
+            args: vec![Value::Label24(format!(":{}", &self.function))],
+            resolved: None,
+        });
+
+        let parameters_bytes = self.parameters.len() as u32 * 4;
+
+        // discard paramters and padding and return address
+        ctxt.add_inst(Instruction {
+            opcode: Opcode::AddImm32IgnoreCarry,
+            source: format!("{:?} clean up stack", &self),
+            args: vec![Value::Register(REG_SP), Value::Constant32(parameters_bytes + 4)],
+            resolved: None,
+        });
+        ctxt.additional_offset -= parameters_bytes + 4;
+
+
+        // result is now at the top of the stack
+
+        f.return_type.clone()
+    }
+}
+
+#[derive(Debug, Clone)]
 enum Expression {
     Ident(String),
     Number(NumberType, i64),
@@ -246,6 +369,7 @@ enum Expression {
     AddressOf(Box<Expression>),
     Index(String,Box<Expression>),
     Cast{old_type: Option<Type>, new_type: Type, value:Box<Expression>},
+    Call(Call),
     Optimized{original: Box<Expression>, optimized: Box<Expression>},
 }
 
@@ -401,6 +525,9 @@ impl Expression {
                 let index = Expression::parse(pairs.next().unwrap());
                 Expression::Index(ident, Box::new(index))
             }
+            Rule::call_expression => {
+                Expression::Call(Call::parse(pair))
+            }
             r => {
                 dbg!(r);
                 dbg!(&pair);
@@ -409,6 +536,7 @@ impl Expression {
             }
         }
     }
+
 
     fn emit_branch(&self, ctxt: &mut FunctionContext, when_true:&str, when_false: &str) {
         if let Expression::Comparison(op, left, right) = self {
@@ -650,6 +778,9 @@ impl Expression {
         dbg!(&self);
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
         let result = match self {
+            Expression::Call(args) => {
+                args.emit(ctxt).clone()
+            }
             Expression::Optimized{original:_, optimized} => {
                 optimized.emit(ctxt)
             }
@@ -833,27 +964,34 @@ impl Expression {
             Expression::Arithmetic(op, left, right) => {
                 
                 // left in 4..8; right in 8..C, result in 0 (&1)
-
-                let left_type = left.emit(ctxt);
-                let left_type = match left_type {
-                    Type::Number(nt) => nt,
-                    _ => panic!("can't do math on {:?}", left_type),
+                let left_emit_type = left.emit(ctxt);
+                let (left_math_type, left_result_type) = match left_emit_type {
+                    Type::Number(nt) => (nt, None),
+                    Type::Ptr(_) => (NumberType::USIZE, Some(left_emit_type)),
+                    _ => panic!("can't do math on {:?}", left_emit_type),
                 };
 
-                let right_type = right.emit(ctxt);
-                let right_type = match right_type {
-                    Type::Number(nt) => nt,
-                    _ => panic!("can't do math on {:?}", right_type),
+                let right_emit_type = right.emit(ctxt);
+                let (right_math_type, right_result_type) = match right_emit_type {
+                    Type::Number(nt) => (nt, None),
+                    Type::Ptr(_) => (NumberType::USIZE, Some(right_emit_type)),
+                    _ => panic!("can't do math on {:?}", right_emit_type),
                 };
 
-                let result_type = match (left_type, right_type) {
+                let op_math_type = match (left_math_type, right_math_type) {
                     (NumberType::U8, NumberType::U8) => NumberType::U8,
                     (NumberType::USIZE, _) => NumberType::USIZE,
                     (_, NumberType::USIZE) => NumberType::USIZE,
                 };
 
+                let final_result_type = left_result_type
+                    .or(right_result_type)
+                    .or(Some(Type::Number(op_math_type)))
+                    .unwrap();
+
+
                 let right_reg: u8 = 8;
-                for i in 0..(right_type.byte_count(ctxt.program)) {
+                for i in 0..(right_math_type.byte_count(ctxt.program)) {
                     let r = (right_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Pop8,
@@ -864,7 +1002,7 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                for i in right_type.byte_count(ctxt.program)..result_type.byte_count(ctxt.program) {
+                for i in right_math_type.byte_count(ctxt.program)..op_math_type.byte_count(ctxt.program) {
                     let r = (right_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         source: format!("zero ext right {:?}", &self),
@@ -875,7 +1013,7 @@ impl Expression {
                 }
 
                 let left_reg: u8 = 4;
-                for i in 0..(left_type.byte_count(ctxt.program)) {
+                for i in 0..(left_math_type.byte_count(ctxt.program)) {
                     let r = (left_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Pop8,
@@ -886,7 +1024,7 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                for i in left_type.byte_count(ctxt.program)..result_type.byte_count(ctxt.program) {
+                for i in left_math_type.byte_count(ctxt.program)..op_math_type.byte_count(ctxt.program) {
                     let r = (left_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         source: format!("zero ext left {:?}", &self),
@@ -900,7 +1038,7 @@ impl Expression {
 
                 match op {
                     ArithmeticOperator::Add => {
-                        match result_type {
+                        match op_math_type {
                             NumberType::U8 => {
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Add8NoCarry,
@@ -920,7 +1058,7 @@ impl Expression {
                         }
                     },
                     ArithmeticOperator::Or => {
-                        match result_type {
+                        match op_math_type {
                             NumberType::U8 => {
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Or8,
@@ -933,7 +1071,7 @@ impl Expression {
                         }
                     },
                     ArithmeticOperator::Multiply => {
-                        match result_type {
+                        match op_math_type {
                             NumberType::U8 => {
                                 assert_eq!(0, result_reg);
                                 ctxt.add_inst(Instruction {
@@ -953,7 +1091,7 @@ impl Expression {
                         }
                     },
                     ArithmeticOperator::Subtract => {
-                        match result_type {
+                        match op_math_type {
                             NumberType::U8 => {
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Negate8,
@@ -973,7 +1111,7 @@ impl Expression {
                     },
                 }
 
-                for i in (0..result_type.byte_count(ctxt.program)).rev() {
+                for i in (0..op_math_type.byte_count(ctxt.program)).rev() {
                     let r = (result_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Push8,
@@ -984,7 +1122,7 @@ impl Expression {
                     ctxt.additional_offset += 1;
                 }
 
-                Type::Number(result_type)
+                final_result_type
             },
             Expression::Comparison(_,_,_) => panic!("cannot evaluate comparison expression.")
         };
@@ -1137,7 +1275,7 @@ impl LogicalReference {
 enum Statement {
     Declare { local: String, var_type: Type },
     Assign { target: Expression, var_type: Option<Type>, value: Expression},
-    Call { local: Option<String>, var_type: Option<Type>, function: String, parameters: Vec<Expression> },
+    Call { local: Option<String>, var_type: Option<Type>, call: Call },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
@@ -1249,6 +1387,7 @@ impl Statement {
                 }
             },
             Rule::call => {
+                dbg!(&pair);
                 let mut pairs = pair.into_inner();
                 let mut token = pairs.next().unwrap();
                 let (var_name, var_type) = match token.as_rule() {
@@ -1265,20 +1404,15 @@ impl Statement {
 
                         (Some(var_name), var_type)
                     }
-                    Rule::ident => {
+                    Rule::call_expression => {
                         (None, None)
                     }
                     _ => panic!(format!("Unexpected {:?}", &token))
                 };
 
-                let function = token.as_str().to_owned();
+                let call = Call::parse(token);
 
-                let mut parameters = Vec::new();
-                while let Some(arg) = pairs.next() {
-                    parameters.push(Expression::parse(arg));
-                }
-
-                Statement::Call { local:var_name, var_type, function, parameters }
+                Statement::Call { local:var_name, var_type, call }
             },
             Rule::if_else_statement => {
                 let mut pairs = pair.into_inner();
@@ -1469,140 +1603,12 @@ impl Statement {
                     resolved: None                    
                 });
             },
-            Statement::Call{ local, var_type, function, parameters} => { 
+            Statement::Call{ local, var_type, call } => { 
 
-                let f = ctxt.program.functions
-                    .get(function)
-                    .expect(&format!("could not find function '{}'", &function));
-
-                assert_eq!(f.args.len(), parameters.len());
-
-                let var_type = match (var_type, &f.return_type) {
-                    (Some(explicit), Some(return_type)) => {
-                        assert_eq!(explicit, return_type);
-                        Some(explicit)
-                    }
-                    (None, Some(return_type)) => {
-                        Some(return_type)
-                    }
-                    (None, None) => {
-                        None
-                    }
-                    (Some(_), None) => {
-                        panic!(format!("Function `{}` does not return a value.", function));
-                    }
-                };
-
-                match var_type {
-                    None | Some(Type::Number(NumberType::U8)) => {},
-                    _ => unimplemented!(),
-                }
-
-                if var_type.is_some() {
-                    // put 0xCC in for RESULT
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::LoadImm8,
-                        source: format!("{:?} placeholder value for RESULT", &self),
-                        args: vec![Value::Register(0), Value::Constant8(0xCC)],
-                        resolved: None,
-                    });
-                    for _ in 0..4 {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Push8,
-                            source: format!("{:?} placeholder value for RESULT", &self),
-                            args: vec![Value::Register(0)],
-                            resolved: None,
-                        });
-                        ctxt.additional_offset += 1;
-                    }
-                }
-
-                for (i,p) in parameters.iter().enumerate() {
-                    let param_type = p.emit(ctxt);
-                    assert_eq!(f.args[i].1, param_type);
-                    match param_type.byte_count(ctxt.program) {
-                        4 => {}
-                        1 => {
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Pop8,
-                                source: format!("{:?} padding for arg{}", &self, i),
-                                args: vec![Value::Register(4)],
-                                resolved: None,
-                            });
-                            ctxt.additional_offset -= 1;
-
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::LoadImm8,
-                                source: format!("{:?} padding for arg{}", &self, i),
-                                args: vec![Value::Register(0), Value::Constant8(0xCC)],
-                                resolved: None,
-                            });
-                            for b in 1..4 {
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Push8,
-                                    source: format!("{:?} padding byte {} for arg{}", &self, b, i),
-                                    args: vec![Value::Register(0)],
-                                    resolved: None,
-                                });
-                                ctxt.additional_offset += 1;
-                            }
-
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Push8,
-                                source: format!("{:?} padded byte for arg{}", &self, i),
-                                args: vec![Value::Register(4)],
-                                resolved: None,
-                            });
-                            ctxt.additional_offset += 1;
-                        }
-                        _ => panic!()
-                    };
-                }
-
-                // store return address
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::AddImm32IgnoreCarry,
-                    source: format!("{:?} compute return address", &self),
-                    args: vec![Value::Register(REG_SP), Value::Constant32((-4i32) as u32)],
-                    resolved: None,
-                });
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::StoreImm32,
-                    source: format!("{:?} store return address", &self),
-                    args: vec![Value::Register(REG_SP), Value::PcOffset(4+6)],
-                    resolved: None,
-                });
-                ctxt.additional_offset += 4;
-
-                // call
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::JmpImm,
-                    source: format!("{:?} call {}", &self, function),
-                    args: vec![Value::Label24(format!(":{}",function))],
-                    resolved: None,
-                });
-
-                let parameters_bytes = parameters.len() as u32 * 4;
-
-                // discard paramters and padding and return address
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::AddImm32IgnoreCarry,
-                    source: format!("{:?} clean up stack", &self),
-                    args: vec![Value::Register(REG_SP), Value::Constant32(parameters_bytes + 4)],
-                    resolved: None,
-                });
-                ctxt.additional_offset -= parameters_bytes + 4;
-
-                // for r in regs_to_save.iter().rev() {
-                //     unimplemented!();
-                //     // ctxt.add_macro(format!("pop {}", r));
-                //     // ctxt.additional_offset -= 1;
-                // }
+                let return_type = call.emit(ctxt).clone();
 
                 // result is now at the top of the stack
-                // assert_eq!(ctxt.additional_offset, 1);
-
-                if var_type.is_some() {
+                if return_type != Type::Void {
                     for r in 0..4 {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Pop8,
@@ -1615,10 +1621,31 @@ impl Statement {
                 }
 
                 // stack is now back to normal
-                // assert_eq!(ctxt.additional_offset, 0);
 
-                if let Some(local) = local {
-                    let local = ctxt.find_local(local);
+                let var_type = match (var_type, &return_type) {
+                    (None, Type::Void) => {
+                        &Type::Void
+                    }
+                    (Some(_), Type::Void) => {
+                        panic!(format!("Function `{}` does not return a value.", &call.function));
+                    }
+                    (Some(explicit), return_type) => {
+                        assert_eq!(explicit, return_type);
+                        explicit
+                    }
+                    (None, return_type) => {
+                        return_type
+                    }
+                };
+
+                let byte_count = match var_type {
+                    Type::Number(nt) => nt.byte_count(ctxt.program),
+                    Type::Void => 0,
+                    _ => unimplemented!(),
+                };
+                
+                if byte_count != 0 {
+                    let local = ctxt.find_local(local.as_ref().unwrap());
                     match local.storage {
                         // Storage::Register(_r) => {
                         //     unimplemented!();
@@ -1628,21 +1655,41 @@ impl Statement {
                             ctxt.add_inst(Instruction {
                                 opcode: Opcode::LoadImm32,
                                 resolved: None,
-                                source: format!("{:?} store result", &self),
+                                source: format!("load stack offset for call result {:?}", &self),
                                 args: vec![Value::Register(4), Value::Constant32(offset)]
                             });
                             ctxt.add_inst(Instruction {
                                 opcode: Opcode::Add32NoCarryIn,
                                 resolved: None,
-                                source: format!("{:?} store result", &self),
+                                source: format!("add stack pointer to offset {:?}", &self),
                                 args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
                             });
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Store8,
-                                resolved: None,
-                                source: format!("{:?} store result", &self),
-                                args: vec![Value::Register(0), Value::Register(8)]
-                            });
+
+                            match byte_count {
+                                1 => {
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::Store8,
+                                        resolved: None,
+                                        source: format!("{:?}", &self),
+                                        args: vec![Value::Register(0), Value::Register(8)]
+                                    });
+                                }
+                                4 => {
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::Store32Part1,
+                                        resolved: None,
+                                        source: format!("{:?}", &self),
+                                        args: vec![Value::Register(0), Value::Register(8)]
+                                    });
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::Store32Part2,
+                                        resolved: None,
+                                        source: format!("{:?}", &self),
+                                        args: vec![]
+                                    });
+                                }
+                                s => panic!(format!("Unexpected size {}", s))
+                            }
                         }
                     }
                 }
@@ -1727,7 +1774,7 @@ struct Function {
     args: Vec<(String,Type)>,
     locals: BTreeMap<String,Type>,
     variables: BTreeMap<String,Variable>,
-    return_type: Option<Type>,
+    return_type: Type,
     body: Vec<Statement>,
     caller_stack_size: u32,
     callee_stack_size: u32,
@@ -1750,16 +1797,13 @@ impl Function {
             args.push((arg_name, arg_var_type));
         }
 
-        let mut return_type = None;
-
         let return_or_body = pairs.next().unwrap();
-        let body = if Rule::function_return_type == return_or_body.as_rule() {
+        let (return_type, body) = if Rule::function_return_type == return_or_body.as_rule() {
             let mut return_type_tokens = return_or_body.into_inner();
-            assert!(return_type.is_none());
-            return_type = Some(Type::parse(return_type_tokens.next().unwrap(), false));
-            pairs.next().unwrap()
+            let return_type = Type::parse(return_type_tokens.next().unwrap(), false);
+            (return_type, pairs.next().unwrap())
         } else {
-            return_or_body
+            (Type::Void, return_or_body)
         };
 
         let mut body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
@@ -1782,12 +1826,12 @@ impl Function {
                 Statement::Declare {local, var_type} => {
                     visitor(local, Some(var_type));
                 }
-                Statement::Call{ local, var_type, function, parameters:_ }  => {
+                Statement::Call{ local, var_type, call}  => {
                     if let Some(local) = local {
-                        let var_type = match var_type {
-                            Some(t) => Some(t),
-                            None => ctxt.functions[function].return_type.as_ref(),
-                        };
+                        let var_type = Some(match var_type {
+                            Some(t) => t,
+                            None => &ctxt.functions[&call.function].return_type,
+                        });
                         visitor(local, var_type);
                     }
                 }
@@ -1866,7 +1910,7 @@ impl Function {
 
 
         let mut caller_stack_size: u32 = 0;
-        if let Some(return_type) = &return_type {
+        if return_type != Type::Void {
             caller_stack_size += 4;// RESULT
             assert!(return_type.byte_count(ctxt) <= 4);
         }
@@ -1886,7 +1930,7 @@ impl Function {
 
         let mut offset = (caller_stack_size + callee_stack_size) as isize;
 
-        if let Some(return_type) = &return_type {
+        if return_type != Type::Void {
             offset -= 4;
             variables.insert(RESULT.to_owned(), Variable {
                 decl: Declaration::Result,
@@ -2151,8 +2195,8 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
         resolved: None
     }));
 
-    if let Some(return_type) = &main.return_type {
-        assert!(return_type.byte_count(&ctxt) <= 4);
+    if Type::Void != main.return_type {
+        assert!(main.return_type.byte_count(&ctxt) <= 4);
         program.push(AssemblyInputLine::Instruction(Instruction {
             opcode: Opcode::LoadImm8,
             source: format!("load RESULT placeholder byte for main"),
@@ -2196,7 +2240,7 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
         resolved: None,
     }));
 
-    if main.return_type.is_some() {
+    if main.return_type != Type::Void {
         for b in 0..4 {
             program.push(AssemblyInputLine::Instruction(Instruction {
                 opcode: Opcode::Pop8,
@@ -2326,7 +2370,7 @@ mod tests {
         let assembly = compile(program);
         let rom = assemble(assembly);
         let addr1 = 0x8100;
-        let addr2 = 0x8200;
+        let addr2 = 0xA000;
 
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
@@ -2418,6 +2462,17 @@ mod tests {
         test_inputs(
             include_str!("../../programs/if_ne.j"),
             &[(6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
+    }
+
+    #[test]
+    fn if_ne_uptr() {
+        test_inputs(
+            include_str!("../../programs/if_ne_uptr.j"),
+            &[
+                (6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0),
+                (0x0,0x100,1),(0x100,0x100,0),(0xAABBCCDD,0xAABBCCDD,0),
+                (0xAABBCCDD,0xAABBCCDE,1),(0xAABBCCDD,0xAABBCDDD,1),
+                (0xAABBCCDD,0xAABCCCDD,1),(0xAABBCCDD,0xABBBCCDD,1)]);
     }
 
     #[test]
@@ -2566,5 +2621,20 @@ mod tests {
                 (0x1,0x0,0x1),
                 (0x1,0xFF,0x0),
                 ]);
+    }
+
+    #[test]
+    fn strlen() {
+        let mut long: Vec<u8> = (0..300).map(|_| 'a' as u8).collect();
+        long.push(0);
+
+        test_ptr_inputs(
+            include_str!("../../programs/strlen.j"),
+            &[
+                (b"\0", &[0u8], 0u32),
+                (b"hello\0", &[0u8], 5u32),
+                (long.as_slice(), &[0u8], long.len() as u32 - 1),
+            ]
+        );
     }
 }
