@@ -1,8 +1,8 @@
-fn main() -> U8 {
-    sum:U8 := identity(7);
+fn main() -> u8 {
+    sum:u8 := identity(7);
     return sum;
 }
 
-fn identity(a:U8) -> U8 {
+fn identity(a:u8) -> u8 {
     return a;
 }

@@ -1,5 +1,5 @@
-fn divide(x:U8, y:U8) -> U8 {
-    q:U8 := 0;
+fn divide(x:u8, y:u8) -> u8 {
+    q:u8 := 0;
     while (x >= y) {
         q := (q + 1);
         x := (x - y);
@@ -7,7 +7,7 @@ fn divide(x:U8, y:U8) -> U8 {
     return q;
 }
 
-fn main(a:U8, b:U8) -> U8 {
-    c:U8 := divide(a,b);
+fn main(a:u8, b:u8) -> u8 {
+    c:u8 := divide(a,b);
     return c;
 }

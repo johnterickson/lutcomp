@@ -46,7 +46,7 @@ expression = {
     }
 
 pointer_type = { "&" ~ variable_type }
-number_type = {"U8" | "UPTR"}
+number_type = {"u8" | "usize"}
 array_type = { number_type ~ "[" ~ number ~ "]" }
 variable_type = {array_type | number_type | pointer_type | ident}
 variable_decl = {ident ~ ":" ~ variable_type}

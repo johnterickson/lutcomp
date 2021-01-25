@@ -1,4 +1,4 @@
-fn main(x:U8, y:U8) -> U8 {
+fn main(x:u8, y:u8) -> u8 {
     if (x >= y) {
         return 1;
     } else {

@@ -1,18 +1,18 @@
 struct  request {
-    in1: UPTR;
-    in2: UPTR;
-    sum: UPTR;
+    in1: usize;
+    in2: usize;
+    sum: usize;
 }
 
-fn main(x: UPTR, y: UPTR) -> UPTR {
+fn main(x: usize, y: usize) -> usize {
     r:request;
     r.in1 := x;
     r.in2 := y;
-    dummy:U8 := add(&r);
+    dummy:u8 := add(&r);
     return r.sum;
 }
 
-fn add(r: &request) -> U8 {
+fn add(r: &request) -> u8 {
     r->sum := (r->in1 + r->in2);
     return 0;
 }

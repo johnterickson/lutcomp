@@ -1,11 +1,11 @@
-fn main(x:U8) -> U8 {
-    res:U8 := fac(x);
+fn main(x:u8) -> u8 {
+    res:u8 := fac(x);
     return res;
 }
 
-fn fac(x:U8) -> U8 {
+fn fac(x:u8) -> u8 {
     if (x != 0) {
-        prev:U8 := fac((x-1));
+        prev:u8 := fac((x-1));
         return (prev * x);
     } else {
         return 1;

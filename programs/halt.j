@@ -1,3 +1,3 @@
-fn main() -> U8 {
+fn main() -> u8 {
     return 1;
 }

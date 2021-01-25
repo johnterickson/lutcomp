@@ -77,14 +77,14 @@ impl ComparisonOperator {
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum NumberType {
     U8,
-    UPTR,
+    USIZE,
 }
 
 impl NumberType {
     fn parse(s: &str) -> NumberType {
         match  s {
-            "U8" => NumberType::U8,
-            "UPTR" => NumberType::UPTR,
+            "u8" => NumberType::U8,
+            "usize" => NumberType::USIZE,
             other => panic!(format!("unknown type {}", other)),
         }
     }
@@ -94,7 +94,7 @@ impl ByteSize for NumberType {
     fn byte_count(&self, _ctxt: &ProgramContext) -> u32 {
         match self {
             NumberType::U8 => 1,
-            NumberType::UPTR => 4,
+            NumberType::USIZE => 4,
         }
     }
 }
@@ -174,7 +174,9 @@ impl ByteSize for Type {
         match self {
             Type::Number(nt) => nt.byte_count(ctxt),
             Type::Ptr(_) => 4,
-            Type::Struct(struct_name) => ctxt.types[struct_name].byte_count(ctxt),
+            Type::Struct(struct_name) => ctxt.types.get(struct_name)
+                .expect(&format!("Could not find struct definition for '{}'.", struct_name))
+                .byte_count(ctxt),
             Type::Array(nt, count) => nt.byte_count(ctxt) * count
         }
     }
@@ -354,7 +356,7 @@ impl Expression {
                         let number = number.into_inner();
                         let s = number.as_str().trim();
                         Expression::Number(
-                            NumberType::UPTR,
+                            NumberType::USIZE,
                             i64::from_str_radix(s, 16)
                                 .expect(&format!("Couldn't parse hex integer {}", number.as_str())))
                     }
@@ -417,8 +419,8 @@ impl Expression {
                 (Type::Number(left_type), Type::Number(right_type), op) => {
                     match (left_type, right_type, op) {
                         (NumberType::U8, NumberType::U8, _) => { }
-                        (NumberType::UPTR, NumberType::UPTR, ComparisonOperator::Equals) |
-                        (NumberType::UPTR, NumberType::UPTR, ComparisonOperator::NotEquals) => { },
+                        (NumberType::USIZE, NumberType::USIZE, ComparisonOperator::Equals) |
+                        (NumberType::USIZE, NumberType::USIZE, ComparisonOperator::NotEquals) => { },
                         _ => unimplemented!(),
                     }
                     left_type.byte_count(ctxt.program) as u8
@@ -696,7 +698,7 @@ impl Expression {
                 } else {
                     Box::new(Expression::Arithmetic(
                         ArithmeticOperator::Multiply,
-                        Box::new(Expression::Number(NumberType::UPTR, entry_size.into())),
+                        Box::new(Expression::Number(NumberType::USIZE, entry_size.into())),
                         (*index).clone()))
                 };
 
@@ -708,7 +710,7 @@ impl Expression {
 
                 let array_start_address = Box::new(Expression::Cast{
                     old_type: None, //TODO
-                    new_type: Type::Number(NumberType::UPTR),
+                    new_type: Type::Number(NumberType::USIZE),
                     value: array_start_address
                 });
                 let ptr = Expression::Arithmetic(
@@ -718,7 +720,7 @@ impl Expression {
                 );
 
                 let cast = Expression::Cast{
-                    old_type: Some(Type::Number(NumberType::UPTR)),
+                    old_type: Some(Type::Number(NumberType::USIZE)),
                     new_type: Type::Ptr(Box::new(entry_type)), 
                     value: Box::new(ptr)};
                 let mut deref = Expression::Deref(Box::new(cast));
@@ -790,7 +792,7 @@ impl Expression {
                         });
                         ctxt.additional_offset += 1;
                     }
-                    NumberType::UPTR => {
+                    NumberType::USIZE => {
                         let n: u32 = (*n).try_into().expect(&format!("Couldn't cast {} to UPTR", *n));
                         ctxt.add_inst(Instruction {
                             source: format!("{:?}", &self),
@@ -846,8 +848,8 @@ impl Expression {
 
                 let result_type = match (left_type, right_type) {
                     (NumberType::U8, NumberType::U8) => NumberType::U8,
-                    (NumberType::UPTR, _) => NumberType::UPTR,
-                    (_, NumberType::UPTR) => NumberType::UPTR,
+                    (NumberType::USIZE, _) => NumberType::USIZE,
+                    (_, NumberType::USIZE) => NumberType::USIZE,
                 };
 
                 let right_reg: u8 = 8;
@@ -907,7 +909,7 @@ impl Expression {
                                     args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
                                 });
                             }
-                            NumberType::UPTR => {
+                            NumberType::USIZE => {
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Add32NoCarryIn,
                                     resolved: None,
@@ -927,7 +929,7 @@ impl Expression {
                                     args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
                                 });
                             }
-                            NumberType::UPTR => unimplemented!(),
+                            NumberType::USIZE => unimplemented!(),
                         }
                     },
                     ArithmeticOperator::Multiply => {
@@ -947,7 +949,7 @@ impl Expression {
                                     args: vec![]
                                 });
                             }
-                            NumberType::UPTR => unimplemented!()
+                            NumberType::USIZE => unimplemented!()
                         }
                     },
                     ArithmeticOperator::Subtract => {
@@ -966,7 +968,7 @@ impl Expression {
                                     args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
                                 });
                             }
-                            NumberType::UPTR => unimplemented!()
+                            NumberType::USIZE => unimplemented!()
                         }
                     },
                 }
@@ -1002,7 +1004,6 @@ struct Register(u8);
 #[derive(Debug)]
 enum LogicalReference {
     Local,
-    Deref,
     LocalField(String),
     DerefField(String),
     ArrayIndex{multiplier: u32, index_reg: Register},
@@ -1028,9 +1029,9 @@ impl LogicalReference {
 
     fn get_deref_offset<'a>(&self, ctxt: &'a FunctionContext, var_type: &'a Type) -> (MemoryReference, &'a Type) {
         match (self, var_type) {
-            (LogicalReference::Deref, Type::Ptr(inner)) => {
-                (MemoryReference{local_offset:0, deref_offset: DerefOffset::Constant(0)}, inner.as_ref())
-            }
+            // (LogicalReference::Deref, Type::Ptr(inner)) => {
+            //     (MemoryReference{local_offset:0, deref_offset: DerefOffset::Constant(0)}, inner.as_ref())
+            // }
             (LogicalReference::Local, var_type) => {
                 (MemoryReference{local_offset:0, deref_offset: DerefOffset::None}, var_type)
             }
@@ -1906,7 +1907,7 @@ impl Function {
         offset -= 4;
         variables.insert(RETURN_ADDRESS.to_owned(), Variable {
             decl: Declaration::ReturnAddress,
-            var_type: Type::Number(NumberType::UPTR),
+            var_type: Type::Number(NumberType::USIZE),
             storage: Storage::Stack(BaseOffset(offset.try_into().unwrap()))
         });
 
