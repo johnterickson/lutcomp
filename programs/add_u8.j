@@ -1,5 +1,5 @@
-FUNCTION main() -> U8 {
+fn main() -> U8 {
     sum:U8 := (2 + 5);
-    RETURN sum;
+    return sum;
 }
 

@@ -1,34 +1,34 @@
-FUNCTION divide(x:U8, y:U8) -> U8 {
+fn divide(x:U8, y:U8) -> U8 {
     q:U8 := 0;
-    WHILE (x >= y) {
+    while (x >= y) {
         q := (q + 1);
         x := (x - y);
     }
-    RETURN q;
+    return q;
 }
 
-FUNCTION printHexDigit(a:U8) {
-    IF (a < 10) {
+fn printHexDigit(a:U8) {
+    if (a < 10) {
         TTYOUT (a + '0');
-    } ELSE {
+    } else {
         a := (a - 10);
         a := (a + 'A');
         TTYOUT a;
     }
 }
 
-FUNCTION printHex(a:U8) {
-    IF (a > 15) {
-        CALL b := divide(a,16);
-        CALL printHex(b);
+fn printHex(a:U8) {
+    if (a > 15) {
+        b := divide(a,16);
+        printHex(b);
         a := (a - (b*16));
     }
 
-    CALL printHexDigit(a);
+    printHexDigit(a);
 }
 
-FUNCTION main(a:U8, b:U8) -> U8 {
-    CALL printHex(a);
+fn main(a:U8, b:U8) -> U8 {
+    printHex(a);
     TTYOUT 10;
-    RETURN 0;
+    return 0;
 }

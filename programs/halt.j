@@ -1,3 +1,3 @@
-FUNCTION main() -> U8 {
-    RETURN 1;
+fn main() -> U8 {
+    return 1;
 }

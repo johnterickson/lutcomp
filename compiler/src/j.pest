@@ -51,29 +51,29 @@ array_type = { number_type ~ "[" ~ number ~ "]" }
 variable_type = {array_type | number_type | pointer_type | ident}
 variable_decl = {ident ~ ":" ~ variable_type}
 
-else_clause = {"ELSE" ~ "{"~ statement* ~ "}"}
-if_else_statement = { "IF" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
+else_clause = {"else" ~ "{"~ statement* ~ "}"}
+if_else_statement = { "if" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
 declare_statement = {variable_decl ~ ";"}
-while_loop = { "WHILE" ~ expression ~ "{" ~ statement* ~ "}" }
+while_loop = { "while" ~ expression ~ "{" ~ statement* ~ "}" }
 assign_declare = { variable_decl | ident }
 assign_deref = { deref_operator ~ ident }
 assign_target = { index_expression | local_field_expression | ptr_field_expression | assign_deref | assign_declare }
 assign = { assign_target ~ ":=" ~ expression ~ ";" }
 ttyout = { "TTYOUT" ~ expression ~ ";" }
-return_statement = { "RETURN" ~ expression ~ ";" }
+return_statement = { "return" ~ expression ~ ";" }
 call_return_value = {ident ~ (":" ~ variable_type)? ~ ":="}
 
-call = { "CALL" ~ call_return_value? ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
+call = { call_return_value? ~ ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-statement = { if_else_statement | ttyout | return_statement | call | while_loop | assign | declare_statement}
+statement = { if_else_statement | ttyout | return_statement | while_loop | call | assign | declare_statement }
 body = { (statement)+ }
 paramters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}
-function = {"FUNCTION " ~ ident ~ "(" ~ paramters ~ ")" ~ function_return_type? ~ "{" ~ body ~ "}"}
+function = {"fn " ~ ident ~ "(" ~ paramters ~ ")" ~ function_return_type? ~ "{" ~ body ~ "}"}
 
 field = { variable_decl }
 fields = { (field ~ ";")+ }
-struct_decl = {"STRUCT " ~ ident ~ "{" ~ fields ~ "}"}
+struct_decl = {"struct" ~ ident ~ "{" ~ fields ~ "}"}
 
 program = {
     SOI ~

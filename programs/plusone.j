@@ -1,9 +1,9 @@
-FUNCTION main() -> U8 {
-    CALL res:U8 := plusone(6);
-    RETURN res;
+fn main() -> U8 {
+    res:U8 := plusone(6);
+    return res;
 }
 
-FUNCTION plusone(x:U8) -> U8 {
+fn plusone(x:U8) -> U8 {
     sum:U8 := (x + 1);
-    RETURN sum;
+    return sum;
 }

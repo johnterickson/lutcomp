@@ -1,13 +1,13 @@
-FUNCTION main(x:U8) -> U8 {
-    CALL res:U8 := fac(x);
-    RETURN res;
+fn main(x:U8) -> U8 {
+    res:U8 := fac(x);
+    return res;
 }
 
-FUNCTION fac(x:U8) -> U8 {
-    IF (x != 0) {
-        CALL prev:U8 := fac((x-1));
-        RETURN (prev * x);
-    } ELSE {
-        RETURN 1;
+fn fac(x:U8) -> U8 {
+    if (x != 0) {
+        prev:U8 := fac((x-1));
+        return (prev * x);
+    } else {
+        return 1;
     }
 }

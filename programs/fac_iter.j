@@ -1,16 +1,16 @@
-FUNCTION main(x:U8) -> U8 {
-    CALL res:U8 := fac(x);
-    RETURN res;
+fn main(x:U8) -> U8 {
+    res:U8 := fac(x);
+    return res;
 }
 
-FUNCTION fac(x:U8) -> U8 {
-    IF (x == 0) {
-        RETURN 1;
+fn fac(x:U8) -> U8 {
+    if (x == 0) {
+        return 1;
     }
     product:U8 := x;
-    WHILE (x > 2) {
+    while (x > 2) {
         x := (x - 1);
         product := (product * x);
     }
-    RETURN product;
+    return product;
 }

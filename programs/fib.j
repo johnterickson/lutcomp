@@ -1,16 +1,16 @@
-FUNCTION main(x:U8) -> U8 {
-    CALL result : U8 := fib(x);
-    RETURN result;
+fn main(x:U8) -> U8 {
+    result : U8 := fib(x);
+    return result;
 }
 
-FUNCTION fib(n:U8) -> U8 {
-    IF (n != 0) {
-        IF (n != 1) {
-            CALL sum1:U8 := fib((n - 1));
-            CALL sum2:U8 := fib((n - 2));
-            RETURN (sum1 + sum2);
+fn fib(n:U8) -> U8 {
+    if (n != 0) {
+        if (n != 1) {
+            sum1:U8 := fib((n - 1));
+            sum2:U8 := fib((n - 2));
+            return (sum1 + sum2);
         }
-        RETURN 1;
+        return 1;
     }
-    RETURN 0;
+    return 0;
 }

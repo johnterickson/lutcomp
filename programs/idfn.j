@@ -1,8 +1,8 @@
-FUNCTION main() -> U8 {
-    CALL sum:U8 := identity(7);
-    RETURN sum;
+fn main() -> U8 {
+    sum:U8 := identity(7);
+    return sum;
 }
 
-FUNCTION identity(a:U8) -> U8 {
-    RETURN a;
+fn identity(a:U8) -> U8 {
+    return a;
 }

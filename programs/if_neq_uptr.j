@@ -1,8 +1,8 @@
-FUNCTION main(x:UPTR, y:UPTR) -> U8 {
-    IF (x != y) {
-        RETURN 1;
-    } ELSE {
-        RETURN 0;
+fn main(x:UPTR, y:UPTR) -> U8 {
+    if (x != y) {
+        return 1;
+    } else {
+        return 0;
     }
 }
 

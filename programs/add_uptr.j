@@ -1,4 +1,4 @@
-FUNCTION main(x:UPTR,y:UPTR) -> UPTR {
-    RETURN (x+y);
+fn main(x:UPTR,y:UPTR) -> UPTR {
+    return (x+y);
 }
 
