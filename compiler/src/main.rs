@@ -1106,7 +1106,28 @@ impl Expression {
                                     args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
                                 });
                             }
-                            NumberType::USIZE => unimplemented!()
+                            NumberType::USIZE => {
+                                for r in right_reg..right_reg+4 {
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::Invert8,
+                                        resolved: None,
+                                        source: format!("uptr sub {:?}", &self),
+                                        args: vec![Value::Register(r)]
+                                    });
+                                }
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::AddImm32IgnoreCarry,
+                                    resolved: None,
+                                    source: format!("uptr sub {:?}", &self),
+                                    args: vec![Value::Register(right_reg), Value::Constant32(1)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add32NoCarryIn,
+                                    resolved: None,
+                                    source: format!("uptr sub {:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                });
+                            }
                         }
                     },
                 }
@@ -2317,7 +2338,7 @@ mod tests {
         Ascii(&'static [u8]),
         Ptr(Vec<u8>),
         U8(u8),
-        Usize(usize),
+        Usize(u32),
     }
     
     struct TestComputer<'a>(pub Computer<'a>);
@@ -2329,18 +2350,12 @@ mod tests {
 
         fn run(&mut self, inputs: &[u32], out: u32) {
             dbg!(inputs);
-            assert!(inputs.len() <= 2);
-            match inputs.len() {
-                2 => {
-                    *self.0.mem_word_mut(0x80004) = inputs[0].to_le_bytes();
-                    *self.0.mem_word_mut(0x80000) = inputs[1].to_le_bytes();
-                } 
-                1 => {
-                    *self.0.mem_word_mut(0x80000) = inputs[0].to_le_bytes();
-                }
-                0 => {}
-                _ => panic!(),
+            assert!(inputs.len() <= 3);
+            for (i,val) in inputs.iter().rev().enumerate() {
+                let i = i as u32;
+                *self.0.mem_word_mut(0x80000 + 4*i) = val.to_le_bytes();
             }
+            
 
             let mut last_pc = None;
             let mut step_count = 0;
@@ -2413,7 +2428,7 @@ mod tests {
         let rom = assemble(assembly);
         for (args, expected) in cases
         {
-            assert!(args.len() <= 2);
+            assert!(args.len() <= 3);
 
             let mut c = TestComputer::from_rom(&rom);
             let mut arg_addr = 0x8100u32;
@@ -2715,6 +2730,32 @@ mod tests {
                 (&[TestVar::Ascii(b"\0")], 0u32),
                 (&[TestVar::Ascii(b"hello\0")], 5u32),
                 (&[TestVar::Ptr(long)], expected),
+            ]
+        );
+    }
+
+    #[test]
+    fn strncmp() {
+        let same_len = 300u32;
+        let mut long1: Vec<u8> = (0..same_len).map(|_| 'a' as u8).collect();
+        let mut long2 = long1.clone();
+        long1.push(b'a');
+        long1.push(0);
+        long2.push(b'b');
+        long2.push(0);
+
+        test_var_inputs(
+            "strncmp",
+            include_str!("../../programs/strncmp.j"),
+            &[
+                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(0)], 0),
+                (&[TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Usize(1)], 0),
+                (&[TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(1)], 0),
+                (&[TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(2)], 255),
+                (&[TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(2)], 1),
+                (&[TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(1000)], 1),
+                (&[TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Usize(same_len)], 0),
+                (&[TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Usize(same_len+1)], 255),
             ]
         );
     }
