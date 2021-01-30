@@ -2135,7 +2135,7 @@ fn main() -> Result<(), std::io::Error> {
         stdin.lock().read_to_string(&mut s)?;
         s
     };
-    let assembly = compile(&input);
+    let assembly = compile(&input, "main");
 
     let rom = assemble(assembly);
 
@@ -2172,12 +2172,14 @@ fn main() -> Result<(), std::io::Error> {
 }
 
 struct ProgramContext {
+    entry: String,
     functions: BTreeMap<String, Function>,
     types: BTreeMap<String, StructDefinition>
 }
 
 fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
-    let main = ctxt.functions.get("main").expect("main not found.");
+    let main = ctxt.functions.get(&ctxt.entry)
+        .expect(&format!("entry '{}' not found.", &ctxt.entry));
 
     let mut program = Vec::new();
 
@@ -2186,7 +2188,7 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
         program.push(AssemblyInputLine::Comment(format!("{} {:?}", name, t)));
     }
 
-    program.push(AssemblyInputLine::Comment(format!("set up stack and call main")));
+    program.push(AssemblyInputLine::Comment(format!("set up stack and call entry {}", ctxt.entry)));
     let initial_stack = 0x8FFF0;
     program.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
@@ -2224,7 +2226,7 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
             }));
         }
     }
-    program.push(AssemblyInputLine::from_str("!call :main"));
+    program.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.entry)));
 
     program.push(AssemblyInputLine::Instruction(Instruction {
         source: format!("discard args from main"),
@@ -2268,8 +2270,12 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
     program
 }
 
-fn compile(input: &str) -> Vec<AssemblyInputLine> {
-    let mut ctxt = ProgramContext { functions: BTreeMap::new(), types: BTreeMap::new() };
+fn compile(entry: &str, input: &str) -> Vec<AssemblyInputLine> {
+    let mut ctxt = ProgramContext { 
+        entry: entry.to_owned(),
+        functions: BTreeMap::new(),
+        types: BTreeMap::new()
+    };
 
     let mut program = ProgramParser::parse(Rule::program, &input).unwrap();
     let pairs = program.next().unwrap().into_inner();
@@ -2307,6 +2313,12 @@ fn compile(input: &str) -> Vec<AssemblyInputLine> {
 mod tests {
     use super::*;
 
+    enum TestVar {
+        Ascii(&'static [u8]),
+        Ptr(Vec<u8>),
+        U8(u8),
+        Usize(usize),
+    }
     
     struct TestComputer<'a>(pub Computer<'a>);
 
@@ -2315,9 +2327,20 @@ mod tests {
             TestComputer(Computer::with_print(rom.to_vec(), false))
         }
 
-        fn run(&mut self, in1: u32, in2: u32, out: u32) {
-            *self.0.mem_word_mut(0x80004) = in1.to_le_bytes();
-            *self.0.mem_word_mut(0x80000) = in2.to_le_bytes();
+        fn run(&mut self, inputs: &[u32], out: u32) {
+            dbg!(inputs);
+            assert!(inputs.len() <= 2);
+            match inputs.len() {
+                2 => {
+                    *self.0.mem_word_mut(0x80004) = inputs[0].to_le_bytes();
+                    *self.0.mem_word_mut(0x80000) = inputs[1].to_le_bytes();
+                } 
+                1 => {
+                    *self.0.mem_word_mut(0x80000) = inputs[0].to_le_bytes();
+                }
+                0 => {}
+                _ => panic!(),
+            }
 
             let mut last_pc = None;
             let mut step_count = 0;
@@ -2333,23 +2356,23 @@ mod tests {
         }
     }
 
-    fn test_inputs(program: &str, pairs: &[(u32,u32,u32)]) {
-        let assembly = compile(program);
+    fn test_inputs(entry: &str, program: &str, pairs: &[(u32,u32,u32)]) {
+        let assembly = compile(entry, program);
         let rom = assemble(assembly);
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
             dbg!((input1, input2, expected));
-            c.run(*input1, *input2, *expected);
+            c.run(&[*input1, *input2], *expected);
         }
     }
 
-    fn test_ttyout(program: &str, pairs: &[(u32,u32,&str)]) {
-        let assembly = compile(program);
+    fn test_ttyout(entry: &str, program: &str, pairs: &[(u32,u32,&str)]) {
+        let assembly = compile(entry, program);
         let rom = assemble(assembly);
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
             dbg!((input1, input2, expected));
-            c.run(*input1, *input2, 0);
+            c.run(&[*input1, *input2], 0);
 
             let mut lines = Vec::new();
             let mut line = String::new();
@@ -2366,8 +2389,8 @@ mod tests {
         }
     }
 
-    fn test_ptr_inputs(program: &str, pairs: &[(&[u8],&[u8],u32)]) {
-        let assembly = compile(program);
+    fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
+        let assembly = compile(entry, program);
         let rom = assemble(assembly);
         let addr1 = 0x8100;
         let addr2 = 0xA000;
@@ -2381,7 +2404,40 @@ mod tests {
             for (i,b) in input2.iter().enumerate() {
                 *c.0.mem_byte_mut(addr2 + i as u32) = *b;
             }
-            c.run(addr1, addr2, *expected);
+            c.run(&[addr1, addr2], *expected);
+        }
+    }
+
+    fn test_var_inputs(entry: &str, program: &str, cases: &[(&[TestVar], u32)]) {
+        let assembly = compile(entry, program);
+        let rom = assemble(assembly);
+        for (args, expected) in cases
+        {
+            assert!(args.len() <= 2);
+
+            let mut c = TestComputer::from_rom(&rom);
+            let mut arg_addr = 0x8100u32;
+
+            let mut ptr_arg = |bytes: &[u8]| -> u32 {
+                let addr = arg_addr;
+                arg_addr += bytes.len() as u32;
+
+                for (i,b) in bytes.iter().enumerate() {
+                    *c.0.mem_byte_mut(addr + i as u32) = *b;
+                }
+                addr
+            };
+
+            let arg_values : Vec<_> = args.iter().map(|arg| {
+                match arg {
+                    TestVar::Ascii(bytes) => ptr_arg(bytes),
+                    TestVar::Ptr(bytes) => ptr_arg(&bytes),
+                    TestVar::U8(i) => *i as u32,
+                    TestVar::Usize(i) => *i as u32,
+                }
+            }).collect();
+
+            c.run(&arg_values, *expected);
         }
     }
 
@@ -2389,6 +2445,7 @@ mod tests {
     #[test]
     fn halt() {
         test_inputs(
+            "main",
             include_str!("../../programs/halt.j"),
             &[(0,0,1)]);
     }
@@ -2396,6 +2453,7 @@ mod tests {
     #[test]
     fn add_u8() {
         test_inputs(
+            "main",
             include_str!("../../programs/add_u8.j"),
             &[(0,0,7)]);
     }
@@ -2403,6 +2461,7 @@ mod tests {
     #[test]
     fn call_parameterless() {
         test_inputs(
+            "main",
             include_str!("../../programs/call_parameterless.j"),
             &[(0,0,7)]);
     }
@@ -2410,6 +2469,7 @@ mod tests {
     #[test]
     fn idfn() {
         test_inputs(
+            "main",
             include_str!("../../programs/idfn.j"),
             &[(0,0,7)]);
     }
@@ -2417,6 +2477,7 @@ mod tests {
     #[test]
     fn if_eq() {
         test_inputs(
+            "main",
             include_str!("../../programs/if_eq.j"),
             &[(6,7,0), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
     }
@@ -2424,6 +2485,7 @@ mod tests {
     #[test]
     fn if_gt_unsigned() {
         test_inputs(
+            "main",
             include_str!("../../programs/if_gt.j"),
             &[
                 (0,1,0),
@@ -2436,6 +2498,7 @@ mod tests {
     #[test]
     fn if_gte_unsigned() {
         test_inputs(
+            "main",
             include_str!("../../programs/if_gte.j"),
             &[(6,7,0), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 1), (7,7,1)]);
     }
@@ -2443,6 +2506,7 @@ mod tests {
     #[test]
     fn if_lt_unsigned() {
         test_inputs(
+            "main",
             include_str!("../../programs/if_lt.j"),
             &[
             (0,0,0),
@@ -2453,6 +2517,7 @@ mod tests {
     #[test]
     fn if_lte_unsigned() {
         test_inputs(
+            "main",
             include_str!("../../programs/if_lte.j"),
             &[(6,7,1), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 0), (7,7,1)]);
     }
@@ -2460,6 +2525,7 @@ mod tests {
     #[test]
     fn if_ne() {
         test_inputs(
+            "main",
             include_str!("../../programs/if_ne.j"),
             &[(6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
     }
@@ -2467,6 +2533,7 @@ mod tests {
     #[test]
     fn if_ne_uptr() {
         test_inputs(
+            "main",
             include_str!("../../programs/if_ne_uptr.j"),
             &[
                 (6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0),
@@ -2478,6 +2545,7 @@ mod tests {
     #[test]
     fn plusone() {
         test_inputs(
+            "main",
             include_str!("../../programs/plusone.j"),
             &[(0,0,7)]);
 
@@ -2486,6 +2554,7 @@ mod tests {
     #[test]
     fn fac_rec() {
         test_inputs(
+            "main",
             include_str!("../../programs/fac_rec.j"),
             &[
                 (0xCC,0,1),(0xCC,1,1),(0xCC, 2, 2),(0xCC,5,120)
@@ -2495,6 +2564,7 @@ mod tests {
     #[test]
     fn fac_iter() {
         test_inputs(
+            "main",
             include_str!("../../programs/fac_iter.j"),
             &[
                 (0xCC,0,1),(0xCC,1,1),(0xCC, 2, 2),(0xCC,5,120)
@@ -2504,6 +2574,7 @@ mod tests {
     #[test]
     fn fib() {
         test_inputs(
+            "main",
             include_str!("../../programs/fib.j"),
             &[
                 (0xCC,0,0),
@@ -2517,6 +2588,7 @@ mod tests {
     #[test]
     fn add_uptr() {
         test_inputs(
+            "main",
             include_str!("../../programs/add_uptr.j"),
             &[
                 (0x0,0x0,0x0),
@@ -2533,6 +2605,7 @@ mod tests {
     #[test]
     fn ptr() {
         test_ptr_inputs(
+            "main",
             include_str!("../../programs/ptr.j"),
             &[
                 (&0u32.to_le_bytes(), &0u32.to_le_bytes(), 0u32),
@@ -2547,6 +2620,7 @@ mod tests {
     #[test]
     fn structs() {
         test_inputs(
+            "main",
             include_str!("../../programs/struct.j"),
             &[
                 (0x0,0x0,0x0),
@@ -2563,6 +2637,7 @@ mod tests {
     #[test]
     fn divide() {
         test_inputs(
+            "main",
             include_str!("../../programs/divide.j"),
             &[
                 (0x1,0x1,0x1),
@@ -2575,6 +2650,7 @@ mod tests {
     #[test]
     fn print_hex() {
         test_ttyout(
+            "main",
             include_str!("../../programs/print_hex.j"),
             &[
                 (0x0,0x0,"0"),
@@ -2590,6 +2666,7 @@ mod tests {
     #[test]
     fn local_array() {
         test_inputs(
+            "main",
             include_str!("../../programs/local_array.j"),
             &[
                 (0x0,0x0,0x0),
@@ -2602,6 +2679,7 @@ mod tests {
     #[test]
     fn array_to_ptr() {
         test_inputs(
+            "main",
             include_str!("../../programs/array_to_ptr.j"),
             &[
                 (0x0,0x0,0x0),
@@ -2614,6 +2692,7 @@ mod tests {
     #[test]
     fn array_loop() {
         test_inputs(
+            "main",
             include_str!("../../programs/array_loop.j"),
             &[
                 (0x0,0x0,0x0),
@@ -2627,13 +2706,15 @@ mod tests {
     fn strlen() {
         let mut long: Vec<u8> = (0..300).map(|_| 'a' as u8).collect();
         long.push(0);
+        let expected = long.len() as u32 - 1;
 
-        test_ptr_inputs(
+        test_var_inputs(
+            "strlen",
             include_str!("../../programs/strlen.j"),
             &[
-                (b"\0", &[0u8], 0u32),
-                (b"hello\0", &[0u8], 5u32),
-                (long.as_slice(), &[0u8], long.len() as u32 - 1),
+                (&[TestVar::Ascii(b"\0")], 0u32),
+                (&[TestVar::Ascii(b"hello\0")], 5u32),
+                (&[TestVar::Ptr(long)], expected),
             ]
         );
     }

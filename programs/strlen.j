@@ -1,4 +1,3 @@
-
 fn strlen(str: &char) -> usize {
     len: usize := 0x0;
     while(*str != 0) {
@@ -6,8 +5,4 @@ fn strlen(str: &char) -> usize {
         str := (str + 0x1);
     }
     return len;
-}
-
-fn main(str: &char, len: usize) -> usize {
-    return strlen(str);
 }
