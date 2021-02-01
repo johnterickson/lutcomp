@@ -6,7 +6,7 @@ use strum::IntoEnumIterator;
 
 use alu::*;
 use common::*;
-use std::{collections::VecDeque, convert::TryInto, fmt::Debug, io, sync::{Mutex, mpsc::{self, Receiver}}, thread};
+use std::{collections::{BTreeSet, VecDeque}, convert::TryInto, fmt::Debug, io, sync::{Mutex, mpsc::{self, Receiver}}, thread};
 use ucode::*;
 
 fn spawn_stdin_channel() -> Receiver<String> {
@@ -51,6 +51,7 @@ pub struct Computer<'a> {
     pub ir0: u8,
     in1: u8,
     print: bool,
+    trap_addrs: BTreeSet<u32>,
 }
 
 impl<'a> Debug for Computer<'a> {
@@ -88,11 +89,16 @@ impl<'a> Computer<'a> {
             ir0: 0,
             in1: 0,
             print,
+            trap_addrs: BTreeSet::new(),
         };
 
         assert_eq!(c.alu_lut.len(), 1 << MEM_BITS);
         assert_eq!(c.ucode_rom.len(), 1 << MEM_BITS);
         c
+    }
+
+    pub fn add_data_trap(&mut self, addr: u32) {
+        self.trap_addrs.insert(addr);
     }
 
     fn mem_slice_mut(&mut self, addr_bus: u32, len: usize) -> &mut [u8] {
@@ -101,6 +107,14 @@ impl<'a> Computer<'a> {
 
     pub fn try_mem_slice_mut(&mut self, addr_bus: u32, len: usize) -> Option<&mut [u8]> {
         let addr_bus = addr_bus & 0x0FFFFF;
+
+        for addr in addr_bus..addr_bus+(len as u32) {
+            assert!(
+                !self.trap_addrs.contains(&addr),
+                "Accessing trapped memory address 0x{:x} as part of access 0x{:x} of len 0x{:x}",
+                addr, addr_bus, len);
+        }
+
         Some(match addr_bus as usize {
             a if ROM_MIN <= a && a + len < ROM_MAX => {
                 let end_index = len + a - ROM_MIN;

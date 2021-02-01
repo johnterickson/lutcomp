@@ -31,19 +31,23 @@ greater_than_or_equal = { ">=" }
 less_than = { "<" }
 less_than_or_equal = { "<=" }
 
+parentheses_expression = { "(" ~ expression ~ ")" }
 rotate_right_expression = { "(" ~ expression ~ ">>>" ~ number ~ ")" }
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
 arithmetic_expression = { "(" ~ expression ~ arithmetic ~ expression ~ ")" }
+cast_expression = { "(" ~ expression ~ "AS" ~ variable_type ~ ")" }
 deref_expression = { deref_operator ~ expression }
 local_field_expression = {ident ~ "." ~ ident}
 ptr_field_expression = {ident ~ "->" ~ ident}
 call_expression = {ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" }
 address_of_expression = {address_of_operator ~ expression}
 index_expression = {ident ~ "[" ~ expression ~ "]" }
-expression = { 
+expression = {
+    number | cast_expression | 
     index_expression | local_field_expression | ptr_field_expression | call_expression |
-    ttyin | ident | number | arithmetic_expression | rotate_right_expression | 
-    comparison_expression | deref_expression | address_of_expression
+    ttyin | arithmetic_expression | rotate_right_expression | 
+    comparison_expression | deref_expression | address_of_expression |
+    ident | parentheses_expression
     }
 
 pointer_type = { "&" ~ variable_type }
@@ -76,9 +80,11 @@ field = { variable_decl }
 fields = { (field ~ ";")+ }
 struct_decl = {"struct" ~ ident ~ "{" ~ fields ~ "}"}
 
+include_path = { (!"'" ~ ANY)+ }
+include = { "!include" ~ "'" ~ include_path ~ "'" }
+
 program = {
     SOI ~
-    struct_decl * ~
-    function+ ~
+    (include | struct_decl | function)+   ~
     EOI
 }

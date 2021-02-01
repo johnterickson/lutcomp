@@ -6,7 +6,7 @@ use pest::Parser;
 extern crate strum;
 use strum::IntoEnumIterator;
 
-use std::{io, unimplemented};
+use std::{env, fs::File, io, path::PathBuf, unimplemented};
 use std::io::Read;
 use std::collections::BTreeMap;
 use std::{convert::TryInto};
@@ -248,6 +248,9 @@ impl Call {
     }
 
     fn emit(&self, ctxt: &mut FunctionContext) -> Type {
+
+        let start_offset = ctxt.additional_offset;
+
         let f = ctxt.program.functions
             .get(&self.function)
             .expect(&format!("could not find function '{}'", &self.function));
@@ -272,6 +275,8 @@ impl Call {
                 ctxt.additional_offset += 1;
             }
         }
+
+        let ret_value_offset = ctxt.additional_offset;
         
         for (i,p) in self.parameters.iter().enumerate() {
             let param_type = p.emit(ctxt);
@@ -351,8 +356,43 @@ impl Call {
 
 
         // result is now at the top of the stack
+        assert_eq!(ret_value_offset, ctxt.additional_offset);
 
-        f.return_type.clone()
+        let return_type = f.return_type.clone();
+        let return_type_stack_size = if return_type != Type::Void {
+            let return_type_cur_stack_size = return_type.byte_count(ctxt.program);
+            match return_type_cur_stack_size {
+                4 => return_type_cur_stack_size,
+                1 => {
+                    for r in 0..4 {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Pop8,
+                            source: format!("{:?} unpadding return value", &self),
+                            args: vec![Value::Register(r)],
+                            resolved: None,
+                        });
+                        ctxt.additional_offset -= 1;
+                    }
+
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Push8,
+                        source: format!("{:?} unpadding return value", &self),
+                        args: vec![Value::Register(0)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset += 1;
+
+                    return_type_cur_stack_size
+                }
+                _ => unimplemented!(),
+            }
+        } else {
+            0
+        };
+
+        assert_eq!(start_offset + return_type_stack_size, ctxt.additional_offset);
+
+        return_type
     }
 }
 
@@ -528,6 +568,16 @@ impl Expression {
             Rule::call_expression => {
                 Expression::Call(Call::parse(pair))
             }
+            Rule::parentheses_expression => {
+                let mut pairs = pair.into_inner();
+                Expression::parse(pairs.next().unwrap())
+            }
+            Rule::cast_expression => {
+                let mut pairs = pair.into_inner();
+                let value = Box::new(Expression::parse(pairs.next().unwrap()));
+                let new_type = Type::parse(pairs.next().unwrap(), false);
+                Expression::Cast{ old_type: None, new_type, value }
+            }
             r => {
                 dbg!(r);
                 dbg!(&pair);
@@ -580,43 +630,47 @@ impl Expression {
 
             let (cond, uncond, jmp_op) = match op {
                 ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
-                    if size == 1 {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Cmp8,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(right_reg), Value::Register(left_reg)]
-                        });
-                    } else {
-                        for r in 0..size {
+                    match size {
+                        1 => {
                             ctxt.add_inst(Instruction {
-                                opcode: Opcode::Invert8,
+                                opcode: Opcode::Cmp8,
                                 resolved: None,
                                 source: format!("{:?}", &self),
-                                args: vec![Value::Register(right_reg + r)]
+                                args: vec![Value::Register(right_reg), Value::Register(left_reg)]
                             });
                         }
+                        4 => {
+                            for r in 0..size {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Invert8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(right_reg + r)]
+                                });
+                            }
 
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::AddImm32IgnoreCarry,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(right_reg), Value::Constant32(1)]
-                        });
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::AddImm32IgnoreCarry,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(right_reg), Value::Constant32(1)]
+                            });
 
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Add32NoCarryIn,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(left_reg)]
-                        });
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Add32NoCarryIn,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(left_reg)]
+                            });
 
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::OrImm32,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(left_reg), Value::Constant32(0)]
-                        });
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::OrImm32,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(left_reg), Value::Constant32(0)]
+                            });
+                        }
+                        _ => unimplemented!(),
                     }
                     if op == &ComparisonOperator::Equals {
                         (when_true, when_false, Opcode::JzImm)
@@ -804,6 +858,7 @@ impl Expression {
                 if let Some(old_type) = old_type {
                     assert_eq!(old_type, &emitted_type);
                 }
+                assert_eq!(emitted_type.byte_count(ctxt.program), new_type.byte_count(ctxt.program));
                 new_type.clone()
             }
             Expression::Ident(local_name) => {
@@ -885,12 +940,25 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                ctxt.add_inst(Instruction {
-                    source: format!("fetching deref {:?}", &self),
-                    opcode: Opcode::Load32,
-                    args: vec![Value::Register(4), Value::Register(0)],
-                    resolved: None,
-                });
+                match inner_type.byte_count(ctxt.program) {
+                    1 => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("fetching deref {:?}", &self),
+                            opcode: Opcode::Load8,
+                            args: vec![Value::Register(4), Value::Register(0)],
+                            resolved: None,
+                        });
+                    }
+                    4 => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("fetching deref {:?}", &self),
+                            opcode: Opcode::Load32,
+                            args: vec![Value::Register(4), Value::Register(0)],
+                            resolved: None,
+                        });
+                    }
+                    _ => unimplemented!(),
+                }
 
                 for r in (0..inner_type.byte_count(ctxt.program)).rev() {
                     ctxt.add_inst(Instruction {
@@ -989,6 +1057,7 @@ impl Expression {
                     .or(Some(Type::Number(op_math_type)))
                     .unwrap();
 
+                dbg!((&left_math_type, &right_math_type, op_math_type, &final_result_type));
 
                 let right_reg: u8 = 8;
                 for i in 0..(right_math_type.byte_count(ctxt.program)) {
@@ -1296,7 +1365,7 @@ impl LogicalReference {
 enum Statement {
     Declare { local: String, var_type: Type },
     Assign { target: Expression, var_type: Option<Type>, value: Expression},
-    Call { local: Option<String>, var_type: Option<Type>, call: Call },
+    CallAssign { local: Option<String>, var_type: Option<Type>, call: Call },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
@@ -1433,7 +1502,7 @@ impl Statement {
 
                 let call = Call::parse(token);
 
-                Statement::Call { local:var_name, var_type, call }
+                Statement::CallAssign { local:var_name, var_type, call }
             },
             Rule::if_else_statement => {
                 let mut pairs = pair.into_inner();
@@ -1498,22 +1567,28 @@ impl Statement {
             },
             Statement::Declare{local:_, var_type:_} => {}
             Statement::Assign{target, var_type, value} => {
+
+                let start_offset = ctxt.additional_offset;
+
                 let value_type = value.emit(ctxt); // calculate value
-
-                let ptr_type = target.emit_address_to_reg0(ctxt);
-                match ptr_type {
-                    Type::Ptr(inner) => assert_eq!(&value_type, inner.as_ref()),
-                    _ => panic!("expected pointer")
-                };
-
-                let value_size = value_type.byte_count(ctxt.program);
-                assert!(value_size <= 4);
-                let value_size = value_size as u8;
-
+                
                 if let Some(explicit_type) = var_type {
                     assert_eq!(explicit_type, &value_type);
                 }
 
+                let value_size = value_type.byte_count(ctxt.program);
+                assert!(value_size <= 4);
+                assert_eq!(start_offset + value_size, ctxt.additional_offset);
+
+                let ptr_type = target.emit_address_to_reg0(ctxt);
+                match ptr_type {
+                    Type::Ptr(inner) => assert_eq!(inner.as_ref(), &value_type),
+                    _ => panic!("expected pointer")
+                };
+                assert_eq!(start_offset + value_size, ctxt.additional_offset);
+
+
+                let value_size = value_size as u8;
                 for r in 0..value_size {
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::Pop8,
@@ -1523,6 +1598,8 @@ impl Statement {
                     });
                     ctxt.additional_offset -= 1;
                 }
+
+                assert_eq!(start_offset, ctxt.additional_offset);
 
                 match value_size {
                     1 => {
@@ -1624,13 +1701,15 @@ impl Statement {
                     resolved: None                    
                 });
             },
-            Statement::Call{ local, var_type, call } => { 
+            Statement::CallAssign{ local, var_type, call } => { 
+
+                let start_offset = ctxt.additional_offset;
 
                 let return_type = call.emit(ctxt).clone();
 
                 // result is now at the top of the stack
                 if return_type != Type::Void {
-                    for r in 0..4 {
+                    for r in 0..return_type.byte_count(ctxt.program) as u8 {
                         ctxt.add_inst(Instruction {
                             opcode: Opcode::Pop8,
                             source: format!("{:?} pop result off stack", &self),
@@ -1642,6 +1721,7 @@ impl Statement {
                 }
 
                 // stack is now back to normal
+                assert_eq!(start_offset, ctxt.additional_offset);
 
                 let var_type = match (var_type, &return_type) {
                     (None, Type::Void) => {
@@ -1718,17 +1798,22 @@ impl Statement {
             Statement::While{predicate, while_true} => {
                 let source = format!("WHILE ({:?})  ... ", predicate);
 
-                let while_start = format!(":{}_IF_WHILE_START_{}", &ctxt.function.name, ctxt.block_counter);
-                let while_body = format!(":{}_IF_WHILE_BODY_{}", &ctxt.function.name, ctxt.block_counter);
+                let while_start = format!(":{}_WHILE_START_{}", &ctxt.function.name, ctxt.block_counter);
+                let while_body = format!(":{}_WHILE_BODY_{}", &ctxt.function.name, ctxt.block_counter);
                 let while_end = format!(":{}_WHILE_END_{}", &ctxt.function.name, ctxt.block_counter);
                 ctxt.block_counter += 1;
 
+                let start_offset = ctxt.additional_offset;
+
                 ctxt.lines.push(AssemblyInputLine::Label(while_start.to_owned()));
                 predicate.emit_branch(ctxt, &while_body, &while_end);
+                assert_eq!(start_offset, ctxt.additional_offset);
                 ctxt.lines.push(AssemblyInputLine::Label(while_body.to_owned()));
                 for s in while_true {
                     s.emit(ctxt);
+                    // assert_eq!(start_offset, ctxt.additional_offset);
                 }
+                // assert_eq!(start_offset, ctxt.additional_offset);
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JmpImm,
                     source: source.to_owned(),
@@ -1745,14 +1830,19 @@ impl Statement {
                 let block_end = format!(":{}_IF_END_{}", &ctxt.function.name, ctxt.block_counter);
                 ctxt.block_counter += 1;
 
+                let start_offset = ctxt.additional_offset;
+
                 predicate.emit_branch(ctxt, &true_start, &false_start);              
 
                 ctxt.lines.push(AssemblyInputLine::Label(true_start.to_owned()));
 
                 let true_start_stack_offset = ctxt.additional_offset;
+                assert_eq!(start_offset, true_start_stack_offset);
 
                 for s in when_true {
+                    dbg!(s);
                     s.emit(ctxt);
+                    assert_eq!(start_offset, ctxt.additional_offset);
                 }
 
                 let true_end_stack_offset = ctxt.additional_offset;
@@ -1766,10 +1856,9 @@ impl Statement {
 
                 ctxt.lines.push(AssemblyInputLine::Label(false_start.to_owned()));
                 
-                ctxt.additional_offset = true_start_stack_offset;
-
                 for s in when_false {
                     s.emit(ctxt);
+                    assert_eq!(start_offset, ctxt.additional_offset);
                 }
 
                 let false_end_stack_offset = ctxt.additional_offset;
@@ -1847,11 +1936,14 @@ impl Function {
                 Statement::Declare {local, var_type} => {
                     visitor(local, Some(var_type));
                 }
-                Statement::Call{ local, var_type, call}  => {
+                Statement::CallAssign{ local, var_type, call}  => {
                     if let Some(local) = local {
                         let var_type = Some(match var_type {
                             Some(t) => t,
-                            None => &ctxt.functions[&call.function].return_type,
+                            None => &ctxt.functions
+                                        .get(&call.function)
+                                        .expect(&format!("could not find function '{}'", &call.function))
+                                        .return_type,
                         });
                         visitor(local, var_type);
                     }
@@ -2156,7 +2248,7 @@ fn main() -> Result<(), std::io::Error> {
         stdin.lock().read_to_string(&mut s)?;
         s
     };
-    let assembly = compile(&input, "main");
+    let assembly = compile(&input, "main", &env::current_dir().unwrap());
 
     let rom = assemble(assembly);
 
@@ -2291,43 +2383,70 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
     program
 }
 
-fn compile(entry: &str, input: &str) -> Vec<AssemblyInputLine> {
-    let mut ctxt = ProgramContext { 
-        entry: entry.to_owned(),
-        functions: BTreeMap::new(),
-        types: BTreeMap::new()
-    };
+fn compile(entry: &str, input: &str, root: &PathBuf) -> Vec<AssemblyInputLine> {
+    
 
-    let mut program = ProgramParser::parse(Rule::program, &input).unwrap();
-    let pairs = program.next().unwrap().into_inner();
-    for pair in pairs {
-        match pair.as_rule() {
-            Rule::struct_decl => {
-                let mut pairs = pair.into_inner();
+    let mut input = input.to_owned();
 
-                let name = pairs.next().unwrap().as_str().to_owned();
+    'reparse: loop {
+        let mut ctxt = ProgramContext { 
+            entry: entry.to_owned(),
+            functions: BTreeMap::new(),
+            types: BTreeMap::new()
+        };
 
-                let mut fields = Vec::new();
-                for arg in pairs.next().unwrap().into_inner() {
-                    let mut field_tokens = arg.into_inner();
-                    let mut field_tokens = field_tokens.next().unwrap().into_inner();
-                    let field_name = field_tokens.next().unwrap().as_str().to_owned();
-                    let field_type = Type::parse(field_tokens.next().unwrap(), false);
-                    fields.push((field_name, field_type));
+        let to_parse = input.clone();
+
+        let mut program = ProgramParser::parse(Rule::program, &to_parse).unwrap();
+        let pairs = program.next().unwrap().into_inner();
+        for pair in pairs {
+            // dbg!(&pair);
+            match pair.as_rule() {
+                Rule::include => {
+                    let original_stmt = pair.as_str().to_owned();
+                    let original_byte_offset = input.find(&original_stmt).unwrap();
+                    let original_byte_count = original_stmt.len(); //Returns the length of this String, in bytes
+                    let mut pairs = pair.into_inner();
+                    let relative_include_path = pairs.next().unwrap().as_str();
+                    let mut path = root.clone();
+                    path.push(relative_include_path);
+                    // let path = fs::canonicalize(path).unwrap();
+                    let mut file = File::open(&path).expect(&format!("Could not open '{:?}'", &path));
+                    let mut contents = String::new();
+                    contents += &format!("\n/* BEGIN {} */\n", &original_stmt);
+                    file.read_to_string(&mut contents).unwrap();
+                    contents += &format!("\n/* END   {} */\n", &original_stmt);
+                    input.replace_range(original_byte_offset..original_byte_offset+original_byte_count, &contents);
+                    println!("{}",&input);
+                    continue 'reparse;
                 }
+                Rule::struct_decl => {
+                    let mut pairs = pair.into_inner();
 
-                ctxt.types.insert(name, StructDefinition{fields});
-            },
-            Rule::function => {
-                let f = Function::parse(&ctxt, pair);
-                ctxt.functions.insert(f.name.clone(), f);
-            },
-            Rule::EOI => {},
-            _ => panic!("Unexpected rule: {:?}", pair)
+                    let name = pairs.next().unwrap().as_str().to_owned();
+
+                    let mut fields = Vec::new();
+                    for arg in pairs.next().unwrap().into_inner() {
+                        let mut field_tokens = arg.into_inner();
+                        let mut field_tokens = field_tokens.next().unwrap().into_inner();
+                        let field_name = field_tokens.next().unwrap().as_str().to_owned();
+                        let field_type = Type::parse(field_tokens.next().unwrap(), false);
+                        fields.push((field_name, field_type));
+                    }
+
+                    ctxt.types.insert(name, StructDefinition{fields});
+                },
+                Rule::function => {
+                    let f = Function::parse(&ctxt, pair);
+                    ctxt.functions.insert(f.name.clone(), f);
+                },
+                Rule::EOI => {},
+                _ => panic!("Unexpected rule: {:?}", pair)
+            }
         }
+        
+        break emit(ctxt);
     }
-
-    emit(ctxt)
 }
 
 #[cfg(test)]
@@ -2344,6 +2463,20 @@ mod tests {
     struct TestComputer<'a>(pub Computer<'a>);
 
     impl<'a> TestComputer<'a> {
+        fn arg_base_addr() -> u32 {
+            0x8100
+        }
+
+        fn test_programs_dir() -> PathBuf {
+            let mut dir = env::current_exe().unwrap();
+            dir.pop();
+            dir.pop();
+            dir.pop();
+            dir.pop();
+            dir.push("programs");
+            dir
+        }
+
         fn from_rom(rom: &[u8]) -> TestComputer<'a> {
             TestComputer(Computer::with_print(rom.to_vec(), false))
         }
@@ -2372,7 +2505,7 @@ mod tests {
     }
 
     fn test_inputs(entry: &str, program: &str, pairs: &[(u32,u32,u32)]) {
-        let assembly = compile(entry, program);
+        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble(assembly);
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
@@ -2382,7 +2515,7 @@ mod tests {
     }
 
     fn test_ttyout(entry: &str, program: &str, pairs: &[(u32,u32,&str)]) {
-        let assembly = compile(entry, program);
+        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble(assembly);
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
@@ -2405,7 +2538,7 @@ mod tests {
     }
 
     fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
-        let assembly = compile(entry, program);
+        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble(assembly);
         let addr1 = 0x8100;
         let addr2 = 0xA000;
@@ -2424,14 +2557,14 @@ mod tests {
     }
 
     fn test_var_inputs(entry: &str, program: &str, cases: &[(&[TestVar], u32)]) {
-        let assembly = compile(entry, program);
+        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble(assembly);
         for (args, expected) in cases
         {
             assert!(args.len() <= 3);
 
             let mut c = TestComputer::from_rom(&rom);
-            let mut arg_addr = 0x8100u32;
+            let mut arg_addr = TestComputer::arg_base_addr();
 
             let mut ptr_arg = |bytes: &[u8]| -> u32 {
                 let addr = arg_addr;
@@ -2440,6 +2573,16 @@ mod tests {
                 for (i,b) in bytes.iter().enumerate() {
                     *c.0.mem_byte_mut(addr + i as u32) = *b;
                 }
+
+                let round_up_address = 4 *((arg_addr + 4 + 3) / 4);
+                let round_up_bytes = round_up_address - arg_addr;
+                for _ in 0..round_up_bytes {
+                    c.0.add_data_trap(arg_addr);
+                    arg_addr += 1;
+                }
+
+                assert_eq!(arg_addr % 4, 0);
+
                 addr
             };
 
@@ -2749,6 +2892,8 @@ mod tests {
             include_str!("../../programs/strncmp.j"),
             &[
                 (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(0)], 0),
+                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(1)], 0),
+                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(2)], 0),
                 (&[TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Usize(1)], 0),
                 (&[TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(1)], 0),
                 (&[TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(2)], 255),
@@ -2756,6 +2901,27 @@ mod tests {
                 (&[TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(1000)], 1),
                 (&[TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Usize(same_len)], 0),
                 (&[TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Usize(same_len+1)], 255),
+            ]
+        );
+    }
+
+    #[test]
+    fn strstr() {
+        test_var_inputs(
+            "strstr",
+            include_str!("../../programs/strstr.j"),
+            &[
+                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], 0),
+                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], 0),
+                (&[TestVar::Ascii(b"a\0"), TestVar::Ascii(b"\0")], TestComputer::arg_base_addr()),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"h\0")], TestComputer::arg_base_addr()),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"he\0")], TestComputer::arg_base_addr()),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"Z\0")], 0),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"hi\0")], 0),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"el\0")], TestComputer::arg_base_addr() + 1),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"ll\0")], TestComputer::arg_base_addr() + 2),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"lo\0")], TestComputer::arg_base_addr() + 3),
+                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"l\0")], TestComputer::arg_base_addr() + 2),
             ]
         );
     }

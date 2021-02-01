@@ -16,6 +16,11 @@ fn strncmp(str1: &char, str2: &char, num: usize) -> u8 {
                 return 1;
             }
         }
+
+        if (*str1 == 0) {
+            return 0;
+        }
+
         str1 := (str1 + 0x1);
         str2 := (str2 + 0x1);
         num := (num - 0x1);
