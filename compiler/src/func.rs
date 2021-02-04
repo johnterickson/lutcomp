@@ -154,10 +154,10 @@ impl FunctionDefinition {
 
         fn find_address_of_stmt(ctxt: &ProgramContext, s: &Statement, needs_to_be_on_stack: &mut BTreeSet<String>) {
             match s {
-                Statement::Assign{target:_, var_type, value} => {
+                Statement::Assign{target:_, var_type:_, value} => {
                     find_address_of_exp(ctxt, value, needs_to_be_on_stack);
                 }
-                Statement::Declare {local, var_type} => {}
+                Statement::Declare {local:_, var_type:_} => {}
                 Statement::CallAssign{ local:_, var_type:_, call}  => {
                     for p in &call.parameters {
                         find_address_of_exp(ctxt, p, needs_to_be_on_stack);
@@ -197,7 +197,6 @@ impl FunctionDefinition {
         }
 
         /*
-
         stack:
 
         SP ->   local 3 (padded to 4 bytes)
@@ -212,13 +211,18 @@ impl FunctionDefinition {
         let mut variables = BTreeMap::new();
         let mut offset = 0;
 
+        let mut registers_used = BTreeSet::new();
+
         // locals
-        for (count, (name, var_type)) in self.locals.iter().enumerate() {
+        for (name, var_type) in &self.locals {
             let storage = {
                 let register = if needs_to_be_on_stack.contains(name) {
                     None
+                } else if var_type.byte_count(ctxt) != 1 {
+                    None  
                 } else {
                     if let Some(r) = ctxt.registers_available.iter().next().cloned() {
+                        registers_used.insert(r);
                         ctxt.registers_available.take(&r)
                     } else {
                         None
@@ -273,33 +277,34 @@ impl FunctionDefinition {
             offset += 4;
         }
 
-        fn find_subroutines(f: &FunctionDefinition, ctxt: &mut ProgramContext) {
-            for stmt in &f.body {
-                match stmt {
-                    Statement::Assign {target, value, var_type} => {
-                        unimplemented!();
-                    }
-                    _ => unimplemented!(),
+        // for v in variables.values() {
+        //     match v.storage {
+        //         Storage::Register(r) => {
+        //             ctxt.registers_available.insert(r);
+        //         },
+        //         Storage::Stack(_) => {},
+        //     }
+        // }
+
+        AllocatedFunction { def: self, registers_used, variables, callee_stack_size }
+    }
+
+    fn find_subroutines<F: FnMut()->()>(&self, f: F) {
+        for stmt in &self.body {
+            match stmt {
+                Statement::Assign {target, value, var_type} => {
+                    unimplemented!();
                 }
+                _ => unimplemented!(),
             }
         }
-
-        for v in variables.values() {
-            match v.storage {
-                Storage::Register(r) => {
-                    ctxt.registers_available.insert(r);
-                },
-                Storage::Stack(_) => {},
-            }
-        }
-
-        AllocatedFunction { def: self, variables, callee_stack_size }
     }
 }
 
 #[derive(Debug)]
 pub struct AllocatedFunction {
     pub def: FunctionDefinition,
+    pub registers_used: BTreeSet<Register>,
     pub variables: BTreeMap<String,Variable>,
     pub callee_stack_size: u32,
 }

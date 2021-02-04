@@ -35,6 +35,18 @@ impl Call {
 
         assert_eq!(f.def.args.len(), self.parameters.len());
 
+        let registers_to_save: Vec<_> = ctxt.function.registers_used.intersection(&f.registers_used).cloned().collect();
+
+        for r in &registers_to_save {
+            ctxt.add_inst(Instruction {
+                opcode: Opcode::Push8,
+                source: format!("{:?} save register before call", &self),
+                args: vec![Value::Register(r.0)],
+                resolved: None,
+            });
+            ctxt.additional_offset += 1;
+        }
+
         if f.def.return_type != Type::Void {
             // put 0xCC in for RESULT
             ctxt.add_inst(Instruction {
@@ -167,6 +179,40 @@ impl Call {
         } else {
             0
         };
+
+        assert_eq!(start_offset + return_type_stack_size + registers_to_save.len() as u32, ctxt.additional_offset);
+
+        if registers_to_save.len() > 0 {
+            for r in 0..return_type_stack_size {
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    source: format!("{:?} stashing return value", &self),
+                    args: vec![Value::Register(r.try_into().unwrap())],
+                    resolved: None,
+                });
+                ctxt.additional_offset -= 1;
+            }
+
+            for r in registers_to_save.iter().rev() {
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Pop8,
+                    source: format!("{:?} restore saved register after call", &self),
+                    args: vec![Value::Register(r.0)],
+                    resolved: None,
+                });
+                ctxt.additional_offset -= 1;
+            }
+
+            for r in 0..return_type_stack_size {
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::Push8,
+                    source: format!("{:?} restoring return value", &self),
+                    args: vec![Value::Register(r.try_into().unwrap())],
+                    resolved: None,
+                });
+                ctxt.additional_offset += 1;
+            }
+        }
 
         assert_eq!(start_offset + return_type_stack_size, ctxt.additional_offset);
 

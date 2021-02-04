@@ -219,51 +219,65 @@ impl Statement {
                 assert!(value_size <= 4);
                 assert_eq!(start_offset + value_size, ctxt.additional_offset);
 
-                let ptr_type = target.emit_address_to_reg0(ctxt);
-                match ptr_type {
-                    Type::Ptr(inner) => assert_eq!(inner.as_ref(), &value_type),
-                    _ => panic!("expected pointer")
-                };
-                assert_eq!(start_offset + value_size, ctxt.additional_offset);
-
-
-                let value_size = value_size as u8;
-                for r in 0..value_size {
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Pop8,
-                        resolved: None,
-                        source: format!("reading value from stack {:?}", &self),
-                        args: vec![Value::Register(4 + r)]
-                    });
-                    ctxt.additional_offset -= 1;
-                }
-
-                assert_eq!(start_offset, ctxt.additional_offset);
-
-                match value_size {
-                    1 => {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Store8,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(4), Value::Register(0)]
-                        });
+                let emit_result= target.try_emit_address_to_reg0(ctxt);
+                match emit_result {
+                    EmitAddressResult::ValueInRegister{reg, value_type: type_in_reg} => {
+                        assert_eq!(value_type, type_in_reg);
+                        for i in 0..value_size as u8 {
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Pop8,
+                                resolved: None,
+                                source: format!("reading value from stack {:?}", &self),
+                                args: vec![Value::Register(reg.0 + i)]
+                            });
+                            ctxt.additional_offset -= 1;
+                        }
                     }
-                    4 => {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Store32Part1,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(4), Value::Register(0)]
-                        });
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Store32Part2,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![]
-                        });
+                    EmitAddressResult::AddressInReg0{ptr_to_stack_type} => {
+                        match ptr_to_stack_type {
+                            Type::Ptr(inner) => assert_eq!(inner.as_ref(), &value_type),
+                            _ => panic!("expected pointer")
+                        };
+                        assert_eq!(start_offset + value_size, ctxt.additional_offset);
+    
+                        for r in 0..value_size as u8 {
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Pop8,
+                                resolved: None,
+                                source: format!("reading value from stack {:?}", &self),
+                                args: vec![Value::Register(4 + r)]
+                            });
+                            ctxt.additional_offset -= 1;
+                        }
+    
+                        assert_eq!(start_offset, ctxt.additional_offset);
+    
+                        match value_size {
+                            1 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(4), Value::Register(0)]
+                                });
+                            }
+                            4 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store32Part1,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(4), Value::Register(0)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store32Part2,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![]
+                                });
+                            }
+                            s => panic!(format!("Unexpected size {}", s))
+                        }
                     }
-                    s => panic!(format!("Unexpected size {}", s))
                 }
             },
             Statement::Return{ value } => {
@@ -393,7 +407,7 @@ impl Statement {
                                     ctxt.add_inst(Instruction {
                                         opcode: Opcode::Or8,
                                         resolved: None,
-                                        source: format!("load stack offset for call result {:?}", &self),
+                                        source: format!("save call result in target register {:?}", &self),
                                         args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
                                     });
                                 }
@@ -401,7 +415,7 @@ impl Statement {
                                     ctxt.add_inst(Instruction {
                                         opcode: Opcode::Or32,
                                         resolved: None,
-                                        source: format!("load stack offset for call result {:?}", &self),
+                                        source: format!("save call result in target register {:?}", &self),
                                         args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
                                     });
                                 }

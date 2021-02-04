@@ -26,6 +26,12 @@ enum DerefOffset {
     Register(u32, Register)
 }
 
+#[derive(Debug)]
+pub enum EmitAddressResult {
+    AddressInReg0{ptr_to_stack_type: Type},
+    ValueInRegister{reg: Register, value_type: Type},
+}
+
 struct MemoryReference {
     local_offset: u32,
     deref_offset: DerefOffset,
@@ -67,7 +73,9 @@ impl LogicalReference {
         }
     }
 
-    pub fn emit_local_address_to_reg0(&self, ctxt: &mut FunctionContext, local_name: &str) -> Type {
+
+
+    pub fn try_emit_local_address_to_reg0(&self, ctxt: &mut FunctionContext, local_name: &str) -> EmitAddressResult {
         let local = ctxt.find_local(local_name);
 
         let (mem_ref, final_type) = self.get_deref_offset(ctxt, &local.var_type);
@@ -76,7 +84,30 @@ impl LogicalReference {
         dbg!(&final_type);
 
         match local.storage {
-            Storage::Register(_) => panic!(format!("Cannot get address of a register")),
+            Storage::Register(r) => {
+                match final_type.byte_count(ctxt.program) {
+                    byte_count if byte_count >= 1 && byte_count <=3 => {
+                        for i in 0..byte_count as u8 {
+                            ctxt.add_inst(Instruction {
+                                source: format!("copying register {:?}", &self),
+                                opcode: Opcode::Or8,
+                                args: vec![Value::Register(r.0 + i), Value::Register(r.0 + i), Value::Register(i)],
+                                resolved: None,
+                            });
+                        }
+                    }
+                    4 => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("copying register {:?}", &self),
+                            opcode: Opcode::Or32,
+                            args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
+                            resolved: None,
+                        });
+                    }
+                    _ => unimplemented!()
+                }
+                EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
+            }
             Storage::Stack(base_offset) => {
                 let offset = ctxt.get_stack_offset(base_offset) + mem_ref.local_offset;
 
@@ -137,8 +168,8 @@ impl LogicalReference {
                         });
                     }
                 }
+                EmitAddressResult::AddressInReg0{ptr_to_stack_type: Type::Ptr(Box::new(final_type))}
             }
-        };
-        Type::Ptr(Box::new(final_type))
+        }
     }
 }

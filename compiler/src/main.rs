@@ -219,7 +219,7 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> Vec<AssemblyInputLine> {
             function_impls: BTreeMap::new(),
             function_defs: BTreeMap::new(),
             types: BTreeMap::new(),
-            registers_available: BTreeSet::new(), //(0x10..=0xFF).map(|r| Register(r)).collect(),
+            registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
         };
 
         let to_parse = input.clone();

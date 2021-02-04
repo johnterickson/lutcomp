@@ -65,6 +65,34 @@ pub enum Expression {
 }
 
 impl Expression {
+    fn visit_inner_expressions<F: Fn(&mut Expression) -> ()>(&mut self, f: &F) {
+        f(self);
+        match self {
+            Expression::Call(call) => {
+                for param in call.parameters.iter_mut() {
+                    param.visit_inner_expressions(f);
+                }
+            }
+            Expression::Arithmetic(_, left, right) |
+            Expression::Comparison(_, left, right) => {
+                left.visit_inner_expressions(f);
+                right.visit_inner_expressions(f);
+            }
+            Expression::Deref(inner) |
+            Expression::AddressOf(inner) |
+            Expression::Index(_, inner) |
+            Expression::Cast{old_type:_, new_type:_, value: inner} |
+            Expression::Optimized{original:_, optimized: inner} => {
+                inner.visit_inner_expressions(f);
+            }
+            Expression::Ident(_) |
+            Expression::TtyIn() |
+            Expression::LocalFieldDeref(_,_) |
+            Expression::PtrFieldDeref(_,_) |
+            Expression::Number(_,_) => {}
+        }
+    }
+
     fn try_get_const(&self) -> Option<i64> {
         match self {
             Expression::Number(_, val) => Some(*val),
@@ -376,56 +404,86 @@ impl Expression {
     }
 
     fn emit_ref(&self, ctxt: &mut FunctionContext, reference: &LogicalReference, local_name: &str) -> Type {
-        let ptr_type = reference.emit_local_address_to_reg0(ctxt, local_name);
-        match ptr_type {
-            Type::Ptr(inner) => {
-                let size = inner.byte_count(ctxt.program);
-                match size {
+        let emit_result = reference.try_emit_local_address_to_reg0(ctxt, local_name);
+        match emit_result {
+            EmitAddressResult::AddressInReg0{ptr_to_stack_type} => {
+                match ptr_to_stack_type {
+                    Type::Ptr(inner) => {
+                        let size = inner.byte_count(ctxt.program);
+                        match size {
+                            1 => {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("loading final value from memory {:?}", &self),
+                                    opcode: Opcode::Load8,
+                                    args: vec![Value::Register(0), Value::Register(4)],
+                                    resolved: None,
+                                });
+                                ctxt.add_inst(Instruction {
+                                    source: format!("storing loaded value {:?}", &self),
+                                    opcode: Opcode::Push8,
+                                    args: vec![Value::Register(4)],
+                                    resolved: None,
+                                });
+                                ctxt.additional_offset += 1;
+                            }
+                            4 => {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("loading final value from memory {:?}", &self),
+                                    opcode: Opcode::Load32,
+                                    args: vec![Value::Register(0), Value::Register(4)],
+                                    resolved: None,
+                                });
+
+                                for r in (0..4).rev() {
+                                    ctxt.add_inst(Instruction {
+                                        source: format!("storing loaded value {:?}", &self),
+                                        opcode: Opcode::Push8,
+                                        args: vec![Value::Register(4 + r)],
+                                        resolved: None,
+                                    });
+                                    ctxt.additional_offset += 1;
+                                }
+                            }
+                            _ => panic!("don't know how to handle size {}", size)
+                        }
+                        *inner
+                    }
+                    _ => panic!(),
+                }
+            }
+            EmitAddressResult::ValueInRegister{reg, value_type} => {
+                match value_type.byte_count(ctxt.program) {
                     1 => {
-                        ctxt.add_inst(Instruction {
-                            source: format!("loading final value from memory {:?}", &self),
-                            opcode: Opcode::Load8,
-                            args: vec![Value::Register(0), Value::Register(4)],
-                            resolved: None,
-                        });
                         ctxt.add_inst(Instruction {
                             source: format!("storing loaded value {:?}", &self),
                             opcode: Opcode::Push8,
-                            args: vec![Value::Register(4)],
+                            args: vec![Value::Register(reg.0)],
                             resolved: None,
                         });
                         ctxt.additional_offset += 1;
                     }
                     4 => {
-                        ctxt.add_inst(Instruction {
-                            source: format!("loading final value from memory {:?}", &self),
-                            opcode: Opcode::Load32,
-                            args: vec![Value::Register(0), Value::Register(4)],
-                            resolved: None,
-                        });
-
-                        for r in (0..4).rev() {
+                        for i in (0..4).rev() {
                             ctxt.add_inst(Instruction {
                                 source: format!("storing loaded value {:?}", &self),
                                 opcode: Opcode::Push8,
-                                args: vec![Value::Register(4 + r)],
+                                args: vec![Value::Register(reg.0+i)],
                                 resolved: None,
                             });
                             ctxt.additional_offset += 1;
                         }
                     }
-                    _ => panic!("don't know how to handle size {}", size)
+                    _ => unimplemented!()
                 }
-                *inner
+                value_type
             }
-            _ => panic!("Expected a pointer but found {:?}", ptr_type)
         }
     }
 
-    pub fn emit_address_to_reg0(&self, ctxt: &mut FunctionContext) -> Type {
+    pub fn try_emit_address_to_reg0(&self, ctxt: &mut FunctionContext) -> EmitAddressResult {
         let t = match self {
             Expression::Ident(local_name) => {
-                LogicalReference::Local.emit_local_address_to_reg0(ctxt, local_name)
+                LogicalReference::Local.try_emit_local_address_to_reg0(ctxt, local_name)
             }
             Expression::Index(local_name, index_exp) => {
                 let index_type = index_exp.emit(ctxt);
@@ -445,7 +503,7 @@ impl Expression {
                 LogicalReference::ArrayIndex{
                     index_reg: Register(0),
                     multiplier: 1
-                }.emit_local_address_to_reg0(ctxt, local_name)
+                }.try_emit_local_address_to_reg0(ctxt, local_name)
             },
             Expression::Deref(inner) => {
                 let inner_type = inner.emit(ctxt);
@@ -460,13 +518,13 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                inner_type
+                EmitAddressResult::AddressInReg0{ptr_to_stack_type: inner_type}
             },
             Expression::LocalFieldDeref(local_name, field_name) => {
-                LogicalReference::LocalField(field_name.to_owned()).emit_local_address_to_reg0(ctxt, local_name)
+                LogicalReference::LocalField(field_name.to_owned()).try_emit_local_address_to_reg0(ctxt, local_name)
             }
             Expression::PtrFieldDeref(local_name, field_name) => {
-                LogicalReference::DerefField(field_name.to_owned()).emit_local_address_to_reg0(ctxt, local_name)
+                LogicalReference::DerefField(field_name.to_owned()).try_emit_local_address_to_reg0(ctxt, local_name)
             }
             _ => {
                 panic!(format!("Don't know how to emit address of {:?}", self));
@@ -489,19 +547,23 @@ impl Expression {
                 optimized.emit(ctxt)
             }
             Expression::AddressOf(inner) => {
-                let inner_type = inner.emit_address_to_reg0(ctxt);
+                let emit_result = inner.try_emit_address_to_reg0(ctxt);
 
-                for r in (0..4).rev() {
-                    ctxt.add_inst(Instruction {
-                        source: format!("pushing deref result {:?}", &self),
-                        opcode: Opcode::Push8,
-                        args: vec![Value::Register(r)],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset += 1;
+                match emit_result {
+                    EmitAddressResult::ValueInRegister{..} => panic!(),
+                    EmitAddressResult::AddressInReg0{ptr_to_stack_type} => {
+                        for r in (0..4).rev() {
+                            ctxt.add_inst(Instruction {
+                                source: format!("pushing deref result {:?}", &self),
+                                opcode: Opcode::Push8,
+                                args: vec![Value::Register(r)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset += 1;
+                        }
+                        ptr_to_stack_type
+                    }
                 }
-
-                inner_type
             }
             Expression::Cast{old_type, new_type, value} => {
                 let emitted_type = value.emit(ctxt);
