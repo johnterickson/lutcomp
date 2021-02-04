@@ -2,7 +2,6 @@ extern crate strum;
 use strum::IntoEnumIterator;
 
 extern crate packed_struct;
-#[macro_use]
 extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 

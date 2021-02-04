@@ -4,7 +4,6 @@ extern crate strum_macros;
 use strum::IntoEnumIterator;
 
 extern crate packed_struct;
-#[macro_use]
 extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
@@ -796,17 +795,6 @@ impl Ucode {
                         add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Mem(AddressBusOutputLevel::Addr));
                     }
 
-                }
-                Some(Opcode::Copy8) => {
-                    self.start_of_ram();
-
-                    pc_inc!(self);
-                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
-                    
-                    pc_inc!(self);
-                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(Opcode::AndImm8) => {
                     self.start_of_ram();

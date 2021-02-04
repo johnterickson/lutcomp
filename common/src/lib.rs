@@ -3,7 +3,6 @@ extern crate strum;
 extern crate strum_macros;
 
 extern crate packed_struct;
-#[macro_use]
 extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
@@ -125,7 +124,6 @@ pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
     Invert8 = 3, // ~regA -> regA
     Negate8 = 4, // (~regA + 1) -> regA + FLAGS
-    Copy8 = 0xF, // regA -> regB
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
