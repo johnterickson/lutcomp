@@ -203,7 +203,7 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
     }
 
     let mut optimizations_performed : usize;
-    while 0 < {optimizations_performed = optimize(&mut program); optimizations_performed} {
+    while 0 < {optimizations_performed = optimize_assembly(&mut program); optimizations_performed} {
         println!("performed {} optimizations", optimizations_performed);
     }
 

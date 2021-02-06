@@ -134,7 +134,7 @@ impl FunctionDefinition {
 
     pub fn allocate(self, ctxt: &mut ProgramContext) -> AllocatedFunction {
 
-        fn mark_as_on_stack(ctxt: &ProgramContext, e: &Expression, needs_to_be_on_stack: &mut BTreeSet<String>) {
+        fn mark_as_on_stack(_ctxt: &ProgramContext, e: &Expression, needs_to_be_on_stack: &mut BTreeSet<String>) {
             let mut mark = |e: &Expression| {
                 dbg!(e);
                 match e {
@@ -149,7 +149,7 @@ impl FunctionDefinition {
 
         fn find_address_of_exp(ctxt: &ProgramContext, e: &Expression, needs_to_be_on_stack: &mut BTreeSet<String>) {
             let mut find = |e: &Expression| {
-                dbg!(e);
+                // dbg!(e);
                 match e {
                     Expression::AddressOf(inner) => {
                         mark_as_on_stack(ctxt, inner.as_ref(), needs_to_be_on_stack);
@@ -285,27 +285,7 @@ impl FunctionDefinition {
             offset += 4;
         }
 
-        // for v in variables.values() {
-        //     match v.storage {
-        //         Storage::Register(r) => {
-        //             ctxt.registers_available.insert(r);
-        //         },
-        //         Storage::Stack(_) => {},
-        //     }
-        // }
-
         AllocatedFunction { def: self, registers_used, variables, callee_stack_size }
-    }
-
-    fn find_subroutines<F: FnMut()->()>(&self, f: F) {
-        for stmt in &self.body {
-            match stmt {
-                Statement::Assign {target, value, var_type} => {
-                    unimplemented!();
-                }
-                _ => unimplemented!(),
-            }
-        }
     }
 }
 
