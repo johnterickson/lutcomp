@@ -1,5 +1,3 @@
-use env::VarError;
-
 use super::*;
 
 pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {

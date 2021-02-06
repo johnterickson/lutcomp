@@ -268,10 +268,11 @@ impl Expression {
 
     pub fn emit_branch(&self, ctxt: &mut FunctionContext, when_true:&str, when_false: &str) {
         if let Expression::Comparison(op, left, right) = self {
+            dbg!(&self);
             let left_type = left.emit(ctxt);
             let right_type = right.emit(ctxt);
 
-            let size = match (left_type, right_type, op) {
+            let size = match (&left_type, &right_type, op) {
                 (Type::Number(left_type), Type::Number(right_type), op) => {
                     match (left_type, right_type, op) {
                         (NumberType::U8, NumberType::U8, _) => { }
@@ -283,6 +284,8 @@ impl Expression {
                 }
                 _ => unimplemented!()
             };
+
+            dbg!(left_type, right_type, size);
 
             let right_reg = 8;
             for r in 0..size {
@@ -537,11 +540,21 @@ impl Expression {
     }
 
     pub fn emit(&self, ctxt: &mut FunctionContext) -> Type {
-        // dbg!(&self);
+        dbg!(&self);
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
         let result = match self {
             Expression::Call(args) => {
-                args.emit(ctxt).clone()
+                let t = args.emit(ctxt);
+                for r in (0..t.byte_count(ctxt.program)).rev() {
+                    ctxt.add_inst(Instruction {
+                        source: format!("pushing result on stack {:?}", &self),
+                        opcode: Opcode::Push8,
+                        args: vec![Value::Register(r.try_into().unwrap())],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset += 1;
+                }
+                t
             }
             Expression::Optimized{original:_, optimized} => {
                 optimized.emit(ctxt)

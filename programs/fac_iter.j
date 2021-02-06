@@ -1,8 +1,3 @@
-fn main(x:u8) -> u8 {
-    res:u8 := fac(x);
-    return res;
-}
-
 fn fac(x:u8) -> u8 {
     if (x == 0) {
         return 1;

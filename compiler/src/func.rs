@@ -210,7 +210,8 @@ impl FunctionDefinition {
                 32-bit return address (32-bit aligned)
                 arg 2 (padded to 4 bytes)
                 arg 1  (padded to 4 bytes)
-                RESULT (padded to 4 bytes)
+
+        R0..    RESULT
         */
 
         let mut variables = BTreeMap::new();
@@ -280,9 +281,8 @@ impl FunctionDefinition {
             variables.insert(RESULT.to_owned(), Variable {
                 decl: Declaration::Result,
                 var_type: self.return_type.clone(),
-                storage: Storage::Stack(BaseOffset(offset.try_into().unwrap()))
+                storage: Storage::Register(Register(0))
             });
-            offset += 4;
         }
 
         AllocatedFunction { def: self, registers_used, variables, callee_stack_size }

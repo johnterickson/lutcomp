@@ -47,25 +47,6 @@ impl Call {
             ctxt.additional_offset += 1;
         }
 
-        if f.def.return_type != Type::Void {
-            // put 0xCC in for RESULT
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::LoadImm8,
-                source: format!("{:?} placeholder value for RESULT", &self),
-                args: vec![Value::Register(0), Value::Constant8(0xCC)],
-                resolved: None,
-            });
-            for _ in 0..4 {
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Push8,
-                    source: format!("{:?} placeholder value for RESULT", &self),
-                    args: vec![Value::Register(0)],
-                    resolved: None,
-                });
-                ctxt.additional_offset += 1;
-            }
-        }
-
         let ret_value_offset = ctxt.additional_offset;
         
         for (i,p) in self.parameters.iter().enumerate() {
@@ -84,7 +65,7 @@ impl Call {
 
                     ctxt.add_inst(Instruction {
                         opcode: Opcode::LoadImm8,
-                        source: format!("{:?} padding for arg{}", &self, i),
+                        source: format!("{:?} padding byte value for arg{}", &self, i),
                         args: vec![Value::Register(0), Value::Constant8(0xCC)],
                         resolved: None,
                     });
@@ -145,54 +126,12 @@ impl Call {
         ctxt.additional_offset -= parameters_bytes + 4;
 
 
-        // result is now at the top of the stack
+        // result is in r0..
         assert_eq!(ret_value_offset, ctxt.additional_offset);
 
-        let return_type = f.def.return_type.clone();
-        let return_type_stack_size = if return_type != Type::Void {
-            let return_type_cur_stack_size = return_type.byte_count(ctxt.program);
-            match return_type_cur_stack_size {
-                4 => return_type_cur_stack_size,
-                1 => {
-                    for r in 0..4 {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Pop8,
-                            source: format!("{:?} unpadding return value", &self),
-                            args: vec![Value::Register(r)],
-                            resolved: None,
-                        });
-                        ctxt.additional_offset -= 1;
-                    }
-
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Push8,
-                        source: format!("{:?} unpadding return value", &self),
-                        args: vec![Value::Register(0)],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset += 1;
-
-                    return_type_cur_stack_size
-                }
-                _ => unimplemented!(),
-            }
-        } else {
-            0
-        };
-
-        assert_eq!(start_offset + return_type_stack_size + registers_to_save.len() as u32, ctxt.additional_offset);
+        assert_eq!(start_offset + registers_to_save.len() as u32, ctxt.additional_offset);
 
         if registers_to_save.len() > 0 {
-            for r in 0..return_type_stack_size {
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Pop8,
-                    source: format!("{:?} stashing return value", &self),
-                    args: vec![Value::Register(r.try_into().unwrap())],
-                    resolved: None,
-                });
-                ctxt.additional_offset -= 1;
-            }
-
             for r in registers_to_save.iter().rev() {
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::Pop8,
@@ -202,20 +141,10 @@ impl Call {
                 });
                 ctxt.additional_offset -= 1;
             }
-
-            for r in 0..return_type_stack_size {
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Push8,
-                    source: format!("{:?} restoring return value", &self),
-                    args: vec![Value::Register(r.try_into().unwrap())],
-                    resolved: None,
-                });
-                ctxt.additional_offset += 1;
-            }
         }
 
-        assert_eq!(start_offset + return_type_stack_size, ctxt.additional_offset);
+        assert_eq!(start_offset, ctxt.additional_offset);
 
-        return_type
+        f.def.return_type.clone()
     }
 }

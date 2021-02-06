@@ -81,7 +81,7 @@ fn main() -> Result<(), std::io::Error> {
         stdin.lock().read_to_string(&mut s)?;
         s
     };
-    let assembly = compile(&input, "main", &env::current_dir().unwrap());
+    let (_program, assembly) = compile(&input, "main", &env::current_dir().unwrap());
 
     let rom = assemble::assemble(assembly);
 
@@ -117,7 +117,7 @@ fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
+fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
     let main = ctxt.function_impls.get(&ctxt.entry)
         .expect(&format!("entry '{}' not found.", &ctxt.entry));
 
@@ -137,24 +137,6 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
         resolved: None
     }));
 
-    if Type::Void != main.def.return_type {
-        assert!(main.def.return_type.byte_count(&ctxt) <= 4);
-        program.push(AssemblyInputLine::Instruction(Instruction {
-            opcode: Opcode::LoadImm8,
-            source: format!("load RESULT placeholder byte for main"),
-            args: vec![Value::Register(0x10), Value::Constant8(0xCC)],
-            resolved: None
-        }));
-        for b in (0..4).rev() {
-            program.push(AssemblyInputLine::Instruction(Instruction {
-                opcode: Opcode::Push8,
-                source: format!("push RESULT placeholder byte {} for main", b),
-                args: vec![Value::Register(0x10)],
-                resolved: None
-            }));
-        }
-    }
-
     let main_args = main.def.args.len() as u8;
     for i in (0..main_args).rev() {
         for b in (0..4).rev() {
@@ -168,30 +150,22 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
     }
     program.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.entry)));
 
-    program.push(AssemblyInputLine::Instruction(Instruction {
-        source: format!("discard args from main"),
-        opcode: Opcode::LoadImm32,
-        args: vec![Value::Register(0), Value::Constant32(4*(main_args as u32))],
-        resolved: None,
-    }));
+    if main_args != 0 {
+        program.push(AssemblyInputLine::Instruction(Instruction {
+            source: format!("discard args from main"),
+            opcode: Opcode::LoadImm32,
+            args: vec![Value::Register(8), Value::Constant32(4*(main_args as u32))],
+            resolved: None,
+        }));
 
-    program.push(AssemblyInputLine::Instruction(Instruction {
-        source: format!("discard args from main"),
-        opcode: Opcode::Add32NoCarryIn,
-        args: vec![Value::Register(REG_SP), Value::Register(0), Value::Register(REG_SP)],
-        resolved: None,
-    }));
-
-    if main.def.return_type != Type::Void {
-        for b in 0..4 {
-            program.push(AssemblyInputLine::Instruction(Instruction {
-                opcode: Opcode::Pop8,
-                source: format!("pop result byte {} for main", b),
-                args: vec![Value::Register(b)],
-                resolved: None
-            }));
-        }
+        program.push(AssemblyInputLine::Instruction(Instruction {
+            source: format!("discard args from main"),
+            opcode: Opcode::Add32NoCarryIn,
+            args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(REG_SP)],
+            resolved: None,
+        }));
     }
+
     program.push(AssemblyInputLine::from_str("halt"));
 
     for f in &ctxt.function_impls {
@@ -210,7 +184,7 @@ fn emit(ctxt: ProgramContext) -> Vec<AssemblyInputLine> {
     program
 }
 
-fn compile(entry: &str, input: &str, root: &PathBuf) -> Vec<AssemblyInputLine> {
+fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<AssemblyInputLine>) {
     let mut input = input.to_owned();
 
     'reparse: loop {
@@ -279,8 +253,8 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> Vec<AssemblyInputLine> {
             ctxt.function_impls.insert(name.clone(), allocated);
         }
 
-
-        break emit(ctxt);
+        let assembly = emit(&mut ctxt);
+        break (ctxt, assembly);
     }
 }
 
@@ -288,6 +262,8 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> Vec<AssemblyInputLine> {
 mod tests {
     use super::*;
 
+
+    #[derive(Debug, PartialEq, Clone)]
     enum TestVar {
         Ascii(&'static [u8]),
         Ptr(Vec<u8>),
@@ -295,11 +271,48 @@ mod tests {
         Usize(u32),
     }
 
+    impl TestVar {
+        fn byte_count(&self) -> u32 {
+            match self {
+                TestVar::Ascii(_) | TestVar::Ptr(_) | TestVar::Usize(_) => 4,
+                TestVar::U8(_) => 1
+            }
+        }
+    }
+
+    impl From<u8> for TestVar {
+        fn from(i: u8) -> Self {
+            TestVar::U8(i)
+        }
+    }
+
+    impl From<&u8> for TestVar {
+        fn from(i: &u8) -> Self {
+            TestVar::U8(*i)
+        }
+    }
+
+    impl From<u32> for TestVar {
+        fn from(i: u32) -> Self {
+            TestVar::Usize(i)
+        }
+    }
+
+    impl From<&u32> for TestVar {
+        fn from(i: &u32) -> Self {
+            TestVar::Usize(*i)
+        }
+    }
+
     struct TestComputer<'a>(pub Computer<'a>);
 
     impl<'a> TestComputer<'a> {
         fn arg_base_addr() -> u32 {
             0x8100
+        }
+
+        fn arg_base_addr_var(offset: u32) -> TestVar {
+            TestVar::Usize(TestComputer::arg_base_addr() + offset)
         }
 
         fn test_programs_dir() -> PathBuf {
@@ -316,7 +329,7 @@ mod tests {
             TestComputer(Computer::with_print(rom.to_vec(), false))
         }
 
-        fn run(&mut self, inputs: &[u32], out: u32) {
+        fn run(&mut self, inputs: &[u32]) -> u32{
             dbg!(inputs);
             assert!(inputs.len() <= 3);
             for (i,val) in inputs.iter().rev().enumerate() {
@@ -335,27 +348,27 @@ mod tests {
                 step_count += 1;
                 assert!(step_count < 100000000);
             }
-            assert_eq!(out, u32::from_le_bytes(*self.0.mem_word_mut(0x80000)));
+            u32::from_le_bytes(*self.0.mem_word_mut(0x80000))
         }
     }
 
-    fn test_inputs(entry: &str, program: &str, pairs: &[(u32,u32,u32)]) {
-        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
-        let rom = assemble(assembly);
-        for (input1, input2, expected) in pairs {
-            let mut c = TestComputer::from_rom(&rom);
-            dbg!((input1, input2, expected));
-            c.run(&[*input1, *input2], *expected);
-        }
+    fn test_inputs<'a, T1,T2,T3>(entry: &str, program: &str, cases: &'a [(T1,T2,T3)])
+        where TestVar: From<&'a T1>, TestVar: From<&'a T2>, TestVar: From<&'a T3>
+    {
+        let cases: Vec<(Vec<TestVar>,TestVar)> = cases
+            .iter()
+            .map(|(in1,in2,out)| ([in1.into(), in2.into()].to_vec(), out.into()))
+            .collect();
+        test_var_inputs(entry, program, cases.as_slice());
     }
 
     fn test_ttyout(entry: &str, program: &str, pairs: &[(u32,u32,&str)]) {
-        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
+        let (_ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble(assembly);
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
             dbg!((input1, input2, expected));
-            c.run(&[*input1, *input2], 0);
+            assert_eq!(0, c.run(&[*input1, *input2]) & 0xFF);
 
             let mut lines = Vec::new();
             let mut line = String::new();
@@ -373,7 +386,7 @@ mod tests {
     }
 
     fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
-        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
+        let (_ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble(assembly);
         let addr1 = 0x8100;
         let addr2 = 0xA000;
@@ -387,12 +400,34 @@ mod tests {
             for (i,b) in input2.iter().enumerate() {
                 *c.0.mem_byte_mut(addr2 + i as u32) = *b;
             }
-            c.run(&[addr1, addr2], *expected);
+            assert_eq!(*expected, c.run(&[addr1, addr2]));
         }
     }
 
-    fn test_var_inputs(entry: &str, program: &str, cases: &[(&[TestVar], u32)]) {
-        let assembly = compile(entry, program, &TestComputer::test_programs_dir());
+    fn check_args(ctxt: &ProgramContext, test_case: &(Vec<TestVar>, TestVar)) {
+        let entry = &ctxt.function_defs[&ctxt.entry];
+        let entry_args = &entry.args;
+        let (test_args, test_return) = test_case;
+        assert_eq!(entry_args.len(), test_args.len());
+        for (i, (entry_arg_name, entry_arg_type)) in entry_args.iter().enumerate() {
+            let entry_arg_size = entry_arg_type.byte_count(ctxt);
+            let test_arg_size = test_args[i].byte_count();
+            assert_eq!(entry_arg_size, test_args[i].byte_count(),
+                "Entry arg '{}' type '{:?}' expects size {} but test provided size {}.", 
+                entry_arg_name, entry_arg_type, entry_arg_size, test_arg_size);
+        }
+
+        let entry_return_size = entry.return_type.byte_count(ctxt);
+        let test_return_size = test_return.byte_count();
+        assert_eq!(entry_return_size, test_return_size,
+            "Entry function returns type '{:?}' expects size {} but test provided size {}.", 
+            entry.return_type, entry_return_size, test_return_size);
+    }
+
+    fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
+        let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
+        check_args(&ctxt, cases.iter().next().unwrap());
+
         let rom = assemble(assembly);
         for (args, expected) in cases
         {
@@ -430,41 +465,49 @@ mod tests {
                 }
             }).collect();
 
-            c.run(&arg_values, *expected);
+            let result = c.run(&arg_values);
+            let expected: &TestVar = expected.into();
+            let result  = match expected {
+                TestVar::U8(_) => TestVar::U8((result & 0xFF) as u8),
+                TestVar::Usize(_) => TestVar::Usize(result),
+                _ => unimplemented!(),
+            };
+
+            assert_eq!(expected, &result);
         }
     }
 
 
     #[test]
     fn halt() {
-        test_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/halt.j"),
-            &[(0,0,1)]);
+            &[(vec![],1u8.into())]);
     }
 
     #[test]
     fn add_u8() {
-        test_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/add_u8.j"),
-            &[(0,0,7)]);
+            &[(vec![],7u8.into())]);
     }
 
     #[test]
     fn call_parameterless() {
-        test_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/call_parameterless.j"),
-            &[(0,0,7)]);
+            &[(vec![],7u8.into())]);
     }
 
     #[test]
     fn idfn() {
-        test_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/idfn.j"),
-            &[(0,0,7)]);
+            &[(vec![],TestVar::U8(7u8))]);
     }
 
     #[test]
@@ -472,7 +515,7 @@ mod tests {
         test_inputs(
             "main",
             include_str!("../../programs/if_eq.j"),
-            &[(6,7,0), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
+            &[(6u8,7u8,0u8), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
     }
 
     #[test]
@@ -481,7 +524,7 @@ mod tests {
             "main",
             include_str!("../../programs/if_gt.j"),
             &[
-                (0,1,0),
+                (0u8,1u8,0u8),
                 (1,2,0),
                 (8,7,1),
                 (0,0xFF,0),
@@ -493,7 +536,7 @@ mod tests {
         test_inputs(
             "main",
             include_str!("../../programs/if_gte.j"),
-            &[(6,7,0), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 1), (7,7,1)]);
+            &[(6u8,7u8,0u8), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 1), (7,7,1)]);
     }
 
     #[test]
@@ -502,7 +545,7 @@ mod tests {
             "main",
             include_str!("../../programs/if_lt.j"),
             &[
-            (0,0,0),
+            (0u8,0u8,0u8),
             (0,1,1),
             (6,7,1), (8,7,0), (0,7,1), (7,0,0), (0x7F,7,0), (0xFF, 7, 0), (7,7,0)]);
     }
@@ -512,7 +555,7 @@ mod tests {
         test_inputs(
             "main",
             include_str!("../../programs/if_lte.j"),
-            &[(6,7,1), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 0), (7,7,1)]);
+            &[(6u8,7u8,1u8), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 0), (7,7,1)]);
     }
 
     #[test]
@@ -520,7 +563,7 @@ mod tests {
         test_inputs(
             "main",
             include_str!("../../programs/if_ne.j"),
-            &[(6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
+            &[(6u8,7u8,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
     }
 
     #[test]
@@ -529,7 +572,7 @@ mod tests {
             "main",
             include_str!("../../programs/if_ne_uptr.j"),
             &[
-                (6,7,1),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0),
+                (6u32,7u32,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0),
                 (0x0,0x100,1),(0x100,0x100,0),(0xAABBCCDD,0xAABBCCDD,0),
                 (0xAABBCCDD,0xAABBCCDE,1),(0xAABBCCDD,0xAABBCDDD,1),
                 (0xAABBCCDD,0xAABCCCDD,1),(0xAABBCCDD,0xABBBCCDD,1)]);
@@ -537,44 +580,50 @@ mod tests {
 
     #[test]
     fn plusone() {
-        test_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/plusone.j"),
-            &[(0,0,7)]);
+            &[(vec![],7u8.into())]);
 
     }
 
     #[test]
     fn fac_rec() {
-        test_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/fac_rec.j"),
             &[
-                (0xCC,0,1),(0xCC,1,1),(0xCC, 2, 2),(0xCC,5,120)
+                (vec![0x0u8.into()],1u8.into()),
+                (vec![0x1u8.into()],1u8.into()),
+                (vec![0x2u8.into()],2u8.into()),
+                (vec![0x5u8.into()],120u8.into()),
             ]);
     }
 
     #[test]
     fn fac_iter() {
-        test_inputs(
-            "main",
+        test_var_inputs(
+            "fac",
             include_str!("../../programs/fac_iter.j"),
             &[
-                (0xCC,0,1),(0xCC,1,1),(0xCC, 2, 2),(0xCC,5,120)
+                (vec![0u8.into()],1u8.into()),
+                (vec![1u8.into()],1u8.into()),
+                (vec![2u8.into()],2u8.into()),
+                (vec![5u8.into()],120u8.into()),
             ]);
     }
 
     #[test]
     fn fib() {
-        test_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/fib.j"),
             &[
-                (0xCC,0,0),
-                (0xCC,1,1),
-                (0xCC,2,1),
-                (0xCC,3,2),
-                (0xCC,13,233)
+                (vec![0u8.into()],0u8.into()),
+                (vec![1u8.into()],1u8.into()),
+                (vec![2u8.into()],1u8.into()),
+                (vec![3u8.into()],2u8.into()),
+                (vec![13u8.into()],233u8.into()),
                 ]);
     }
 
@@ -584,7 +633,7 @@ mod tests {
             "main",
             include_str!("../../programs/add_uptr.j"),
             &[
-                (0x0,0x0,0x0),
+                (0x0u32,0x0u32,0x0u32),
                 (0x0,0x1,0x1),
                 (0x1,0x0,0x1),
                 (0x1,0x1,0x2),
@@ -616,7 +665,7 @@ mod tests {
             "main",
             include_str!("../../programs/struct.j"),
             &[
-                (0x0,0x0,0x0),
+                (0x0u32,0x0u32,0x0u32),
                 (0x0,0x1,0x1),
                 (0x1,0x0,0x1),
                 (0x1,0x1,0x2),
@@ -633,7 +682,7 @@ mod tests {
             "main",
             include_str!("../../programs/divide.j"),
             &[
-                (0x1,0x1,0x1),
+                (0x1u8,0x1u8,0x1u8),
                 (0x2,0x1,0x2),
                 (0x1,0x2,0x0),
                 (100,10,10),
@@ -662,7 +711,7 @@ mod tests {
             "main",
             include_str!("../../programs/local_array.j"),
             &[
-                (0x0,0x0,0x0),
+                (0x0u8,0x0u8,0x0u8),
                 (0x0,0x1,0x1),
                 (0x1,0x0,0x1),
                 (0x1,0xFF,0x0),
@@ -675,7 +724,7 @@ mod tests {
             "main",
             include_str!("../../programs/array_to_ptr.j"),
             &[
-                (0x0,0x0,0x0),
+                (0x0u8,0x0u8,0x0u8),
                 (0x0,0x1,0x1),
                 (0x1,0x0,0x1),
                 (0x1,0xFF,0x0),
@@ -688,7 +737,7 @@ mod tests {
             "main",
             include_str!("../../programs/array_loop.j"),
             &[
-                (0x0,0x0,0x0),
+                (0x0u8,0x0u8,0x0u8),
                 (0x0,0x1,0x1),
                 (0x1,0x0,0x1),
                 (0x1,0xFF,0x0),
@@ -705,9 +754,9 @@ mod tests {
             "strlen",
             include_str!("../../programs/strlen.j"),
             &[
-                (&[TestVar::Ascii(b"\0")], 0u32),
-                (&[TestVar::Ascii(b"hello\0")], 5u32),
-                (&[TestVar::Ptr(long)], expected),
+                (vec![TestVar::Ascii(b"\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"hello\0")], TestVar::Usize(5)),
+                (vec![TestVar::Ptr(long)], TestVar::Usize(expected)),
             ]
         );
     }
@@ -726,16 +775,16 @@ mod tests {
             "strncmp",
             include_str!("../../programs/strncmp.j"),
             &[
-                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(0)], 0),
-                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(1)], 0),
-                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(2)], 0),
-                (&[TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Usize(1)], 0),
-                (&[TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(1)], 0),
-                (&[TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(2)], 255),
-                (&[TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(2)], 1),
-                (&[TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(1000)], 1),
-                (&[TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Usize(same_len)], 0),
-                (&[TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Usize(same_len+1)], 255),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(0)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(1)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(2)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Usize(1)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(1)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(2)], TestVar::U8(255)),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(2)], TestVar::U8(1)),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(1000)], TestVar::U8(1)),
+                (vec![TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Usize(same_len)], TestVar::U8(0)),
+                (vec![TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Usize(same_len+1)], TestVar::U8(255)),
             ]
         );
     }
@@ -746,17 +795,17 @@ mod tests {
             "strstr",
             include_str!("../../programs/strstr.j"),
             &[
-                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], 0),
-                (&[TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], 0),
-                (&[TestVar::Ascii(b"a\0"), TestVar::Ascii(b"\0")], TestComputer::arg_base_addr()),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"h\0")], TestComputer::arg_base_addr()),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"he\0")], TestComputer::arg_base_addr()),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"Z\0")], 0),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"hi\0")], 0),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"el\0")], TestComputer::arg_base_addr() + 1),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"ll\0")], TestComputer::arg_base_addr() + 2),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"lo\0")], TestComputer::arg_base_addr() + 3),
-                (&[TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"l\0")], TestComputer::arg_base_addr() + 2),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"\0")], TestComputer::arg_base_addr_var(0)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"h\0")], TestComputer::arg_base_addr_var(0)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"he\0")], TestComputer::arg_base_addr_var(0)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"Z\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"hi\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"el\0")], TestComputer::arg_base_addr_var(1)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"ll\0")], TestComputer::arg_base_addr_var(2)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"lo\0")], TestComputer::arg_base_addr_var(3)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"l\0")], TestComputer::arg_base_addr_var(2)),
             ]
         );
     }
