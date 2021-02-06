@@ -135,21 +135,32 @@ impl FunctionDefinition {
     pub fn allocate(self, ctxt: &mut ProgramContext) -> AllocatedFunction {
 
         fn mark_as_on_stack(ctxt: &ProgramContext, e: &Expression, needs_to_be_on_stack: &mut BTreeSet<String>) {
-            match e {
-                Expression::Ident(name) => {
-                    needs_to_be_on_stack.insert(name.clone());
+            let mut mark = |e: &Expression| {
+                dbg!(e);
+                match e {
+                    Expression::Ident(name) => {
+                        needs_to_be_on_stack.insert(name.clone());
+                    }
+                    _ => {}
                 }
-                _ => {}
-            }
+            };
+            e.visit_inner_expressions(&mut mark);
         }
 
         fn find_address_of_exp(ctxt: &ProgramContext, e: &Expression, needs_to_be_on_stack: &mut BTreeSet<String>) {
-            match e {
-                Expression::AddressOf(inner) => {
-                    mark_as_on_stack(ctxt, inner.as_ref(), needs_to_be_on_stack);
+            let mut find = |e: &Expression| {
+                dbg!(e);
+                match e {
+                    Expression::AddressOf(inner) => {
+                        mark_as_on_stack(ctxt, inner.as_ref(), needs_to_be_on_stack);
+                    }
+                    Expression::Index(name, ..) => {
+                        needs_to_be_on_stack.insert(name.clone());
+                    }
+                    _ => {}
                 }
-                _ => {}
-            }
+            };
+            e.visit_inner_expressions(&mut find);
         }
 
         fn find_address_of_stmt(ctxt: &ProgramContext, s: &Statement, needs_to_be_on_stack: &mut BTreeSet<String>) {
@@ -186,12 +197,6 @@ impl FunctionDefinition {
 
         let mut needs_to_be_on_stack = BTreeSet::new();
 
-        for (name, var_type) in &self.locals {
-            if var_type.byte_count(ctxt) > 4 {
-                needs_to_be_on_stack.insert(name.clone());
-            }
-        }
-
         for s in &self.body {
             find_address_of_stmt(ctxt, s, &mut needs_to_be_on_stack);
         }
@@ -202,7 +207,7 @@ impl FunctionDefinition {
         SP ->   local 3 (padded to 4 bytes)
                 local 2 (padded to 4 bytes)
                 local 1 (padded to 4 bytes)
-                32-bit return address
+                32-bit return address (32-bit aligned)
                 arg 2 (padded to 4 bytes)
                 arg 1  (padded to 4 bytes)
                 RESULT (padded to 4 bytes)
@@ -215,15 +220,18 @@ impl FunctionDefinition {
 
         // locals
         for (name, var_type) in &self.locals {
+            let byte_count = var_type.byte_count(ctxt) as u8;
             let storage = {
                 let register = if needs_to_be_on_stack.contains(name) {
                     None
-                } else if var_type.byte_count(ctxt) != 1 {
+                } else if byte_count > 4 {
                     None  
                 } else {
-                    if let Some(r) = ctxt.registers_available.iter().next().cloned() {
-                        registers_used.insert(r);
-                        ctxt.registers_available.take(&r)
+                    if let Some(regs) = ctxt.find_registers(byte_count) {
+                        for r in &regs {
+                            registers_used.insert(*r);
+                        }
+                        Some(regs[0])
                     } else {
                         None
                     }

@@ -81,7 +81,7 @@ impl LogicalReference {
         let (mem_ref, final_type) = self.get_deref_offset(ctxt, &local.var_type);
         let final_type = final_type.clone();
 
-        dbg!(&final_type);
+        // dbg!(&final_type);
 
         match local.storage {
             Storage::Register(r) => {

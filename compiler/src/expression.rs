@@ -65,11 +65,11 @@ pub enum Expression {
 }
 
 impl Expression {
-    fn visit_inner_expressions<F: Fn(&mut Expression) -> ()>(&mut self, f: &F) {
+    pub fn visit_inner_expressions<F: FnMut(&Expression) -> ()>(&self, f: &mut F) {
         f(self);
         match self {
             Expression::Call(call) => {
-                for param in call.parameters.iter_mut() {
+                for param in &call.parameters {
                     param.visit_inner_expressions(f);
                 }
             }
@@ -531,13 +531,13 @@ impl Expression {
             }
         };
 
-        dbg!(&t);
+        // dbg!(&t);
 
         t
     }
 
     pub fn emit(&self, ctxt: &mut FunctionContext) -> Type {
-        dbg!(&self);
+        // dbg!(&self);
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
         let result = match self {
             Expression::Call(args) => {
@@ -550,7 +550,8 @@ impl Expression {
                 let emit_result = inner.try_emit_address_to_reg0(ctxt);
 
                 match emit_result {
-                    EmitAddressResult::ValueInRegister{..} => panic!(),
+                    EmitAddressResult::ValueInRegister{..} => 
+                        panic!(format!("Address cannot be determined because value is in register: {:?}", &self)),
                     EmitAddressResult::AddressInReg0{ptr_to_stack_type} => {
                         for r in (0..4).rev() {
                             ctxt.add_inst(Instruction {
