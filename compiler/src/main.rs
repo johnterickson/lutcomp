@@ -32,7 +32,7 @@ use struct_def::*;
 mod types;
 use types::*;
 
-use assemble::{assemble,AssemblyInputLine, Instruction, Value};
+use assemble::{AssemblyInputLine, Instruction, Value};
 use common::*;
 use sim::*;
 
@@ -364,7 +364,7 @@ mod tests {
 
     fn test_ttyout(entry: &str, program: &str, pairs: &[(u32,u32,&str)]) {
         let (_ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
-        let rom = assemble(assembly);
+        let rom = assemble::assemble(assembly);
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
             dbg!((input1, input2, expected));
@@ -387,7 +387,7 @@ mod tests {
 
     fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
         let (_ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
-        let rom = assemble(assembly);
+        let rom = assemble::assemble(assembly);
         let addr1 = 0x8100;
         let addr2 = 0xA000;
 
@@ -428,7 +428,7 @@ mod tests {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
         check_args(&ctxt, cases.iter().next().unwrap());
 
-        let rom = assemble(assembly);
+        let rom = assemble::assemble(assembly);
         for (args, expected) in cases
         {
             assert!(args.len() <= 3);
