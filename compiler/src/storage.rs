@@ -21,6 +21,7 @@ pub enum LogicalReference {
     ArrayIndex{multiplier: u32, index_reg: Register},
 }
 
+#[derive(Debug)]
 enum DerefOffset {
     None,
     Constant(u32),
@@ -33,6 +34,7 @@ pub enum EmitAddressResult {
     ValueInRegister{reg: Register, value_type: Type},
 }
 
+#[derive(Debug)]
 struct MemoryReference {
     local_offset: u32,
     deref_offset: DerefOffset,
@@ -86,12 +88,34 @@ impl LogicalReference {
 
         match local.storage {
             Storage::FixedAddress(addr) => {
-                ctxt.add_inst(Instruction {
-                    source: format!("loading fixed address {:?}", &self),
-                    opcode: Opcode::LoadImm32,
-                    args: vec![Value::Register(0), Value::Constant32(addr)],
-                    resolved: None,
-                });
+                match mem_ref.deref_offset {
+                    DerefOffset::Register(multiplier, index_reg) => {
+                        assert_eq!(multiplier, 1);
+                        assert_eq!(index_reg.0, 0);
+
+                        ctxt.add_inst(Instruction {
+                            source: format!("loading fixed address as base {:?}", &local_name),
+                            opcode: Opcode::LoadImm32,
+                            args: vec![Value::Register(8), Value::Constant32(addr)],
+                            resolved: None,
+                        });
+                        ctxt.add_inst(Instruction {
+                            source: format!("adding array index {:?}", &self),
+                            opcode: Opcode::Add32NoCarryIn,
+                            args: vec![Value::Register(8), Value::Register(index_reg.0), Value::Register(0)],
+                            resolved: None,
+                        });
+                    },
+                    DerefOffset::None => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("loading fixed address {:?}", &local_name),
+                            opcode: Opcode::LoadImm32,
+                            args: vec![Value::Register(0), Value::Constant32(addr)],
+                            resolved: None,
+                        });
+                    }
+                    o => unimplemented!("{:?}", &o),
+                }
                 EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
             }
             Storage::Register(r) => {

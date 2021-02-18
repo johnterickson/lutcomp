@@ -116,7 +116,7 @@ impl Statement {
                 }
             },
             Rule::call => {
-                dbg!(&pair);
+                // dbg!(&pair);
                 let mut pairs = pair.into_inner();
                 let mut token = pairs.next().unwrap();
                 let (var_name, var_type) = match token.as_rule() {
@@ -375,82 +375,89 @@ impl Statement {
                 };
                 
                 if byte_count != 0 {
-                    let local = ctxt.find_var(local.as_ref().unwrap());
-                    let store_reg0_to_addr_in_reg8 = match local.storage {
-                        Storage::Register(r) => {
-                            match byte_count {
-                                1 => {
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::Or8,
-                                        resolved: None,
-                                        source: format!("save call result in target register {:?}", &self),
-                                        args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
-                                    });
-                                }
-                                4 => {
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::Or32,
-                                        resolved: None,
-                                        source: format!("save call result in target register {:?}", &self),
-                                        args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
-                                    });
-                                }
-                                _ => unimplemented!(),
-                            }
-                            false
-                        },
-                        Storage::FixedAddress(addr) => {
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::LoadImm32,
-                                resolved: None,
-                                source: format!("load fixed address {:?}", &self),
-                                args: vec![Value::Register(8), Value::Constant32(addr)]
-                            });
-                            true
-                        },
-                        Storage::Stack(offset) => {
-                            let offset = ctxt.get_stack_offset(offset);
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::LoadImm32,
-                                resolved: None,
-                                source: format!("load stack offset for call result {:?}", &self),
-                                args: vec![Value::Register(4), Value::Constant32(offset)]
-                            });
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Add32NoCarryIn,
-                                resolved: None,
-                                source: format!("add stack pointer to offset {:?}", &self),
-                                args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
-                            });
-                            true
+                    match local {
+                        None => {
+                            // nothing to do
                         }
-                    };
+                        Some(local) => {
+                            let local = ctxt.find_var(local);
+                            let store_reg0_to_addr_in_reg8 = match local.storage {
+                                Storage::Register(r) => {
+                                    match byte_count {
+                                        1 => {
+                                            ctxt.add_inst(Instruction {
+                                                opcode: Opcode::Or8,
+                                                resolved: None,
+                                                source: format!("save call result in target register {:?}", &self),
+                                                args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
+                                            });
+                                        }
+                                        4 => {
+                                            ctxt.add_inst(Instruction {
+                                                opcode: Opcode::Or32,
+                                                resolved: None,
+                                                source: format!("save call result in target register {:?}", &self),
+                                                args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
+                                            });
+                                        }
+                                        _ => unimplemented!(),
+                                    }
+                                    false
+                                },
+                                Storage::FixedAddress(addr) => {
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::LoadImm32,
+                                        resolved: None,
+                                        source: format!("load fixed address {:?}", &self),
+                                        args: vec![Value::Register(8), Value::Constant32(addr)]
+                                    });
+                                    true
+                                },
+                                Storage::Stack(offset) => {
+                                    let offset = ctxt.get_stack_offset(offset);
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::LoadImm32,
+                                        resolved: None,
+                                        source: format!("load stack offset for call result {:?}", &self),
+                                        args: vec![Value::Register(4), Value::Constant32(offset)]
+                                    });
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::Add32NoCarryIn,
+                                        resolved: None,
+                                        source: format!("add stack pointer to offset {:?}", &self),
+                                        args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
+                                    });
+                                    true
+                                }
+                            };
 
-                    if store_reg0_to_addr_in_reg8 {
-                        match byte_count {
-                            1 => {
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Store8,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(0), Value::Register(8)]
-                                });
+                            if store_reg0_to_addr_in_reg8 {
+                                match byte_count {
+                                    1 => {
+                                        ctxt.add_inst(Instruction {
+                                            opcode: Opcode::Store8,
+                                            resolved: None,
+                                            source: format!("{:?}", &self),
+                                            args: vec![Value::Register(0), Value::Register(8)]
+                                        });
+                                    }
+                                    4 => {
+                                        ctxt.add_inst(Instruction {
+                                            opcode: Opcode::Store32Part1,
+                                            resolved: None,
+                                            source: format!("{:?}", &self),
+                                            args: vec![Value::Register(0), Value::Register(8)]
+                                        });
+                                        ctxt.add_inst(Instruction {
+                                            opcode: Opcode::Store32Part2,
+                                            resolved: None,
+                                            source: format!("{:?}", &self),
+                                            args: vec![]
+                                        });
+                                    }
+                                    s => panic!(format!("Unexpected size {}", s))
+                                }
                             }
-                            4 => {
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Store32Part1,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![Value::Register(0), Value::Register(8)]
-                                });
-                                ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Store32Part2,
-                                    resolved: None,
-                                    source: format!("{:?}", &self),
-                                    args: vec![]
-                                });
-                            }
-                            s => panic!(format!("Unexpected size {}", s))
                         }
                     }
                 }
@@ -500,7 +507,7 @@ impl Statement {
                 assert_eq!(start_offset, true_start_stack_offset);
 
                 for s in when_true {
-                    dbg!(s);
+                    // dbg!(s);
                     s.emit(ctxt);
                     assert_eq!(start_offset, ctxt.additional_offset);
                 }

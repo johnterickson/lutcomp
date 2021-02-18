@@ -268,7 +268,7 @@ impl Expression {
 
     pub fn emit_branch(&self, ctxt: &mut FunctionContext, when_true:&str, when_false: &str) {
         if let Expression::Comparison(op, left, right) = self {
-            dbg!(&self);
+            // dbg!(&self);
             let left_type = left.emit(ctxt);
             let right_type = right.emit(ctxt);
 
@@ -285,7 +285,7 @@ impl Expression {
                 _ => unimplemented!()
             };
 
-            dbg!(left_type, right_type, size);
+            // dbg!(left_type, right_type, size);
 
             let right_reg = 8;
             for r in 0..size {
@@ -490,10 +490,9 @@ impl Expression {
             }
             Expression::Index(local_name, index_exp) => {
                 let index_type = index_exp.emit(ctxt);
+                let byte_count = index_type.byte_count(ctxt.program) as u8;
 
-                assert_eq!(index_type.byte_count(ctxt.program), 4);
-
-                for r in 0..4 {
+                for r in 0..byte_count {
                     ctxt.add_inst(Instruction {
                         source: format!("popping index off stack {:?}", &self),
                         opcode: Opcode::Pop8,
@@ -501,6 +500,15 @@ impl Expression {
                         resolved: None,
                     });
                     ctxt.additional_offset -= 1;
+                }
+
+                for r in byte_count..4 {
+                    ctxt.add_inst(Instruction {
+                        source: format!("zero padding index {:?}", &self),
+                        opcode: Opcode::LoadImm8,
+                        args: vec![Value::Register(r), Value::Constant8(0)],
+                        resolved: None,
+                    });
                 }
 
                 LogicalReference::ArrayIndex{
@@ -540,7 +548,7 @@ impl Expression {
     }
 
     pub fn emit(&self, ctxt: &mut FunctionContext) -> Type {
-        dbg!(&self);
+        // dbg!(&self);
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
         let result = match self {
             Expression::Call(args) => {
@@ -783,7 +791,7 @@ impl Expression {
                     .or(Some(Type::Number(op_math_type)))
                     .unwrap();
 
-                dbg!((&left_math_type, &right_math_type, op_math_type, &final_result_type));
+                // dbg!((&left_math_type, &right_math_type, op_math_type, &final_result_type));
 
                 let right_reg: u8 = 8;
                 for i in 0..(right_math_type.byte_count(ctxt.program)) {

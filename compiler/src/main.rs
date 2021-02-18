@@ -195,7 +195,7 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
             globals: BTreeMap::new(),
             types: BTreeMap::new(),
             registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
-            static_cur_address: 0x8000_0100,
+            static_cur_address: 0x8000_1000,
         };
 
         let to_parse = input.clone();
@@ -639,7 +639,7 @@ mod tests {
     #[test]
     fn fib_memo() {
         test_var_inputs(
-            "fib",
+            "main",
             include_str!("../../programs/fib_memo.j"),
             &[
                 (vec![0u8.into()],0u8.into()),
@@ -650,6 +650,17 @@ mod tests {
                 ]);
     }
 
+
+    #[test]
+    fn statics() {
+        test_var_inputs(
+            "main",
+            include_str!("../../programs/static.j"),
+            &[
+                (vec![1u8.into()],2u8.into()),
+                (vec![2u8.into()],4u8.into()),
+                ]);
+    }
     #[test]
     fn add_uptr() {
         test_inputs(

@@ -343,7 +343,7 @@ impl AllocatedFunction {
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:02x} -> {} {:?} {:?}", offset.0, name, var.decl, var.var_type)));
                 }
                 Storage::FixedAddress(addr) => {
-                    ctxt.lines.push(AssemblyInputLine::Comment(format!("# static{:08x} -> {} {:?} {:?}", addr, name, var.decl, var.var_type)));
+                    ctxt.lines.push(AssemblyInputLine::Comment(format!("# static @ 0x{:08x} -> {} {:?} {:?}", addr, name, var.decl, var.var_type)));
                 },
             }
         }
