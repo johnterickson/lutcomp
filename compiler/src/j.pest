@@ -58,7 +58,8 @@ variable_decl = {ident ~ ":" ~ variable_type}
 
 else_clause = {"else" ~ "{"~ statement* ~ "}"}
 if_else_statement = { "if" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
-declare_statement = {variable_decl ~ ";"}
+declare_statement = { variable_decl ~ ";"}
+static_statement = { "static" ~ variable_decl ~ ";"}
 while_loop = { "while" ~ expression ~ "{" ~ statement* ~ "}" }
 assign_declare = { variable_decl | ident }
 assign_deref = { deref_operator ~ ident }
@@ -70,7 +71,7 @@ call_return_value = {ident ~ (":" ~ variable_type)? ~ ":="}
 
 call = { call_return_value? ~ call_expression ~ ";" }
 
-statement = { if_else_statement | ttyout | return_statement | while_loop | call | assign | declare_statement }
+statement = { if_else_statement | ttyout | return_statement | while_loop | call | assign | static_statement | declare_statement }
 body = { (statement)+ }
 paramters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}
@@ -80,11 +81,13 @@ field = { variable_decl }
 fields = { (field ~ ";")+ }
 struct_decl = {"struct" ~ ident ~ "{" ~ fields ~ "}"}
 
+global = {"global" ~ variable_decl ~ ";"}
+
 include_path = { (!"'" ~ ANY)+ }
 include = { "!include" ~ "'" ~ include_path ~ "'" }
 
 program = {
     SOI ~
-    (include | struct_decl | function)+   ~
+    (include | struct_decl | function | global)+   ~
     EOI
 }

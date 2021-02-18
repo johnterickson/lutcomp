@@ -1,4 +1,6 @@
 fn fib(n:u8) -> u8 {
+    static fib_memo: u8[256];
+
     if (n != 0) {
         if (n != 1) {
             sum1:u8 := fib((n - 1));

@@ -409,7 +409,7 @@ impl Expression {
     fn emit_ref(&self, ctxt: &mut FunctionContext, reference: &LogicalReference, local_name: &str) -> Type {
         let emit_result = reference.try_emit_local_address_to_reg0(ctxt, local_name);
         match emit_result {
-            EmitAddressResult::AddressInReg0{ptr_to_stack_type} => {
+            EmitAddressResult::AddressInReg0{ptr_type: ptr_to_stack_type} => {
                 match ptr_to_stack_type {
                     Type::Ptr(inner) => {
                         let size = inner.byte_count(ctxt.program);
@@ -521,7 +521,7 @@ impl Expression {
                     ctxt.additional_offset -= 1;
                 }
 
-                EmitAddressResult::AddressInReg0{ptr_to_stack_type: inner_type}
+                EmitAddressResult::AddressInReg0{ptr_type: inner_type}
             },
             Expression::LocalFieldDeref(local_name, field_name) => {
                 LogicalReference::LocalField(field_name.to_owned()).try_emit_local_address_to_reg0(ctxt, local_name)
@@ -565,7 +565,7 @@ impl Expression {
                 match emit_result {
                     EmitAddressResult::ValueInRegister{..} => 
                         panic!(format!("Address cannot be determined because value is in register: {:?}", &self)),
-                    EmitAddressResult::AddressInReg0{ptr_to_stack_type} => {
+                    EmitAddressResult::AddressInReg0{ptr_type: ptr_to_stack_type} => {
                         for r in (0..4).rev() {
                             ctxt.add_inst(Instruction {
                                 source: format!("pushing deref result {:?}", &self),
@@ -587,13 +587,13 @@ impl Expression {
                 assert_eq!(emitted_type.byte_count(ctxt.program), new_type.byte_count(ctxt.program));
                 new_type.clone()
             }
-            Expression::Ident(local_name) => {
-                self.emit_ref(ctxt, &LogicalReference::Local, local_name)
+            Expression::Ident(name) => {
+                self.emit_ref(ctxt, &LogicalReference::Local, name)
             },
-            Expression::Index(local_name, index) => {
+            Expression::Index(name, index) => {
                 let (local_is_ptr, entry_type) = {
-                    let local = ctxt.find_local(&local_name);
-                    match &local.var_type {
+                    let var = ctxt.find_var(&name);
+                    match &var.var_type {
                         Type::Ptr(value_type) => {
                             (true, value_type.as_ref().clone())
                         },
@@ -615,9 +615,9 @@ impl Expression {
                 };
 
                 let array_start_address = if local_is_ptr {
-                    Box::new(Expression::Ident(local_name.clone()))
+                    Box::new(Expression::Ident(name.clone()))
                 } else {
-                    Box::new(Expression::AddressOf(Box::new(Expression::Ident(local_name.clone()))))
+                    Box::new(Expression::AddressOf(Box::new(Expression::Ident(name.clone()))))
                 };
 
                 let array_start_address = Box::new(Expression::Cast{

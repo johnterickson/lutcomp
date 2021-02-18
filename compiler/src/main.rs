@@ -192,8 +192,10 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
             entry: entry.to_owned(),
             function_impls: BTreeMap::new(),
             function_defs: BTreeMap::new(),
+            globals: BTreeMap::new(),
             types: BTreeMap::new(),
             registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
+            static_cur_address: 0x8000_0100,
         };
 
         let to_parse = input.clone();
@@ -241,6 +243,13 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
                     let f = FunctionDefinition::parse(&ctxt, pair);
                     ctxt.function_defs.insert(f.name.clone(), f);
                 },
+                // Rule::global => {
+                //     let mut decl = pair.into_inner();
+                //     let mut decl_tokens = decl.next().unwrap().into_inner();
+                //     let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
+                //     let var_type = Type::parse(decl_tokens.next().unwrap(), true);
+                //     unimplemented!();
+                // }
                 Rule::EOI => {},
                 _ => panic!("Unexpected rule: {:?}", pair)
             }
@@ -616,8 +625,22 @@ mod tests {
     #[test]
     fn fib() {
         test_var_inputs(
-            "main",
+            "fib",
             include_str!("../../programs/fib.j"),
+            &[
+                (vec![0u8.into()],0u8.into()),
+                (vec![1u8.into()],1u8.into()),
+                (vec![2u8.into()],1u8.into()),
+                (vec![3u8.into()],2u8.into()),
+                // (vec![13u8.into()],233u8.into()),
+                ]);
+    }
+
+    #[test]
+    fn fib_memo() {
+        test_var_inputs(
+            "fib",
+            include_str!("../../programs/fib_memo.j"),
             &[
                 (vec![0u8.into()],0u8.into()),
                 (vec![1u8.into()],1u8.into()),

@@ -11,6 +11,7 @@ pub struct BaseOffset(pub u32);
 pub enum Storage {
     Register(Register),
     Stack(BaseOffset),
+    FixedAddress(u32),
 }
 #[derive(Debug)]
 pub enum LogicalReference {
@@ -28,7 +29,7 @@ enum DerefOffset {
 
 #[derive(Debug)]
 pub enum EmitAddressResult {
-    AddressInReg0{ptr_to_stack_type: Type},
+    AddressInReg0{ptr_type: Type},
     ValueInRegister{reg: Register, value_type: Type},
 }
 
@@ -76,7 +77,7 @@ impl LogicalReference {
 
 
     pub fn try_emit_local_address_to_reg0(&self, ctxt: &mut FunctionContext, local_name: &str) -> EmitAddressResult {
-        let local = ctxt.find_local(local_name);
+        let local = ctxt.find_var(local_name);
 
         let (mem_ref, final_type) = self.get_deref_offset(ctxt, &local.var_type);
         let final_type = final_type.clone();
@@ -84,6 +85,15 @@ impl LogicalReference {
         // dbg!(&final_type);
 
         match local.storage {
+            Storage::FixedAddress(addr) => {
+                ctxt.add_inst(Instruction {
+                    source: format!("loading fixed address {:?}", &self),
+                    opcode: Opcode::LoadImm32,
+                    args: vec![Value::Register(0), Value::Constant32(addr)],
+                    resolved: None,
+                });
+                EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
+            }
             Storage::Register(r) => {
                 match final_type.byte_count(ctxt.program) {
                     byte_count if byte_count >= 1 && byte_count <=3 => {
@@ -168,7 +178,7 @@ impl LogicalReference {
                         });
                     }
                 }
-                EmitAddressResult::AddressInReg0{ptr_to_stack_type: Type::Ptr(Box::new(final_type))}
+                EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
             }
         }
     }

@@ -34,6 +34,12 @@ pub enum Type {
     Array(Box<Type>,u32),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Scope {
+    Local,
+    Static,
+}
+
 impl Type {
     pub fn parse(pair: pest::iterators::Pair<Rule>, is_decl: bool) -> Type {
         assert_eq!(pair.as_rule(), Rule::variable_type);

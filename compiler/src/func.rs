@@ -9,28 +9,28 @@ pub const EPILOGUE : &'static str = "EPILOGUE";
 pub struct FunctionDefinition {
     pub name: String,
     pub args: Vec<(String,Type)>,
-    pub locals: BTreeMap<String,Type>,
+    pub vars: BTreeMap<String,(Scope,Type)>,
     pub return_type: Type,
     pub body: Vec<Statement>,
 }
 
 impl FunctionDefinition {
     fn walk_decls<F>(ctxt: &ProgramContext, s: &Statement, visitor: &mut F)
-        where F : FnMut(&String, Option<&Type>),
+        where F : FnMut(&String, Option<&Scope>, Option<&Type>),
     {
         match s {
             Statement::Assign{target, var_type, value:_} => {
                 match target {
                     Expression::Ident(name) => {
-                        visitor(name, var_type.as_ref());
+                        visitor(name, None, var_type.as_ref());
                     }
                     _ => {}
                 }
             }
-            Statement::Declare {local, var_type} => {
-                visitor(local, Some(var_type));
+            Statement::Declare {scope, name: local, var_type} => {
+                visitor(local, Some(scope), Some(var_type));
             }
-            Statement::CallAssign{ local, var_type, call}  => {
+            Statement::CallAssign{ name: local, var_type, call}  => {
                 if let Some(local) = local {
                     let var_type = Some(match var_type {
                         Some(t) => t,
@@ -39,7 +39,7 @@ impl FunctionDefinition {
                                     .expect(&format!("could not find function '{}'", &call.function))
                                     .return_type,
                     });
-                    visitor(local, var_type);
+                    visitor(local, None, var_type);
                 }
             }
             Statement::IfElse{ predicate:_, when_true, when_false } => {
@@ -88,29 +88,36 @@ impl FunctionDefinition {
 
         let mut body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
 
-        // find locals
-        let mut locals = BTreeMap::new();
+        // find vars
+        let mut vars = BTreeMap::new();
 
-        let mut find_locals  = |name: &String, var_type: Option<&Type>| {
+        let mut find_vars  = |name: &String, scope: Option<&Scope>, var_type: Option<&Type>| {
             if let Some(var_type) = var_type {
-                if !locals.contains_key(name) && !args.iter().any(|a|&a.0 == name) {
-                    locals.insert(name.clone(), var_type.clone());
+                let scope = scope.unwrap_or(&Scope::Local);
+                if !vars.contains_key(name) && !args.iter().any(|a|&a.0 == name) {
+                    vars.insert(name.clone(), (*scope, var_type.clone()));
                 }
             }
         };
 
         for s in &body {
-            FunctionDefinition::walk_decls(ctxt, s, &mut find_locals);
+            FunctionDefinition::walk_decls(ctxt, s, &mut find_vars);
         }
 
-        let mut validate_no_mismatch = |name: &String, var_type: Option<&Type>| {
+        let mut validate_no_mismatch = |name: &String, scope: Option<&Scope>, var_type: Option<&Type>| {
             if let Some(declared_type) = var_type {
-                let existing = locals.get(name)
-                    .or_else(|| args.iter().filter(|(n,_)| n == name).map(|a| &a.1).next());
+                let existing = vars.get(name)
+                    .map(|(scope, var_type)| (scope, var_type))
+                    .or_else(|| args.iter().filter(|(n,_)| n == name).map(|a| (&Scope::Local, &a.1)).next());
                 match existing {
-                    Some(existing) => {
-                        if existing != declared_type {
-                            panic!(format!("Variable '{}' is declared with different types: {:?} and {:?}", name, existing, declared_type));
+                    Some((existing_scope, existing_type)) => {
+                        if existing_type != declared_type {
+                            panic!(format!("Variable '{}' is declared with different types: {:?} and {:?}", name, existing_type, declared_type));
+                        }
+                        if let Some(scope) = scope {
+                            if existing_scope != scope {
+                                panic!(format!("Variable '{}' is declared with different scopes: {:?} and {:?}", name, existing_scope, scope));
+                            }
                         }
                     }
                     None => {
@@ -129,7 +136,7 @@ impl FunctionDefinition {
             s.optimize(ctxt);
         }
 
-        FunctionDefinition { name, args, locals, return_type, body}
+        FunctionDefinition { name, args, vars, return_type, body}
     }
 
     pub fn allocate(self, ctxt: &mut ProgramContext) -> AllocatedFunction {
@@ -168,8 +175,8 @@ impl FunctionDefinition {
                 Statement::Assign{target:_, var_type:_, value} => {
                     find_address_of_exp(ctxt, value, needs_to_be_on_stack);
                 }
-                Statement::Declare {local:_, var_type:_} => {}
-                Statement::CallAssign{ local:_, var_type:_, call}  => {
+                Statement::Declare {scope:_, name:_, var_type:_} => {}
+                Statement::CallAssign{ name:_, var_type:_, call}  => {
                     for p in &call.parameters {
                         find_address_of_exp(ctxt, p, needs_to_be_on_stack);
                     }
@@ -219,33 +226,41 @@ impl FunctionDefinition {
 
         let mut registers_used = BTreeSet::new();
 
-        // locals
-        for (name, var_type) in &self.locals {
-            let byte_count = var_type.byte_count(ctxt) as u8;
-            let storage = {
-                let register = if needs_to_be_on_stack.contains(name) {
-                    None
-                } else if byte_count > 4 {
-                    None  
-                } else {
-                    if let Some(regs) = ctxt.find_registers(byte_count) {
-                        for r in &regs {
-                            registers_used.insert(*r);
-                        }
-                        Some(regs[0])
-                    } else {
-                        None
-                    }
-                };
+        // vars
+        for (name, (var_scope, var_type)) in &self.vars {
+            let byte_count = var_type.byte_count(ctxt);
 
-                if let Some(reg) = register {
-                    Storage::Register(reg)
+            let storage = match var_scope {
+                Scope::Static => {
+                    let storage = Storage::FixedAddress(ctxt.static_cur_address);
+                    ctxt.static_cur_address += byte_count;
+                    storage
                 }
-                else {
-                    let size = var_type.byte_count(ctxt);
-                    let s = Storage::Stack(BaseOffset(offset.try_into().unwrap()));
-                    offset += std::cmp::max(size,4);
-                    s
+                Scope::Local => {
+                    let register = if needs_to_be_on_stack.contains(name) {
+                        None
+                    } else if byte_count > 4 {
+                        None  
+                    } else {
+                        if let Some(regs) = ctxt.find_registers(byte_count as u8) {
+                            for r in &regs {
+                                registers_used.insert(*r);
+                            }
+                            Some(regs[0])
+                        } else {
+                            None
+                        }
+                    };
+    
+                    if let Some(reg) = register {
+                        Storage::Register(reg)
+                    }
+                    else {
+                        let size = var_type.byte_count(ctxt);
+                        let s = Storage::Stack(BaseOffset(offset.try_into().unwrap()));
+                        offset += std::cmp::max(size,4);
+                        s
+                    }
                 }
             };
 
@@ -327,6 +342,9 @@ impl AllocatedFunction {
                 Storage::Stack(offset) => {
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:02x} -> {} {:?} {:?}", offset.0, name, var.decl, var.var_type)));
                 }
+                Storage::FixedAddress(addr) => {
+                    ctxt.lines.push(AssemblyInputLine::Comment(format!("# static{:08x} -> {} {:?} {:?}", addr, name, var.decl, var.var_type)));
+                },
             }
         }
 

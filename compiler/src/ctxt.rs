@@ -18,10 +18,10 @@ impl<'a> FunctionContext<'a> {
         self.lines.push(AssemblyInputLine::from_str(&s))
     }
 
-    pub fn find_local(&self, local: &str) -> &Variable {
+    pub fn find_var(&self, name: &str) -> &Variable {
         self.function.variables
-            .get(local)
-            .expect(&format!("could not find '{}'", local))
+            .get(name)
+            .expect(&format!("could not find '{}'", name))
     }
 
     pub fn get_stack_offset(&self, offset: BaseOffset) -> u32 {
@@ -31,10 +31,12 @@ impl<'a> FunctionContext<'a> {
 
 pub struct ProgramContext {
     pub entry: String,
+    pub globals: BTreeMap<String, Variable>,
     pub function_defs: BTreeMap<String, FunctionDefinition>,
     pub function_impls: BTreeMap<String, AllocatedFunction>,
     pub types: BTreeMap<String, StructDefinition>,
     pub registers_available: Vec<Register>,
+    pub static_cur_address: u32,
 }
 
 impl ProgramContext {

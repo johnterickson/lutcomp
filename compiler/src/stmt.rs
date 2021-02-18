@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Clone, Debug)]
 pub enum Statement {
-    Declare { local: String, var_type: Type },
+    Declare { scope: Scope, name: String, var_type: Type },
     Assign { target: Expression, var_type: Option<Type>, value: Expression},
-    CallAssign { local: Option<String>, var_type: Option<Type>, call: Call },
+    CallAssign { name: Option<String>, var_type: Option<Type>, call: Call },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
@@ -30,18 +30,18 @@ impl Statement {
         let pair = pair.into_inner().next().unwrap();
 
         match pair.as_rule() {
-            Rule::declare_statement => {
-                let mut pairs = pair.into_inner();
-                let decl = pairs.next().unwrap();
-                match decl.as_rule() {
-                    Rule::variable_decl => {
-                        let mut decl = decl.into_inner();
-                        let var_name = decl.next().unwrap().as_str().trim().to_owned();
-                        let var_type = Type::parse(decl.next().unwrap(),true);
-                        Statement::Declare {local: var_name, var_type }
-                    }
-                    _ => panic!("Unexpected {:?}", decl)
-                }
+            Rule::static_statement | Rule::declare_statement => {
+                let scope = if pair.as_rule() == Rule::static_statement {
+                    Scope::Static
+                } else {
+                    Scope::Local
+                };
+                let decl = pair.into_inner().next().unwrap();
+                assert_eq!(decl.as_rule(), Rule::variable_decl);
+                let mut decl_tokens = decl.into_inner();
+                let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
+                let var_type = Type::parse(decl_tokens.next().unwrap(), true);
+                Statement::Declare {scope, name: var_name, var_type }
             }
             Rule::assign => {
                 let mut pairs = pair.into_inner();
@@ -141,7 +141,7 @@ impl Statement {
 
                 let call = Call::parse(token);
 
-                Statement::CallAssign { local:var_name, var_type, call }
+                Statement::CallAssign { name:var_name, var_type, call }
             },
             Rule::if_else_statement => {
                 let mut pairs = pair.into_inner();
@@ -204,7 +204,7 @@ impl Statement {
                     args: vec![Value::Register(0)]
                 });
             },
-            Statement::Declare{local:_, var_type:_} => {}
+            Statement::Declare{scope:_, name:_, var_type:_} => {}
             Statement::Assign{target, var_type, value} => {
 
                 let start_offset = ctxt.additional_offset;
@@ -233,7 +233,7 @@ impl Statement {
                             ctxt.additional_offset -= 1;
                         }
                     }
-                    EmitAddressResult::AddressInReg0{ptr_to_stack_type} => {
+                    EmitAddressResult::AddressInReg0{ptr_type: ptr_to_stack_type} => {
                         match ptr_to_stack_type {
                             Type::Ptr(inner) => assert_eq!(inner.as_ref(), &value_type),
                             _ => panic!("expected pointer")
@@ -295,12 +295,13 @@ impl Statement {
                     ctxt.additional_offset -= 1;
                 }
 
-                let return_var = ctxt.find_local(RESULT);
+                let return_var = ctxt.find_var(RESULT);
                 let return_type = return_var.var_type.clone();
 
                 assert_eq!(return_type, expression_type);
 
                 match return_var.storage {
+                    Storage::FixedAddress(_) => panic!(),
                     Storage::Register(r) => {
                         assert_eq!(r.0, 0);
                     },
@@ -341,7 +342,7 @@ impl Statement {
                     resolved: None                    
                 });
             },
-            Statement::CallAssign{ local, var_type, call } => { 
+            Statement::CallAssign{ name: local, var_type, call } => { 
 
                 let start_offset = ctxt.additional_offset;
 
@@ -374,8 +375,8 @@ impl Statement {
                 };
                 
                 if byte_count != 0 {
-                    let local = ctxt.find_local(local.as_ref().unwrap());
-                    match local.storage {
+                    let local = ctxt.find_var(local.as_ref().unwrap());
+                    let store_reg0_to_addr_in_reg8 = match local.storage {
                         Storage::Register(r) => {
                             match byte_count {
                                 1 => {
@@ -396,6 +397,16 @@ impl Statement {
                                 }
                                 _ => unimplemented!(),
                             }
+                            false
+                        },
+                        Storage::FixedAddress(addr) => {
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::LoadImm32,
+                                resolved: None,
+                                source: format!("load fixed address {:?}", &self),
+                                args: vec![Value::Register(8), Value::Constant32(addr)]
+                            });
+                            true
                         },
                         Storage::Stack(offset) => {
                             let offset = ctxt.get_stack_offset(offset);
@@ -411,32 +422,35 @@ impl Statement {
                                 source: format!("add stack pointer to offset {:?}", &self),
                                 args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
                             });
+                            true
+                        }
+                    };
 
-                            match byte_count {
-                                1 => {
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::Store8,
-                                        resolved: None,
-                                        source: format!("{:?}", &self),
-                                        args: vec![Value::Register(0), Value::Register(8)]
-                                    });
-                                }
-                                4 => {
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::Store32Part1,
-                                        resolved: None,
-                                        source: format!("{:?}", &self),
-                                        args: vec![Value::Register(0), Value::Register(8)]
-                                    });
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::Store32Part2,
-                                        resolved: None,
-                                        source: format!("{:?}", &self),
-                                        args: vec![]
-                                    });
-                                }
-                                s => panic!(format!("Unexpected size {}", s))
+                    if store_reg0_to_addr_in_reg8 {
+                        match byte_count {
+                            1 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(0), Value::Register(8)]
+                                });
                             }
+                            4 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store32Part1,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(0), Value::Register(8)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store32Part2,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![]
+                                });
+                            }
+                            s => panic!(format!("Unexpected size {}", s))
                         }
                     }
                 }
