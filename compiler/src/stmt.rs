@@ -136,7 +136,7 @@ impl Statement {
                     Rule::call_expression => {
                         (None, None)
                     }
-                    _ => panic!(format!("Unexpected {:?}", &token))
+                    _ => panic!("Unexpected {:?}", &token)
                 };
 
                 let call = Call::parse(token);
@@ -275,7 +275,7 @@ impl Statement {
                                     args: vec![]
                                 });
                             }
-                            s => panic!(format!("Unexpected size {}", s))
+                            s => panic!("Unexpected size {}", s)
                         }
                     }
                 }
@@ -357,7 +357,7 @@ impl Statement {
                         &Type::Void
                     }
                     (Some(_), Type::Void) => {
-                        panic!(format!("Function `{}` does not return a value.", &call.function));
+                        panic!("Function `{}` does not return a value.", &call.function);
                     }
                     (Some(explicit), return_type) => {
                         assert_eq!(explicit, return_type);
@@ -455,7 +455,7 @@ impl Statement {
                                             args: vec![]
                                         });
                                     }
-                                    s => panic!(format!("Unexpected size {}", s))
+                                    s => panic!("Unexpected size {}", s)
                                 }
                             }
                         }

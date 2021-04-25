@@ -112,17 +112,17 @@ impl FunctionDefinition {
                 match existing {
                     Some((existing_scope, existing_type)) => {
                         if existing_type != declared_type {
-                            panic!(format!("Variable '{}' is declared with different types: {:?} and {:?}", name, existing_type, declared_type));
+                            panic!("Variable '{}' is declared with different types: {:?} and {:?}", name, existing_type, declared_type);
                         }
                         if let Some(scope) = scope {
                             if existing_scope != scope {
-                                panic!(format!("Variable '{}' is declared with different scopes: {:?} and {:?}", name, existing_scope, scope));
+                                panic!("Variable '{}' is declared with different scopes: {:?} and {:?}", name, existing_scope, scope);
                             }
                         }
                     }
                     None => {
                         assert_eq!(var_type, None);
-                        panic!(format!("No type found for '{}'", name));
+                        panic!("No type found for '{}'", name);
                     }
                 }
             }

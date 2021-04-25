@@ -11,7 +11,7 @@ impl NumberType {
         match  s {
             "u8" | "char" => NumberType::U8,
             "usize" => NumberType::USIZE,
-            other => panic!(format!("unknown type {}", other)),
+            other => panic!("unknown type {}", other),
         }
     }
 }
@@ -65,12 +65,12 @@ impl Type {
                     Expression::Number(_, v) => {
                         v.try_into().unwrap()
                     }
-                    e => panic!(format!("Expected array size but found {:?}", &e))
+                    e => panic!("Expected array size but found {:?}", &e)
                 };
                 assert!(tokens.next().is_none());
                 Type::Array(Box::new(Type::Number(val_type)), count)
             }
-            _ => panic!(format!("unexpected {:?}", variable))
+            _ => panic!("unexpected {:?}", variable)
         }
     }
 }

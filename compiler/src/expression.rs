@@ -18,7 +18,7 @@ impl ArithmeticOperator {
             "-" => ArithmeticOperator::Subtract,
             "*" => ArithmeticOperator::Multiply,
             "||" => ArithmeticOperator::Or,
-            op => panic!(format!("Unknown op: {}", op)),
+            op => panic!("Unknown op: {}", op),
         }
     }
 }
@@ -42,7 +42,7 @@ impl ComparisonOperator {
             ">=" => ComparisonOperator::GreaterThanOrEqual,
             "<" => ComparisonOperator::LessThan,
             "<=" => ComparisonOperator::LessThanOrEqual,
-            op => panic!(format!("Unknown op: {}", op)),
+            op => panic!("Unknown op: {}", op),
         }
     }
 }
@@ -206,7 +206,7 @@ impl Expression {
                         let number = number.into_inner().next().unwrap();
                         Expression::Number(NumberType::U8, number.as_str().chars().next().unwrap() as u8 as i64)
                     }
-                    r => panic!(format!("unexpected {:?}", &r))
+                    r => panic!("unexpected {:?}", &r)
                 }
                 // let mut n = 0;
                 // let mut digits = pair.into_inner();
@@ -538,7 +538,7 @@ impl Expression {
                 LogicalReference::DerefField(field_name.to_owned()).try_emit_local_address_to_reg0(ctxt, local_name)
             }
             _ => {
-                panic!(format!("Don't know how to emit address of {:?}", self));
+                panic!("Don't know how to emit address of {:?}", self);
             }
         };
 
@@ -572,7 +572,7 @@ impl Expression {
 
                 match emit_result {
                     EmitAddressResult::ValueInRegister{..} => 
-                        panic!(format!("Address cannot be determined because value is in register: {:?}", &self)),
+                        panic!("Address cannot be determined because value is in register: {:?}", &self),
                     EmitAddressResult::AddressInReg0{ptr_type: ptr_to_stack_type} => {
                         for r in (0..4).rev() {
                             ctxt.add_inst(Instruction {
@@ -608,7 +608,7 @@ impl Expression {
                         Type::Array(entry_type, _count) => {
                             (false, entry_type.as_ref().clone())
                         }
-                        t => panic!(format!("Expected a Ptr, but found {:?}", &t))
+                        t => panic!("Expected a Ptr, but found {:?}", &t)
                     }
                 };
 

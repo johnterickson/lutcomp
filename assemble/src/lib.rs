@@ -247,7 +247,7 @@ pub fn assemble_from_str(input: &str) -> Vec<u8> {
                 }
                 dump_tree(pair.into_inner(), indent + 1);
             }
-        };
+        }
 
         let assembly = AssemblyParser::parse(Rule::program, input).unwrap();
         dump_tree(assembly, 0);

@@ -64,7 +64,7 @@ impl LogicalReference {
                     let (field_offset, target_type) = LogicalReference::get_offset_for_field(ctxt, struct_name, field_name);
                     (MemoryReference {local_offset:0, deref_offset: DerefOffset::Constant(field_offset)}, target_type)
                 } else {
-                    panic!(format!("'{}' is accessed as a struct but it is '{:?}'", field_name, inner));
+                    panic!("'{}' is accessed as a struct but it is '{:?}'", field_name, inner);
                 }
             }
             (LogicalReference::ArrayIndex{multiplier, index_reg}, Type::Array(num_type, _)) => {
@@ -72,7 +72,7 @@ impl LogicalReference {
                 assert_eq!(num_type.as_ref(), &Type::Number(NumberType::U8));
                 (MemoryReference {local_offset:0, deref_offset: DerefOffset::Register(*multiplier, *index_reg)}, num_type.as_ref())
             }
-            _ => panic!(format!("Don't know how to reference '{:?}' via '{:?}'", var_type, &self))
+            _ => panic!("Don't know how to reference '{:?}' via '{:?}'", var_type, &self)
         }
     }
 
