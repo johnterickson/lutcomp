@@ -1,6 +1,5 @@
 extern crate packed_struct;
-use packed_struct::prelude::*;
-
+use packed_struct::prelude::PackedStruct;
 
 use strum::IntoEnumIterator;
 

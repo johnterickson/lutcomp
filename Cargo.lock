@@ -8,8 +8,8 @@ version = "0.1.0"
 dependencies = [
  "common",
  "lazy_static",
- "packed_struct",
- "packed_struct_codegen",
+ "packed_struct 0.10.0",
+ "packed_struct_codegen 0.10.0",
  "strum",
 ]
 
@@ -34,7 +34,7 @@ name = "assemble"
 version = "0.1.0"
 dependencies = [
  "common",
- "packed_struct",
+ "packed_struct 0.5.0",
  "pest",
  "pest_derive",
  "sim",
@@ -46,6 +46,18 @@ name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+
+[[package]]
+name = "bitvec"
+version = "0.22.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5237f00a8c86130a0cc317830e558b966dd7850d48a953d998c813f01a41b527"
+dependencies = [
+ "funty",
+ "radium",
+ "tap",
+ "wyz",
+]
 
 [[package]]
 name = "block-buffer"
@@ -85,8 +97,8 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "bitflags",
- "packed_struct",
- "packed_struct_codegen",
+ "packed_struct 0.10.0",
+ "packed_struct_codegen 0.10.0",
  "strum",
  "strum_macros",
 ]
@@ -123,6 +135,12 @@ name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
+
+[[package]]
+name = "funty"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1847abb9cb65d566acd5942e94aea9c8f547ad02c98e1649326fc0e8910b8b1e"
 
 [[package]]
 name = "generic-array"
@@ -175,7 +193,18 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cea50f42bba10123bd78c09425cf34369710399d18d16f73ff8a9cf00dba070d"
 dependencies = [
- "packed_struct_codegen",
+ "packed_struct_codegen 0.5.0",
+ "serde",
+]
+
+[[package]]
+name = "packed_struct"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c48e482b9a59ad6c2cdb06f7725e7bd33fe3525baaf4699fde7bfea6a5b77b1"
+dependencies = [
+ "bitvec",
+ "packed_struct_codegen 0.10.0",
  "serde",
 ]
 
@@ -184,6 +213,17 @@ name = "packed_struct_codegen"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aaaf71038d56e38aec6ab9f254737eb37450f97b7fba349fe1e3dfe6c1a68db4"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "packed_struct_codegen"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56e3692b867ec1d48ccb441e951637a2cc3130d0912c0059e48319e1c83e44bc"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -252,6 +292,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "radium"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "643f8f41a8ebc4c5dc4515c82bb8abd397b527fc20fd681b7c011c2aee5d44fb"
+
+[[package]]
 name = "serde"
 version = "1.0.130"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -277,7 +323,7 @@ dependencies = [
  "common",
  "itertools",
  "lazy_static",
- "packed_struct",
+ "packed_struct 0.10.0",
  "strum",
  "ucode",
 ]
@@ -312,6 +358,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "tap"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
+
+[[package]]
 name = "typenum"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -329,8 +381,8 @@ version = "0.1.0"
 dependencies = [
  "common",
  "lazy_static",
- "packed_struct",
- "packed_struct_codegen",
+ "packed_struct 0.10.0",
+ "packed_struct_codegen 0.10.0",
  "strum",
  "strum_macros",
 ]
@@ -346,3 +398,12 @@ name = "unicode-xid"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
+
+[[package]]
+name = "wyz"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "129e027ad65ce1453680623c3fb5163cbf7107bfe1aa32257e7d0e63f9ced188"
+dependencies = [
+ "tap",
+]

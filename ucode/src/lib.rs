@@ -105,7 +105,7 @@ pub struct MicroOp {
     #[packed_field(bits = "8..=11", ty = "enum")]
     pub data_bus_load: DataBusLoadEdge,
     #[packed_field(bits = "12..=15")]
-    pub immediate: Integer<u8, packed_bits::Bits4>,
+    pub immediate: Integer<u8, packed_bits::Bits::<4>>,
 }
 
 enum Load {
@@ -207,7 +207,7 @@ pub struct MicroEntry {
     #[packed_field(bits = "0..=7")]
     pub instruction: u8,
     #[packed_field(bits = "8..=11")]
-    pub flags: Integer<u8, packed_bits::Bits4>,
+    pub flags: Integer<u8, packed_bits::Bits::<4>>,
 }
 
 impl MicroEntry {

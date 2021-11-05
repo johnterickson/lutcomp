@@ -75,7 +75,7 @@ pub enum ShiftMode {
 #[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
 pub struct ShiftArgs {
     #[packed_field(bits = "0..=3")]
-    pub left_amount: Integer<i8, packed_bits::Bits4>,
+    pub left_amount: Integer<i8, packed_bits::Bits::<4>>,
     #[packed_field(bits = "4..=5", ty = "enum")]
     pub mode: ShiftMode,
 }
@@ -109,7 +109,7 @@ pub enum SpecialOpcode {
 #[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
 pub struct SpecialArgs {
     #[packed_field(bits = "0..=5")]
-    pub mode_args: Integer<u8, packed_bits::Bits6>,
+    pub mode_args: Integer<u8, packed_bits::Bits::<6>>,
     #[packed_field(bits = "6..=7", ty = "enum")]
     pub op: SpecialOpcode,
 }
