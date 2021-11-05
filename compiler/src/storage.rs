@@ -48,6 +48,7 @@ impl LogicalReference {
     }
 
     fn get_deref_offset<'a>(&self, ctxt: &'a FunctionContext, var_type: &'a Type) -> (MemoryReference, &'a Type) {
+        // dbg!((&self, &var_type));
         match (self, var_type) {
             // (LogicalReference::Deref, Type::Ptr(inner)) => {
             //     (MemoryReference{local_offset:0, deref_offset: DerefOffset::Constant(0)}, inner.as_ref())
@@ -80,6 +81,7 @@ impl LogicalReference {
 
     pub fn try_emit_local_address_to_reg0(&self, ctxt: &mut FunctionContext, local_name: &str) -> EmitAddressResult {
         let local = ctxt.find_var(local_name);
+        // dbg!(&local);
 
         let (mem_ref, final_type) = self.get_deref_offset(ctxt, &local.var_type);
         let final_type = final_type.clone();
@@ -119,7 +121,8 @@ impl LogicalReference {
                 EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
             }
             Storage::Register(r) => {
-                match final_type.byte_count(ctxt.program) {
+                let byte_count = final_type.byte_count(ctxt.program);
+                match byte_count {
                     byte_count if byte_count >= 1 && byte_count <=3 => {
                         for i in 0..byte_count as u8 {
                             ctxt.add_inst(Instruction {

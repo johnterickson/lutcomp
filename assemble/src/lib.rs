@@ -176,7 +176,7 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum AssemblyInputLine {
     Comment(String),
     Label(String),
@@ -223,7 +223,7 @@ impl AssemblyInputLine {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum AssemblyOutputLine {
     Comment(String),
     Instruction(Instruction),
@@ -231,7 +231,7 @@ enum AssemblyOutputLine {
     String(String),
 }
 
-pub fn assemble_from_str(input: &str) -> Vec<u8> {
+pub fn assemble_from_str(input: &str) -> Vec<(u8,Symbol)> {
     println!("v2.0 raw");
 
     {
@@ -270,14 +270,14 @@ pub fn assemble_from_str(input: &str) -> Vec<u8> {
     assemble_inner(assembly_lines)
 }
 
-pub fn assemble(input: Vec<AssemblyInputLine>) -> Vec<u8> {
+pub fn assemble(input: Vec<AssemblyInputLine>) -> Vec<(u8,Symbol)> {
     println!("v2.0 raw");
     assemble_inner(input)
 }
 
-fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
+fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<(u8,Symbol)> {
 
-    let mut lines : Vec<AssemblyOutputLine> = Vec::new();
+    let mut lines : Vec<(u32, AssemblyInputLine, AssemblyOutputLine)> = Vec::new();
     let mut labels = BTreeMap::new();
 
     let mut pc = 0u32;
@@ -285,17 +285,17 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
         let source = format!("{:?}", line);
         //lines.push(AssemblyOutputLine::Comment(source.to_owned()));
 
-        match line {
+        match line.clone() {
             AssemblyInputLine::Instruction(inst) => {
+                lines.push((pc,line,AssemblyOutputLine::Instruction(inst.clone())));
                 pc += inst.size();
-                lines.push(AssemblyOutputLine::Instruction(inst));
             }
             AssemblyInputLine::Comment(comment) => {
-                lines.push(AssemblyOutputLine::Comment(comment));
+                lines.push((pc, line, AssemblyOutputLine::Comment(comment)));
             }
             AssemblyInputLine::Label(label) => {
                 labels.insert(label.to_owned(), pc);
-                lines.push(AssemblyOutputLine::Comment(label.to_owned()));
+                lines.push((pc, line, AssemblyOutputLine::Comment(label.to_owned())));
             }
             AssemblyInputLine::PseudoReturn() => {
                 let inst = Instruction {
@@ -304,8 +304,8 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
                     args: vec![Value::Register(REG_SP)],
                     resolved: None,
                 };
+                lines.push((pc, line, AssemblyOutputLine::Instruction(inst.clone())));
                 pc += inst.size();
-                lines.push(AssemblyOutputLine::Instruction(inst));
             }
             AssemblyInputLine::PseudoCall(value) => {
                 let mut insts = vec![
@@ -337,25 +337,36 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
                 ];
 
                 for inst in insts.drain(..) {
+                    lines.push((pc, line.clone(), AssemblyOutputLine::Instruction(inst.clone())));
                     pc += inst.size();
-                    lines.push(AssemblyOutputLine::Instruction(inst));
                 }
             }
             AssemblyInputLine::Literal8(byte) => {
+                lines.push((pc, line, AssemblyOutputLine::Constant8(byte)));
                 pc += 1;
-                lines.push(AssemblyOutputLine::Constant8(byte));
             }
             AssemblyInputLine::LiteralString(string) => {
+                lines.push((pc, line, AssemblyOutputLine::String(string.clone())));
                 pc += string.as_bytes().len() as u32;
-                lines.push(AssemblyOutputLine::String(string));
             }
         }
     }
 
     let mut rom = Vec::new();
+    let mut notes = Some(Vec::new());
     let mut pc = 0u32;
-    for line in lines.as_mut_slice() {
-        match line {
+    for (_pc, in_line, out_line) in lines.as_mut_slice() {
+
+        notes.as_mut().unwrap().push(format!("{:?}", &in_line));
+        notes.as_mut().unwrap().push(format!("{:?}", &out_line));
+
+        let mut push_byte = |b: u8| {
+            let sym = Symbol { notes: notes.take().unwrap() };
+            rom.push((b, sym));
+            notes = Some(Vec::new());
+        };
+
+        match out_line {
             AssemblyOutputLine::Comment(comment) => {
                 println!("# {}", &comment);
             }
@@ -365,21 +376,21 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<u8> {
 
                 for byte in i.resolved.as_ref().unwrap() {
                     print!("{:02x} ", byte);
-                    rom.push(*byte);
+                    push_byte(*byte);
                     pc += 1;
                 }
                 println!();
             }
             AssemblyOutputLine::Constant8(byte) => {
                 println!("{:02x} ", byte);
-                rom.push(*byte);
+                push_byte(*byte);
                 pc += 1;
             }
             AssemblyOutputLine::String(string) => {
                 println!("# '{}'", &string);
                 for byte in string.as_bytes() {
                     print!("{:02x} ", byte);
-                    rom.push(*byte);
+                    push_byte(*byte);
                     pc += 1;
                 }
                 println!();

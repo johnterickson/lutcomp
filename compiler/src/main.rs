@@ -8,7 +8,7 @@ use strum::IntoEnumIterator;
 
 use std::{collections::BTreeSet, env, fs::File, io, path::PathBuf, unimplemented};
 use std::io::Read;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::{convert::TryInto};
 
 mod call;
@@ -57,9 +57,7 @@ fn print_state(c: &mut Computer) {
     let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
     println!(
         "pc:{:05x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x} mem[sp+10]:{:08x} r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ",
-        //"pc:{:05x}={:02x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x}| r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ",
         pc,
-        //pc_byte,
         sp,
         c.flags.bits(),
         u32::from_le_bytes(*c.mem_word_mut(sp)),
@@ -72,6 +70,14 @@ fn print_state(c: &mut Computer) {
         u32::from_le_bytes(*c.mem_word_mut(0x80008)),
         Opcode::iter().filter(|o| *o as u8 == c.ir0).next(),
     );
+    if let Some(symbol) = c.symbols.get(pc as usize) {
+        let mut seen = HashSet::new();
+        for note in &symbol.notes {
+            if seen.insert(note) {
+                println!("   {}", note);
+            }
+        }   
+    }
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -87,7 +93,7 @@ fn main() -> Result<(), std::io::Error> {
 
     let args : Vec<_> = std::env::args().skip(1).map(|arg| u8::from_str_radix(&arg, 16).unwrap()).collect();
 
-    let mut c = Computer::with_print(rom, false);
+    let mut c = Computer::with_print_with_sym(rom, false);
 
     *c.mem_word_mut(0x80000) = u32::to_le_bytes(0xAABBCCDD);
 
@@ -235,7 +241,7 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
                         let mut field_tokens = arg.into_inner();
                         let mut field_tokens = field_tokens.next().unwrap().into_inner();
                         let field_name = field_tokens.next().unwrap().as_str().to_owned();
-                        let field_type = Type::parse(field_tokens.next().unwrap(), false);
+                        let field_type = Type::parse(field_tokens.next().unwrap(), true);
                         fields.push((field_name, field_type));
                     }
 
@@ -336,8 +342,8 @@ mod tests {
             dir
         }
 
-        fn from_rom(rom: &[u8]) -> TestComputer<'a> {
-            TestComputer(Computer::with_print(rom.to_vec(), false))
+        fn from_rom(rom: &[(u8,Symbol)]) -> TestComputer<'a> {
+            TestComputer(Computer::with_print_with_sym(rom.to_vec(), false))
         }
 
         fn run(&mut self, inputs: &[u32]) -> u32{
@@ -433,14 +439,14 @@ mod tests {
             entry.return_type, entry_return_size, test_return_size);
     }
 
-    fn assemble(entry: &str, program: &str) -> (ProgramContext, Vec<u8>) {
+    fn assemble(entry: &str, program: &str) -> (ProgramContext, Vec<(u8,Symbol)>) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
 
         let rom = assemble::assemble(assembly);
         (ctxt, rom)
     }
 
-    fn test_var_input(rom: &[u8], args: &Vec<TestVar>) -> u32 {
+    fn test_var_input(rom: &[(u8,Symbol)], args: &Vec<TestVar>) -> u32 {
         assert!(args.len() <= 3);
 
         let mut c = TestComputer::from_rom(&rom);
@@ -704,9 +710,9 @@ mod tests {
     }
 
     #[test]
-    fn structs() {
+    fn struct_pass_by_ref() {
         test_inputs(
-            "main",
+            "test_add",
             include_str!("../../programs/struct.j"),
             &[
                 (0x0u32,0x0u32,0x0u32),
@@ -721,10 +727,27 @@ mod tests {
     }
 
     #[test]
-    fn heap() {
-        let (_, rom) = assemble("heap_start", include_str!("../../programs/heap.j"));
+    fn struct_return_by_ref() {
+        test_inputs(
+            "test_ret_static",
+            include_str!("../../programs/struct_ret.j"),
+            &[
+                (0xAABBCCDDu32, 0x11111111u32, 0xBBCCDDEEu32)
+                ]);
+    }
+
+    #[test]
+    fn get_heap() {
+        let (_, rom) = assemble("get_heap", include_str!("../../programs/heap.j"));
         let heap_start = test_var_input(&rom, &vec![0u8.into()]);
-        assert!(heap_start >= STATICS_START_ADDRESS);
+        assert_eq!(heap_start, STATICS_START_ADDRESS);
+    }
+
+    #[test]
+    fn heap_alloc1() {
+        let (_, rom) = assemble("test1", include_str!("../../programs/heap.j"));
+        let heap_start = test_var_input(&rom, &vec![0u8.into()]);
+        assert_eq!(heap_start, 0);
     }
 
     #[test]

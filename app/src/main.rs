@@ -30,7 +30,7 @@ fn main() {
                 input
             };
             let rom = assemble_from_str(&input);
-            let mut c = Computer::with_print(rom, true);
+            let mut c = Computer::with_print(rom.iter().map(|(b,_s)| *b).collect(), true);
             while c.step() { }
         }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),

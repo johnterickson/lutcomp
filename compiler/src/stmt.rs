@@ -395,9 +395,8 @@ impl Statement {
                 };
 
                 let byte_count = match var_type {
-                    Type::Number(nt) => nt.byte_count(ctxt.program),
                     Type::Void => 0,
-                    _ => unimplemented!(),
+                    t => t.byte_count(ctxt.program),
                 };
                 
                 if byte_count != 0 {

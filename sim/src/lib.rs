@@ -36,6 +36,7 @@ const RAM_MAX: usize = RAM_MIN + RAM_SIZE - 1;
 
 pub struct Computer<'a> {
     rom: Vec<u8>,
+    pub symbols: Vec<Symbol>,
     ram: Vec<u8>,
     pub tty_in: VecDeque<u8>,
     pub tty_out: VecDeque<u8>,
@@ -72,8 +73,16 @@ impl<'a> Computer<'a> {
     }
 
     pub fn with_print(rom: Vec<u8>, print: bool) -> Computer<'a> {
+        Computer::with_print_with_sym(
+            rom.iter().map(|b| (*b, Symbol::default())).collect(),
+            print
+        )
+    }
+
+    pub fn with_print_with_sym(mut rom: Vec<(u8,Symbol)>, print: bool) -> Computer<'a> {
         let c = Computer {
-            rom,
+            rom: rom.iter().map(|(b,_s)| *b).collect(),
+            symbols: rom.drain(..).map(|(_b,s)| s).collect(),
             ram: Vec::new(),
             tty_in: VecDeque::new(),
             tty_out: VecDeque::new(),

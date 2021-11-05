@@ -174,3 +174,8 @@ pub enum Opcode {
 
     Halt = 255,
 }
+
+#[derive(Clone,Debug,Default)]
+pub struct Symbol {
+    pub notes: Vec<String>,
+}
