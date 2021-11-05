@@ -371,26 +371,24 @@ mod tests {
         test_var_inputs(entry, program, cases.as_slice());
     }
 
-    fn test_ttyout(entry: &str, program: &str, pairs: &[(u32,u32,&str)]) {
+    fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
         let (_ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble::assemble(assembly);
-        for (input1, input2, expected) in pairs {
+        for (ttyin, input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
-            dbg!((input1, input2, expected));
+            dbg!((ttyin, input1, input2, expected));
+            for ch in ttyin.chars() {
+                c.0.tty_in.push_back(ch as u8);
+            }
             assert_eq!(0, c.run(&[*input1, *input2]) & 0xFF);
 
-            let mut lines = Vec::new();
-            let mut line = String::new();
+            let mut out = String::new();
             for c in &c.0.tty_out {
                 let c = *c as char;
-                if c == '\n' {
-                    lines.push(line);
-                    line = String::new();
-                } else {
-                    line.push(c);
-                }
+                out.push(c);
             }
-            assert_eq!(lines.iter().last().map(|s| s.as_str()), Some(*expected));
+
+            assert_eq!(out.as_str(), *expected);
         }
     }
 
@@ -725,19 +723,31 @@ mod tests {
 
     #[test]
     fn print_hex() {
-        test_ttyout(
+        test_tty(
             "main",
             include_str!("../../programs/print_hex.j"),
             &[
-                (0x0,0x0,"0"),
-                (0x1,0x0,"1"),
-                (0x9,0x0,"9"),
-                (0xA,0x0,"A"),
-                (0xF,0x0,"F"),
-                (0x10,0x0,"10"),
-                (0xFF,0x0,"FF"),
+                ("",0x0,0x0,"0\n"),
+                ("",0x1,0x0,"1\n"),
+                ("",0x9,0x0,"9\n"),
+                ("",0xA,0x0,"A\n"),
+                ("",0xF,0x0,"F\n"),
+                ("",0x10,0x0,"10\n"),
+                ("",0xFF,0x0,"FF\n"),
                 ]);
     }
+
+    #[test]
+    fn echo() {
+        test_tty(
+            "main",
+            include_str!("../../programs/echo.j"),
+            &[
+                ("0\n",0x0,0x0,"0\n"),
+                ("01\n",0x0,0x0,"01\n"),
+                ]);
+    }
+
 
     #[test]
     fn local_array() {

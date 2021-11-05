@@ -9,6 +9,7 @@ pub enum ArithmeticOperator {
     Subtract,
     Multiply,
     Or,
+    And,
 }
 
 impl ArithmeticOperator {
@@ -18,6 +19,7 @@ impl ArithmeticOperator {
             "-" => ArithmeticOperator::Subtract,
             "*" => ArithmeticOperator::Multiply,
             "||" => ArithmeticOperator::Or,
+            "&" => ArithmeticOperator::And,
             op => panic!("Unknown op: {}", op),
         }
     }
@@ -840,6 +842,26 @@ impl Expression {
                 let result_reg = 0;
 
                 match op {
+                    ArithmeticOperator::And => {
+                        match op_math_type {
+                            NumberType::U8 => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::And8,
+                                    resolved: None,
+                                    source: format!("u8 and {:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                });
+                            }
+                            NumberType::USIZE => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::And32,
+                                    resolved: None,
+                                    source: format!("uptr and {:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                });
+                            }
+                        }
+                    },
                     ArithmeticOperator::Add => {
                         match op_math_type {
                             NumberType::U8 => {

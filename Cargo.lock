@@ -8,8 +8,8 @@ version = "0.1.0"
 dependencies = [
  "common",
  "lazy_static",
- "packed_struct 0.10.0",
- "packed_struct_codegen 0.10.0",
+ "packed_struct",
+ "packed_struct_codegen",
  "strum",
 ]
 
@@ -34,7 +34,7 @@ name = "assemble"
 version = "0.1.0"
 dependencies = [
  "common",
- "packed_struct 0.5.0",
+ "packed_struct",
  "pest",
  "pest_derive",
  "sim",
@@ -97,8 +97,8 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "bitflags",
- "packed_struct 0.10.0",
- "packed_struct_codegen 0.10.0",
+ "packed_struct",
+ "packed_struct_codegen",
  "strum",
  "strum_macros",
 ]
@@ -189,34 +189,13 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
 name = "packed_struct"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cea50f42bba10123bd78c09425cf34369710399d18d16f73ff8a9cf00dba070d"
-dependencies = [
- "packed_struct_codegen 0.5.0",
- "serde",
-]
-
-[[package]]
-name = "packed_struct"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c48e482b9a59ad6c2cdb06f7725e7bd33fe3525baaf4699fde7bfea6a5b77b1"
 dependencies = [
  "bitvec",
- "packed_struct_codegen 0.10.0",
+ "packed_struct_codegen",
  "serde",
-]
-
-[[package]]
-name = "packed_struct_codegen"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaaf71038d56e38aec6ab9f254737eb37450f97b7fba349fe1e3dfe6c1a68db4"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -323,7 +302,7 @@ dependencies = [
  "common",
  "itertools",
  "lazy_static",
- "packed_struct 0.10.0",
+ "packed_struct",
  "strum",
  "ucode",
 ]
@@ -381,8 +360,8 @@ version = "0.1.0"
 dependencies = [
  "common",
  "lazy_static",
- "packed_struct 0.10.0",
- "packed_struct_codegen 0.10.0",
+ "packed_struct",
+ "packed_struct_codegen",
  "strum",
  "strum_macros",
 ]
