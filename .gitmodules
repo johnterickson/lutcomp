@@ -1,0 +1,3 @@
+[submodule "logisim/Logisim-Ita"]
+	path = logisim/Logisim-Ita
+	url = https://github.com/Logisim-Ita/Logisim.git

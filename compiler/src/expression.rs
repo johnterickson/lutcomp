@@ -95,10 +95,39 @@ impl Expression {
         }
     }
 
-    fn try_get_const(&self) -> Option<i64> {
+    pub fn try_get_const(&self) -> Option<i64> {
         match self {
             Expression::Number(_, val) => Some(*val),
             Expression::Cast{old_type:_, new_type:_, value} => value.try_get_const(),
+            Expression::Arithmetic(op, left, right) => {
+                if let (Some(left), Some(right)) = (left.try_get_const(), right.try_get_const()) {
+                    Some(match op {
+                        ArithmeticOperator::Add => left + right,
+                        ArithmeticOperator::Subtract => left - right,
+                        ArithmeticOperator::Multiply => left * right,
+                        &ArithmeticOperator::Or => left | right,
+                        ArithmeticOperator::And => left & right,
+                    })
+                }
+                else
+                {
+                    None
+                }
+            },
+            _ => None
+        }
+    }
+
+    pub fn try_emit_type(&self) -> Option<Type> {
+        match self {
+            Expression::Number(nt, _) => Some(Type::Number(nt.clone())),
+            Expression::AddressOf(inner) => {
+                if let Some(inner_type) = inner.try_emit_type() {
+                    Some(Type::Ptr(Box::new(inner_type)))
+                } else {
+                    None
+                }
+            },
             _ => None
         }
     }
@@ -135,8 +164,25 @@ impl Expression {
             Expression::Index(_, index_exp) => {
                 (index_exp.optimize(ctxt), None)
             }
-            Expression::Cast{old_type:_, new_type:_, value} => {
-                (value.optimize(ctxt), None)
+            Expression::Cast{old_type, new_type, value} => {
+                if old_type.is_none() {
+                    *old_type = value.try_emit_type();
+                }
+                if let (Some(Type::Number(NumberType::U8)), Type::Number(NumberType::USIZE), Some(v)) = 
+                   (&old_type, &new_type, value.try_get_const())
+                {
+                    (true, Some(Box::new(Expression::Number(NumberType::USIZE, v))))
+                } else if let (Some(Type::Number(NumberType::U8)), 4, Some(v)) = 
+                    (&old_type, &new_type.byte_count(ctxt), value.try_get_const())
+                {
+                    (true, Some(Box::new(Expression::Cast {
+                        old_type: Some(Type::Number(NumberType::USIZE)),
+                        new_type: new_type.clone(),
+                        value: Box::new(Expression::Number(NumberType::USIZE, v))
+                    })))
+                } else {
+                    (value.optimize(ctxt), None)
+                }
             }
             Expression::Optimized{original:_, optimized} => {
                 (optimized.optimize(ctxt), None)
@@ -190,19 +236,18 @@ impl Expression {
                 let mut number = pair.into_inner();
                 let number = number.next().unwrap();
                 match number.as_rule() {
-                    Rule::decimal_number => {
-                        Expression::Number(
-                            NumberType::U8,
-                            i64::from_str_radix(number.as_str().trim(), 10)
-                                .expect(&format!("Couldn't parse decimal integer '{}'", number.as_str().trim())))
-                    }
-                    Rule::hex_number => {
-                        let number = number.into_inner();
-                        let s = number.as_str().trim();
-                        Expression::Number(
-                            NumberType::USIZE,
-                            i64::from_str_radix(s, 16)
-                                .expect(&format!("Couldn't parse hex integer {}", number.as_str())))
+                    Rule::decimal_number | Rule::hex_number => {
+                        let is_hex = number.as_rule() == Rule::hex_number;
+                        let (radix, skip) = if is_hex {(16,2)} else {(10,0)};
+                        let number = number.as_str().trim();
+                        let (_prefix, number)= number.split_at(skip);
+                        let number = i64::from_str_radix(number, radix)
+                            .expect(&format!("Couldn't parse integer '{}'", number));
+                        if number < 256 && !is_hex {
+                            Expression::Number(NumberType::U8, number)
+                        } else {
+                            Expression::Number(NumberType::USIZE, number)
+                        }
                     }
                     Rule::char_literal => {
                         let number = number.into_inner().next().unwrap();
@@ -210,14 +255,6 @@ impl Expression {
                     }
                     r => panic!("unexpected {:?}", &r)
                 }
-                // let mut n = 0;
-                // let mut digits = pair.into_inner();
-                // while let Some(digit) = digits.next() {
-                //     let digit = u8::from_str(digit.as_str()).expect("Couldn't parse integer.");
-                //     n *= 10;
-                //     n += digit;
-                // }
-                // Expression::Number(n)
             },
             Rule::ident => {
                 Expression::Ident(pair.as_str().trim().to_owned())
@@ -274,17 +311,23 @@ impl Expression {
             let left_type = left.emit(ctxt);
             let right_type = right.emit(ctxt);
 
-            let size = match (&left_type, &right_type, op) {
-                (Type::Number(left_type), Type::Number(right_type), op) => {
-                    match (left_type, right_type, op) {
-                        (NumberType::U8, NumberType::U8, _) => { }
-                        (NumberType::USIZE, NumberType::USIZE, ComparisonOperator::Equals) |
-                        (NumberType::USIZE, NumberType::USIZE, ComparisonOperator::NotEquals) => { },
-                        _ => unimplemented!(),
-                    }
-                    left_type.byte_count(ctxt.program) as u8
-                }
-                _ => unimplemented!()
+            let size = left_type.byte_count(ctxt.program);
+            if size != right_type.byte_count(ctxt.program) {
+                panic!("'{:?}' and '{:?}' are different sizes.", &left_type, &right_type);
+            }
+
+            let size: u8 = size.try_into().expect("Comparison size is too big.");
+
+            if left_type != right_type {
+                panic!("'{:?}' and '{:?}' are different types.", &left_type, &right_type);
+            }
+
+            match (&left_type, &right_type, op) {
+                (_, _, ComparisonOperator::Equals | ComparisonOperator::NotEquals) => {
+                    assert!(size == 1 || size == 4);
+                },
+                (Type::Number(NumberType::U8), _, _) => {},
+                _ => unimplemented!(),
             };
 
             // dbg!(left_type, right_type, size);

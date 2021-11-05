@@ -61,12 +61,11 @@ impl Type {
                 assert!(is_decl);
                 let mut tokens = variable.into_inner();
                 let val_type = NumberType::parse(tokens.next().unwrap().as_str().trim());
-                let count: u32 = match Expression::parse_inner(tokens.next().unwrap()) {
-                    Expression::Number(_, v) => {
-                        v.try_into().unwrap()
-                    }
-                    e => panic!("Expected array size but found {:?}", &e)
-                };
+                let count_exp = Expression::parse(tokens.next().unwrap());
+                let count = count_exp.try_get_const()
+                    .expect(&format!("Could not evaluate array size as a constant value: {:?}", count_exp));
+                let count = count.try_into()
+                    .expect(&format!("Could not fit array size into 32-bit integer {}", count));
                 assert!(tokens.next().is_none());
                 Type::Array(Box::new(Type::Number(val_type)), count)
             }

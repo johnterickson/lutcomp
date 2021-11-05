@@ -133,7 +133,7 @@ impl FunctionDefinition {
         }
 
         for s in body.iter_mut() {
-            s.optimize(ctxt);
+            while s.optimize(ctxt) { }
         }
 
         FunctionDefinition { name, args, vars, return_type, body}

@@ -184,6 +184,8 @@ fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
     program
 }
 
+const STATICS_START_ADDRESS: u32 = 0x8000_1000;
+
 fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<AssemblyInputLine>) {
     let mut input = input.to_owned();
 
@@ -195,7 +197,7 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
             globals: BTreeMap::new(),
             types: BTreeMap::new(),
             registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
-            static_cur_address: 0x8000_1000,
+            static_cur_address: STATICS_START_ADDRESS,
         };
 
         let to_parse = input.clone();
@@ -431,48 +433,58 @@ mod tests {
             entry.return_type, entry_return_size, test_return_size);
     }
 
-    fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
+    fn assemble(entry: &str, program: &str) -> (ProgramContext, Vec<u8>) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
-        check_args(&ctxt, cases.iter().next().unwrap());
 
         let rom = assemble::assemble(assembly);
-        for (args, expected) in cases
+        (ctxt, rom)
+    }
+
+    fn test_var_input(rom: &[u8], args: &Vec<TestVar>) -> u32 {
+        assert!(args.len() <= 3);
+
+        let mut c = TestComputer::from_rom(&rom);
+        let mut arg_addr = TestComputer::arg_base_addr();
+
+        let mut ptr_arg = |bytes: &[u8]| -> u32 {
+            let addr = arg_addr;
+            arg_addr += bytes.len() as u32;
+
+            for (i,b) in bytes.iter().enumerate() {
+                *c.0.mem_byte_mut(addr + i as u32) = *b;
+            }
+
+            let round_up_address = 4 *((arg_addr + 4 + 3) / 4);
+            let round_up_bytes = round_up_address - arg_addr;
+            for _ in 0..round_up_bytes {
+                c.0.add_data_trap(arg_addr);
+                arg_addr += 1;
+            }
+
+            assert_eq!(arg_addr % 4, 0);
+
+            addr
+        };
+
+        let arg_values : Vec<_> = args.iter().map(|arg| {
+            match arg {
+                TestVar::Ascii(bytes) => ptr_arg(bytes),
+                TestVar::Ptr(bytes) => ptr_arg(&bytes),
+                TestVar::U8(i) => *i as u32,
+                TestVar::Usize(i) => *i as u32,
+            }
+        }).collect();
+
+        c.run(&arg_values)
+    }
+
+    fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
+        let (ctxt, rom) = assemble(entry, program);
+        for case in cases
         {
-            assert!(args.len() <= 3);
-
-            let mut c = TestComputer::from_rom(&rom);
-            let mut arg_addr = TestComputer::arg_base_addr();
-
-            let mut ptr_arg = |bytes: &[u8]| -> u32 {
-                let addr = arg_addr;
-                arg_addr += bytes.len() as u32;
-
-                for (i,b) in bytes.iter().enumerate() {
-                    *c.0.mem_byte_mut(addr + i as u32) = *b;
-                }
-
-                let round_up_address = 4 *((arg_addr + 4 + 3) / 4);
-                let round_up_bytes = round_up_address - arg_addr;
-                for _ in 0..round_up_bytes {
-                    c.0.add_data_trap(arg_addr);
-                    arg_addr += 1;
-                }
-
-                assert_eq!(arg_addr % 4, 0);
-
-                addr
-            };
-
-            let arg_values : Vec<_> = args.iter().map(|arg| {
-                match arg {
-                    TestVar::Ascii(bytes) => ptr_arg(bytes),
-                    TestVar::Ptr(bytes) => ptr_arg(&bytes),
-                    TestVar::U8(i) => *i as u32,
-                    TestVar::Usize(i) => *i as u32,
-                }
-            }).collect();
-
-            let result = c.run(&arg_values);
+            check_args(&ctxt, case);
+            let (args, expected) = case;
+            let result = test_var_input(&rom, args);
             let expected: &TestVar = expected.into();
             let result  = match expected {
                 TestVar::U8(_) => TestVar::U8((result & 0xFF) as u8),
@@ -706,6 +718,13 @@ mod tests {
                 (0xAABBCCDD, 0x0, 0xAABBCCDD),
                 (0xFFFFFFFF, 0x1, 0x0),
                 ]);
+    }
+
+    #[test]
+    fn heap() {
+        let (_, rom) = assemble("heap_start", include_str!("../../programs/heap.j"));
+        let heap_start = test_var_input(&rom, &vec![0u8.into()]);
+        assert!(heap_start >= STATICS_START_ADDRESS);
     }
 
     #[test]

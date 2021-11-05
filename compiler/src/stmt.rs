@@ -12,17 +12,43 @@ pub enum Statement {
 }
 
 impl Statement {
-    pub fn optimize(&mut self, ctxt: &ProgramContext) {
+    pub fn optimize(&mut self, ctxt: &ProgramContext) -> bool{
+        let mut optimized = false;
         match self {
             Statement::Assign { target, var_type:_, value} => {
-                while target.optimize(ctxt) {}
-                while value.optimize(ctxt) {}
+                while target.optimize(ctxt) { optimized = true; }
+                while value.optimize(ctxt) { optimized = true; }
+            }
+            Statement::While { predicate, while_true} => {
+                while predicate.optimize(ctxt) { optimized = true; }
+                for s in while_true {
+                    while s.optimize(ctxt) { optimized = true; }
+                }
             }
             Statement::Return {value} => {
-                while value.optimize(ctxt) {}
+                while value.optimize(ctxt) { optimized = true; }
             }
-            _ => {}
+            Statement::Declare { .. } =>  {},
+            Statement::CallAssign { name:_, var_type:_, call } => {
+                for p in &mut call.parameters {
+                    while p.optimize(ctxt) { optimized = true; } 
+                }
+            }
+            Statement::IfElse { predicate, when_true, when_false } => {
+                while predicate.optimize(ctxt) { optimized = true; }
+                for s in when_true {
+                    while s.optimize(ctxt) { optimized = true; }
+                }
+                for s in when_false {
+                    while s.optimize(ctxt) { optimized = true; }
+                }
+            }
+            Statement::TtyOut { value } => {
+                while value.optimize(ctxt) { optimized = true; }
+            }
         }
+
+        optimized
     }
 
     pub fn parse(pair: pest::iterators::Pair<Rule>) -> Statement {
