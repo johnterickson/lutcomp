@@ -13,6 +13,5 @@ fn test_ret_static(x: usize, y: usize) -> usize {
     r1: &request := get_request();
     r1->in1 := x;
     r1->in2 := y;
-    r2: &request := get_request();
-    return (r2->in1 + r2->in2);
+    return (r1->in1 + r1->in2);
 }

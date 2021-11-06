@@ -8,7 +8,7 @@ use strum::IntoEnumIterator;
 
 use std::{collections::BTreeSet, env, fs::File, io, path::PathBuf, unimplemented};
 use std::io::Read;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::{convert::TryInto};
 
 mod call;
@@ -56,7 +56,7 @@ fn print_state(c: &mut Computer) {
     //let pc_byte = *c.mem_byte_mut(pc);
     let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
     println!(
-        "pc:{:05x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x} mem[sp+10]:{:08x} r0:{:08x} r4:{:08x} r8:{:08x} ir0:{:?} ",
+        "pc:{:05x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x} r0:{:08x} r4:{:08x} r8:{:08x} rc:{:08x} r10:{:08x} r14:{:08x} ir0:{:?} ",
         pc,
         sp,
         c.flags.bits(),
@@ -64,10 +64,12 @@ fn print_state(c: &mut Computer) {
         u32::from_le_bytes(*c.mem_word_mut(sp+4)),
         u32::from_le_bytes(*c.mem_word_mut(sp+8)),
         u32::from_le_bytes(*c.mem_word_mut(sp+0xC)),
-        u32::from_le_bytes(*c.mem_word_mut(sp+0x10)),
         u32::from_le_bytes(*c.mem_word_mut(0x80000)),
         u32::from_le_bytes(*c.mem_word_mut(0x80004)),
         u32::from_le_bytes(*c.mem_word_mut(0x80008)),
+        u32::from_le_bytes(*c.mem_word_mut(0x8000c)),
+        u32::from_le_bytes(*c.mem_word_mut(0x80010)),
+        u32::from_le_bytes(*c.mem_word_mut(0x80014)),
         Opcode::iter().filter(|o| *o as u8 == c.ir0).next(),
     );
     if let Some(symbol) = c.symbols.get(pc as usize) {

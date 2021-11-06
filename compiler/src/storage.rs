@@ -121,9 +121,46 @@ impl LogicalReference {
                 EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
             }
             Storage::Register(r) => {
+                assert_eq!(0, mem_ref.local_offset);
                 let byte_count = final_type.byte_count(ctxt.program);
-                match byte_count {
-                    byte_count if byte_count >= 1 && byte_count <=3 => {
+                match (mem_ref.deref_offset, byte_count) {
+                    (DerefOffset::Constant(c), _) => {
+                        if c == 0 {
+                            ctxt.add_inst(Instruction {
+                                source: format!("copying address to reg0 {:?}", &self),
+                                opcode: Opcode::Or32,
+                                args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
+                                resolved: None,
+                            });
+                        } else {
+                            ctxt.add_inst(Instruction {
+                                source: format!("copying base address to reg0 {:?}", &self),
+                                opcode: Opcode::Or32,
+                                args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
+                                resolved: None,
+                            });
+                            ctxt.add_inst(Instruction {
+                                source: format!("adding offset to register {:?}", &self),
+                                opcode: Opcode::AddImm32IgnoreCarry,
+                                args: vec![Value::Register(0), Value::Constant32(c)],
+                                resolved: None,
+                            });
+                        }
+                        EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
+                    }
+                    (DerefOffset::None, 4) => {
+                        ctxt.add_inst(Instruction {
+                            source: format!("copying value to register {:?}", &self),
+                            opcode: Opcode::Or32,
+                            args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
+                            resolved: None,
+                        });
+                        EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
+                        // if i != 0 {
+
+                        // }
+                    }
+                    (DerefOffset::None, byte_count) if byte_count >= 1 && byte_count <=3 => {
                         for i in 0..byte_count as u8 {
                             ctxt.add_inst(Instruction {
                                 source: format!("copying register {:?}", &self),
@@ -132,18 +169,15 @@ impl LogicalReference {
                                 resolved: None,
                             });
                         }
+                        EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
                     }
-                    4 => {
-                        ctxt.add_inst(Instruction {
-                            source: format!("copying register {:?}", &self),
-                            opcode: Opcode::Or32,
-                            args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
-                            resolved: None,
-                        });
-                    }
-                    _ => unimplemented!()
+                    (d,b) => unimplemented!("{:?} is {:?} and does not fit in a register.", &final_type, &(d, b)),
                 }
-                EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
+                
+                // if let Storage::ValueRegister(_) = local.storage {
+                // } else {
+                //     EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
+                // }
             }
             Storage::Stack(base_offset) => {
                 let offset = ctxt.get_stack_offset(base_offset) + mem_ref.local_offset;

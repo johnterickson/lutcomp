@@ -428,7 +428,7 @@ impl Statement {
                                         _ => unimplemented!(),
                                     }
                                     false
-                                },
+                                }
                                 Storage::FixedAddress(addr) => {
                                     ctxt.add_inst(Instruction {
                                         opcode: Opcode::LoadImm32,
@@ -437,7 +437,7 @@ impl Statement {
                                         args: vec![Value::Register(8), Value::Constant32(addr)]
                                     });
                                     true
-                                },
+                                }
                                 Storage::Stack(offset) => {
                                     let offset = ctxt.get_stack_offset(offset);
                                     ctxt.add_inst(Instruction {

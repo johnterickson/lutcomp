@@ -344,7 +344,7 @@ impl AllocatedFunction {
                 }
                 Storage::FixedAddress(addr) => {
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("# static @ 0x{:08x} -> {} {:?} {:?}", addr, name, var.decl, var.var_type)));
-                },
+                }
             }
         }
 
