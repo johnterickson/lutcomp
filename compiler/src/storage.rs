@@ -50,9 +50,6 @@ impl LogicalReference {
     fn get_deref_offset<'a>(&self, ctxt: &'a FunctionContext, var_type: &'a Type) -> (MemoryReference, &'a Type) {
         // dbg!((&self, &var_type));
         match (self, var_type) {
-            // (LogicalReference::Deref, Type::Ptr(inner)) => {
-            //     (MemoryReference{local_offset:0, deref_offset: DerefOffset::Constant(0)}, inner.as_ref())
-            // }
             (LogicalReference::Local, var_type) => {
                 (MemoryReference{local_offset:0, deref_offset: DerefOffset::None}, var_type)
             }

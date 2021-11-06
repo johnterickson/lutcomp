@@ -10,7 +10,8 @@ fn get_heap() -> &heap {
 
 fn heap_init() -> &heap {
     heap: &heap := get_heap();
-    heap->current := ((0x80001004) AS &u8); /* (((((heap) AS &u8) AS usize) + 4) AS &u8); */
+    heap_start: &u8[1024] := &(heap->bytes);
+    heap->current := ((heap_start) AS &u8);
     return heap;
 }
 

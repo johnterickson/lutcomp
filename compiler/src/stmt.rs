@@ -110,7 +110,7 @@ impl Statement {
                             Rule::variable_decl => {
                                 let mut decl_tokens = decl.into_inner();
                                 let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
-                                let var_type = Type::parse(decl_tokens.next().unwrap(), false);
+                                let var_type = Type::parse(decl_tokens.next().unwrap(), true);
                                 (var_name, Some(var_type))
                             }
                             Rule::ident => {
