@@ -1,5 +1,15 @@
+!include 'cmp_usize.j'
+
+struct heap_entry {
+    next: &heap_entry;
+    len: usize;
+    free: u8;
+    junk: u8[3];
+    data: u8[0];
+}
+
 struct heap {
-    current: &u8;
+    head: &heap_entry;
     bytes: u8[1024];
 }
 
@@ -8,27 +18,67 @@ fn get_heap() -> &heap {
     return &heap;
 }
 
+fn get_heap_head() -> &heap_entry {
+    heap: &heap := get_heap();
+    return heap->head;
+}
+
 fn heap_init() -> &heap {
     heap: &heap := get_heap();
-    heap_start: &u8[1024] := &(heap->bytes);
-    heap->current := ((heap_start) AS &u8);
+    head: &heap_entry := ((&(heap->bytes)) AS &heap_entry);
+    heap->head := head;
+    head->next := ((0x0) AS &heap_entry);
+    head->len := (1024 - 0xc);
+    head->free := 1;
     return heap;
 }
 
-fn heap_alloc(n: usize) -> &u8 {
-    heap: &heap := get_heap();
-    b: &u8 := heap->current;
-    heap->current := (heap->current + n);
-    return b;
+fn heap_is_entry_bad(head: &heap_entry, alloc: usize) -> u8 {
+    if (head->free == 0) {
+        return 1;
+    }
+    if (cmp_usize(head->len,alloc) == 255) {
+        return 1;
+    }
+    return 0;
 }
 
-fn test1() -> usize {
-    heap: &heap := get_heap();
-    heap_init();
-    a1: &u8 := heap_alloc(0x1);
-    if (((a1) AS usize) != 0x80001004) {
-        return ((a1) AS usize);
+fn heap_alloc(n: usize) -> &u8 {
+    head: &heap_entry := get_heap_head();
+    alloc: usize := (n + 0xc);
+    while (heap_is_entry_bad(head,alloc) != 0) {
+        head := head->next;
+        if (head == ((0x0) AS &heap_entry)) {
+            return ((0x0) AS &u8);
+        }
     }
 
-    return 0x0;
+    new: &heap_entry := head;
+    new := (new + 0xc);
+    new := (new + head->len);
+    new := (new - alloc);
+    new->next := head->next;
+    new->len := n;
+    new->free := 0;
+
+    head->len := (head->len - alloc);
+    head->next := new;
+
+    return (((new) AS &u8) + 0xc);
+}
+
+fn test_get_heap_head() -> &heap_entry {
+    heap_init();
+    return get_heap_head();
+}
+
+fn test_heap_is_entry_bad(n: usize) -> u8 {
+    heap_init();
+    head: &heap_entry := get_heap_head();
+    return heap_is_entry_bad(head, n);
+}
+
+fn test_heap_alloc(n: usize) -> &u8 {
+    heap_init();
+    return heap_alloc(n);
 }

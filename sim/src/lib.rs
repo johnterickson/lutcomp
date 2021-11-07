@@ -49,6 +49,7 @@ pub struct Computer<'a> {
     alu: u8,
     pub flags: Flags,
     pub ir0: u8,
+    pub ir0_pc: u32,
     in1: u8,
     print: bool,
     trap_addrs: BTreeSet<u32>,
@@ -95,6 +96,7 @@ impl<'a> Computer<'a> {
             alu: 0,
             flags: Flags::empty(),
             ir0: 0,
+            ir0_pc: 0,
             in1: 0,
             print,
             trap_addrs: BTreeSet::new(),
@@ -172,6 +174,15 @@ impl<'a> Computer<'a> {
                 "urom_addr {:05x} = {:?} {:?} + {:02x}",
                 urom_addr, urom_entry, opcode, self.upc);
         }
+
+        // match opcode {
+        //     Some(Opcode::Store32Part1) => {
+        //         let addr_reg = *self.mem_byte_mut(self.ir0_pc + 2);
+        //         let addr = u32::from_le_bytes(*self.mem_word_mut(0x80000 + addr_reg as u32));
+        //         assert!(addr % 4 == 0);
+        //     }
+        //     _ => {}
+        // }
 
         let i0 = self.ucode_rom[urom_addr];
         let i1 = self.ucode_rom[urom_addr + 1];
@@ -252,7 +263,10 @@ impl<'a> Computer<'a> {
                 self.flags = Flags::from_bits_truncate(data_bus.unwrap());
             }
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
-            DataBusLoadEdge::IR0 => self.ir0 = data_bus.unwrap(),
+            DataBusLoadEdge::IR0 => {
+                self.ir0_pc = addr_bus;
+                self.ir0 = data_bus.unwrap();
+            },
             DataBusLoadEdge::Mem => {
                 if self.print {
                     println!("addr_bus: {:08x}", addr_bus);
@@ -785,11 +799,48 @@ mod tests {
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::new(rom);
-
+        
+        assert_ne!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
+        
         while c.step() {}
 
         assert_eq!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
         assert_eq!(0x81234, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
+
+        assert_eq!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
+    }
+
+    #[test]
+    #[should_panic]
+    fn store32_unaligned() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(0x0);
+        rom.push(0xEF);
+        rom.push(0xCD);
+        rom.push(0xAB);
+        rom.push(0x89);
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(4);
+        rom.push(0x35);
+        rom.push(0x12);
+        rom.push(0x08);
+        rom.push(0x00);
+        rom.push(Opcode::Store32Part1 as u8);
+        rom.push(0);
+        rom.push(4);
+        rom.push(Opcode::Store32Part2 as u8);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::new(rom);
+        
+        assert_ne!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
+        
+        while c.step() {}
+
+        assert_eq!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+        assert_eq!(0x81235, u32::from_le_bytes(*c.mem_word_mut(0x80004)));
+
         assert_eq!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
     }
 

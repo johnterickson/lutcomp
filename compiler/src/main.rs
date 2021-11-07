@@ -55,6 +55,7 @@ fn print_state(c: &mut Computer) {
     let pc = u32::from_le_bytes(c.pc);
     //let pc_byte = *c.mem_byte_mut(pc);
     let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
+    let op = Opcode::iter().filter(|o| *o as u8 == c.ir0).next();
     println!(
         "pc:{:05x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x} r0:{:08x} r4:{:08x} r8:{:08x} rc:{:08x} r10:{:08x} r14:{:08x} ir0:{:?} ",
         pc,
@@ -70,8 +71,25 @@ fn print_state(c: &mut Computer) {
         u32::from_le_bytes(*c.mem_word_mut(0x8000c)),
         u32::from_le_bytes(*c.mem_word_mut(0x80010)),
         u32::from_le_bytes(*c.mem_word_mut(0x80014)),
-        Opcode::iter().filter(|o| *o as u8 == c.ir0).next(),
+        &op,
     );
+    match op {
+        Some(Opcode::Store32Part1) | Some(Opcode::Store32Part2) => {
+            let value_reg_offset = if op == Some(Opcode::Store32Part1) { 1 } else { 0xFFFFFFFE };
+            let value_reg = *c.mem_byte_mut(c.ir0_pc.wrapping_add(value_reg_offset));
+            let value = u32::from_le_bytes(*c.mem_word_mut(0x80000 + value_reg as u32));
+            let addr_reg_offset = if op == Some(Opcode::Store32Part1) { 2 } else { 0xFFFFFFFF };
+            let addr_reg = *c.mem_byte_mut(c.ir0_pc.wrapping_add(addr_reg_offset));
+            let addr = u32::from_le_bytes(*c.mem_word_mut(0x80000 + addr_reg as u32));
+            let mem_value = u32::from_le_bytes(*c.mem_word_mut(addr));
+            println!(" (r{:02x} == {:08x}) ==> (mem[r{:02x}={:08x}] == {:08x})", 
+                value_reg, value,
+                addr_reg, addr, mem_value
+            );
+        }
+        _ => {}
+    }
+
     if let Some(symbol) = c.symbols.get(pc as usize) {
         let mut seen = HashSet::new();
         for note in &symbol.notes {
@@ -323,9 +341,20 @@ mod tests {
         }
     }
 
-    struct TestComputer<'a>(pub Computer<'a>);
+    struct TestComputer<'a> {
+        pub comp: Computer<'a>,
+        ctxt: &'a ProgramContext
+    }
 
     impl<'a> TestComputer<'a> {
+        fn read_u32(&mut self, addr: u32) -> u32 {
+            u32::from_le_bytes(*self.comp.mem_word_mut(addr))
+        }
+
+        fn read_u8(&mut self, addr: u32) -> u8 {
+            *self.comp.mem_byte_mut(addr)
+        }
+
         fn arg_base_addr() -> u32 {
             0x8100
         }
@@ -344,8 +373,11 @@ mod tests {
             dir
         }
 
-        fn from_rom(rom: &[(u8,Symbol)]) -> TestComputer<'a> {
-            TestComputer(Computer::with_print_with_sym(rom.to_vec(), false))
+        fn from_rom(ctxt: &'a ProgramContext, rom: &[(u8,Symbol)]) -> TestComputer<'a> {
+            TestComputer{
+                comp: Computer::with_print_with_sym(rom.to_vec(), false),
+                ctxt
+            }
         }
 
         fn run(&mut self, inputs: &[u32]) -> u32{
@@ -353,21 +385,21 @@ mod tests {
             assert!(inputs.len() <= 3);
             for (i,val) in inputs.iter().rev().enumerate() {
                 let i = i as u32;
-                *self.0.mem_word_mut(0x80000 + 4*i) = val.to_le_bytes();
+                *self.comp.mem_word_mut(0x80000 + 4*i) = val.to_le_bytes();
             }
 
 
             let mut last_pc = None;
             let mut step_count = 0;
-            while self.0.step() {
-                if last_pc != Some(self.0.pc) {
-                    print_state(&mut self.0);
+            while self.comp.step() {
+                if last_pc != Some(self.comp.pc) {
+                    print_state(&mut self.comp);
                 }
-                last_pc = Some(self.0.pc);
+                last_pc = Some(self.comp.pc);
                 step_count += 1;
                 assert!(step_count < 100000000);
             }
-            u32::from_le_bytes(*self.0.mem_word_mut(0x80000))
+            u32::from_le_bytes(*self.comp.mem_word_mut(0x80000))
         }
     }
 
@@ -382,18 +414,18 @@ mod tests {
     }
 
     fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
-        let (_ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
+        let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble::assemble(assembly);
         for (ttyin, input1, input2, expected) in pairs {
-            let mut c = TestComputer::from_rom(&rom);
+            let mut c = TestComputer::from_rom(&ctxt, &rom);
             dbg!((ttyin, input1, input2, expected));
             for ch in ttyin.chars() {
-                c.0.tty_in.push_back(ch as u8);
+                c.comp.tty_in.push_back(ch as u8);
             }
             assert_eq!(0, c.run(&[*input1, *input2]) & 0xFF);
 
             let mut out = String::new();
-            for c in &c.0.tty_out {
+            for c in &c.comp.tty_out {
                 let c = *c as char;
                 out.push(c);
             }
@@ -403,19 +435,19 @@ mod tests {
     }
 
     fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
-        let (_ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
+        let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
         let rom = assemble::assemble(assembly);
         let addr1 = 0x8100;
         let addr2 = 0xA000;
 
         for (input1, input2, expected) in pairs {
-            let mut c = TestComputer::from_rom(&rom);
+            let mut c = TestComputer::from_rom(&ctxt, &rom);
             dbg!((input1, input2, expected));
             for (i,b) in input1.iter().enumerate() {
-                *c.0.mem_byte_mut(addr1 + i as u32) = *b;
+                *c.comp.mem_byte_mut(addr1 + i as u32) = *b;
             }
             for (i,b) in input2.iter().enumerate() {
-                *c.0.mem_byte_mut(addr2 + i as u32) = *b;
+                *c.comp.mem_byte_mut(addr2 + i as u32) = *b;
             }
             assert_eq!(*expected, c.run(&[addr1, addr2]));
         }
@@ -448,10 +480,9 @@ mod tests {
         (ctxt, rom)
     }
 
-    fn test_var_input(rom: &[(u8,Symbol)], args: &Vec<TestVar>) -> u32 {
-        assert!(args.len() <= 3);
+    fn test_var_input<'a>(ctxt: &'a ProgramContext, rom: &[(u8,Symbol)], args: &Vec<TestVar>) -> (TestComputer<'a>, u32) {
 
-        let mut c = TestComputer::from_rom(&rom);
+        let mut c = TestComputer::from_rom(ctxt, &rom);
         let mut arg_addr = TestComputer::arg_base_addr();
 
         let mut ptr_arg = |bytes: &[u8]| -> u32 {
@@ -459,13 +490,13 @@ mod tests {
             arg_addr += bytes.len() as u32;
 
             for (i,b) in bytes.iter().enumerate() {
-                *c.0.mem_byte_mut(addr + i as u32) = *b;
+                *c.comp.mem_byte_mut(addr + i as u32) = *b;
             }
 
             let round_up_address = 4 *((arg_addr + 4 + 3) / 4);
             let round_up_bytes = round_up_address - arg_addr;
             for _ in 0..round_up_bytes {
-                c.0.add_data_trap(arg_addr);
+                c.comp.add_data_trap(arg_addr);
                 arg_addr += 1;
             }
 
@@ -483,7 +514,8 @@ mod tests {
             }
         }).collect();
 
-        c.run(&arg_values)
+        let result = c.run(&arg_values);
+        (c, result)
     }
 
     fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
@@ -492,7 +524,7 @@ mod tests {
         {
             check_args(&ctxt, case);
             let (args, expected) = case;
-            let result = test_var_input(&rom, args);
+            let (_comp, result) = test_var_input(&ctxt, &rom, args);
             let expected: &TestVar = expected.into();
             let result  = match expected {
                 TestVar::U8(_) => TestVar::U8((result & 0xFF) as u8),
@@ -679,6 +711,7 @@ mod tests {
                 (vec![2u8.into()],4u8.into()),
                 ]);
     }
+
     #[test]
     fn add_uptr() {
         test_inputs(
@@ -693,6 +726,25 @@ mod tests {
                 (0xAABBCCDD, 0x0, 0xAABBCCDD),
                 (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
                 (0xFFFFFFFF, 0x1, 0x0),
+                ]);
+    }
+
+    #[test]
+    fn cmp_usize() {
+        test_inputs(
+            "cmp_usize",
+            include_str!("../../programs/cmp_usize.j"),
+            &[
+                (0x0u32,0x0u32,0x0u8),
+                (0x0,0x1,0xFF),
+                (0x1,0x0,0x1),
+                (0x100,0x0,0x1),
+                (0x100,0x2,0x1),
+                (0x0,0x100,0xFF),
+                (0x2,0x100,0xFF),
+                (0xbbccddee,0xbbccddee,0x0),
+                (0x01020304,0x04030201,0xFF),
+                (0x04030201,0x01020304,0x1),
                 ]);
     }
 
@@ -739,17 +791,76 @@ mod tests {
     }
 
     #[test]
-    fn get_heap() {
-        let (_, rom) = assemble("get_heap", include_str!("../../programs/heap.j"));
-        let heap_start = test_var_input(&rom, &vec![0u8.into()]);
+    fn heap_nofree() {
+        let (ctxt, rom) = assemble("get_heap", include_str!("../../programs/heap_nofree.j"));
+        let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
         assert_eq!(heap_start, STATICS_START_ADDRESS);
     }
 
     #[test]
-    fn heap_alloc1() {
-        let (_, rom) = assemble("test1", include_str!("../../programs/heap.j"));
-        let heap_start = test_var_input(&rom, &vec![0u8.into()]);
+    fn heap_nofree_alloc() {
+        let (ctxt, rom) = assemble("test1", include_str!("../../programs/heap_nofree.j"));
+        let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
         assert_eq!(heap_start, 0);
+    }
+
+    #[test]
+    fn heap_init() {
+        let (ctxt, rom) = assemble("heap_init", include_str!("../../programs/heap.j"));
+        let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
+        assert_eq!(heap_start, STATICS_START_ADDRESS);
+
+        let (ctxt, rom) = assemble("test_get_heap_head", include_str!("../../programs/heap.j"));
+        let (mut c, heap_entry) = test_var_input(&ctxt, &rom, &vec![]);
+        assert_eq!(heap_entry, STATICS_START_ADDRESS+4);
+
+        let header_size = 0xc;
+
+        let head_entry_addr = heap_start + 4;
+        assert_eq!(c.read_u32(heap_start), head_entry_addr);
+        assert_eq!(c.read_u32(head_entry_addr), 0); 
+        let len = 1024-header_size;
+        assert_eq!(c.read_u32(head_entry_addr+4), len); 
+        assert_eq!(c.read_u8(head_entry_addr+8), 1); 
+
+        let max_static = ctxt.static_cur_address;
+        assert_eq!(max_static, head_entry_addr + header_size + len);
+    }
+
+    #[test]
+    fn heap_is_entry_bad() {
+        let (ctxt, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/heap.j"));
+        let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1u32.into()]);
+        assert_eq!(is_bad & 0xFF, 0);
+
+        let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1024u32.into()]);
+        assert_eq!(is_bad & 0xFF, 1);
+    }
+
+    #[test]
+    fn heap_alloc() {
+        let (ctxt, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
+        let (mut c, alloc) = test_var_input(&ctxt, &rom, &vec![1u32.into()]);
+
+        const HEADER_SIZE : u32 = 0xc;
+        
+        let heap_addr = STATICS_START_ADDRESS;
+        let max_static = ctxt.static_cur_address;
+        let head_entry_addr = heap_addr + 4;
+        assert_eq!(c.read_u32(heap_addr), head_entry_addr);
+        let new_entry_addr = c.read_u32(head_entry_addr);
+        assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-1); 
+        let head_entry_len = 1024-HEADER_SIZE-HEADER_SIZE-1;
+        assert_eq!(c.read_u32(head_entry_addr+4), head_entry_len); 
+        assert_eq!(c.read_u8(head_entry_addr+8), 1); 
+
+        assert_eq!(new_entry_addr+HEADER_SIZE, alloc);
+
+        assert_eq!(c.read_u32(new_entry_addr), 0);
+        assert_eq!(c.read_u32(new_entry_addr+4), 1);
+        assert_eq!(c.read_u8(new_entry_addr+8), 0);
+        assert_eq!(max_static-1, alloc);
+        assert_eq!(new_entry_addr+HEADER_SIZE, alloc);
     }
 
     #[test]
@@ -786,6 +897,17 @@ mod tests {
         test_tty(
             "main",
             include_str!("../../programs/echo.j"),
+            &[
+                ("0\n",0x0,0x0,"0\n"),
+                ("01\n",0x0,0x0,"01\n"),
+                ]);
+    }
+
+    #[test]
+    fn echoline() {
+        test_tty(
+            "test_echoline",
+            include_str!("../../programs/echoline.j"),
             &[
                 ("0\n",0x0,0x0,"0\n"),
                 ("01\n",0x0,0x0,"01\n"),

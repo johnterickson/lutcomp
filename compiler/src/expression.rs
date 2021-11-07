@@ -317,20 +317,17 @@ impl Expression {
             }
 
             let size: u8 = size.try_into().expect("Comparison size is too big.");
+            assert!(size == 1 || size == 4);
 
             if left_type != right_type {
                 panic!("'{:?}' and '{:?}' are different types.", &left_type, &right_type);
             }
 
-            match (&left_type, &right_type, op) {
-                (_, _, ComparisonOperator::Equals | ComparisonOperator::NotEquals) => {
-                    assert!(size == 1 || size == 4);
-                },
-                (Type::Number(NumberType::U8), _, _) => {},
-                _ => unimplemented!(),
+            let is_single_op = match (&left_type, op) {
+                (_, ComparisonOperator::Equals | ComparisonOperator::NotEquals) => true,
+                (Type::Number(NumberType::U8), _) => true,
+                _ => false,
             };
-
-            // dbg!(left_type, right_type, size);
 
             let right_reg = 8;
             for r in 0..size {
@@ -353,102 +350,141 @@ impl Expression {
                 });
                 ctxt.additional_offset -= 1;
             }
-
-            let (cond, uncond, jmp_op) = match op {
-                ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
-                    match size {
-                        1 => {
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Cmp8,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(right_reg), Value::Register(left_reg)]
-                            });
-                        }
-                        4 => {
-                            for r in 0..size {
+            if is_single_op {
+                let (cond, uncond, jmp_op) = match op {
+                    ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
+                        match size {
+                            1 => {
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Invert8,
+                                    opcode: Opcode::Cmp8,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(right_reg + r)]
+                                    args: vec![Value::Register(right_reg), Value::Register(left_reg)]
                                 });
                             }
+                            4 => {
+                                for r in 0..size {
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::Invert8,
+                                        resolved: None,
+                                        source: format!("{:?}", &self),
+                                        args: vec![Value::Register(right_reg + r)]
+                                    });
+                                }
 
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::AddImm32IgnoreCarry,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(right_reg), Value::Constant32(1)]
-                            });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::AddImm32IgnoreCarry,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(right_reg), Value::Constant32(1)]
+                                });
 
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Add32NoCarryIn,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(left_reg)]
-                            });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add32NoCarryIn,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(left_reg)]
+                                });
 
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::OrImm32,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(left_reg), Value::Constant32(0)]
-                            });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::OrImm32,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Constant32(0)]
+                                });
+                            }
+                            _ => unimplemented!(),
                         }
-                        _ => unimplemented!(),
+                        if op == &ComparisonOperator::Equals {
+                            (when_true, when_false, Opcode::JzImm)
+                        } else {
+                            (when_false,when_true, Opcode::JzImm)
+                        }
+                    },
+                    ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Cmp8,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(left_reg), Value::Register(right_reg)]
+                        });
+                        if op == &ComparisonOperator::LessThanOrEqual {
+                            (when_true,when_false,Opcode::JcImm)
+                        } else {
+                            (when_false,when_true,Opcode::JcImm)
+                        }
+                    },
+                    ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Cmp8,
+                            resolved: None,
+                            source: format!("{:?}", &self),
+                            args: vec![Value::Register(right_reg), Value::Register(left_reg)]
+                        });
+                        if op == &ComparisonOperator::GreaterThanOrEqual {
+                            (when_true,when_false,Opcode::JcImm)
+                        } else {
+                            (when_false,when_true,Opcode::JcImm)
+                        }
                     }
-                    if op == &ComparisonOperator::Equals {
-                        (when_true, when_false, Opcode::JzImm)
-                    } else {
-                        (when_false,when_true, Opcode::JzImm)
-                    }
-                },
-                ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Cmp8,
-                        resolved: None,
-                        source: format!("{:?}", &self),
-                        args: vec![Value::Register(left_reg), Value::Register(right_reg)]
-                    });
-                    if op == &ComparisonOperator::LessThanOrEqual {
-                        (when_true,when_false,Opcode::JcImm)
-                    } else {
-                        (when_false,when_true,Opcode::JcImm)
-                    }
-                },
-                ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Cmp8,
-                        resolved: None,
-                        source: format!("{:?}", &self),
-                        args: vec![Value::Register(right_reg), Value::Register(left_reg)]
-                    });
-                    if op == &ComparisonOperator::GreaterThanOrEqual {
-                        (when_true,when_false,Opcode::JcImm)
-                    } else {
-                        (when_false,when_true,Opcode::JcImm)
-                    }
-                }
-            };
+                };
 
-            ctxt.add_inst(Instruction {
-                opcode: jmp_op,
-                source: format!("{:?}", &self),
-                args: vec![Value::Label24(cond.to_owned())],
-                resolved: None,
-            });
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::JmpImm,
-                source: format!("{:?}", &self),
-                args: vec![Value::Label24(uncond.to_owned())],
-                resolved: None,
-            });
+                ctxt.add_inst(Instruction {
+                    opcode: jmp_op,
+                    source: format!("{:?}", &self),
+                    args: vec![Value::Label24(cond.to_owned())],
+                    resolved: None,
+                });
+                ctxt.add_inst(Instruction {
+                    opcode: Opcode::JmpImm,
+                    source: format!("{:?}", &self),
+                    args: vec![Value::Label24(uncond.to_owned())],
+                    resolved: None,
+                });
+                
+            } else {
+                unimplemented!();
+                // let (cond, uncond, jmp_op) = match op {
+                //     ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
+                //         if op == &ComparisonOperator::Equals {
+                //             (when_true, when_false, Opcode::JzImm)
+                //         } else {
+                //             (when_false,when_true, Opcode::JzImm)
+                //         }
+                //     }
+                //     ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
+                //         if op == &ComparisonOperator::LessThanOrEqual {
+                //             (when_true,when_false,Opcode::JcImm)
+                //         } else {
+                //             (when_false,when_true,Opcode::JcImm)
+                //         }
+                //     }
+                //     ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
+                //         if op == &ComparisonOperator::GreaterThanOrEqual {
+                //             (when_true,when_false,Opcode::JcImm)
+                //         } else {
+                //             (when_false,when_true,Opcode::JcImm)
+                //         }
+                //     }
+                // };
+
+                // for r in 0..size {
+
+                //     ctxt.add_inst(Instruction {
+                //         opcode: Opcode::Cmp8,
+                //         resolved: None,
+                //         source: format!("{:?}", &self),
+                //         args: vec![Value::Register(right_reg + r), Value::Register(left_reg+r)]
+                //     });
+
+                //     ctxt.block_counter += 1;
+                    
+                    
+                // }
+            }
         } else {
-            panic!("expected comparison expression");
+            panic!("expected comparison expression, but found: {:?}", &self);
         }
-
-        
     }
 
     fn emit_ref(&self, ctxt: &mut FunctionContext, reference: &LogicalReference, local_name: &str) -> Type {

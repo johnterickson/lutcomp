@@ -1047,7 +1047,7 @@ impl Ucode {
                         add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
-                    for i in 0..=1 {
+                    for _ in 0..=1 {
                         self.start_of_ram();
                         add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
                         add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
@@ -1060,15 +1060,13 @@ impl Ucode {
 
                         add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
-                        if i != 3 {
-                            add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
-                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+                        add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
-                            add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                            add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
-                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-                        }
+                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
                     }
                 }
                 Some(Opcode::Store32Part2) => {
