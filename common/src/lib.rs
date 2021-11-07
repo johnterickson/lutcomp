@@ -138,6 +138,7 @@ pub enum Opcode {
     Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
     Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
     Cmp8 = 0x25, // 8bit regB - 8bit regA -> FLAGS
+    Cmp8IfZero = 0x26, // if Flags & ZERO { 8bit regB - 8bit regA } else { Flags } -> Flags
 
     AndImm8 = 0x30, // regA &= [8-bit constant B]
     OrImm8 = 0x31, // regA |= [8-bit constant B]

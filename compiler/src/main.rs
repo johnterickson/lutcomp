@@ -375,7 +375,7 @@ mod tests {
 
         fn from_rom(ctxt: &'a ProgramContext, rom: &[(u8,Symbol)]) -> TestComputer<'a> {
             TestComputer{
-                comp: Computer::with_print_with_sym(rom.to_vec(), false),
+                comp: Computer::with_print_with_sym(rom.to_vec(), true),
                 ctxt
             }
         }
@@ -532,7 +532,7 @@ mod tests {
                 _ => unimplemented!(),
             };
 
-            assert_eq!(expected, &result);
+            assert_eq!(expected, &result, "{:?}", &case);
         }
     }
 

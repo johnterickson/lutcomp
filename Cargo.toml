@@ -8,3 +8,6 @@ members = [
     "sim",
     "ucode"
     ]
+exclude = [
+    "arduino/sst39sf040-avr/flasher"
+    ]
