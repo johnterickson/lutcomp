@@ -92,7 +92,17 @@ pub enum SpecialMicroHelper {
     Negate = 5,
     Pow2Mask = 6,
     Invert = 7,
+    GetInfo = 0x39,
     Max=0x40,
+}
+
+#[derive(Clone, Copy, Display, Debug, PartialEq, PartialOrd)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+pub enum SpecialMicroHelperInfo {
+    VersionHi = 1,
+    VersionLo = 2,
+    VersionPatch = 3,
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]

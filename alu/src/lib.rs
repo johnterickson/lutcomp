@@ -112,6 +112,18 @@ pub fn alu(print: bool) -> Vec<u8> {
                                     ((1u64 << (entry.in1 & 0x1F)) - 1) as u8
                                 }
                                 SpecialMicroHelper::Invert => (entry.in1 ^ 0xFF),
+                                SpecialMicroHelper::GetInfo => {
+                                    let info = SpecialMicroHelperInfo::iter().filter(|o| *o as u8 == entry.in1).next();
+                                    if let Some(info) = info {
+                                        match info {
+                                            SpecialMicroHelperInfo::VersionHi => 0,
+                                            SpecialMicroHelperInfo::VersionLo => 0,
+                                            SpecialMicroHelperInfo::VersionPatch => 1,
+                                        }
+                                    } else {
+                                        0xFF
+                                    }
+                                }
                                 SpecialMicroHelper::Max => {
                                     panic!();
                                 }
@@ -172,6 +184,8 @@ pub fn alu(print: bool) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
+    use std::{collections::hash_map::DefaultHasher, hash::Hasher};
+
     use super::*;
 
     #[test]
@@ -287,5 +301,19 @@ mod tests {
         test_shift(ShiftMode::Logical,-1, 0x84, 0x42);
         test_shift(ShiftMode::Arithmetic, 1, 0x42, 0x84);
         test_shift(ShiftMode::Logical,1, 0x42, 0x84);
+    }
+
+    #[test]
+    fn version_bump() {
+        let mut hasher = DefaultHasher::new();
+        hasher.write(&ALU);
+        let hash = hasher.finish();
+        let hash = hash % 0x10000;
+        
+        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionHi as u8, 0x0);
+        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionLo as u8, 0x0);
+        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionPatch as u8, 0x1);
+
+        assert_eq!(38748, hash); // if you have to change this, also change the version
     }
 }
