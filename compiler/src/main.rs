@@ -814,10 +814,14 @@ mod tests {
         let (mut c, heap_entry) = test_var_input(&ctxt, &rom, &vec![]);
         assert_eq!(heap_entry, STATICS_START_ADDRESS+4);
 
-        let header_size = 0xc;
+        let heap_type = c.ctxt.types.get("heap").unwrap();
+        let (head_offset, _) = heap_type.get_field("head");
+        let heap_entry_type = c.ctxt.types.get("heap_entry").unwrap();
+
+        let header_size = heap_entry_type.byte_count(c.ctxt);
 
         let head_entry_addr = heap_start + 4;
-        assert_eq!(c.read_u32(heap_start), head_entry_addr);
+        assert_eq!(c.read_u32(heap_start + head_offset), head_entry_addr);
         assert_eq!(c.read_u32(head_entry_addr), 0); 
         let len = 1024-header_size;
         assert_eq!(c.read_u32(head_entry_addr+4), len); 
