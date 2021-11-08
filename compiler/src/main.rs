@@ -54,33 +54,45 @@ pub struct Variable {
 fn print_state(c: &mut Computer) {
     let pc = u32::from_le_bytes(c.pc);
     //let pc_byte = *c.mem_byte_mut(pc);
-    let sp = u32::from_le_bytes(*c.mem_word_mut(0x8000C));
+    let sp = c.reg_u32(common::REG_SP);
     let op = Opcode::iter().filter(|o| *o as u8 == c.ir0).next();
-    println!(
-        "pc:{:05x} sp:{:08x} flags:{:01x} | mem[sp]:{:08x} mem[sp+4]:{:08x} mem[sp+8]:{:08x} mem[sp+c]:{:08x} r0:{:08x} r4:{:08x} r8:{:08x} rc:{:08x} r10:{:08x} r14:{:08x} ir0:{:?} ",
+    print!(
+        "pc:{:05x} sp:{:08x} flags:{:01x}",
         pc,
         sp,
-        c.flags.bits(),
-        u32::from_le_bytes(*c.mem_word_mut(sp)),
-        u32::from_le_bytes(*c.mem_word_mut(sp+4)),
-        u32::from_le_bytes(*c.mem_word_mut(sp+8)),
-        u32::from_le_bytes(*c.mem_word_mut(sp+0xC)),
-        u32::from_le_bytes(*c.mem_word_mut(0x80000)),
-        u32::from_le_bytes(*c.mem_word_mut(0x80004)),
-        u32::from_le_bytes(*c.mem_word_mut(0x80008)),
-        u32::from_le_bytes(*c.mem_word_mut(0x8000c)),
-        u32::from_le_bytes(*c.mem_word_mut(0x80010)),
-        u32::from_le_bytes(*c.mem_word_mut(0x80014)),
+        c.flags.bits());
+    
+    for stack_offset in [0,4,8,0xc] {
+        let stack_mem = sp + stack_offset;
+        print!(" mem[sp");
+        if stack_offset != 0 {
+            print!("+{}", stack_offset);
+        }
+        print!("]:");
+        if let Some(stack_slice) = c.try_mem_slice_mut(stack_mem, 4) {
+            let slice: &mut [u8; 4] = stack_slice.try_into().unwrap();
+            print!("{:08x}", u32::from_le_bytes(*slice));
+        } else {
+            print!("err     ");
+        }
+    }
+    println!(
+        " r0:{:08x} r4:{:08x} r8:{:08x} r10:{:08x} r14:{:08x} ir0:{:?}",
+        c.reg_u32(0),
+        c.reg_u32(4),
+        c.reg_u32(8),
+        c.reg_u32(0x10),
+        c.reg_u32(0x14),
         &op,
     );
     match op {
         Some(Opcode::Store32Part1) | Some(Opcode::Store32Part2) => {
             let value_reg_offset = if op == Some(Opcode::Store32Part1) { 1 } else { 0xFFFFFFFE };
             let value_reg = *c.mem_byte_mut(c.ir0_pc.wrapping_add(value_reg_offset));
-            let value = u32::from_le_bytes(*c.mem_word_mut(0x80000 + value_reg as u32));
+            let value = c.reg_u32(value_reg);
             let addr_reg_offset = if op == Some(Opcode::Store32Part1) { 2 } else { 0xFFFFFFFF };
             let addr_reg = *c.mem_byte_mut(c.ir0_pc.wrapping_add(addr_reg_offset));
-            let addr = u32::from_le_bytes(*c.mem_word_mut(0x80000 + addr_reg as u32));
+            let addr = c.reg_u32(addr_reg);
             let mem_value = u32::from_le_bytes(*c.mem_word_mut(addr));
             println!(" (r{:02x} == {:08x}) ==> (mem[r{:02x}={:08x}] == {:08x})", 
                 value_reg, value,
@@ -115,14 +127,14 @@ fn main() -> Result<(), std::io::Error> {
 
     let mut c = Computer::with_print_with_sym(rom, false);
 
-    *c.mem_word_mut(0x80000) = u32::to_le_bytes(0xAABBCCDD);
+    c.reg_u32_set(0, 0xAABBCCDD);
 
     if args.len() > 3 {
         panic!("main can take a max of three args.");
     }
 
     for (i,arg) in args.iter().enumerate() {
-        *c.mem_byte_mut(0x80002 - i as u32) = *arg;
+        *c.reg_u8(2 - i as u8) = *arg;
     }
 
     let mut last_ir0 = None;
@@ -138,7 +150,7 @@ fn main() -> Result<(), std::io::Error> {
         last_ir0 = Some(c.ir0);
     }
 
-    eprintln!("Final R0:{:02x}", u32::from_le_bytes(*c.mem_word_mut(0x80000)));
+    eprintln!("Final R0:{:02x}", c.reg_u32(0));
 
     Ok(())
 }
@@ -155,7 +167,8 @@ fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
     }
 
     program.push(AssemblyInputLine::Comment(format!("set up stack and call entry {}", ctxt.entry)));
-    let initial_stack = 0x8FFF0;
+    let initial_stack = RAM_MAX as u32;//0x8FFF0;
+    assert_eq!(initial_stack, (RAM_MAX) as u32);
     program.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
         source: format!("init stack to 0x{:x}", initial_stack),
@@ -210,7 +223,7 @@ fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
     program
 }
 
-const STATICS_START_ADDRESS: u32 = 0x8000_1000;
+pub const STATICS_START_ADDRESS: u32 = common::RAM_MIN as u32 + common::REGISTER_COUNT;
 
 fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<AssemblyInputLine>) {
     let mut input = input.to_owned();
@@ -384,8 +397,8 @@ mod tests {
             dbg!(inputs);
             assert!(inputs.len() <= 3);
             for (i,val) in inputs.iter().rev().enumerate() {
-                let i = i as u32;
-                *self.comp.mem_word_mut(0x80000 + 4*i) = val.to_le_bytes();
+                let i = i as u8;
+                self.comp.reg_u32_set(4*i, *val);
             }
 
 
@@ -399,7 +412,7 @@ mod tests {
                 step_count += 1;
                 assert!(step_count < 100000000);
             }
-            u32::from_le_bytes(*self.comp.mem_word_mut(0x80000))
+            self.comp.reg_u32(0)
         }
     }
 

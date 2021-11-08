@@ -124,8 +124,6 @@ pub struct SpecialArgs {
     pub op: SpecialOpcode,
 }
 
-pub const REG_SP: u8 = 0x0C;
-
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
@@ -190,3 +188,16 @@ pub enum Opcode {
 pub struct Symbol {
     pub notes: Vec<String>,
 }
+
+pub const REG_SP: u8 = 0xC;
+pub const REGISTER_COUNT: u32 = 256;
+
+pub const MEM_BITS: usize = 19;
+
+pub const ROM_MIN: usize = 0;
+pub const ROM_SIZE: usize = 1 << MEM_BITS;
+pub const ROM_MAX: usize = ROM_MIN + ROM_SIZE - 1;
+
+pub const RAM_MIN: usize = ROM_MAX + 1;
+pub const RAM_SIZE: usize = 1 << MEM_BITS;
+pub const RAM_MAX: usize = RAM_MIN + RAM_SIZE - 1;

@@ -26,7 +26,7 @@ fn test1() -> usize {
     heap: &heap := get_heap();
     heap_init();
     a1: &u8 := heap_alloc(0x1);
-    if (((a1) AS usize) != 0x80001004) {
+    if (((a1) AS usize) != 0x80104) {
         return ((a1) AS usize);
     }
 

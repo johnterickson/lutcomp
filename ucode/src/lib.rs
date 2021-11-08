@@ -1,6 +1,7 @@
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
+
 use strum::IntoEnumIterator;
 
 extern crate packed_struct;
@@ -300,8 +301,9 @@ impl Ucode {
     }
 
     fn start_of_ram(&mut self) {
-        add!(self, Output::Imm(0x8), Load::Direct(DataBusLoadEdge::Addr2));
-        add!(self, Output::Imm(0x0), Load::Direct(DataBusLoadEdge::Addr1));
+        let ram_addr = (common::RAM_MIN as u32).to_lsb_bytes();
+        add!(self, Output::Imm(ram_addr[2]), Load::Direct(DataBusLoadEdge::Addr2));
+        add!(self, Output::Imm(ram_addr[1]), Load::Direct(DataBusLoadEdge::Addr1));
     }
 
     fn load_pc_from_address_regs(&mut self) {
