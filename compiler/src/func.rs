@@ -232,8 +232,8 @@ impl FunctionDefinition {
 
             let storage = match var_scope {
                 Scope::Static => {
-                    let storage = Storage::FixedAddress(ctxt.static_cur_address);
-                    ctxt.static_cur_address += byte_count;
+                    let storage = Storage::FixedAddress(ctxt.statics_cur_address);
+                    ctxt.statics_cur_address += byte_count;
                     storage
                 }
                 Scope::Local => {

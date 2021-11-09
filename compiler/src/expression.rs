@@ -289,6 +289,9 @@ impl Expression {
                 let mut pairs = pair.into_inner();
                 Expression::parse(pairs.next().unwrap())
             }
+            Rule::RAM_MIN_expression => {
+                Expression::Number(NumberType::USIZE, RAM_MIN.into())
+            }
             Rule::cast_expression => {
                 let mut pairs = pair.into_inner();
                 let value = Box::new(Expression::parse(pairs.next().unwrap()));

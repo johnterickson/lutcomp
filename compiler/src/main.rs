@@ -159,7 +159,7 @@ fn main() -> Result<(), std::io::Error> {
 
 fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
     let mut program = Vec::new();
-    program.push(AssemblyInputLine::BaseAddress(ctxt.image_base_address));
+    program.push(AssemblyInputLine::ImageBaseAddress(ctxt.image_base_address));
 
     let main = ctxt.function_impls.get(&ctxt.entry)
         .expect(&format!("entry '{}' not found.", &ctxt.entry));
@@ -241,7 +241,8 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
             globals: BTreeMap::new(),
             types: BTreeMap::new(),
             registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
-            static_cur_address: STATICS_START_ADDRESS,
+            statics_cur_address: STATICS_START_ADDRESS,
+            statics_base_address: STATICS_START_ADDRESS,
             image_base_address: 0,
         };
 
@@ -252,15 +253,20 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
         let pairs = program.next().unwrap().into_inner();
         for pair in pairs {
             // dbg!(&pair);
-            match pair.as_rule() {
-                Rule::base_address => {
+            let rule = pair.as_rule();
+            match rule {
+                Rule::image_base_address | Rule::statics_base_address => {
                     let mut pairs = pair.into_inner();
                     let hex_number = pairs.next().unwrap();
                     assert_eq!(hex_number.as_rule(), Rule::expression);
                     let hex_number = Expression::parse(hex_number);
                     let hex_number = hex_number.try_get_const().expect("Could not resolve base address as constant.");
                     let hex_number: u32 = hex_number.try_into().expect("base adddress does not fit in u32.");
-                    ctxt.image_base_address = hex_number;
+                    match rule {
+                        Rule::image_base_address => { ctxt.image_base_address = hex_number; }
+                        Rule::statics_base_address => { ctxt.statics_base_address = hex_number; }
+                        _ => panic!()
+                    }
                 }
                 Rule::include => {
                     let original_stmt = pair.as_str().to_owned();
@@ -376,14 +382,6 @@ mod tests {
     }
 
     impl<'a> TestComputer<'a> {
-        fn read_u32(&mut self, addr: u32) -> u32 {
-            u32::from_le_bytes(*self.comp.mem_word_mut(addr))
-        }
-
-        fn read_u8(&mut self, addr: u32) -> u8 {
-            *self.comp.mem_byte_mut(addr)
-        }
-
         fn arg_base_addr() -> u32 {
             STATICS_START_ADDRESS+1000
         }
@@ -404,7 +402,7 @@ mod tests {
 
         fn from_rom(ctxt: &'a ProgramContext, rom: &'a Image) -> TestComputer<'a> {
             TestComputer{
-                comp: Computer::from_image(Cow::Borrowed(&rom), true),
+                comp: Computer::from_image(Cow::Borrowed(&rom), false),
                 ctxt
             }
         }
@@ -578,6 +576,28 @@ mod tests {
             "main",
             include_str!("../../programs/halt_base_address.j"),
             &[(vec![],1u8.into())]);
+    }
+
+    #[test]
+    fn halt_base_ram() {
+        let (_ctxt, ram_image) = assemble(
+            "main", 
+            include_str!("../../programs/halt_ram.j"));
+
+
+        let mut loader = Vec::new();
+        loader.push(Opcode::JmpImm as u8);
+        loader.extend(&ram_image.start_addr.to_le_bytes()[0..3]);
+        for _ in 0..10 {
+            loader.push(Opcode::Halt as u8);
+        }
+
+        let mut c = Computer::from_raw(loader);
+        c.mem_slice_mut(ram_image.start_addr, ram_image.bytes.len() as u32)
+            .copy_from_slice(&ram_image.bytes);
+
+        while c.step() {}
+        assert_eq!(1, c.reg_u8(0));
     }
 
     #[test]
@@ -846,7 +866,7 @@ mod tests {
         assert_eq!(heap_start, STATICS_START_ADDRESS);
 
         let (ctxt, rom) = assemble("test_get_heap_head", include_str!("../../programs/heap.j"));
-        let (mut c, heap_entry) = test_var_input(&ctxt, &rom, &vec![]);
+        let (c, heap_entry) = test_var_input(&ctxt, &rom, &vec![]);
         assert_eq!(heap_entry, STATICS_START_ADDRESS+4);
 
         let heap_type = c.ctxt.types.get("heap").unwrap();
@@ -856,13 +876,13 @@ mod tests {
         let header_size = heap_entry_type.byte_count(c.ctxt);
 
         let head_entry_addr = heap_start + 4;
-        assert_eq!(c.read_u32(heap_start + head_offset), head_entry_addr);
-        assert_eq!(c.read_u32(head_entry_addr), 0); 
+        assert_eq!(c.comp.mem_word(heap_start + head_offset), head_entry_addr);
+        assert_eq!(c.comp.mem_word(head_entry_addr), 0); 
         let len = 1024-header_size;
-        assert_eq!(c.read_u32(head_entry_addr+4), len); 
-        assert_eq!(c.read_u8(head_entry_addr+8), 1); 
+        assert_eq!(c.comp.mem_word(head_entry_addr+4), len); 
+        assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
 
-        let max_static = ctxt.static_cur_address;
+        let max_static = ctxt.statics_cur_address;
         assert_eq!(max_static, head_entry_addr + header_size + len);
     }
 
@@ -878,28 +898,29 @@ mod tests {
 
     #[test]
     fn heap_alloc() {
+        let alloc_size = 4u32;
         let (ctxt, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
-        let (mut c, alloc) = test_var_input(&ctxt, &rom, &vec![1u32.into()]);
+        let (c, allocated_addr) = test_var_input(&ctxt, &rom, &vec![alloc_size.into()]);
 
         const HEADER_SIZE : u32 = 0xc;
         
         let heap_addr = STATICS_START_ADDRESS;
-        let max_static = ctxt.static_cur_address;
+        let max_static = ctxt.statics_cur_address;
         let head_entry_addr = heap_addr + 4;
-        assert_eq!(c.read_u32(heap_addr), head_entry_addr);
-        let new_entry_addr = c.read_u32(head_entry_addr);
-        assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-1); 
-        let head_entry_len = 1024-HEADER_SIZE-HEADER_SIZE-1;
-        assert_eq!(c.read_u32(head_entry_addr+4), head_entry_len); 
-        assert_eq!(c.read_u8(head_entry_addr+8), 1); 
+        assert_eq!(c.comp.mem_word(heap_addr), head_entry_addr);
+        let new_entry_addr = c.comp.mem_word(head_entry_addr);
+        assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-alloc_size); 
+        let head_entry_len = 1024-HEADER_SIZE-HEADER_SIZE-alloc_size;
+        assert_eq!(c.comp.mem_word(head_entry_addr+4), head_entry_len); 
+        assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
 
-        assert_eq!(new_entry_addr+HEADER_SIZE, alloc);
+        assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
 
-        assert_eq!(c.read_u32(new_entry_addr), 0);
-        assert_eq!(c.read_u32(new_entry_addr+4), 1);
-        assert_eq!(c.read_u8(new_entry_addr+8), 0);
-        assert_eq!(max_static-1, alloc);
-        assert_eq!(new_entry_addr+HEADER_SIZE, alloc);
+        assert_eq!(c.comp.mem_word(new_entry_addr), 0);
+        assert_eq!(c.comp.mem_word(new_entry_addr+4), alloc_size);
+        assert_eq!(c.comp.mem_byte(new_entry_addr+8), 0);
+        assert_eq!(max_static-alloc_size, allocated_addr);
+        assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
     }
 
     #[test]

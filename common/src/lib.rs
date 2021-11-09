@@ -208,7 +208,7 @@ pub struct Symbol {
 
 #[derive(Clone,Debug,Default)]
 pub struct Image {
-    pub rom_start_addr: u32,
-    pub rom: Vec<u8>,
+    pub start_addr: u32,
+    pub bytes: Vec<u8>,
     pub symbols: HashMap<u32,Symbol>,
 }

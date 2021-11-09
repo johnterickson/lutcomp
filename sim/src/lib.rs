@@ -66,15 +66,15 @@ impl<'a> Computer<'a> {
         rom.resize(ROM_SIZE as usize, 0xFF);
         Computer::from_image(
             Cow::Owned(Image{
-                rom,
-                rom_start_addr: 0,
+                bytes: rom,
+                start_addr: 0,
                 symbols: HashMap::new(),
             }),
             print)
     }
 
     pub fn from_image(image: Cow<'a, Image>, print: bool) -> Computer<'a> {
-        let start_pc = image.rom_start_addr.to_le_bytes();
+        let start_pc = image.start_addr.to_le_bytes();
         let c = Computer {
             image,
             ram: vec![0xCC; RAM_SIZE as usize],
@@ -138,11 +138,11 @@ impl<'a> Computer<'a> {
         match chip_select {
             0 => {
                 assert!(ROM_MIN <= addr && addr <= ROM_MAX);
-                if chip_address < self.image.rom_start_addr {
+                if chip_address < self.image.start_addr {
                     None
                 } else {
-                    let image_offset = (chip_address - self.image.rom_start_addr) as usize;
-                    if let Some(slice) = self.image.rom.get(image_offset..image_offset+(len as usize)) {
+                    let image_offset = (chip_address - self.image.start_addr) as usize;
+                    if let Some(slice) = self.image.bytes.get(image_offset..image_offset+(len as usize)) {
                         Some(slice)
                     } else {
                         None

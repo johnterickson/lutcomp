@@ -31,6 +31,7 @@ greater_than_or_equal = { ">=" }
 less_than = { "<" }
 less_than_or_equal = { "<=" }
 
+RAM_MIN_expression = { "RAM_MIN" }
 parentheses_expression = { "(" ~ expression ~ ")" }
 rotate_right_expression = { "(" ~ expression ~ ">>>" ~ number ~ ")" }
 comparison_expression = { "(" ~ expression ~ comparison ~ expression ~ ")" }
@@ -43,7 +44,7 @@ call_expression = {ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" }
 address_of_expression = {address_of_operator ~ expression}
 index_expression = {ident ~ "[" ~ expression ~ "]" }
 expression = {
-    number | cast_expression | 
+    RAM_MIN_expression | number | cast_expression | 
     index_expression | local_field_expression | ptr_field_expression | call_expression |
     ttyin | arithmetic_expression | rotate_right_expression | 
     comparison_expression | deref_expression | address_of_expression |
@@ -86,10 +87,11 @@ global = {"global" ~ variable_decl ~ ";"}
 include_path = { (!"'" ~ ANY)+ }
 include = { "!include" ~ "'" ~ include_path ~ "'" }
 
-base_address = { "!base_address=(" ~ expression ~ ")"}
+image_base_address = { "!image_base_address=(" ~ expression ~ ")"}
+statics_base_address = { "!statics_base_address=(" ~ expression ~ ")"}
 
 program = {
     SOI ~
-    (base_address | include | struct_decl | function | global)+   ~
+    (image_base_address | statics_base_address | include | struct_decl | function | global)+   ~
     EOI
 }

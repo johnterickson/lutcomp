@@ -185,7 +185,7 @@ pub enum AssemblyInputLine {
     PseudoReturn(),
     LiteralString(String),
     Literal8(u8),
-    BaseAddress(u32),
+    ImageBaseAddress(u32),
 }
 
 impl AssemblyInputLine {
@@ -282,7 +282,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
     let mut labels = BTreeMap::new();
 
     let start_pc = input.iter().filter_map(|line| match line {
-        AssemblyInputLine::BaseAddress(base) => Some(*base),
+        AssemblyInputLine::ImageBaseAddress(base) => Some(*base),
         _ => None
     }).next().unwrap_or(0);
 
@@ -292,7 +292,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
         //lines.push(AssemblyOutputLine::Comment(source.to_owned()));
 
         match line.clone() {
-            AssemblyInputLine::BaseAddress(base) => {
+            AssemblyInputLine::ImageBaseAddress(base) => {
                 assert_eq!(base, start_pc);
             }
             AssemblyInputLine::Instruction(inst) => {
@@ -409,8 +409,8 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
     }
 
     Image {
-        rom_start_addr: start_pc,
-        rom,
+        start_addr: start_pc,
+        bytes: rom,
         symbols,
     }
 }

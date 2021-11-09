@@ -36,8 +36,9 @@ pub struct ProgramContext {
     pub function_impls: BTreeMap<String, AllocatedFunction>,
     pub types: BTreeMap<String, StructDefinition>,
     pub registers_available: Vec<Register>,
-    pub static_cur_address: u32,
+    pub statics_cur_address: u32,
     pub image_base_address: u32,
+    pub statics_base_address: u32,
 }
 
 impl ProgramContext {
