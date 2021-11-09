@@ -185,6 +185,7 @@ pub enum AssemblyInputLine {
     PseudoReturn(),
     LiteralString(String),
     Literal8(u8),
+    BaseAddress(u32),
 }
 
 impl AssemblyInputLine {
@@ -267,18 +268,23 @@ pub fn assemble_from_str(input: &str) -> Image {
         assembly_lines.push(parsed_line);
     }
 
-    assemble_inner(0, assembly_lines)
+    assemble_inner(assembly_lines)
 }
 
-pub fn assemble(start_pc: u32, input: Vec<AssemblyInputLine>) -> Image {
+pub fn assemble(input: Vec<AssemblyInputLine>) -> Image {
     println!("v2.0 raw");
-    assemble_inner(start_pc, input)
+    assemble_inner(input)
 }
 
-fn assemble_inner(start_pc: u32, mut input: Vec<AssemblyInputLine>) -> Image {
+fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
 
     let mut lines : Vec<(u32, AssemblyInputLine, AssemblyOutputLine)> = Vec::new();
     let mut labels = BTreeMap::new();
+
+    let start_pc = input.iter().filter_map(|line| match line {
+        AssemblyInputLine::BaseAddress(base) => Some(*base),
+        _ => None
+    }).next().unwrap_or(0);
 
     let mut pc = start_pc;
     for line in input.drain(..) {
@@ -286,6 +292,9 @@ fn assemble_inner(start_pc: u32, mut input: Vec<AssemblyInputLine>) -> Image {
         //lines.push(AssemblyOutputLine::Comment(source.to_owned()));
 
         match line.clone() {
+            AssemblyInputLine::BaseAddress(base) => {
+                assert_eq!(base, start_pc);
+            }
             AssemblyInputLine::Instruction(inst) => {
                 lines.push((pc,line,AssemblyOutputLine::Instruction(inst.clone())));
                 pc += inst.size();
@@ -399,10 +408,8 @@ fn assemble_inner(start_pc: u32, mut input: Vec<AssemblyInputLine>) -> Image {
         }
     }
 
-    rom.resize(ROM_SIZE as usize, 0xCC);
-
     Image {
-        start_pc,
+        rom_start_addr: start_pc,
         rom,
         symbols,
     }

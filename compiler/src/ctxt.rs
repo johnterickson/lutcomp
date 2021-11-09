@@ -37,6 +37,7 @@ pub struct ProgramContext {
     pub types: BTreeMap<String, StructDefinition>,
     pub registers_available: Vec<Register>,
     pub static_cur_address: u32,
+    pub image_base_address: u32,
 }
 
 impl ProgramContext {

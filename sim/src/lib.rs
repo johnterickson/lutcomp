@@ -67,15 +67,14 @@ impl<'a> Computer<'a> {
         Computer::from_image(
             Cow::Owned(Image{
                 rom,
-                start_pc: 0,
+                rom_start_addr: 0,
                 symbols: HashMap::new(),
             }),
             print)
     }
 
     pub fn from_image(image: Cow<'a, Image>, print: bool) -> Computer<'a> {
-        assert_eq!(image.rom.len(), ROM_SIZE as usize);
-        let start_pc = image.start_pc.to_le_bytes();
+        let start_pc = image.rom_start_addr.to_le_bytes();
         let c = Computer {
             image,
             ram: vec![0xCC; RAM_SIZE as usize],
@@ -136,25 +135,29 @@ impl<'a> Computer<'a> {
         let chip_address = addr & CHIP_ADDRESS_MASK;
         let chip_select = addr >> MEM_BITS_PER_CHIP;
 
-        let chip = match chip_select {
+        match chip_select {
             0 => {
                 assert!(ROM_MIN <= addr && addr <= ROM_MAX);
-                Some(&self.image.rom)
+                if chip_address < self.image.rom_start_addr {
+                    None
+                } else {
+                    let image_offset = (chip_address - self.image.rom_start_addr) as usize;
+                    if let Some(slice) = self.image.rom.get(image_offset..image_offset+(len as usize)) {
+                        Some(slice)
+                    } else {
+                        None
+                    }
+                }
             },
             1 => {
                 assert!(RAM_MIN <= addr && addr <= RAM_MAX);
-                Some(&self.ram)
+                if let Some(slice) = self.ram.get(chip_address as usize .. (chip_address+len) as usize) {
+                    Some(slice)
+                } else {
+                    None
+                }
             },
             _ => None
-        };
-        if let Some(chip) = chip {
-            if let Some(slice) = chip.get(chip_address as usize .. (chip_address+len) as usize) {
-                Some(slice)
-            } else {
-                None
-            }
-        } else {
-            None
         }
     }
 

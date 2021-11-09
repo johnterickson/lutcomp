@@ -121,9 +121,9 @@ fn main() -> Result<(), std::io::Error> {
         s
     };
 
-    let (_program, assembly) = compile(&input, "main", &env::current_dir().unwrap());
+    let (_program, assembly) = compile("main", &input, &env::current_dir().unwrap());
 
-    let rom = assemble::assemble(0, assembly);
+    let rom = assemble::assemble(assembly);
 
     let args : Vec<_> = std::env::args().skip(1).map(|arg| u8::from_str_radix(&arg, 16).unwrap()).collect();
 
@@ -158,10 +158,13 @@ fn main() -> Result<(), std::io::Error> {
 }
 
 fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
+    let mut program = Vec::new();
+    program.push(AssemblyInputLine::BaseAddress(ctxt.image_base_address));
+
     let main = ctxt.function_impls.get(&ctxt.entry)
         .expect(&format!("entry '{}' not found.", &ctxt.entry));
 
-    let mut program = Vec::new();
+    
 
     program.push(AssemblyInputLine::Comment("Types:".to_owned()));
     for (name, t) in &ctxt.types {
@@ -239,15 +242,26 @@ fn compile(entry: &str, input: &str, root: &PathBuf) -> (ProgramContext, Vec<Ass
             types: BTreeMap::new(),
             registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
             static_cur_address: STATICS_START_ADDRESS,
+            image_base_address: 0,
         };
 
         let to_parse = input.clone();
 
-        let mut program = ProgramParser::parse(Rule::program, &to_parse).unwrap();
+        let mut program = ProgramParser::parse(Rule::program, &to_parse)
+            .expect(&format!("Could not parse `{}`.", &to_parse));
         let pairs = program.next().unwrap().into_inner();
         for pair in pairs {
             // dbg!(&pair);
             match pair.as_rule() {
+                Rule::base_address => {
+                    let mut pairs = pair.into_inner();
+                    let hex_number = pairs.next().unwrap();
+                    assert_eq!(hex_number.as_rule(), Rule::expression);
+                    let hex_number = Expression::parse(hex_number);
+                    let hex_number = hex_number.try_get_const().expect("Could not resolve base address as constant.");
+                    let hex_number: u32 = hex_number.try_into().expect("base adddress does not fit in u32.");
+                    ctxt.image_base_address = hex_number;
+                }
                 Rule::include => {
                     let original_stmt = pair.as_str().to_owned();
                     let original_byte_offset = input.find(&original_stmt).unwrap();
@@ -430,7 +444,7 @@ mod tests {
 
     fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
-        let rom = assemble::assemble(0, assembly);
+        let rom = assemble::assemble(assembly);
         for (ttyin, input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&ctxt, &rom);
             dbg!((ttyin, input1, input2, expected));
@@ -451,7 +465,7 @@ mod tests {
 
     fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
-        let rom = assemble::assemble(0, assembly);
+        let rom = assemble::assemble(assembly);
         let addr1 = STATICS_START_ADDRESS+100;
         let addr2 = STATICS_START_ADDRESS+200;
 
@@ -491,15 +505,13 @@ mod tests {
     fn assemble(entry: &str, program: &str) -> (ProgramContext, Image) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
 
-        let rom = assemble::assemble(0, assembly);
+        let rom = assemble::assemble(assembly);
         (ctxt, rom)
     }
 
     fn test_var_input<'a>(ctxt: &'a ProgramContext, rom: &'a Image, args: &Vec<TestVar>) -> (TestComputer<'a>, u32) {
-
         let mut c = TestComputer::from_rom(ctxt, &rom);
         let mut arg_addr = TestComputer::arg_base_addr();
-
         let mut ptr_arg = |bytes: &[u8]| -> u32 {
             let addr = arg_addr;
             arg_addr += bytes.len() as u32;
@@ -557,6 +569,14 @@ mod tests {
         test_var_inputs(
             "main",
             include_str!("../../programs/halt.j"),
+            &[(vec![],1u8.into())]);
+    }
+
+    #[test]
+    fn halt_base_address() {
+        test_var_inputs(
+            "main",
+            include_str!("../../programs/halt_base_address.j"),
             &[(vec![],1u8.into())]);
     }
 

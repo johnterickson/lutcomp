@@ -86,8 +86,10 @@ global = {"global" ~ variable_decl ~ ";"}
 include_path = { (!"'" ~ ANY)+ }
 include = { "!include" ~ "'" ~ include_path ~ "'" }
 
+base_address = { "!base_address=(" ~ expression ~ ")"}
+
 program = {
     SOI ~
-    (include | struct_decl | function | global)+   ~
+    (base_address | include | struct_decl | function | global)+   ~
     EOI
 }
