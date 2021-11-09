@@ -8,7 +8,7 @@ extern crate strum;
 extern crate packed_struct;
 
 use common::*;
-use std::{collections::BTreeMap, convert::TryInto};
+use std::{collections::{BTreeMap, HashMap}, convert::TryInto};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
@@ -231,7 +231,7 @@ enum AssemblyOutputLine {
     String(String),
 }
 
-pub fn assemble_from_str(input: &str) -> Vec<(u8,Symbol)> {
+pub fn assemble_from_str(input: &str) -> Image {
     println!("v2.0 raw");
 
     {
@@ -267,20 +267,20 @@ pub fn assemble_from_str(input: &str) -> Vec<(u8,Symbol)> {
         assembly_lines.push(parsed_line);
     }
 
-    assemble_inner(assembly_lines)
+    assemble_inner(0, assembly_lines)
 }
 
-pub fn assemble(input: Vec<AssemblyInputLine>) -> Vec<(u8,Symbol)> {
+pub fn assemble(start_pc: u32, input: Vec<AssemblyInputLine>) -> Image {
     println!("v2.0 raw");
-    assemble_inner(input)
+    assemble_inner(start_pc, input)
 }
 
-fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<(u8,Symbol)> {
+fn assemble_inner(start_pc: u32, mut input: Vec<AssemblyInputLine>) -> Image {
 
     let mut lines : Vec<(u32, AssemblyInputLine, AssemblyOutputLine)> = Vec::new();
     let mut labels = BTreeMap::new();
 
-    let mut pc = 0u32;
+    let mut pc = start_pc;
     for line in input.drain(..) {
         let source = format!("{:?}", line);
         //lines.push(AssemblyOutputLine::Comment(source.to_owned()));
@@ -353,16 +353,20 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<(u8,Symbol)> {
     }
 
     let mut rom = Vec::new();
+    let mut symbols = HashMap::new();
     let mut notes = Some(Vec::new());
-    let mut pc = 0u32;
+    let mut pc = start_pc;
     for (_pc, in_line, out_line) in lines.as_mut_slice() {
 
         notes.as_mut().unwrap().push(format!("{:?}", &in_line));
         notes.as_mut().unwrap().push(format!("{:?}", &out_line));
 
-        let mut push_byte = |b: u8| {
-            let sym = Symbol { notes: notes.take().unwrap() };
-            rom.push((b, sym));
+        let mut push_byte = |pc: &mut u32, b: u8| {
+            rom.push(b);
+            if let Some(notes) = notes.take() {
+                symbols.insert(*pc, Symbol { notes });
+            }
+            *pc += 1;
             notes = Some(Vec::new());
         };
 
@@ -376,27 +380,30 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Vec<(u8,Symbol)> {
 
                 for byte in i.resolved.as_ref().unwrap() {
                     print!("{:02x} ", byte);
-                    push_byte(*byte);
-                    pc += 1;
+                    push_byte(&mut pc, *byte);
                 }
                 println!();
             }
             AssemblyOutputLine::Constant8(byte) => {
                 println!("{:02x} ", byte);
-                push_byte(*byte);
-                pc += 1;
+                push_byte(&mut pc, *byte);
             }
             AssemblyOutputLine::String(string) => {
                 println!("# '{}'", &string);
                 for byte in string.as_bytes() {
                     print!("{:02x} ", byte);
-                    push_byte(*byte);
-                    pc += 1;
+                    push_byte(&mut pc, *byte);
                 }
                 println!();
             }
         }
     }
 
-    rom
+    rom.resize(ROM_SIZE as usize, 0xCC);
+
+    Image {
+        start_pc,
+        rom,
+        symbols,
+    }
 }

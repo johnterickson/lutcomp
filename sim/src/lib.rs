@@ -5,7 +5,7 @@ use strum::IntoEnumIterator;
 
 use alu::*;
 use common::*;
-use std::{collections::{BTreeSet, VecDeque}, convert::TryInto, fmt::Debug, io, sync::{Mutex, mpsc::{self, Receiver}}, thread};
+use std::{borrow::Cow, collections::{BTreeSet, HashMap, VecDeque}, convert::TryInto, fmt::Debug, io, ops::Range, sync::{Mutex, mpsc::{self, Receiver}}, thread};
 use ucode::*;
 
 fn spawn_stdin_channel() -> Receiver<String> {
@@ -25,8 +25,7 @@ lazy_static! {
 }
 
 pub struct Computer<'a> {
-    rom: Vec<u8>,
-    pub symbols: Vec<Symbol>,
+    pub image: Cow<'a, Image>,
     ram: Vec<u8>,
     pub tty_in: VecDeque<u8>,
     pub tty_out: VecDeque<u8>,
@@ -59,29 +58,34 @@ impl<'a> Debug for Computer<'a> {
 }
 
 impl<'a> Computer<'a> {
-    pub fn new(rom: Vec<u8>) -> Computer<'a> {
-        Computer::with_print(rom, false)
+    pub fn from_raw(rom: Vec<u8>) -> Computer<'a> {
+        Computer::from_raw_with_print(rom, false)
     }
 
-    pub fn with_print(rom: Vec<u8>, print: bool) -> Computer<'a> {
-        Computer::with_print_with_sym(
-            rom.iter().map(|b| (*b, Symbol::default())).collect(),
-            print
-        )
+    pub fn from_raw_with_print(mut rom: Vec<u8>, print: bool) -> Computer<'a> {
+        rom.resize(ROM_SIZE as usize, 0xFF);
+        Computer::from_image(
+            Cow::Owned(Image{
+                rom,
+                start_pc: 0,
+                symbols: HashMap::new(),
+            }),
+            print)
     }
 
-    pub fn with_print_with_sym(mut rom: Vec<(u8,Symbol)>, print: bool) -> Computer<'a> {
+    pub fn from_image(image: Cow<'a, Image>, print: bool) -> Computer<'a> {
+        assert_eq!(image.rom.len(), ROM_SIZE as usize);
+        let start_pc = image.start_pc.to_le_bytes();
         let c = Computer {
-            rom: rom.iter().map(|(b,_s)| *b).collect(),
-            symbols: rom.drain(..).map(|(_b,s)| s).collect(),
-            ram: Vec::new(),
+            image,
+            ram: vec![0xCC; RAM_SIZE as usize],
             tty_in: VecDeque::new(),
             tty_out: VecDeque::new(),
             alu_lut: &alu::ALU,
             ucode_rom: &ucode::UCODE,
             regs: [0u8; 4],
             addr: [0u8; 4],
-            pc: [0u8; 4],
+            pc: start_pc,
             upc: 0,
             alu: 0,
             flags: Flags::empty(),
@@ -92,8 +96,8 @@ impl<'a> Computer<'a> {
             trap_addrs: BTreeSet::new(),
         };
 
-        assert_eq!(c.alu_lut.len(), 1 << MEM_BITS);
-        assert_eq!(c.ucode_rom.len(), 1 << MEM_BITS);
+        assert_eq!(c.alu_lut.len(), 1 << MEM_BITS_PER_CHIP);
+        assert_eq!(c.ucode_rom.len(), 1 << MEM_BITS_PER_CHIP);
         c
     }
 
@@ -101,51 +105,100 @@ impl<'a> Computer<'a> {
         self.trap_addrs.insert(addr);
     }
 
-    fn mem_slice_mut(&mut self, addr_bus: u32, len: usize) -> &mut [u8] {
-        self.try_mem_slice_mut(addr_bus, len).unwrap()
+    pub fn reg_u8(&self, reg_num: u8) -> u8 {
+        self.mem_byte(common::RAM_MIN + reg_num as u32)
     }
 
-    pub fn reg_u8(&mut self, reg_num: u8) -> &mut u8 {
-        self.mem_byte_mut(common::RAM_MIN as u32 + reg_num as u32)
+    pub fn reg_u8_mut(&mut self, reg_num: u8) -> &mut u8 {
+        self.mem_byte_mut(common::RAM_MIN + reg_num as u32)
     }
 
-    pub fn reg_u32(&mut self, reg_num: u8) -> u32 {
-        assert!(reg_num % 4 == 0);
-        u32::from_le_bytes(*self.mem_word_mut(common::RAM_MIN as u32 + reg_num as u32))
+    pub fn reg_u32(&self, reg_num: u8) -> u32 {
+        self.mem_word(common::RAM_MIN + reg_num as u32)
     }
 
     pub fn reg_u32_set(&mut self, reg_num: u8, value: u32) {
         assert!(reg_num % 4 == 0);
-        *self.mem_word_mut(common::RAM_MIN as u32 + reg_num as u32) = value.to_le_bytes();
+        *self.mem_word_mut(common::RAM_MIN + reg_num as u32) = value.to_le_bytes();
     }
 
-    pub fn try_mem_slice_mut(&mut self, addr_bus: u32, len: usize) -> Option<&mut [u8]> {
-        let addr_bus = addr_bus & 0x0FFFFF;
-
-        for addr in addr_bus..addr_bus+(len as u32) {
+    fn check_for_trap(&self, mut range: Range<u32>) {
+        for addr in &mut range {
             assert!(
                 !self.trap_addrs.contains(&addr),
                 "Accessing trapped memory address 0x{:x} as part of access 0x{:x} of len 0x{:x}",
-                addr, addr_bus, len);
+                addr, range.start, range.len());
         }
+    }
 
-        Some(match addr_bus as usize {
-            a if ROM_MIN <= a && a + len - 1 <= ROM_MAX => {
-                let end_index = len + a - ROM_MIN;
-                if end_index > self.rom.len() {
-                    self.rom.extend(std::iter::repeat(0xCCu8).take(end_index - self.rom.len()));
-                }
-                &mut self.rom[a - ROM_MIN..(len + a - ROM_MIN)]
+    pub fn try_mem_slice(&self, addr: u32, len: u32) -> Option<&[u8]> {
+        self.check_for_trap(addr..addr+len);
+        let chip_address = addr & CHIP_ADDRESS_MASK;
+        let chip_select = addr >> MEM_BITS_PER_CHIP;
+
+        let chip = match chip_select {
+            0 => {
+                assert!(ROM_MIN <= addr && addr <= ROM_MAX);
+                Some(&self.image.rom)
             },
-            a if RAM_MIN <= a && a + len - 1 <= RAM_MAX => {
-                let end_index = len + a - RAM_MIN;
-                if end_index > self.ram.len() {
-                    self.ram.extend(std::iter::repeat(0xCCu8).take(end_index - self.ram.len()));
-                }
-                &mut self.ram[a - RAM_MIN..(len + a - RAM_MIN)]
+            1 => {
+                assert!(RAM_MIN <= addr && addr <= RAM_MAX);
+                Some(&self.ram)
             },
-            _ => return None,
-        })
+            _ => None
+        };
+        if let Some(chip) = chip {
+            if let Some(slice) = chip.get(chip_address as usize .. (chip_address+len) as usize) {
+                Some(slice)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn mem_slice(&self, addr: u32, len: u32) -> &[u8] { 
+        self.try_mem_slice(addr, len).expect(&format!("Invalid memory read: {:08x}", addr))
+    }
+
+    pub fn try_mem_slice_mut(&mut self, addr: u32, len: u32) -> Option<&mut [u8]> {
+        self.check_for_trap(addr..addr+len);
+        let chip_address = addr & CHIP_ADDRESS_MASK;
+        let chip_select = addr >> MEM_BITS_PER_CHIP;
+
+        let chip = match chip_select {
+            0 => None,
+            1 => {
+                assert!(RAM_MIN <= addr && addr <= RAM_MAX);
+                Some(&mut self.ram)
+            },
+            _ => None,
+        };
+        if let Some(chip) = chip {
+            Some(&mut chip[chip_address as usize .. (chip_address+len) as usize])
+        } else {
+            None
+        }
+    }
+
+    pub fn mem_slice_mut(&mut self, addr: u32, len: u32) -> &mut [u8] { 
+        if let Some(slice) = self.try_mem_slice_mut(addr, len) {
+            slice
+        } else {
+            panic!("Invalid memory write: {:08x}", addr);
+        }
+    }
+
+    pub fn mem_byte(&self, addr: u32) -> u8 {
+        self.mem_slice(addr, 1)[0]
+    }
+
+    pub fn mem_word(&self, addr: u32) -> u32 {
+        if addr % 4 != 0 {
+            panic!("Access of {:08x} is not word-aligned.", addr);
+        }
+        u32::from_le_bytes(self.mem_slice(addr,4).try_into().unwrap())
     }
 
     pub fn mem_byte_mut(&mut self, addr_bus: u32) -> &mut u8 {
@@ -208,7 +261,7 @@ impl<'a> Computer<'a> {
                 if self.print {
                     println!("addr_bus: {:08x}", addr_bus);
                 }
-                Some(*self.mem_byte_mut(addr_bus))
+                Some(self.mem_byte(addr_bus))
             }
             DataBusOutputLevel::Next => {
                 self.upc = 0;
@@ -312,7 +365,7 @@ mod tests {
         let mut rom = Vec::new();
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::with_print(rom, false);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
         while c.step() {}
     }
@@ -328,7 +381,7 @@ mod tests {
             rom.push(Opcode::Halt as u8);
         }
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         while c.step() {}
 
@@ -346,7 +399,7 @@ mod tests {
             rom.push(Opcode::Halt as u8);
         }
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         c.flags |= Flags::ZERO;
 
@@ -366,7 +419,7 @@ mod tests {
             rom.push(Opcode::Halt as u8);
         }
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         while c.step() {}
 
@@ -382,7 +435,7 @@ mod tests {
             rom.push(Opcode::Halt as u8);
         }
 
-        let mut c = Computer::with_print(rom, false);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
         c.reg_u32_set(4, 7);
 
@@ -400,7 +453,7 @@ mod tests {
             rom.push(Opcode::Halt as u8);
         }
 
-        let mut c = Computer::with_print(rom, false);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
         c.reg_u32_set(8, common::ROM_MIN as u32 + 7);
         c.reg_u32_set(4, common::RAM_MIN as u32 + 8);
@@ -418,11 +471,11 @@ mod tests {
         rom.push(0xef);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         while c.step() {}
 
-        assert_eq!(0xef, *c.reg_u8(4));
+        assert_eq!(0xef, c.reg_u8(4));
     }
 
     fn imm8(op: Opcode, reg_value: u8, imm: u8, result: u8) {
@@ -433,13 +486,13 @@ mod tests {
         rom.push(imm);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
-        *c.reg_u8(reg_index) = reg_value;
+        *c.reg_u8_mut(reg_index) = reg_value;
 
         while c.step() {}
 
-        assert_eq!(result, *c.reg_u8(reg_index));
+        assert_eq!(result, c.reg_u8(reg_index));
         assert_eq!(c.flags.contains(Flags::CARRY), false);
         assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
@@ -455,7 +508,7 @@ mod tests {
         rom.push(((imm >> 24) & 0xFF) as u8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         c.reg_u32_set(reg_index, reg_value);
 
@@ -474,9 +527,9 @@ mod tests {
         }
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::with_print(rom, true);
+        let mut c = Computer::from_raw_with_print(rom, true);
         for arg in args {
-            *c.reg_u8(arg.0) = arg.1;
+            *c.reg_u8_mut(arg.0) = arg.1;
         }
 
         c.flags = flags;
@@ -492,13 +545,13 @@ mod tests {
         let reg_c = 5;
 
         let args = [(reg_a,arg1_value),(reg_b, arg2_value), (reg_c, 0xFF)];
-        let mut c = run(
+        let c = run(
             if carry_in {Flags::CARRY} else { Flags::empty() },
             op,
             &args
         );
 
-        assert_eq!(result, *c.reg_u8(reg_c));
+        assert_eq!(result, c.reg_u8(reg_c));
         assert_eq!(c.flags.contains(Flags::CARRY), carry_out);
         assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
@@ -542,11 +595,11 @@ mod tests {
         rom.push(4);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::with_print(rom, false);
-        *c.reg_u8(4) = 0x84;
+        let mut c = Computer::from_raw_with_print(rom, false);
+        *c.reg_u8_mut(4) = 0x84;
         while c.step() {}
 
-        assert_eq!(0xC2, *c.reg_u8(4));
+        assert_eq!(0xC2, c.reg_u8(4));
     }
 
     #[test]
@@ -560,7 +613,7 @@ mod tests {
         rom.push(0x89);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         while c.step() {}
 
@@ -594,7 +647,7 @@ mod tests {
         rom.push(0x02);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         while c.step() {}
 
@@ -611,14 +664,14 @@ mod tests {
         rom.push(1);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         c.tty_in.push_front('A' as u8);
 
         while c.step() {}
 
-        assert_eq!(0x80 | ('A' as u8), *c.reg_u8(0));
-        assert_eq!(0, *c.reg_u8(1));
+        assert_eq!(0x80 | ('A' as u8), c.reg_u8(0));
+        assert_eq!(0, c.reg_u8(1));
     }
 
     fn modify8(op: Opcode, input: u8, output: u8) {
@@ -627,13 +680,13 @@ mod tests {
         rom.push(3);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
-        *c.reg_u8(3) = input;
+        *c.reg_u8_mut(3) = input;
 
         while c.step() {}
 
-        assert_eq!(output, *c.reg_u8(3));
+        assert_eq!(output, c.reg_u8(3));
     }
 
     #[test]
@@ -664,13 +717,13 @@ mod tests {
         rom.push(8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         *c.mem_word_mut(0x81234) = u32::to_le_bytes(0xDEADBEEF);
 
         while c.step() {}
 
-        assert_eq!(0xEF, *c.reg_u8(8));
+        assert_eq!(0xEF, c.reg_u8(8));
     }
 
     #[test]
@@ -690,11 +743,11 @@ mod tests {
         rom.push(4);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         while c.step() {}
 
-        assert_eq!(0xAA, *c.reg_u8(0));
+        assert_eq!(0xAA, c.reg_u8(0));
         assert_eq!(0x81234, c.reg_u32(4));
         assert_eq!(0xAA, *c.mem_byte_mut(0x81234));
     }
@@ -708,10 +761,10 @@ mod tests {
         rom.push(0x2);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::with_print(rom, false);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
-        *c.reg_u8(1) = 0xAA;
-        *c.reg_u8(2) = 0xBB;
+        *c.reg_u8_mut(1) = 0xAA;
+        *c.reg_u8_mut(2) = 0xBB;
         // set up stack pointer
         c.reg_u32_set(common::REG_SP, 0x81001);
 
@@ -731,7 +784,7 @@ mod tests {
         rom.push(0x2);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::with_print(rom, false);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
         *c.mem_byte_mut(0x80FFF) = 0xAA;
         *c.mem_byte_mut(0x81000) = 0xBB;
@@ -742,8 +795,8 @@ mod tests {
         while c.step() {}
 
         assert_eq!(0x81001, c.reg_u32(REG_SP));
-        assert_eq!(0xAA, *c.reg_u8(1));
-        assert_eq!(0xBB, *c.reg_u8(2));
+        assert_eq!(0xAA, c.reg_u8(1));
+        assert_eq!(0xBB, c.reg_u8(2));
     }
 
     fn load32_test(addr_reg: u8, dest_reg: u8) {
@@ -759,7 +812,7 @@ mod tests {
         rom.push(dest_reg);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         *c.mem_word_mut(0x81234) = u32::to_le_bytes(0xDEADBEEF);
 
@@ -795,7 +848,7 @@ mod tests {
         rom.push(Opcode::Store32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
         
         assert_ne!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
         
@@ -829,7 +882,7 @@ mod tests {
         rom.push(Opcode::Store32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
         
         assert_ne!(0x89ABCDEF, u32::from_le_bytes(*c.mem_word_mut(0x81234)));
         
@@ -852,7 +905,7 @@ mod tests {
         rom.push(0x89);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         c.reg_u32_set(0xC, 0x81234);
 
@@ -870,7 +923,7 @@ mod tests {
         rom.push(0xc);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
         c.reg_u32_set(4, 0x0F0F0F0F);
         c.reg_u32_set(8, 0x40302010);
 
@@ -981,10 +1034,10 @@ mod tests {
         rom.push(Opcode::Mul8Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::with_print(rom, false);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
-        *c.reg_u8(4) = a;
-        *c.reg_u8(5) = b;
+        *c.reg_u8_mut(4) = a;
+        *c.reg_u8_mut(5) = b;
 
         while c.step() {}
 
@@ -993,8 +1046,6 @@ mod tests {
             (c.reg_u32(0) & 0xFFFF) as u16
         );
     }
-
-
 
     #[test]
     fn mul8() {
@@ -1016,7 +1067,7 @@ mod tests {
         rom.push(Opcode::Add32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
         c.reg_u32_set(4, 0x12345678);
         c.reg_u32_set(8, 0x11111111);
 
@@ -1033,7 +1084,7 @@ mod tests {
         rom.push(0x8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
         c.reg_u32_set(4, 0x12345678);
 
         while c.step() {}
@@ -1066,7 +1117,7 @@ mod tests {
         rom.push(Opcode::Add32Part2 as u8);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         c.reg_u32_set(0, in1);
         c.reg_u32_set(4, in2);
@@ -1096,7 +1147,7 @@ mod tests {
         rom.push(reg_sum);
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         c.reg_u32_set(reg1, in1);
         c.reg_u32_set(reg2, in2);
@@ -1131,7 +1182,7 @@ mod tests {
         rom.extend_from_slice(&u32::to_le_bytes(in2));
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::new(rom);
+        let mut c = Computer::from_raw(rom);
 
         c.reg_u32_set(0, in1);
 

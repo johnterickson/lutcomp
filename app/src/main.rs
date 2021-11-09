@@ -2,7 +2,7 @@ use alu::*;
 use assemble::*;
 use sim::*;
 use ucode::*;
-use std::{io::Read, fs::File};
+use std::{borrow::Cow, fs::File, io::Read};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -30,7 +30,7 @@ fn main() {
                 input
             };
             let rom = assemble_from_str(&input);
-            let mut c = Computer::with_print(rom.iter().map(|(b,_s)| *b).collect(), true);
+            let mut c = Computer::from_image(Cow::Borrowed(&rom), true);
             while c.step() { }
         }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),

@@ -4,6 +4,8 @@ extern crate strum_macros;
 
 extern crate packed_struct;
 extern crate packed_struct_codegen;
+use std::collections::HashMap;
+
 use packed_struct::prelude::*;
 
 #[macro_use]
@@ -184,20 +186,29 @@ pub enum Opcode {
     Halt = 255,
 }
 
+pub const REG_SP: u8 = 0xC;
+pub const REGISTER_COUNT: u32 = 256;
+
+pub const MEM_BITS_PER_CHIP: u32 = 19;
+pub const CHIP_ADDRESS_MASK: u32 = (1 << MEM_BITS_PER_CHIP) - 1;
+pub const ADDRESS_BITS: u32 = 20;
+
+pub const ROM_MIN: u32 = 0;
+pub const ROM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP;
+pub const ROM_MAX: u32 = ROM_MIN + ROM_SIZE - 1;
+
+pub const RAM_MIN: u32 = ROM_MAX + 1;
+pub const RAM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP;
+pub const RAM_MAX: u32 = RAM_MIN + RAM_SIZE - 1;
+
 #[derive(Clone,Debug,Default)]
 pub struct Symbol {
     pub notes: Vec<String>,
 }
 
-pub const REG_SP: u8 = 0xC;
-pub const REGISTER_COUNT: u32 = 256;
-
-pub const MEM_BITS: usize = 19;
-
-pub const ROM_MIN: usize = 0;
-pub const ROM_SIZE: usize = 1 << MEM_BITS;
-pub const ROM_MAX: usize = ROM_MIN + ROM_SIZE - 1;
-
-pub const RAM_MIN: usize = ROM_MAX + 1;
-pub const RAM_SIZE: usize = 1 << MEM_BITS;
-pub const RAM_MAX: usize = RAM_MIN + RAM_SIZE - 1;
+#[derive(Clone,Debug,Default)]
+pub struct Image {
+    pub start_pc: u32,
+    pub rom: Vec<u8>,
+    pub symbols: HashMap<u32,Symbol>,
+}

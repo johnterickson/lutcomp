@@ -6,6 +6,7 @@ use pest::Parser;
 extern crate strum;
 use strum::IntoEnumIterator;
 
+use std::borrow::Cow;
 use std::{collections::BTreeSet, env, fs::File, io, path::PathBuf, unimplemented};
 use std::io::Read;
 use std::collections::{BTreeMap, HashSet};
@@ -69,8 +70,8 @@ fn print_state(c: &mut Computer) {
             print!("+{}", stack_offset);
         }
         print!("]:");
-        if let Some(stack_slice) = c.try_mem_slice_mut(stack_mem, 4) {
-            let slice: &mut [u8; 4] = stack_slice.try_into().unwrap();
+        if let Some(stack_slice) = c.try_mem_slice(stack_mem, 4) {
+            let slice: &[u8; 4] = stack_slice.try_into().unwrap();
             print!("{:08x}", u32::from_le_bytes(*slice));
         } else {
             print!("err     ");
@@ -85,24 +86,24 @@ fn print_state(c: &mut Computer) {
         c.reg_u32(0x14),
         &op,
     );
-    match op {
-        Some(Opcode::Store32Part1) | Some(Opcode::Store32Part2) => {
-            let value_reg_offset = if op == Some(Opcode::Store32Part1) { 1 } else { 0xFFFFFFFE };
-            let value_reg = *c.mem_byte_mut(c.ir0_pc.wrapping_add(value_reg_offset));
-            let value = c.reg_u32(value_reg);
-            let addr_reg_offset = if op == Some(Opcode::Store32Part1) { 2 } else { 0xFFFFFFFF };
-            let addr_reg = *c.mem_byte_mut(c.ir0_pc.wrapping_add(addr_reg_offset));
-            let addr = c.reg_u32(addr_reg);
-            let mem_value = u32::from_le_bytes(*c.mem_word_mut(addr));
-            println!(" (r{:02x} == {:08x}) ==> (mem[r{:02x}={:08x}] == {:08x})", 
-                value_reg, value,
-                addr_reg, addr, mem_value
-            );
-        }
-        _ => {}
-    }
+    // match op {
+    //     Some(Opcode::Store32Part1) | Some(Opcode::Store32Part2) => {
+    //         let value_reg_offset = if op == Some(Opcode::Store32Part1) { 1 } else { 0xFFFFFFFE };
+    //         let value_reg = c.mem_byte(c.ir0_pc.wrapping_add(value_reg_offset));
+    //         let value = c.reg_u32(value_reg);
+    //         let addr_reg_offset = if op == Some(Opcode::Store32Part1) { 2 } else { 0xFFFFFFFF };
+    //         let addr_reg = c.mem_byte(c.ir0_pc.wrapping_add(addr_reg_offset));
+    //         let addr = c.reg_u32(addr_reg);
+    //         let mem_value = c.mem_word(addr);
+    //         println!(" (r{:02x} == {:08x}) ==> (mem[r{:02x}={:08x}] == {:08x})", 
+    //             value_reg, value,
+    //             addr_reg, addr, mem_value
+    //         );
+    //     }
+    //     _ => {}
+    // }
 
-    if let Some(symbol) = c.symbols.get(pc as usize) {
+    if let Some(symbol) = c.image.symbols.get(&pc) {
         let mut seen = HashSet::new();
         for note in &symbol.notes {
             if seen.insert(note) {
@@ -119,13 +120,14 @@ fn main() -> Result<(), std::io::Error> {
         stdin.lock().read_to_string(&mut s)?;
         s
     };
+
     let (_program, assembly) = compile(&input, "main", &env::current_dir().unwrap());
 
-    let rom = assemble::assemble(assembly);
+    let rom = assemble::assemble(0, assembly);
 
     let args : Vec<_> = std::env::args().skip(1).map(|arg| u8::from_str_radix(&arg, 16).unwrap()).collect();
 
-    let mut c = Computer::with_print_with_sym(rom, false);
+    let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
 
     c.reg_u32_set(0, 0xAABBCCDD);
 
@@ -134,7 +136,7 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     for (i,arg) in args.iter().enumerate() {
-        *c.reg_u8(2 - i as u8) = *arg;
+        *c.reg_u8_mut(2 - i as u8) = *arg;
     }
 
     let mut last_ir0 = None;
@@ -369,7 +371,7 @@ mod tests {
         }
 
         fn arg_base_addr() -> u32 {
-            0x8100
+            STATICS_START_ADDRESS+1000
         }
 
         fn arg_base_addr_var(offset: u32) -> TestVar {
@@ -386,9 +388,9 @@ mod tests {
             dir
         }
 
-        fn from_rom(ctxt: &'a ProgramContext, rom: &[(u8,Symbol)]) -> TestComputer<'a> {
+        fn from_rom(ctxt: &'a ProgramContext, rom: &'a Image) -> TestComputer<'a> {
             TestComputer{
-                comp: Computer::with_print_with_sym(rom.to_vec(), true),
+                comp: Computer::from_image(Cow::Borrowed(&rom), true),
                 ctxt
             }
         }
@@ -428,7 +430,7 @@ mod tests {
 
     fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
-        let rom = assemble::assemble(assembly);
+        let rom = assemble::assemble(0, assembly);
         for (ttyin, input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&ctxt, &rom);
             dbg!((ttyin, input1, input2, expected));
@@ -449,9 +451,9 @@ mod tests {
 
     fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
-        let rom = assemble::assemble(assembly);
-        let addr1 = 0x8100;
-        let addr2 = 0xA000;
+        let rom = assemble::assemble(0, assembly);
+        let addr1 = STATICS_START_ADDRESS+100;
+        let addr2 = STATICS_START_ADDRESS+200;
 
         for (input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&ctxt, &rom);
@@ -486,14 +488,14 @@ mod tests {
             entry.return_type, entry_return_size, test_return_size);
     }
 
-    fn assemble(entry: &str, program: &str) -> (ProgramContext, Vec<(u8,Symbol)>) {
+    fn assemble(entry: &str, program: &str) -> (ProgramContext, Image) {
         let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
 
-        let rom = assemble::assemble(assembly);
+        let rom = assemble::assemble(0, assembly);
         (ctxt, rom)
     }
 
-    fn test_var_input<'a>(ctxt: &'a ProgramContext, rom: &[(u8,Symbol)], args: &Vec<TestVar>) -> (TestComputer<'a>, u32) {
+    fn test_var_input<'a>(ctxt: &'a ProgramContext, rom: &'a Image, args: &Vec<TestVar>) -> (TestComputer<'a>, u32) {
 
         let mut c = TestComputer::from_rom(ctxt, &rom);
         let mut arg_addr = TestComputer::arg_base_addr();
