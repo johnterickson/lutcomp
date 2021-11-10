@@ -12,7 +12,7 @@ const int
   TTYIN_OE_ = 7; //PD7, PCINT23
 
 const int DATA_PINS[] = {
-  8,9,10,11,12,13,18,19
+  8,9,10,11,14,15,16,17
 };
 
 const int QUEUE_LENGTH = 64;
@@ -83,12 +83,12 @@ ISR(PCINT2_vect){   // Port D, PCINT16 - PCINT23
     setDataPinsOutput();
   }
   if (!prevTTYIN_OE_ && newTTYIN_OE_) {
-    Serial.println("TTYIN_OE_ LOW->HIGH");
+    //Serial.println("TTYIN_OE_ LOW->HIGH");
   } else if (prevTTYIN_OE_ && !newTTYIN_OE_) {
-    Serial.print("TTYIN_OE_ HIGH->LOW: 0x");
-    byte b = readDataPins();
-    Serial.print(b, HEX);
-    Serial.println();
+    //Serial.print("TTYIN_OE_ HIGH->LOW: 0x");
+    //byte b = readDataPins();
+    //Serial.print(b, HEX);
+    //Serial.println();
   }
   prevTTYIN_OE_ = newTTYIN_OE_;
 
@@ -97,8 +97,8 @@ ISR(PCINT2_vect){   // Port D, PCINT16 - PCINT23
   if (!prevTTYOUT_CP && newTTYOUT_CP) {
     byte b = readDataPins();
     enqueue(inputQueue, b);
-    Serial.print("TTL->ARDUINO:");
-    Serial.println(b);
+    //Serial.print("TTL->ARDUINO:");
+    //Serial.println(b);
   }
   prevTTYOUT_CP = newTTYOUT_CP;
 
@@ -107,18 +107,25 @@ ISR(PCINT2_vect){   // Port D, PCINT16 - PCINT23
   if (!prevTTYIN_CP && newTTYIN_CP) {
     byte b = dequeue(outputQueue);
    // if (b > 0) {
-      Serial.print("ARDUINO->TTL:");
-      Serial.println(b);
+      //Serial.print("ARDUINO->TTL:");
+      //Serial.println(b);
     //}
   }
   prevTTYIN_CP = newTTYIN_CP;
 }
 
 unsigned long tickCount = 0;
+bool paused = false;
 
-void tick() { 
-  digitalWrite(CLK, 1 ^ digitalRead(CLK));
-  tickCount += 1;
+void tick(bool force) { 
+  if (force || !paused) {
+    digitalWrite(CLK, 1 ^ digitalRead(CLK));
+    tickCount += 1;
+
+    if (tickCount == 2225) {
+      paused = true;
+    }
+  }
   delayMicroseconds(10000);
 }
 
@@ -130,7 +137,7 @@ void step() {
     Serial.write((byte)byteToWrite);
   }
 
-  tick();
+  tick(false);
 }
 
 void printQueue(int queue[QUEUE_LENGTH]) {
@@ -150,13 +157,14 @@ void printQueue(int queue[QUEUE_LENGTH]) {
 }
 
 void reset() {
+  paused = false;
   digitalWrite(CLK, LOW);
   digitalWrite(RESET_, LOW);
   delay(1000);
-  tick();
-  tick();
-  tick();
-  tick();
+  tick(false);
+  tick(false);
+  tick(false);
+  tick(false);
   digitalWrite(RESET_, HIGH);
 }
 
@@ -172,10 +180,12 @@ void loop() {
     Serial.flush();
 
     if (b == 't') { 
-      tick();
+      tick(true);
       Serial.println(tickCount);
     } else if (b == 'r') {
       reset();
+    } else if (b == 'p') {
+      paused = !paused;
     } else {
       cli();
       enqueue(outputQueue, b);

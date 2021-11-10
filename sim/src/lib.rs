@@ -38,7 +38,7 @@ pub struct Computer<'a> {
     alu: u8,
     pub flags: Flags,
     pub ir0: u8,
-    pub ir0_pc: u32,
+    pub ir0_pc: Option<u32>,
     in1: u8,
     print: bool,
     pub stdin_out: bool,
@@ -83,15 +83,15 @@ impl<'a> Computer<'a> {
             tty_out: VecDeque::new(),
             alu_lut: &alu::ALU,
             ucode_rom: &ucode::UCODE,
-            regs: [0u8; 4],
-            addr: [0u8; 4],
+            regs: [0xFFu8; 4],
+            addr: [0xFFu8, 0xFFu8, 0xFFu8, 0x0u8],
             pc: start_pc,
             upc: 0,
-            alu: 0,
-            flags: Flags::empty(),
-            ir0: 0,
-            ir0_pc: 0,
-            in1: 0,
+            alu: 0xFF,
+            flags: Flags::all(),
+            ir0: 0xFF,
+            ir0_pc: None,
+            in1: 0xFF,
             print,
             stdin_out: false,
             trap_addrs: BTreeSet::new(),
@@ -326,7 +326,7 @@ impl<'a> Computer<'a> {
             }
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
             DataBusLoadEdge::IR0 => {
-                self.ir0_pc = addr_bus;
+                self.ir0_pc = Some(addr_bus);
                 self.ir0 = data_bus.unwrap();
             },
             DataBusLoadEdge::Mem => {
@@ -425,6 +425,7 @@ mod tests {
         }
 
         let mut c = Computer::from_raw(rom);
+        c.flags.remove(Flags::ZERO);
 
         while c.step() {}
 
@@ -1073,6 +1074,7 @@ mod tests {
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);
+        c.flags.remove(Flags::CARRY);
         c.reg_u32_set(4, 0x12345678);
         c.reg_u32_set(8, 0x11111111);
 
@@ -1129,6 +1131,8 @@ mod tests {
 
         if carry_in {
             c.flags |= Flags::CARRY;
+        } else {
+            c.flags.remove(Flags::CARRY);
         }
 
         while c.step() {}
@@ -1159,6 +1163,8 @@ mod tests {
 
         if carry_in {
             c.flags |= Flags::CARRY;
+        } else {
+            c.flags.remove(Flags::CARRY);
         }
 
         while c.step() {}
@@ -1193,6 +1199,8 @@ mod tests {
 
         if carry_in {
             c.flags |= Flags::CARRY;
+        }  else {
+            c.flags.remove(Flags::CARRY);
         }
 
         while c.step() {}

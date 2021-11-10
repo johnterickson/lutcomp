@@ -57,17 +57,17 @@ fn main() {
             let (_program, assembly) = compile(
                 "main", &input, file_path.parent().unwrap());
             let rom = assemble::assemble(assembly);
-            let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
+            let mut c = Computer::from_image(Cow::Borrowed(&rom), true);
             c.stdin_out = true;
-            while c.step() { }
-            // let mut last_ir0 = None;
-            // while c.step() { 
-            //     if last_ir0 != Some(c.ir0) {
-            //         print_state(&c);
-            //     }
-            //     last_ir0 = Some(c.ir0);
-            // }
-            // print_state(&c);
+            // while c.step() { }
+            let mut last_ir0 = None;
+            while c.step() { 
+                if last_ir0 != Some(c.ir0) {
+                    print_state(&c);
+                }
+                last_ir0 = Some(c.ir0);
+            }
+            print_state(&c);
         }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),
         None => eprintln!("no arg provided"),
