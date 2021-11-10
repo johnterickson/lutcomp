@@ -25,6 +25,20 @@ pub enum Value {
     PcOffset(u32),
 }
 
+impl Value {
+    pub fn size(&self) -> u32 {
+        match self {
+            Value::Constant8(_) => 1,
+            Value::Constant24(_) => 3,
+            Value::Constant32(_) => 4,
+            Value::Register(_) => 1,
+            Value::Label24(_) => 3,
+            Value::Label32(_) => 4,
+            Value::PcOffset(_) => 4,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Instruction {
     pub source: String,
@@ -35,18 +49,16 @@ pub struct Instruction {
 
 impl Instruction {
     pub fn size(&self) -> u32 {
+        let expected = self.opcode.expected_arg_sizes();
+        assert_eq!(expected.len(), self.args.len());
+
         let mut sum = 0;
         sum += 1;
-        for arg in &self.args {
-            sum += match arg {
-                Value::Constant8(_) => 1,
-                Value::Constant24(_) => 3,
-                Value::Constant32(_) => 4,
-                Value::Register(_) => 1,
-                Value::Label24(_) => 3,
-                Value::Label32(_) => 4,
-                Value::PcOffset(_) => 4,
-            }
+        for (i, (arg, expected)) in self.args.iter().zip(expected).enumerate() {
+            let size = arg.size();
+            assert_eq!(size, *expected, 
+                "For '{:?}' expected arg {} to be {} bytes, but is {} bytes.", self.opcode, i, *expected, size);
+            sum += size;
         }
         sum
     }

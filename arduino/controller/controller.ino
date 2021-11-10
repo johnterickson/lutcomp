@@ -122,7 +122,7 @@ void tick(bool force) {
     digitalWrite(CLK, 1 ^ digitalRead(CLK));
     tickCount += 1;
 
-    if (tickCount == 2225) {
+    if (tickCount == 4*350) {
       paused = true;
     }
   }
@@ -158,6 +158,7 @@ void printQueue(int queue[QUEUE_LENGTH]) {
 
 void reset() {
   paused = false;
+  tickCount = 0;
   digitalWrite(CLK, LOW);
   digitalWrite(RESET_, LOW);
   delay(1000);
@@ -172,13 +173,13 @@ void loop() {
   if (Serial.available() > 0) {
     byte b = Serial.read();
     b &= 0x7F;
-
+/*
     cli();
     Serial.print("PC->ARDUINO:");
     Serial.println(b);
     sei();
     Serial.flush();
-
+*/
     if (b == 't') { 
       tick(true);
       Serial.println(tickCount);
@@ -194,10 +195,7 @@ void loop() {
   }
   
   if(digitalRead(HALT) == HIGH) {
-    //if (tickCount < 2980) {
       step();
-      //delay(1);
-    //}
   }
   
 //  if (inputQueue[0] != EMPTY) {

@@ -170,7 +170,7 @@ pub enum Opcode {
 
     Load32 = 0x90,       // 32-bit MEM[24-bit RegA] -> RegB
     Store32Part1 = 0x92, // RegA -> 32-bit MEM[24-bit RegB]
-    Store32Part2 = 0x93, // RegA -> 32-bit MEM[24-bit RegB]
+    Store32Part2 = 0x93, // [none] must follow Part1
     StoreImm32,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
     Add32NoCarryIn = 0xA0, // regA + regB -> regC [carry out undefined]
@@ -184,6 +184,57 @@ pub enum Opcode {
     AndImm32 = 0xB3, // regA &= [32-bit constant BCDE]
 
     Halt = 255,
+}
+
+impl Opcode {
+    pub fn expected_arg_sizes(&self) -> &[u32] {
+        match &self {
+            Opcode::LoadImm8 => &[1,1],
+            Opcode::Invert8 => &[1],
+            Opcode::Negate8 => &[1],
+            Opcode::Load8 => &[1,1],
+            Opcode::Store8 => &[1,1],
+            Opcode::TtyIn => &[1],
+            Opcode::TtyOut => &[1],
+            Opcode::Push8 => &[1],
+            Opcode::Pop8 => &[1],
+            Opcode::Mul8Part1 => &[1,1],
+            Opcode::Mul8Part2 => &[],
+            Opcode::Add8 => &[1,1,1],
+            Opcode::Add8NoCarry => &[1,1,1],
+            Opcode::Add8NoCarryIn => &[1,1,1],
+            Opcode::Cmp8 => &[1,1],
+            Opcode::Cmp8IfZero => &[1,1],
+            Opcode::AndImm8 => &[1,1],
+            Opcode::OrImm8 => &[1,1],
+            Opcode::XorImm8 => &[1,1],
+            Opcode::And8 => &[1,1,1],
+            Opcode::Or8 => &[1,1,1],
+            Opcode::Xor8 => &[1,1,1],
+            Opcode::ShiftImm8 => &[1,1,1],
+            Opcode::JmpImm => &[3],
+            Opcode::JcImm => &[3],
+            Opcode::JzImm => &[3],
+            Opcode::JnImm => &[3],
+            Opcode::JmpReg => &[1],
+            Opcode::JmpMem => &[1],
+            Opcode::LoadImm32 => &[1,4],
+            Opcode::Copy32 => &[1,1],
+            Opcode::Load32 => &[1,1],
+            Opcode::Store32Part1 => &[1,1],
+            Opcode::Store32Part2 => &[],
+            Opcode::StoreImm32 => &[1,4],
+            Opcode::Add32NoCarryIn => &[1,1,1],
+            Opcode::Add32Part1 => &[1,1,1],
+            Opcode::Add32Part2 => &[],
+            Opcode::AddImm32IgnoreCarry => &[1,4],
+            Opcode::Or32 => &[1,1,1],
+            Opcode::And32 => &[1,1,1],
+            Opcode::OrImm32 => &[1,4],
+            Opcode::AndImm32 => &[1,4],
+            Opcode::Halt => &[],
+        }
+    }
 }
 
 pub const REG_SP: u8 = 0xC;

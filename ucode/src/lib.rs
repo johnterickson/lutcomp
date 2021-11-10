@@ -668,7 +668,7 @@ impl Ucode {
                         add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load_edge));
                     }
 
-                    // copy address to addres regs
+                    // copy address to address regs
                     for (i, load_edge) in Ucode::ADDR_LOADS.iter().enumerate() {
                         add!(self, Output::Direct(Ucode::WXYZ_OUTS[i]), Load::Direct(*load_edge));
                     }
