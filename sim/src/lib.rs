@@ -41,6 +41,7 @@ pub struct Computer<'a> {
     pub ir0_pc: u32,
     in1: u8,
     print: bool,
+    pub stdin_out: bool,
     trap_addrs: BTreeSet<u32>,
 }
 
@@ -92,6 +93,7 @@ impl<'a> Computer<'a> {
             ir0_pc: 0,
             in1: 0,
             print,
+            stdin_out: false,
             trap_addrs: BTreeSet::new(),
         };
 
@@ -275,7 +277,7 @@ impl<'a> Computer<'a> {
                 None
             }
             DataBusOutputLevel::TtyIn => {
-                if self.print {
+                if self.stdin_out {
                     let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
                     if let Ok(line) = stdin_channel.try_recv() {
                         for c in line.chars() {

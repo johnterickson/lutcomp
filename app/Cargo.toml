@@ -11,5 +11,6 @@ strum = "0.18.0"
 alu = { path = "../alu" }
 assemble = { path = "../assemble" }
 common = { path = "../common" }
+compiler = { path = "../compiler" }
 sim = { path = "../sim" }
 ucode = { path = "../ucode" }

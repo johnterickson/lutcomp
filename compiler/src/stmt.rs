@@ -211,7 +211,7 @@ impl Statement {
 
     pub fn emit(&self, ctxt: &mut FunctionContext) -> () {
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Begin statement {:?}", self)));
-        eprintln!("Emitting statement: {:?}", &self);
+        // eprintln!("Emitting statement: {:?}", &self);
         match self {
             Statement::TtyOut{value} => {
                 value.emit(ctxt);

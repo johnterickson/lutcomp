@@ -20,6 +20,7 @@ dependencies = [
  "alu",
  "assemble",
  "common",
+ "compiler",
  "sim",
  "strum",
  "ucode",

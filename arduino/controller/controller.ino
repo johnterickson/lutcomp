@@ -30,7 +30,9 @@ void initOutput(int pin, int initValue) {
 }
 
 void setDataPinsInput() {
-  for(int i=0; i<8;i++) pinMode(DATA_PINS[i], INPUT);
+  for(int i=0; i<8;i++) {
+    pinMode(DATA_PINS[i], INPUT);
+  }
 }
 
 void setDataPinsOutput() {
@@ -64,28 +66,50 @@ int dequeue(int queue[QUEUE_LENGTH]) {
   return poppedValue;
 }
 
+byte readDataPins() {
+  byte b = 0;
+  for(int i=0; i<8;i++) {
+    b |= digitalRead(DATA_PINS[i]) << i;
+  }
+  return b;
+}
+
 ISR(PCINT2_vect){   // Port D, PCINT16 - PCINT23
-  if (digitalRead(TTYIN_OE_) == HIGH) {
+  static bool prevTTYIN_OE_ = false;
+  bool newTTYIN_OE_ = digitalRead(TTYIN_OE_);
+  if (newTTYIN_OE_ == HIGH) {
     setDataPinsInput();
   } else {
     setDataPinsOutput();
   }
+  if (!prevTTYIN_OE_ && newTTYIN_OE_) {
+    Serial.println("TTYIN_OE_ LOW->HIGH");
+  } else if (prevTTYIN_OE_ && !newTTYIN_OE_) {
+    Serial.print("TTYIN_OE_ HIGH->LOW: 0x");
+    byte b = readDataPins();
+    Serial.print(b, HEX);
+    Serial.println();
+  }
+  prevTTYIN_OE_ = newTTYIN_OE_;
 
   static bool prevTTYOUT_CP = false;
   bool newTTYOUT_CP = digitalRead(TTYOUT_CP);
   if (!prevTTYOUT_CP && newTTYOUT_CP) {
-    byte b = 0;
-    for(int i=0; i<8;i++) {
-      b |= digitalRead(DATA_PINS[i]) << i;
-    }
+    byte b = readDataPins();
     enqueue(inputQueue, b);
+    Serial.print("TTL->ARDUINO:");
+    Serial.println(b);
   }
   prevTTYOUT_CP = newTTYOUT_CP;
 
   static bool prevTTYIN_CP = false;
   bool newTTYIN_CP = digitalRead(TTYIN_CP);
   if (!prevTTYIN_CP && newTTYIN_CP) {
-    dequeue(outputQueue);
+    byte b = dequeue(outputQueue);
+   // if (b > 0) {
+      Serial.print("ARDUINO->TTL:");
+      Serial.println(b);
+    //}
   }
   prevTTYIN_CP = newTTYIN_CP;
 }
@@ -95,6 +119,7 @@ unsigned long tickCount = 0;
 void tick() { 
   digitalWrite(CLK, 1 ^ digitalRead(CLK));
   tickCount += 1;
+  delayMicroseconds(10000);
 }
 
 void step() {
@@ -125,8 +150,13 @@ void printQueue(int queue[QUEUE_LENGTH]) {
 }
 
 void reset() {
+  digitalWrite(CLK, LOW);
   digitalWrite(RESET_, LOW);
   delay(1000);
+  tick();
+  tick();
+  tick();
+  tick();
   digitalWrite(RESET_, HIGH);
 }
 
@@ -135,9 +165,17 @@ void loop() {
     byte b = Serial.read();
     b &= 0x7F;
 
+    cli();
+    Serial.print("PC->ARDUINO:");
+    Serial.println(b);
+    sei();
+    Serial.flush();
+
     if (b == 't') { 
       tick();
       Serial.println(tickCount);
+    } else if (b == 'r') {
+      reset();
     } else {
       cli();
       enqueue(outputQueue, b);
@@ -148,7 +186,7 @@ void loop() {
   if(digitalRead(HALT) == HIGH) {
     //if (tickCount < 2980) {
       step();
-      delayMicroseconds(5);
+      //delay(1);
     //}
   }
   
@@ -177,8 +215,8 @@ void setup() {
   PCICR |=  (1<<2); //PCINT2/PD
   sei();
 
+  Serial.begin(115200);
+  
   Serial.println("RESETING...");
   reset();
-
-  Serial.begin(115200);
 }
