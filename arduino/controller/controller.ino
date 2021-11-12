@@ -16,6 +16,12 @@ const int DATA_PINS[] = {
   8,9,10,11,14,15,16,17
 };
 
+#define DATA_LO_NIBBLE_PORT PORTB
+#define DATA_HI_NIBBLE_PORT PORTC
+
+#define CLK_PORT PORTD
+#define CLK_BIT 3
+
 const int QUEUE_LENGTH = 64;
 int inputQueue[QUEUE_LENGTH] = {0};
 int outputQueue[QUEUE_LENGTH] = {0};
@@ -68,10 +74,12 @@ void enqueue(int queue[QUEUE_LENGTH], byte b) {
 
 int dequeue(int queue[QUEUE_LENGTH]) {
   int poppedValue = queue[0];
-  for(int i=0; i<QUEUE_LENGTH-1; i++) {
-    queue[i] = queue[i+1];
+  if (poppedValue != EMPTY) {
+    for(int i=0; i<QUEUE_LENGTH-1; i++) {
+      queue[i] = queue[i+1];
+    }
+    queue[QUEUE_LENGTH-1] = EMPTY;
   }
-  queue[QUEUE_LENGTH-1] = EMPTY;
   return poppedValue;
 }
 
@@ -128,7 +136,8 @@ ISR(PCINT2_vect){   // Port D, PCINT16 - PCINT23
 
 void tick(bool force) { 
   if (force || !paused) {
-    digitalWrite(CLK, 1 ^ digitalRead(CLK));
+    //digitalWrite(CLK, 1 ^ digitalRead(CLK));
+    CLK_PORT ^= (1<<CLK_BIT);
     tickCount += 1;
 
 /*
@@ -158,7 +167,7 @@ void tick(bool force) {
     }
     */
   }
-  if (delay_us != 0) { delayMicroseconds(delay_us); }
+  //if (delay_us != 0) { delayMicroseconds(delay_us); }
   //if (delay_ms != 0) { delay(delay_ms); }
 }
 
@@ -191,7 +200,6 @@ void checkSerial() {
     }
   }
 
-  
   cli();
   if ((b = dequeue(inputQueue)) != EMPTY) {
     sei();
