@@ -1,0 +1,118 @@
+v2.0 raw
+#  line: 'loadimm32 r0c <- $000ffffc'
+#   instruction: 'loadimm32 r0c <- $000ffffc'
+#    loadimm32: 'loadimm32 r0c <- $000ffffc'
+#     register: 'r0c'
+#      unsigned_hex_constant: '0c'
+#     constant32: '$000ffffc'
+#      signed_hex_constant: '000ffffc'
+#       unsigned_hex_constant: '000ffffc'
+#  line: 'loadimm32 r00 <- :hello_world'
+#   instruction: 'loadimm32 r00 <- :hello_world'
+#    loadimm32: 'loadimm32 r00 <- :hello_world'
+#     register: 'r00'
+#      unsigned_hex_constant: '00'
+#     constant32: ':hello_world'
+#      label: ':hello_world'
+#  line: '!call :puts'
+#   pseudo_call: '!call :puts'
+#    constant24: ':puts'
+#     label: ':puts'
+#  line: 'halt'
+#   instruction: 'halt'
+#    halt: 'halt'
+#  line: ':puts'
+#   label: ':puts'
+#  line: 'load8 *r00 -> r04'
+#   instruction: 'load8 *r00 -> r04'
+#    load8: 'load8 *r00 -> r04'
+#     register: 'r00'
+#      unsigned_hex_constant: '00'
+#     register: 'r04'
+#      unsigned_hex_constant: '04'
+#  line: 'orimm8 r04 <- $00'
+#   instruction: 'orimm8 r04 <- $00'
+#    orimm8: 'orimm8 r04 <- $00'
+#     register: 'r04'
+#      unsigned_hex_constant: '04'
+#     constant8: '$00'
+#      signed_hex_constant: '00'
+#       unsigned_hex_constant: '00'
+#  line: 'jzimm :puts_done'
+#   instruction: 'jzimm :puts_done'
+#    jzimm: 'jzimm :puts_done'
+#     constant24: ':puts_done'
+#      label: ':puts_done'
+#  line: 'ttyout r04'
+#   instruction: 'ttyout r04'
+#    ttyout: 'ttyout r04'
+#     register: 'r04'
+#      unsigned_hex_constant: '04'
+#  line: 'addimm32ignorecarry r00 <- $00000001'
+#   instruction: 'addimm32ignorecarry r00 <- $00000001'
+#    addimm32ignorecarry: 'addimm32ignorecarry r00 <- $00000001'
+#     register: 'r00'
+#      unsigned_hex_constant: '00'
+#     constant32: '$00000001'
+#      signed_hex_constant: '00000001'
+#       unsigned_hex_constant: '00000001'
+#  line: 'jmpimm :puts'
+#   instruction: 'jmpimm :puts'
+#    jmpimm: 'jmpimm :puts'
+#     constant24: ':puts'
+#      label: ':puts'
+#  line: ':puts_done'
+#   label: ':puts_done'
+#  line: '!return'
+#   pseudo_return: '!return'
+#  line: ':hello_world'
+#   label: ':hello_world'
+#  line: 'LITERAL_STRING Hello, World!'
+#   literal_string: 'LITERAL_STRING Hello, World!'
+#    literal_string_value: 'Hello, World!'
+#  line: 'LITERAL8 $0A'
+#   literal8: 'LITERAL8 $0A'
+#    constant8: '$0A'
+#     signed_hex_constant: '0A'
+#      unsigned_hex_constant: '0A'
+#  line: 'LITERAL8 $00'
+#   literal8: 'LITERAL8 $00'
+#    constant8: '$00'
+#     signed_hex_constant: '00'
+#      unsigned_hex_constant: '00'
+#  EOI: ''
+# 00000 Instruction { source: "loadimm32 r0c <- $000ffffc", opcode: LoadImm32, args: [Register(12), Constant32(1048572)], resolved: None }
+80 0c fc ff 0f 00 
+# 00006 Instruction { source: "loadimm32 r00 <- :hello_world", opcode: LoadImm32, args: [Register(0), Label32(":hello_world")], resolved: None }
+80 00 3b 00 00 00 
+# 0000c Instruction { source: "PseudoCall(Label24(\":puts\"))", opcode: AddImm32IgnoreCarry, args: [Register(12), Constant32(4294967292)], resolved: None }
+a3 0c fc ff ff ff 
+# 00012 Instruction { source: "PseudoCall(Label24(\":puts\"))", opcode: StoreImm32, args: [Register(12), PcOffset(10)], resolved: None }
+94 0c 1c 00 00 00 
+# 00018 Instruction { source: "PseudoCall(Label24(\":puts\"))", opcode: JmpImm, args: [Label24(":puts")], resolved: None }
+40 23 00 00 
+# 0001c Instruction { source: "PseudoCall(Label24(\":puts\"))", opcode: AddImm32IgnoreCarry, args: [Register(12), Constant32(4)], resolved: None }
+a3 0c 04 00 00 00 
+# 00022 Instruction { source: "halt", opcode: Halt, args: [], resolved: None }
+ff 
+# :puts
+# 00023 Instruction { source: "load8 *r00 -> r04", opcode: Load8, args: [Register(0), Register(4)], resolved: None }
+10 00 04 
+# 00026 Instruction { source: "orimm8 r04 <- $00", opcode: OrImm8, args: [Register(4), Constant8(0)], resolved: None }
+31 04 00 
+# 00029 Instruction { source: "jzimm :puts_done", opcode: JzImm, args: [Label24(":puts_done")], resolved: None }
+42 39 00 00 
+# 0002d Instruction { source: "ttyout r04", opcode: TtyOut, args: [Register(4)], resolved: None }
+13 04 
+# 0002f Instruction { source: "addimm32ignorecarry r00 <- $00000001", opcode: AddImm32IgnoreCarry, args: [Register(0), Constant32(1)], resolved: None }
+a3 00 01 00 00 00 
+# 00035 Instruction { source: "jmpimm :puts", opcode: JmpImm, args: [Label24(":puts")], resolved: None }
+40 23 00 00 
+# :puts_done
+# 00039 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(12)], resolved: None }
+49 0c 
+# :hello_world
+# 'Hello, World!'
+48 65 6c 6c 6f 2c 20 57 6f 72 6c 64 21 
+0a 
+00 

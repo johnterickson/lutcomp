@@ -1017,7 +1017,7 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddLoNoCarry));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
-                    // capture the zero bit
+                    // capture the zero and neg bit
                     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddHiNoCarry));
                     self.some_flags_from_preceding_addhi(flags, Flags::ZERO | Flags::NEG);
                 },
@@ -1054,8 +1054,6 @@ impl Ucode {
                     self.start_of_ram();
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-
-                    // copy value into Z
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::TtyOut));
                 }
                 Some(Opcode::Store32Part1) => {
@@ -1353,7 +1351,7 @@ impl Ucode {
                     add!(self, Output::Imm(Flags::ZERO.bits()), Load::Alu(AluOpcode::And));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                 }
-                Some(Opcode::Halt) => {
+                Some(Opcode::Halt) | Some(Opcode::HaltRAM) => {
                     self.add_op(halt, file!(), line!());
                 }
                 Some(Opcode::Or32) => {

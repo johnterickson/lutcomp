@@ -143,7 +143,6 @@ impl FunctionDefinition {
 
         fn mark_as_on_stack(_ctxt: &ProgramContext, e: &Expression, needs_to_be_on_stack: &mut BTreeSet<String>) {
             let mut mark = |e: &Expression| {
-                dbg!(e);
                 match e {
                     Expression::Ident(name) => {
                         needs_to_be_on_stack.insert(name.clone());

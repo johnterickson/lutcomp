@@ -183,7 +183,8 @@ pub enum Opcode {
     OrImm32 = 0xB2,  // regA |= [32-bit constant BCDE]
     AndImm32 = 0xB3, // regA &= [32-bit constant BCDE]
 
-    Halt = 255,
+    HaltRAM = 0xCC,
+    Halt = 0xFF,
 }
 
 impl Opcode {
@@ -233,6 +234,7 @@ impl Opcode {
             Opcode::OrImm32 => &[1,4],
             Opcode::AndImm32 => &[1,4],
             Opcode::Halt => &[],
+            Opcode::HaltRAM => &[],
         }
     }
 }

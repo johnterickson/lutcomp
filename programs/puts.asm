@@ -1,3 +1,4 @@
+loadimm32 r0c <- $000ffffc
 loadimm32 r00 <- :hello_world
 !call :puts
 halt

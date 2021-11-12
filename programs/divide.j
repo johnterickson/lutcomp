@@ -6,8 +6,3 @@ fn divide(x:u8, y:u8) -> u8 {
     }
     return q;
 }
-
-fn main(a:u8, b:u8) -> u8 {
-    c:u8 := divide(a,b);
-    return c;
-}

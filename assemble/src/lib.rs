@@ -190,6 +190,7 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
 
 #[derive(Debug,Clone)]
 pub enum AssemblyInputLine {
+    Directive(AssemblyDirective),
     Comment(String),
     Label(String),
     Instruction(Instruction),
@@ -198,6 +199,11 @@ pub enum AssemblyInputLine {
     LiteralString(String),
     Literal8(u8),
     ImageBaseAddress(u32),
+}
+
+#[derive(Debug,Clone)]
+pub enum AssemblyDirective {
+    FillWithHalt
 }
 
 impl AssemblyInputLine {
@@ -299,11 +305,17 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
     }).next().unwrap_or(0);
 
     let mut pc = start_pc;
+    let mut fill_with_halt = None;
     for line in input.drain(..) {
         let source = format!("{:?}", line);
         //lines.push(AssemblyOutputLine::Comment(source.to_owned()));
 
         match line.clone() {
+            AssemblyInputLine::Directive(directive) => {
+                match directive {
+                    AssemblyDirective::FillWithHalt => { fill_with_halt = Some(true);},
+                }
+            }
             AssemblyInputLine::ImageBaseAddress(base) => {
                 assert_eq!(base, start_pc);
             }
@@ -418,6 +430,14 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
                 println!();
             }
         }
+    }
+
+    if fill_with_halt == Some(true) {
+        let old_len = rom.len();
+        rom.resize(ROM_SIZE as usize, 0xff);
+        let added = rom.len() - old_len;
+        println!("# Fill with HALT");
+        println!("{}*ff", added);
     }
 
     Image {

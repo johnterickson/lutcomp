@@ -43,6 +43,7 @@ pub struct Computer<'a> {
     print: bool,
     pub stdin_out: bool,
     trap_addrs: BTreeSet<u32>,
+    pub tick_count: u64,
 }
 
 impl<'a> Debug for Computer<'a> {
@@ -54,6 +55,7 @@ impl<'a> Debug for Computer<'a> {
         write!(f, " ir0:{:02x}", self.ir0)?;
         write!(f, " in1:{:02x}", self.in1)?;
         write!(f, " flags:[{:?}]", self.flags)?;
+        write!(f, " ticks:{}", self.tick_count)?;
         Ok(())
     }
 }
@@ -95,6 +97,7 @@ impl<'a> Computer<'a> {
             print,
             stdin_out: false,
             trap_addrs: BTreeSet::new(),
+            tick_count: 0,
         };
 
         assert_eq!(c.alu_lut.len(), 1 << MEM_BITS_PER_CHIP);
@@ -219,6 +222,8 @@ impl<'a> Computer<'a> {
         if self.print {
             println!("\n{:?}", &self);
         }
+
+        self.tick_count += 8;
 
         let urom_entry = MicroEntry {
             flags: self.flags.bits().into(),
@@ -396,31 +401,44 @@ mod tests {
     #[test]
     fn jz_zero() {
         let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(0x00);
+        rom.push(0xAA);
         rom.push(Opcode::JzImm as u8);
-        rom.push(0x07);
+        rom.push(0x10);
         rom.push(0x00);
         rom.push(0x00);
-        for _ in 0..10 {
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(0x00);
+        rom.push(0xBB);
+        for _ in 0..100 {
             rom.push(Opcode::Halt as u8);
         }
 
         let mut c = Computer::from_raw(rom);
-
         c.flags |= Flags::ZERO;
 
         while c.step() {}
 
-        assert_eq!(7, u32::from_le_bytes(c.pc));
+        assert_eq!(0xAA, c.reg_u8(0));
+        assert_eq!(0x10, u32::from_le_bytes(c.pc));
     }
 
     #[test]
     fn jz_nonzero() {
         let mut rom = Vec::new();
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(0x00);
+        rom.push(0xAA);
         rom.push(Opcode::JzImm as u8);
-        rom.push(0x07);
+        rom.push(0x10);
         rom.push(0x00);
         rom.push(0x00);
-        for _ in 0..10 {
+        rom.push(Opcode::LoadImm8 as u8);
+        rom.push(0x00);
+        rom.push(0xBB);
+        let expected_pc = rom.len() as u32;
+        for _ in 0..100 {
             rom.push(Opcode::Halt as u8);
         }
 
@@ -429,7 +447,8 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(4, u32::from_le_bytes(c.pc));
+        assert_eq!(0xBB, c.reg_u8(0));
+        assert_eq!(expected_pc, u32::from_le_bytes(c.pc));
     }
 
     #[test]

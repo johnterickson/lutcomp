@@ -142,6 +142,7 @@ pub fn main_inner(rom: &Image, args: Vec<u8>) {
 
     eprintln!("Final R0:{:02x}", c.reg_u32(0));
 }
+const INITIAL_STACK: u32 = (RAM_MAX as u32/4)*4;
 
 fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
     let mut program = Vec::new();
@@ -158,11 +159,10 @@ fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
     }
 
     program.push(AssemblyInputLine::Comment(format!("set up stack and call entry {}", ctxt.entry)));
-    let initial_stack = (RAM_MAX as u32/4)*4;
     program.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
-        source: format!("init stack to 0x{:x}", initial_stack),
-        args: vec![Value::Register(REG_SP), Value::Constant32(initial_stack)],
+        source: format!("init stack to 0x{:x}", INITIAL_STACK),
+        args: vec![Value::Register(REG_SP), Value::Constant32(INITIAL_STACK)],
         resolved: None
     }));
 
@@ -913,28 +913,30 @@ mod tests {
     #[test]
     fn divide() {
         test_inputs(
-            "main",
+            "divide",
             include_str!("../../programs/divide.j"),
             &[
                 (0x1u8,0x1u8,0x1u8),
                 (0x2,0x1,0x2),
                 (0x1,0x2,0x0),
                 (100,10,10),
+                (255,16,15),
                 ]);
     }
 
     #[test]
     fn print_hex() {
         test_tty(
-            "main",
+            "printHexTest",
             include_str!("../../programs/print_hex.j"),
             &[
-                ("",0x0,0x0,"0\n"),
-                ("",0x1,0x0,"1\n"),
-                ("",0x9,0x0,"9\n"),
-                ("",0xA,0x0,"A\n"),
-                ("",0xF,0x0,"F\n"),
+                ("",0x0,0x0,"00\n"),
+                ("",0x1,0x0,"01\n"),
+                ("",0x9,0x0,"09\n"),
+                ("",0xA,0x0,"0A\n"),
+                ("",0xF,0x0,"0F\n"),
                 ("",0x10,0x0,"10\n"),
+                ("",0xAA,0x0,"AA\n"),
                 ("",0xFF,0x0,"FF\n"),
                 ]);
     }
@@ -1065,5 +1067,66 @@ mod tests {
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"l\0")], TestComputer::arg_base_addr_var(2)),
             ]
         );
+    }
+
+    #[test]
+    fn parse_hex_nibble() {
+        test_var_inputs(
+            "parseHexNibble",
+            include_str!("../../programs/bootram.j"),
+            &[
+                (vec![TestVar::U8('9' as u8)], TestVar::U8(0x9)),
+                (vec![TestVar::U8('a' as u8)], TestVar::U8(0xA)),
+            ]
+        );
+    }
+
+    #[test]
+    fn bootram() {
+        let (_ctxt, ram_image) = assemble(
+            "main", 
+            include_str!("../../programs/hello_ram.j"));
+        
+        let (loader_ctxt, loader_image) = assemble(
+            "main",
+            include_str!("../../programs/bootram.j"));
+
+        let mut c = Computer::from_image(Cow::Owned(loader_image), false);
+
+        for ch in (format!("s{:08x}\n", ram_image.start_addr)).chars() {
+            c.tty_in.push_back(ch as u8);
+        }
+
+        for b in ram_image.bytes {
+            for ch in (format!("w{:02x}\n", b)).chars() {
+                c.tty_in.push_back(ch as u8);
+            }
+        }
+
+        for ch in (format!("s{:08x}\n", INITIAL_STACK-4)).chars() {
+            c.tty_in.push_back(ch as u8);
+        }
+
+        for b in ram_image.start_addr.to_le_bytes() {
+            for ch in (format!("w{:02x}\n", b)).chars() {
+                c.tty_in.push_back(ch as u8);
+            }
+        }
+
+        c.tty_in.push_back('q' as u8);
+        c.tty_in.push_back('\n' as u8);
+
+        dbg!(c.tty_in.as_slices());
+
+        while c.step() { }
+        let r0 = c.reg_u32(0);
+        assert_eq!(r0, 0xAABBCCDD);
+
+        let mut out = String::new();
+        for c in &c.tty_out {
+            out.push(*c as char);
+        }
+
+        assert_eq!(out.as_str(), "Hi_from_RAM!");
     }
 }

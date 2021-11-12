@@ -5,11 +5,12 @@ const int EMPTY = -256;
 
 const int
   RESET_ = 2,
-  CLK = 3, //chamge to 13 for LED?
+  CLK = 3,
   HALT = 4,
   TTYOUT_CP = 5, //PD5, PCINT21
   TTYIN_CP = 6, //PD6, PCINT22
-  TTYIN_OE_ = 7; //PD7, PCINT23
+  TTYIN_OE_ = 7, //PD7, PCINT23
+  LED = 13;
 
 const int DATA_PINS[] = {
   8,9,10,11,14,15,16,17
@@ -18,6 +19,15 @@ const int DATA_PINS[] = {
 const int QUEUE_LENGTH = 64;
 int inputQueue[QUEUE_LENGTH] = {0};
 int outputQueue[QUEUE_LENGTH] = {0};
+
+unsigned long tickCount = 0;
+unsigned long breakPoint = 0;//1700/4*4;
+long dataBreakPoint = 0x23;
+bool paused = false;
+bool halted = false;
+unsigned long lastUpdate = 0;
+unsigned long delay_ms = 0;
+unsigned int delay_us = 500;
 
 void initOutput(int pin, int initValue) {
   if (initValue != 0) {
@@ -86,6 +96,7 @@ ISR(PCINT2_vect){   // Port D, PCINT16 - PCINT23
     //Serial.println("TTYIN_OE_ LOW->HIGH");
   } else if (prevTTYIN_OE_ && !newTTYIN_OE_) {
     //Serial.print("TTYIN_OE_ HIGH->LOW: 0x");
+    //paused = true;
     //byte b = readDataPins();
     //Serial.print(b, HEX);
     //Serial.println();
@@ -97,75 +108,88 @@ ISR(PCINT2_vect){   // Port D, PCINT16 - PCINT23
   if (!prevTTYOUT_CP && newTTYOUT_CP) {
     byte b = readDataPins();
     enqueue(inputQueue, b);
-    //Serial.print("TTL->ARDUINO:");
-    //Serial.println(b);
   }
   prevTTYOUT_CP = newTTYOUT_CP;
 
   static bool prevTTYIN_CP = false;
   bool newTTYIN_CP = digitalRead(TTYIN_CP);
   if (!prevTTYIN_CP && newTTYIN_CP) {
-    byte b = dequeue(outputQueue);
-   // if (b > 0) {
-      //Serial.print("ARDUINO->TTL:");
-      //Serial.println(b);
-    //}
+    byte dequeued = dequeue(outputQueue) & 0x7f;
+    byte acked = readDataPins() & 0x7f;
+    if (dequeued != acked) {
+      Serial.print("TTL->ARDUINO ACK: 0x");
+      Serial.print(dequeued, HEX);
+      Serial.print(" vs 0x");
+      Serial.println(acked, HEX);
+    }
   }
   prevTTYIN_CP = newTTYIN_CP;
 }
 
-unsigned long tickCount = 0;
-bool paused = false;
 
 void tick(bool force) { 
   if (force || !paused) {
     digitalWrite(CLK, 1 ^ digitalRead(CLK));
+    digitalWrite(LED, 1 ^ digitalRead(LED));
     tickCount += 1;
 
-    if (tickCount == 4*350) {
+/*
+    if ((tickCount % 8) == 7){
+      char str[20];
+      byte b = readDataPins();
+      sprintf(str,"data_bus: %02x", b);
+      Serial.println(str);
+      Serial.flush();
+      if (b == dataBreakPoint){
+        Serial.print("DATA_BREAKPOINT: 0x");
+        Serial.println(b, HEX);
+        paused = true;
+      }
+    }
+*/
+    unsigned long now = millis();
+    if ((now - lastUpdate) > 1000) {
+      //Serial.println(tickCount);
+      lastUpdate = now;
+    }
+
+    if (tickCount == breakPoint) {
       paused = true;
+      Serial.println("BREAKPOINT");
     }
   }
-  delayMicroseconds(10000);
+  if (delay_us != 0) { delayMicroseconds(delay_us); }
+  if (delay_ms != 0) { delay(delay_ms); }
 }
 
 void step() {
+  int byteToWrite;
   cli();
-  int byteToWrite = dequeue(inputQueue);
-  sei();
-  if (byteToWrite >= 0) {
-    Serial.write((byte)byteToWrite);
+  while ((byteToWrite = dequeue(inputQueue)) != EMPTY) {
+    sei();
+    //Serial.print("tty_out:");
+    //Serial.println((char)byteToWrite);
+    Serial.print((char)byteToWrite);
+    cli();
   }
+  sei();
 
   tick(false);
-}
-
-void printQueue(int queue[QUEUE_LENGTH]) {
-  for(int i=0; i < QUEUE_LENGTH; i++) {
-    if (queue[i] == EMPTY) {
-      Serial.print("{}");
-    } else {
-      Serial.print("0x");
-      Serial.print(queue[i], HEX);
-      Serial.print("=");
-      Serial.print((char)queue[i]);
-    }
-    Serial.print(",");
-  }
-  Serial.println();
-  Serial.flush();
 }
 
 void reset() {
-  paused = false;
-  tickCount = 0;
   digitalWrite(CLK, LOW);
   digitalWrite(RESET_, LOW);
-  delay(1000);
-  tick(false);
-  tick(false);
-  tick(false);
-  tick(false);
+  delay(100);
+  tick(true);
+  tick(true);
+  tick(true);
+  tick(true);
+  delay(100);
+  init_queue(inputQueue);
+  init_queue(outputQueue);
+  tickCount = 0;
+  halted = false;
   digitalWrite(RESET_, HIGH);
 }
 
@@ -173,13 +197,7 @@ void loop() {
   if (Serial.available() > 0) {
     byte b = Serial.read();
     b &= 0x7F;
-/*
-    cli();
-    Serial.print("PC->ARDUINO:");
-    Serial.println(b);
-    sei();
-    Serial.flush();
-*/
+
     if (b == 't') { 
       tick(true);
       Serial.println(tickCount);
@@ -196,14 +214,11 @@ void loop() {
   
   if(digitalRead(HALT) == HIGH) {
       step();
+  } else if (!halted) {
+      Serial.print("HALT@");
+      Serial.println(tickCount);
+      halted = true;
   }
-  
-//  if (inputQueue[0] != EMPTY) {
-//    Serial.print("inputQueue: "); printQueue(inputQueue);
-//  }
-//  if (outputQueue[0] != EMPTY) {
-//    Serial.print("outputQueue: "); printQueue(outputQueue);
-//  }
 }
 
 
@@ -211,10 +226,15 @@ void loop() {
 void setup() {
   init_queue(inputQueue);
   init_queue(outputQueue);
-  
-  initOutput(CLK, LOW);
-  initOutput (RESET_, HIGH);
 
+  initOutput(LED, LOW);
+  initOutput(RESET_, HIGH);
+  initOutput(CLK, LOW);
+  pinMode(HALT, INPUT);
+  pinMode(TTYOUT_CP, INPUT);
+  pinMode(TTYIN_CP, INPUT);
+  pinMode(TTYIN_OE_, INPUT);
+  
   cli();
   // https://thewanderingengineer.com/2014/08/11/arduino-pin-change-interrupts/
   PCMSK2 |= (1<<7); //PD7/PCINT23
@@ -223,7 +243,7 @@ void setup() {
   PCICR |=  (1<<2); //PCINT2/PD
   sei();
 
-  Serial.begin(115200);
+  Serial.begin(2000000);
   
   Serial.println("RESETING...");
   reset();
