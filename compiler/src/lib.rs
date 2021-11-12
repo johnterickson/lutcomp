@@ -207,7 +207,7 @@ fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
 
     let mut optimizations_performed : usize;
     while 0 < {optimizations_performed = optimize_assembly(&mut program); optimizations_performed} {
-        println!("# performed {} optimizations", optimizations_performed);
+        // println!("# performed {} optimizations", optimizations_performed);
     }
 
     program
@@ -268,7 +268,7 @@ pub fn compile(entry: &str, input: &str, root: &Path) -> (ProgramContext, Vec<As
                     file.read_to_string(&mut contents).unwrap();
                     contents += &format!("\n/* END   {} */\n", &original_stmt);
                     input.replace_range(original_byte_offset..original_byte_offset+original_byte_count, &contents);
-                    println!("{}",&input);
+                    // println!("{}",&input);
                     continue 'reparse;
                 }
                 Rule::struct_decl => {
