@@ -241,7 +241,7 @@ impl FunctionDefinition {
                     } else if byte_count > 4 {
                         None  
                     } else {
-                        if let Some(regs) = ctxt.find_registers(byte_count as u8) {
+                        if let Some(regs) = ctxt.find_registers(byte_count as u8, byte_count as u8) {
                             for r in &regs {
                                 registers_used.insert(*r);
                             }
@@ -281,13 +281,33 @@ impl FunctionDefinition {
         offset += 4;
 
         // args
-        for arg in self.args.iter().rev() {
-            variables.insert(arg.0.clone(), Variable {
-                var_type: arg.1.clone(),
-                decl: Declaration::Arg,
-                storage: Storage::Stack(BaseOffset(offset as u32))
+        for (arg_name, arg_type) in self.args.iter().rev() {
+            let byte_count: u8 = arg_type.byte_count(ctxt).try_into().unwrap();
+            let storage = match byte_count {
+                1 | 4 => {
+                    if let Some(regs) = ctxt.find_registers(byte_count, byte_count) {
+                        for r in &regs {
+                            registers_used.insert(*r);
+                        }
+                        Some(Storage::Register(regs[0]))
+                    } else {
+                        None
+                    }
+                }
+                _ => None
+            };
+
+            let storage = storage.unwrap_or_else(|| {
+                let s = Storage::Stack(BaseOffset(offset as u32));
+                offset += 4;
+                s
             });
-            offset += 4;
+
+            variables.insert(arg_name.clone(), Variable {
+                var_type: arg_type.clone(),
+                decl: Declaration::Arg,
+                storage,
+            });
         }
 
         // result

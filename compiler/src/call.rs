@@ -48,47 +48,70 @@ impl Call {
         }
 
         let ret_value_offset = ctxt.additional_offset;
-        
-        for (i,p) in self.parameters.iter().enumerate() {
-            let param_type = p.emit(ctxt);
-            assert_eq!(f.def.args[i].1, param_type);
-            match param_type.byte_count(ctxt.program) {
-                4 => {}
-                1 => {
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Pop8,
-                        source: format!("{:?} padding for arg{}", &self, i),
-                        args: vec![Value::Register(4)],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset -= 1;
+        let mut parameters_bytes = 0;
 
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::LoadImm8,
-                        source: format!("{:?} padding byte value for arg{}", &self, i),
-                        args: vec![Value::Register(0), Value::Constant8(0xCC)],
-                        resolved: None,
-                    });
-                    for b in 1..4 {
+        
+        for (i, (p, (var_name, var_type))) in self.parameters.iter().zip(f.def.args.iter()).enumerate() {
+            let param_type = p.emit(ctxt);
+            assert_eq!(var_type, &param_type);
+
+            let param_bytes: u8 = param_type.byte_count(ctxt.program).try_into().unwrap();
+
+            let var = &f.variables[var_name];
+            match var.storage {
+                Storage::FixedAddress(..) => panic!(),
+                Storage::Register(base_reg) => {
+                    for i in 0..param_bytes {
                         ctxt.add_inst(Instruction {
-                            opcode: Opcode::Push8,
-                            source: format!("{:?} padding byte {} for arg{}", &self, b, i),
-                            args: vec![Value::Register(0)],
+                            opcode: Opcode::Pop8,
+                            source: format!("{:?} popping to arg in reg", &self),
+                            args: vec![Value::Register(base_reg.0+i)],
                             resolved: None,
                         });
-                        ctxt.additional_offset += 1;
+                        ctxt.additional_offset -= 1;
                     }
-
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Push8,
-                        source: format!("{:?} padded byte for arg{}", &self, i),
-                        args: vec![Value::Register(4)],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset += 1;
                 }
-                _ => panic!()
-            };
+                Storage::Stack(_) => {
+                    match param_bytes {
+                        4 => {}
+                        1 => {
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Pop8,
+                                source: format!("{:?} padding for arg{}", &self, i),
+                                args: vec![Value::Register(4)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset -= 1;
+        
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::LoadImm8,
+                                source: format!("{:?} padding byte value for arg{}", &self, i),
+                                args: vec![Value::Register(0), Value::Constant8(0xCC)],
+                                resolved: None,
+                            });
+                            for b in 1..4 {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Push8,
+                                    source: format!("{:?} padding byte {} for arg{}", &self, b, i),
+                                    args: vec![Value::Register(0)],
+                                    resolved: None,
+                                });
+                                ctxt.additional_offset += 1;
+                            }
+        
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Push8,
+                                source: format!("{:?} padded byte for arg{}", &self, i),
+                                args: vec![Value::Register(4)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset += 1;
+                        }
+                        _ => panic!()
+                    }
+                    parameters_bytes += 4;
+                }
+            }
         }
 
         // store return address
@@ -114,8 +137,7 @@ impl Call {
             resolved: None,
         });
 
-        let parameters_bytes = self.parameters.len() as u32 * 4;
-
+        
         // discard paramters and padding and return address
         ctxt.add_inst(Instruction {
             opcode: Opcode::AddImm32IgnoreCarry,

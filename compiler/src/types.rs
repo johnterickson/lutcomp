@@ -18,10 +18,16 @@ impl NumberType {
 
 impl ByteSize for NumberType {
     fn byte_count(&self, _ctxt: &ProgramContext) -> u32 {
-        match self {
+        self.try_byte_count().unwrap()
+    }
+}
+
+impl TryByteSize for NumberType {
+    fn try_byte_count(&self) -> Option<u32> {
+        Some(match self {
             NumberType::U8 => 1,
             NumberType::USIZE => 4,
-        }
+        })
     }
 }
 
@@ -78,6 +84,10 @@ pub trait ByteSize {
     fn byte_count(&self, ctxt: &ProgramContext) -> u32;
 }
 
+pub trait TryByteSize {
+    fn try_byte_count(&self) -> Option<u32>;
+}
+
 impl ByteSize for Type {
     fn byte_count(&self, ctxt: &ProgramContext ) -> u32 {
         match self {
@@ -88,6 +98,18 @@ impl ByteSize for Type {
                 .expect(&format!("Could not find struct definition for '{}'.", struct_name))
                 .byte_count(ctxt),
             Type::Array(nt, count) => nt.byte_count(ctxt) * count
+        }
+    }
+}
+
+impl TryByteSize for Type {
+    fn try_byte_count(&self) -> Option<u32> {
+        match self {
+            Type::Void => panic!(),
+            Type::Number(nt) => nt.try_byte_count(),
+            Type::Ptr(_) => Some(4),
+            Type::Struct(_) => None,
+            Type::Array(nt, count) => nt.try_byte_count().map(|s| s * count),
         }
     }
 }

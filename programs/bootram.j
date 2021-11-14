@@ -6,24 +6,6 @@ fn getchar() -> u8 {
     return (tty & 127);
 }
 
-fn parseHexNibble(ch: char) -> u8 {
-    if (ch >= 'a') {
-        return ((ch - 'a') + 10);
-    }
-    if (ch <= '9') {
-        return (ch - '0');
-    }
-
-    return ((ch -'A') + 10);
-}
-
-fn parseHex(c: &char) -> u8 {
-    h: u8 := (16 * (parseHexNibble(*c)));
-    c := (c + 1);
-    h := (h + parseHexNibble(*c));
-    return h;
-}
-
 !include 'print_hex.j'
 
 fn main() -> u8 {

@@ -1,8 +1,16 @@
+use std::fmt::Debug;
+
 use super::*;
 use assemble::{Instruction, Value};
 
-#[derive(Debug, Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Register(pub u8);
+
+impl Debug for Register {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "r0x{:02x}", self.0)
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct BaseOffset(pub u32);
@@ -146,26 +154,9 @@ impl LogicalReference {
                         EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
                     }
                     (DerefOffset::None, 4) => {
-                        ctxt.add_inst(Instruction {
-                            source: format!("copying value to register {:?}", &self),
-                            opcode: Opcode::Or32,
-                            args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
-                            resolved: None,
-                        });
                         EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
-                        // if i != 0 {
-
-                        // }
                     }
                     (DerefOffset::None, byte_count) if byte_count >= 1 && byte_count <=3 => {
-                        for i in 0..byte_count as u8 {
-                            ctxt.add_inst(Instruction {
-                                source: format!("copying register {:?}", &self),
-                                opcode: Opcode::Or8,
-                                args: vec![Value::Register(r.0 + i), Value::Register(r.0 + i), Value::Register(i)],
-                                resolved: None,
-                            });
-                        }
                         EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
                     }
                     (d,b) => unimplemented!("{:?} is {:?} and does not fit in a register.", &final_type, &(d, b)),

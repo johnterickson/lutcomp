@@ -42,8 +42,11 @@ pub struct ProgramContext {
 }
 
 impl ProgramContext {
-    fn find_contiguous(&self, count: u8) -> Option<usize> {
+    fn find_contiguous(&self, count: u8, alignment: u8) -> Option<usize> {
         for (i, w) in self.registers_available.windows(count as usize).enumerate() {
+            if w[0].0 % alignment != 0 {
+                continue;
+            }
             let range = w.iter().max().unwrap().0 - w.iter().min().unwrap().0;
             if range + 1 == count {
                 return Some(i);
@@ -52,8 +55,8 @@ impl ProgramContext {
         None
     }
 
-    pub fn find_registers(&mut self, count: u8) -> Option<Vec<Register>> {
-        let first_r = self.find_contiguous(count);
+    pub fn find_registers(&mut self, count: u8, alignment: u8) -> Option<Vec<Register>> {
+        let first_r = self.find_contiguous(count, alignment);
         if let Some(first_r) = first_r {
             let v = self.registers_available[first_r..first_r+count as usize].to_vec();
             for _ in 0..count {

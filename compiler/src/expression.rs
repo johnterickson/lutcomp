@@ -52,7 +52,7 @@ impl ComparisonOperator {
 #[derive(Debug, Clone)]
 pub enum Expression {
     Ident(String),
-    Number(NumberType, i64),
+    Number(NumberType, u32),
     TtyIn(),
     Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
     Comparison(ComparisonOperator, Box<Expression>, Box<Expression>),
@@ -95,10 +95,16 @@ impl Expression {
         }
     }
 
-    pub fn try_get_const(&self) -> Option<i64> {
+    pub fn try_get_const(&self) -> Option<u32> {
         match self {
             Expression::Number(_, val) => Some(*val),
-            Expression::Cast{old_type:_, new_type:_, value} => value.try_get_const(),
+            Expression::Cast{old_type: _, new_type, value} => {
+                if let (Some(v), Some(new_size)) = (value.try_get_const(), new_type.try_byte_count()) {
+                    Some(v & ((1 << new_size)-1))
+                } else {
+                    None
+                }
+            },
             Expression::Arithmetic(op, left, right) => {
                 if let (Some(left), Some(right)) = (left.try_get_const(), right.try_get_const()) {
                     Some(match op {
@@ -168,17 +174,21 @@ impl Expression {
                 if old_type.is_none() {
                     *old_type = value.try_emit_type();
                 }
+
                 if let (Some(Type::Number(NumberType::U8)), Type::Number(NumberType::USIZE), Some(v)) = 
-                   (&old_type, &new_type, value.try_get_const())
+                       (&old_type, &new_type, value.try_get_const())
                 {
-                    (true, Some(Box::new(Expression::Number(NumberType::USIZE, v))))
-                } else if let (Some(Type::Number(NumberType::U8)), 4, Some(v)) = 
-                    (&old_type, &new_type.byte_count(ctxt), value.try_get_const())
+                    let v: u32 = v.try_into().unwrap();
+                    (true, Some(Box::new(Expression::Number(NumberType::USIZE, v.into()))))
+                }
+                else if let (Some(Type::Number(NumberType::U8)), 4, Some(v)) = 
+                              (&old_type, &new_type.byte_count(ctxt), value.try_get_const())
                 {
+                    let v: u32 = v.try_into().unwrap();
                     (true, Some(Box::new(Expression::Cast {
                         old_type: Some(Type::Number(NumberType::USIZE)),
                         new_type: new_type.clone(),
-                        value: Box::new(Expression::Number(NumberType::USIZE, v))
+                        value: Box::new(Expression::Number(NumberType::USIZE, v.into()))
                     })))
                 } else {
                     (value.optimize(ctxt), None)
@@ -241,7 +251,7 @@ impl Expression {
                         let (radix, skip) = if is_hex {(16,2)} else {(10,0)};
                         let number = number.as_str().trim();
                         let (_prefix, number)= number.split_at(skip);
-                        let number = i64::from_str_radix(number, radix)
+                        let number = u32::from_str_radix(number, radix)
                             .expect(&format!("Couldn't parse integer '{}'", number));
                         if number < 256 && !is_hex {
                             Expression::Number(NumberType::U8, number)
@@ -251,7 +261,7 @@ impl Expression {
                     }
                     Rule::char_literal => {
                         let number = number.into_inner().next().unwrap();
-                        Expression::Number(NumberType::U8, number.as_str().chars().next().unwrap() as u8 as i64)
+                        Expression::Number(NumberType::U8, number.as_str().chars().next().unwrap() as u8 as u32)
                     }
                     r => panic!("unexpected {:?}", &r)
                 }

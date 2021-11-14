@@ -4,13 +4,29 @@ use common::*;
 use compiler::*;
 use sim::*;
 use ucode::*;
-use std::{borrow::Cow, fs::File, io::Read, path::Path};
+use std::{borrow::Cow, collections::HashMap, fs::File, io::Read, path::Path};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     let arg1 = args.get(1).map(|s| s.as_str());
     let arg2 = args.get(2).map(|s| s.as_str());
-    let arg3 = args.get(3).map(|s| s.as_str());
+
+    let params = {
+        let mut params: HashMap<&str,_> = HashMap::new();
+        for arg in args.iter().skip(2) {
+            if arg.starts_with("--") {
+                if let Some((key,value)) = arg.split_once('=') {
+                    let key = key.trim_start_matches('-');
+                    params.insert(key, value.to_owned());
+                }
+            }
+        }
+        params
+    };
+
+    let get_param = |k| params.get(k).map(|s| s.as_str());
+
+    //let arg3 = args.get(3).map(|s| s.as_str());
     match arg1 {
         Some("ucode") => {
             ucode(true);
@@ -26,7 +42,7 @@ fn main() {
                 input
             };
             let rom = assemble_from_str(&input);
-            if arg3 == Some("sim") {
+            if let Some("true") = get_param("sim") {
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
                 c.stdin_out = true;
                 while c.step() { }
@@ -40,11 +56,12 @@ fn main() {
                 file.read_to_string(&mut input).unwrap();
                 input
             };
+            let entry = get_param("entry").unwrap_or("main");
             let (_program, assembly) = compile(
-                "main", &input, file_path.parent().unwrap());
+                entry, &input, file_path.parent().unwrap());
             let rom = assemble::assemble(assembly);
 
-            if arg3 == Some("sim") {
+            if let Some("true") = get_param("sim") {
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
                 c.stdin_out = true;
                 let mut last_ir0 = None;
@@ -59,7 +76,7 @@ fn main() {
         }
         Some("make_test") => {
             let rom = make_test();
-            if arg2 == Some("sim") {
+            if let Some("true") = get_param("sim") {
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
                 c.stdin_out = true;
                 while c.step() { }

@@ -8,13 +8,13 @@ extern crate strum;
 extern crate packed_struct;
 
 use common::*;
-use std::{collections::{BTreeMap, HashMap}, convert::TryInto};
+use std::{collections::{BTreeMap, HashMap}, convert::TryInto, fmt::Debug};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
 struct AssemblyParser;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Value {
     Constant8(u8),
     Constant24(u32),
@@ -23,6 +23,20 @@ pub enum Value {
     Label24(String),
     Label32(String),
     PcOffset(u32),
+}
+
+impl Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Constant8(arg0) => write!(f, "Constant8(0x{:02x}={})", arg0, arg0),
+            Self::Constant24(arg0) => write!(f, "Constant24(0x{:06x}={})", arg0, arg0),
+            Self::Constant32(arg0) => write!(f, "Constant32(0x{:08x}={})", arg0, arg0),
+            Self::Register(arg0) => write!(f, "Register(0x{:02x})", arg0),
+            Self::Label24(arg0) =>  write!(f, "Label24({})", arg0),
+            Self::Label32(arg0) => write!(f, "Label32({})", arg0),
+            Self::PcOffset(arg0) => write!(f, "PcOffset(0x{:08x})", arg0),
+        }
+    }
 }
 
 impl Value {
