@@ -214,70 +214,91 @@ impl Statement {
         // eprintln!("Emitting statement: {:?}", &self);
         match self {
             Statement::TtyOut{value} => {
-                value.emit(ctxt);
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Pop8,
-                    resolved: None,
-                    source: format!("{:?}", &self),
-                    args: vec![Value::Register(0)]
-                });
-                ctxt.additional_offset -= 1;
+                let (actual_reg, actual_type) = value.emit(ctxt, Some(Register(0)));
+                assert_eq!(actual_type.byte_count(ctxt.program), 1);
+                if let Some(reg) = actual_reg {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::TtyOut,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![reg.into()]
+                    });
+                } else {
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::Pop8,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(0)]
+                    });
+                    ctxt.additional_offset -= 1;
 
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::TtyOut,
-                    resolved: None,
-                    source: format!("{:?}", &self),
-                    args: vec![Value::Register(0)]
-                });
+                    ctxt.add_inst(Instruction {
+                        opcode: Opcode::TtyOut,
+                        resolved: None,
+                        source: format!("{:?}", &self),
+                        args: vec![Value::Register(0)]
+                    });
+                }
             },
             Statement::Declare{scope:_, name:_, var_type:_} => {}
             Statement::Assign{target, var_type, value} => {
 
-                let start_offset = ctxt.additional_offset;
+                let emit_addr_result = target.try_emit_address(ctxt, Register(0));
+                let (target_value_reg, type_in_reg)  = match emit_addr_result {
+                    EmitAddressResult::ValueInRegister{reg, value_type} => {
+                        if let Some(explicit_type) = var_type {
+                            assert_eq!(explicit_type, &value_type);
+                        }
+                        (Some(reg), value_type)
+                    }
+                    EmitAddressResult::AddressInRegister{reg: address_reg, ptr_type} => {
+                        for r in (0..4).rev() {
+                            let r = r + address_reg.0;
+                            ctxt.add_inst(Instruction {
+                                source: format!("storing address on stack {:?}", &self),
+                                opcode: Opcode::Push8,
+                                args: vec![Value::Register(r)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset += 1;
+                        }
+                        (None, ptr_type)
+                    }
+                };
 
-                let value_type = value.emit(ctxt); // calculate value
-                
+                let (actual_value_reg, value_type) = value.emit(ctxt, target_value_reg); // calculate value
+
                 if let Some(explicit_type) = var_type {
                     assert_eq!(explicit_type, &value_type);
                 }
 
                 let value_size = value_type.byte_count(ctxt.program);
                 assert!(value_size <= 4);
-                assert_eq!(start_offset + value_size, ctxt.additional_offset);
 
-                let emit_result= target.try_emit_address_to_reg0(ctxt);
-                match emit_result {
-                    EmitAddressResult::ValueInRegister{reg, value_type: type_in_reg} => {
-                        assert_eq!(value_type, type_in_reg);
+                match (target_value_reg, actual_value_reg) {
+                    (Some(target_value_reg), Some(actual_value_reg)) if target_value_reg == actual_value_reg => {
+                        assert_eq!(type_in_reg, value_type);
+                    },
+                    (None, None) => {
                         for i in 0..value_size as u8 {
                             ctxt.add_inst(Instruction {
                                 opcode: Opcode::Pop8,
                                 resolved: None,
                                 source: format!("reading value from stack {:?}", &self),
-                                args: vec![Value::Register(reg.0 + i)]
+                                args: vec![Value::Register(4+i)]
                             });
                             ctxt.additional_offset -= 1;
                         }
-                    }
-                    EmitAddressResult::AddressInReg0{ptr_type: ptr_to_stack_type} => {
-                        match ptr_to_stack_type {
-                            Type::Ptr(inner) => assert_eq!(inner.as_ref(), &value_type),
-                            _ => panic!("expected pointer")
-                        };
-                        assert_eq!(start_offset + value_size, ctxt.additional_offset);
-    
-                        for r in 0..value_size as u8 {
+                        for i in 0..4 {
                             ctxt.add_inst(Instruction {
                                 opcode: Opcode::Pop8,
                                 resolved: None,
-                                source: format!("reading value from stack {:?}", &self),
-                                args: vec![Value::Register(4 + r)]
+                                source: format!("reading addr from stack {:?}", &self),
+                                args: vec![Value::Register(i)]
                             });
                             ctxt.additional_offset -= 1;
                         }
-    
-                        assert_eq!(start_offset, ctxt.additional_offset);
-    
+                        
                         match value_size {
                             1 => {
                                 ctxt.add_inst(Instruction {
@@ -304,63 +325,77 @@ impl Statement {
                             s => panic!("Unexpected size {}", s)
                         }
                     }
+                    _ => unimplemented!(),
                 }
             },
             Statement::Return{ value } => {
-                let expression_type = value.emit(ctxt);
-                let byte_count = expression_type.byte_count(ctxt.program);
+
+                let (return_storage, return_type) = {
+                    let return_var = ctxt.find_var(RESULT);
+                    (return_var.storage.clone(), return_var.var_type.clone())
+                };
+
+                let byte_count = return_type.byte_count(ctxt.program);
                 assert!(byte_count <= 4);
-                for i in 0..byte_count {
-                    let r = i.try_into().unwrap();
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Pop8,
-                        resolved: None,
-                        source: format!("{:?}", &self),
-                        args: vec![Value::Register(r)]
-                    });
-                    ctxt.additional_offset -= 1;
-                }
 
-                let return_var = ctxt.find_var(RESULT);
-                let return_type = return_var.var_type.clone();
-
-                assert_eq!(return_type, expression_type);
-
-                match return_var.storage {
+                let target_reg = match return_storage {
                     Storage::FixedAddress(_) => panic!(),
                     Storage::Register(r) => {
                         assert_eq!(r.0, 0);
+                        Some(r)
                     },
-                    Storage::Stack(offset) => {
-                        let result_offset = ctxt.get_stack_offset(offset);
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::LoadImm32,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(4), Value::Constant32(result_offset as u32)]
-                        });
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Add32NoCarryIn,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(REG_SP),Value::Register(4), Value::Register(8)]
-                        });
-        
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Store32Part1,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![Value::Register(0), Value::Register(8)]
-                        });
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Store32Part2,
-                            resolved: None,
-                            source: format!("{:?}", &self),
-                            args: vec![]
-                        });
-                    }
+                    Storage::Stack(_) => None,
                 };
-        
+
+                let (actual_reg, expression_type) = value.emit(ctxt, target_reg);
+                assert_eq!(return_type, expression_type);
+                assert_eq!(actual_reg, target_reg);
+
+                match (target_reg, actual_reg, return_storage) {
+                    (Some(target_reg), Some(actual_reg), Storage::Register(final_reg))
+                        if target_reg == actual_reg && actual_reg == final_reg => {}
+                    (None, None, Storage::Stack(offset)) => {
+                        for i in 0..byte_count {
+                            let r = i.try_into().unwrap();
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Pop8,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(r)]
+                            });
+                            ctxt.additional_offset -= 1;
+
+                            let result_offset = ctxt.get_stack_offset(offset);
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::LoadImm32,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(4), Value::Constant32(result_offset as u32)]
+                            });
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Add32NoCarryIn,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(REG_SP),Value::Register(4), Value::Register(8)]
+                            });
+            
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Store32Part1,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![Value::Register(0), Value::Register(8)]
+                            });
+                            ctxt.add_inst(Instruction {
+                                opcode: Opcode::Store32Part2,
+                                resolved: None,
+                                source: format!("{:?}", &self),
+                                args: vec![]
+                            });
+                        }
+                    }
+                    _ => panic!(),
+                }
+                
                 ctxt.add_inst(Instruction {
                     opcode: Opcode::JmpImm,
                     source: format!("{:?}", &self),
@@ -419,10 +454,10 @@ impl Statement {
                                         }
                                         4 => {
                                             ctxt.add_inst(Instruction {
-                                                opcode: Opcode::Or32,
+                                                opcode: Opcode::Copy32,
                                                 resolved: None,
                                                 source: format!("save call result in target register {:?}", &self),
-                                                args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
+                                                args: vec![Value::Register(0), Value::Register(r.0)]
                                             });
                                         }
                                         _ => unimplemented!(),

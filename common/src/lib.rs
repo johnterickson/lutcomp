@@ -242,6 +242,15 @@ impl Opcode {
 pub const REG_SP: u8 = 0xC;
 pub const REGISTER_COUNT: u32 = 256;
 
+#[derive(Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
+pub struct Register(pub u8);
+
+impl std::fmt::Debug for Register {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "r0x{:02x}", self.0)
+    }
+}
+
 pub const MEM_BITS_PER_CHIP: u32 = 19;
 pub const CHIP_ADDRESS_MASK: u32 = (1 << MEM_BITS_PER_CHIP) - 1;
 pub const ADDRESS_BITS: u32 = 20;

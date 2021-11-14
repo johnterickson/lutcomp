@@ -1,16 +1,5 @@
-use std::fmt::Debug;
-
 use super::*;
 use assemble::{Instruction, Value};
-
-#[derive(Copy, Clone, PartialOrd, Ord, PartialEq, Eq)]
-pub struct Register(pub u8);
-
-impl Debug for Register {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "r0x{:02x}", self.0)
-    }
-}
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct BaseOffset(pub u32);
@@ -38,7 +27,7 @@ enum DerefOffset {
 
 #[derive(Debug)]
 pub enum EmitAddressResult {
-    AddressInReg0{ptr_type: Type},
+    AddressInRegister{reg: Register, ptr_type: Type},
     ValueInRegister{reg: Register, value_type: Type},
 }
 
@@ -84,7 +73,7 @@ impl LogicalReference {
 
 
 
-    pub fn try_emit_local_address_to_reg0(&self, ctxt: &mut FunctionContext, local_name: &str) -> EmitAddressResult {
+    pub fn try_emit_local_address(&self, ctxt: &mut FunctionContext, local_name: &str, target_register:Register) -> EmitAddressResult {
         let local = ctxt.find_var(local_name);
         // dbg!(&local);
 
@@ -109,7 +98,7 @@ impl LogicalReference {
                         ctxt.add_inst(Instruction {
                             source: format!("adding array index {:?}", &self),
                             opcode: Opcode::Add32NoCarryIn,
-                            args: vec![Value::Register(8), Value::Register(index_reg.0), Value::Register(0)],
+                            args: vec![Value::Register(8), Value::Register(index_reg.0), target_register.into()],
                             resolved: None,
                         });
                     },
@@ -117,13 +106,13 @@ impl LogicalReference {
                         ctxt.add_inst(Instruction {
                             source: format!("loading fixed address {:?}", &local_name),
                             opcode: Opcode::LoadImm32,
-                            args: vec![Value::Register(0), Value::Constant32(addr)],
+                            args: vec![target_register.into(), Value::Constant32(addr)],
                             resolved: None,
                         });
                     }
                     o => unimplemented!("{:?}", &o),
                 }
-                EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
+                EmitAddressResult::AddressInRegister{reg: target_register, ptr_type: Type::Ptr(Box::new(final_type))}
             }
             Storage::Register(r) => {
                 assert_eq!(0, mem_ref.local_offset);
@@ -132,31 +121,28 @@ impl LogicalReference {
                     (DerefOffset::Constant(c), _) => {
                         if c == 0 {
                             ctxt.add_inst(Instruction {
-                                source: format!("copying address to reg0 {:?}", &self),
-                                opcode: Opcode::Or32,
-                                args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
+                                source: format!("copying address to {:?} {:?}", &target_register, &self),
+                                opcode: Opcode::Copy32,
+                                args: vec![Value::Register(r.0), target_register.into()],
                                 resolved: None,
                             });
                         } else {
                             ctxt.add_inst(Instruction {
-                                source: format!("copying base address to reg0 {:?}", &self),
-                                opcode: Opcode::Or32,
-                                args: vec![Value::Register(r.0), Value::Register(r.0), Value::Register(0)],
+                                source: format!("copying base address to {:?} {:?}", &target_register, &self),
+                                opcode: Opcode::Copy32,
+                                args: vec![Value::Register(r.0), target_register.into()],
                                 resolved: None,
                             });
                             ctxt.add_inst(Instruction {
-                                source: format!("adding offset to register {:?}", &self),
+                                source: format!("adding offset to {:?} {:?}", &target_register, &self),
                                 opcode: Opcode::AddImm32IgnoreCarry,
-                                args: vec![Value::Register(0), Value::Constant32(c)],
+                                args: vec![target_register.into(), Value::Constant32(c)],
                                 resolved: None,
                             });
                         }
-                        EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
+                        EmitAddressResult::AddressInRegister{reg: target_register, ptr_type: Type::Ptr(Box::new(final_type))}
                     }
-                    (DerefOffset::None, 4) => {
-                        EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
-                    }
-                    (DerefOffset::None, byte_count) if byte_count >= 1 && byte_count <=3 => {
+                    (DerefOffset::None, byte_count) if byte_count >= 1 && byte_count <=4 => {
                         EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
                     }
                     (d,b) => unimplemented!("{:?} is {:?} and does not fit in a register.", &final_type, &(d, b)),
@@ -191,7 +177,7 @@ impl LogicalReference {
                         ctxt.add_inst(Instruction {
                             source: format!("adding array index {:?}", &self),
                             opcode: Opcode::Add32NoCarryIn,
-                            args: vec![Value::Register(8), Value::Register(index_reg.0), Value::Register(0)],
+                            args: vec![Value::Register(8), Value::Register(index_reg.0), target_register.into()],
                             resolved: None,
                         });
                     }
@@ -205,7 +191,7 @@ impl LogicalReference {
                         ctxt.add_inst(Instruction {
                             source: format!("reading base address from stack {:?}", &self),
                             opcode: Opcode::Load32,
-                            args: vec![Value::Register(4), Value::Register(0)],
+                            args: vec![Value::Register(4), target_register.into()],
                             resolved: None,
                         });
 
@@ -213,7 +199,7 @@ impl LogicalReference {
                             ctxt.add_inst(Instruction {
                                 source: format!("offseting pointer for field access {:?}", &self),
                                 opcode: Opcode::AddImm32IgnoreCarry,
-                                args: vec![Value::Register(0), Value::Constant32(deref_offset)],
+                                args: vec![target_register.into(), Value::Constant32(deref_offset)],
                                 resolved: None,
                             });
                         }
@@ -222,12 +208,12 @@ impl LogicalReference {
                         ctxt.add_inst(Instruction {
                             source: format!("calculating stack address {:?}", &self),
                             opcode: Opcode::Add32NoCarryIn,
-                            args: vec![Value::Register(REG_SP), Value::Register(8), Value::Register(0)],
+                            args: vec![Value::Register(REG_SP), Value::Register(8), target_register.into()],
                             resolved: None,
                         });
                     }
                 }
-                EmitAddressResult::AddressInReg0{ptr_type: Type::Ptr(Box::new(final_type))}
+                EmitAddressResult::AddressInRegister{reg: target_register, ptr_type: Type::Ptr(Box::new(final_type))}
             }
         }
     }

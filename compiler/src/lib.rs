@@ -182,9 +182,9 @@ fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
                     }
                     4 => {
                         program.push(AssemblyInputLine::Instruction(Instruction {
-                            opcode: Opcode::Or32,
+                            opcode: Opcode::Copy32,
                             source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
-                            args: vec![Value::Register(4*i), Value::Register(4*i), Value::Register(base_reg.0)],
+                            args: vec![Value::Register(4*i), Value::Register(base_reg.0)],
                             resolved: None
                         }));
                     }

@@ -52,24 +52,22 @@ impl Call {
 
         
         for (i, (p, (var_name, var_type))) in self.parameters.iter().zip(f.def.args.iter()).enumerate() {
-            let param_type = p.emit(ctxt);
+            let var = &f.variables[var_name];
+            let target_reg = match var.storage {
+                Storage::Register(reg) => Some(reg),
+                _ => None
+            };
+
+            let (actual_reg, param_type) = p.emit(ctxt, target_reg);
             assert_eq!(var_type, &param_type);
+            assert_eq!(actual_reg, target_reg);
 
             let param_bytes: u8 = param_type.byte_count(ctxt.program).try_into().unwrap();
 
-            let var = &f.variables[var_name];
             match var.storage {
                 Storage::FixedAddress(..) => panic!(),
                 Storage::Register(base_reg) => {
-                    for i in 0..param_bytes {
-                        ctxt.add_inst(Instruction {
-                            opcode: Opcode::Pop8,
-                            source: format!("{:?} popping to arg in reg", &self),
-                            args: vec![Value::Register(base_reg.0+i)],
-                            resolved: None,
-                        });
-                        ctxt.additional_offset -= 1;
-                    }
+                    assert_eq!(Some(base_reg), actual_reg);
                 }
                 Storage::Stack(_) => {
                     match param_bytes {

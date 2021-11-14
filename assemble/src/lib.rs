@@ -39,6 +39,12 @@ impl Debug for Value {
     }
 }
 
+impl From<Register> for Value {
+    fn from(r: Register) -> Self {
+        Value::Register(r.0)
+    }
+}
+
 impl Value {
     pub fn size(&self) -> u32 {
         match self {

@@ -23,6 +23,16 @@ impl ArithmeticOperator {
             op => panic!("Unknown op: {}", op),
         }
     }
+
+    fn is_symmetric(&self) -> bool {
+        match self {
+            ArithmeticOperator::Add => true,
+            ArithmeticOperator::Subtract => false,
+            ArithmeticOperator::Multiply => true,
+            ArithmeticOperator::Or => true,
+            ArithmeticOperator::And => true,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -325,8 +335,10 @@ impl Expression {
             panic!("expected comparison expression, but found: {:?}", &self);
         };
 
-        let left_type = left.emit(ctxt);
-        let right_type = right.emit(ctxt);
+        let (actual_left_reg, left_type) = left.emit(ctxt, None);
+        assert_eq!(actual_left_reg, None);
+        let (actual_right_reg, right_type) = right.emit(ctxt, None);
+        assert_eq!(actual_right_reg, None);
 
         let size = left_type.byte_count(ctxt.program);
         if size != right_type.byte_count(ctxt.program) {
@@ -424,101 +436,154 @@ impl Expression {
         });
     }
 
-    fn emit_ref(&self, ctxt: &mut FunctionContext, reference: &LogicalReference, local_name: &str) -> Type {
-        let emit_result = reference.try_emit_local_address_to_reg0(ctxt, local_name);
+    fn emit_ref(&self, ctxt: &mut FunctionContext, reference: &LogicalReference, local_name: &str, target_register: Option<Register>) -> (Option<Register>,Type) {
+        let emit_result = reference.try_emit_local_address(ctxt, local_name, target_register.unwrap_or(Register(0)));
         match emit_result {
-            EmitAddressResult::AddressInReg0{ptr_type: ptr_to_stack_type} => {
+            EmitAddressResult::AddressInRegister{reg: address_reg, ptr_type: ptr_to_stack_type} => {
                 match ptr_to_stack_type {
                     Type::Ptr(inner) => {
                         let size = inner.byte_count(ctxt.program);
-                        match size {
+                        let actual_reg = match size {
                             1 => {
-                                ctxt.add_inst(Instruction {
-                                    source: format!("loading final value from memory {:?}", &self),
-                                    opcode: Opcode::Load8,
-                                    args: vec![Value::Register(0), Value::Register(4)],
-                                    resolved: None,
-                                });
-                                ctxt.add_inst(Instruction {
-                                    source: format!("storing loaded value {:?}", &self),
-                                    opcode: Opcode::Push8,
-                                    args: vec![Value::Register(4)],
-                                    resolved: None,
-                                });
-                                ctxt.additional_offset += 1;
-                            }
-                            4 => {
-                                ctxt.add_inst(Instruction {
-                                    source: format!("loading final value from memory {:?}", &self),
-                                    opcode: Opcode::Load32,
-                                    args: vec![Value::Register(0), Value::Register(4)],
-                                    resolved: None,
-                                });
-
-                                for r in (0..4).rev() {
+                                if let Some(target_register) = target_register {
+                                    ctxt.add_inst(Instruction {
+                                        source: format!("loading final value from memory {:?}", &self),
+                                        opcode: Opcode::Load8,
+                                        args: vec![address_reg.into(), target_register.into()],
+                                        resolved: None,
+                                    });
+                                    Some(target_register)
+                                } else {
+                                    ctxt.add_inst(Instruction {
+                                        source: format!("loading final value from memory {:?}", &self),
+                                        opcode: Opcode::Load8,
+                                        args: vec![address_reg.into(), Value::Register(4)],
+                                        resolved: None,
+                                    });
                                     ctxt.add_inst(Instruction {
                                         source: format!("storing loaded value {:?}", &self),
                                         opcode: Opcode::Push8,
-                                        args: vec![Value::Register(4 + r)],
+                                        args: vec![Value::Register(4)],
                                         resolved: None,
                                     });
                                     ctxt.additional_offset += 1;
+                                    None
+                                }
+                            }
+                            4 => {
+                                if let Some(target_register) = target_register {
+                                    ctxt.add_inst(Instruction {
+                                        source: format!("loading final value from memory {:?}", &self),
+                                        opcode: Opcode::Load32,
+                                        args: vec![address_reg.into(), target_register.into()],
+                                        resolved: None,
+                                    });
+                                    Some(target_register)
+                                } else {
+                                    ctxt.add_inst(Instruction {
+                                        source: format!("loading final value from memory {:?}", &self),
+                                        opcode: Opcode::Load32,
+                                        args: vec![address_reg.into(), Value::Register(4)],
+                                        resolved: None,
+                                    });
+
+                                    for r in (0..4).rev() {
+                                        let r = r + address_reg.0;
+                                        ctxt.add_inst(Instruction {
+                                            source: format!("storing loaded value {:?}", &self),
+                                            opcode: Opcode::Push8,
+                                            args: vec![Value::Register(4 + r)],
+                                            resolved: None,
+                                        });
+                                        ctxt.additional_offset += 1;
+                                    }
+                                    None
                                 }
                             }
                             _ => panic!("don't know how to handle size {}", size)
-                        }
-                        *inner
+                        };
+                        (actual_reg, *inner)
                     }
                     _ => panic!(),
                 }
             }
             EmitAddressResult::ValueInRegister{reg, value_type} => {
-                match value_type.byte_count(ctxt.program) {
+                let actual_reg = match value_type.byte_count(ctxt.program) {
                     1 => {
-                        ctxt.add_inst(Instruction {
-                            source: format!("storing loaded value {:?}", &self),
-                            opcode: Opcode::Push8,
-                            args: vec![Value::Register(reg.0)],
-                            resolved: None,
-                        });
-                        ctxt.additional_offset += 1;
-                    }
-                    4 => {
-                        for i in (0..4).rev() {
+                        if let Some(target_register) = target_register {
+                            ctxt.add_inst(Instruction {
+                                source: format!("loading final value from reg {:?}", &self),
+                                opcode: Opcode::Or8,
+                                args: vec![reg.into(), reg.into(), target_register.into()],
+                                resolved: None,
+                            });
+                            Some(target_register)
+                        } else {
                             ctxt.add_inst(Instruction {
                                 source: format!("storing loaded value {:?}", &self),
                                 opcode: Opcode::Push8,
-                                args: vec![Value::Register(reg.0+i)],
+                                args: vec![Value::Register(reg.0)],
                                 resolved: None,
                             });
                             ctxt.additional_offset += 1;
+                            None
+                        }
+                    }
+                    4 => {
+                        if let Some(target_register) = target_register {
+                            ctxt.add_inst(Instruction {
+                                source: format!("loading final value from reg {:?}", &self),
+                                opcode: Opcode::Copy32,
+                                args: vec![reg.into(), target_register.into()],
+                                resolved: None,
+                            });
+                            Some(target_register)
+                        } else {
+                            for i in (0..4).rev() {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("storing loaded value {:?}", &self),
+                                    opcode: Opcode::Push8,
+                                    args: vec![Value::Register(reg.0+i)],
+                                    resolved: None,
+                                });
+                                ctxt.additional_offset += 1;
+                            }
+                            None
                         }
                     }
                     _ => unimplemented!()
-                }
-                value_type
+                };
+                (actual_reg, value_type)
             }
         }
     }
 
-    pub fn try_emit_address_to_reg0(&self, ctxt: &mut FunctionContext) -> EmitAddressResult {
+    pub fn try_emit_address(&self, ctxt: &mut FunctionContext, target_register: Register) -> EmitAddressResult {
         let t = match self {
             Expression::Ident(local_name) => {
-                LogicalReference::Local.try_emit_local_address_to_reg0(ctxt, local_name)
+                LogicalReference::Local.try_emit_local_address(ctxt, local_name, target_register)
             }
             Expression::Index(local_name, index_exp) => {
-                let index_type = index_exp.emit(ctxt);
+                let target_index_reg = Register(0);
+                let (actual_reg, index_type) = index_exp.emit(ctxt, Some(target_index_reg));
                 let byte_count = index_type.byte_count(ctxt.program) as u8;
 
-                for r in 0..byte_count {
-                    ctxt.add_inst(Instruction {
-                        source: format!("popping index off stack {:?}", &self),
-                        opcode: Opcode::Pop8,
-                        args: vec![Value::Register(r)],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset -= 1;
-                }
+                let actual_reg = match actual_reg {
+                    Some(r) if r == target_index_reg => target_index_reg,
+                    None => {
+                        for r in 0..byte_count {
+                            ctxt.add_inst(Instruction {
+                                source: format!("popping index off stack {:?}", &self),
+                                opcode: Opcode::Pop8,
+                                args: vec![Value::Register(r)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset -= 1;
+                        }
+                        Register(0)
+                    }
+                    _ => panic!(),
+                };
 
                 for r in byte_count..4 {
                     ctxt.add_inst(Instruction {
@@ -530,30 +595,36 @@ impl Expression {
                 }
 
                 LogicalReference::ArrayIndex{
-                    index_reg: Register(0),
+                    index_reg: actual_reg,
                     multiplier: 1
-                }.try_emit_local_address_to_reg0(ctxt, local_name)
+                }.try_emit_local_address(ctxt, local_name, target_register)
             },
             Expression::Deref(inner) => {
-                let inner_type = inner.emit(ctxt);
+                let (actual_reg, inner_type) = inner.emit(ctxt, Some(target_register));
 
-                for r in 0..4 {
-                    ctxt.add_inst(Instruction {
-                        source: format!("popping address off stack {:?}", &self),
-                        opcode: Opcode::Pop8,
-                        args: vec![Value::Register(r)],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset -= 1;
+                match actual_reg {
+                    Some(Register(0)) => {},
+                    None => {
+                        for r in 0..4 {
+                            ctxt.add_inst(Instruction {
+                                source: format!("popping address off stack {:?}", &self),
+                                opcode: Opcode::Pop8,
+                                args: vec![Value::Register(r)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset -= 1;
+                        }
+                    }
+                    _ => panic!(),
                 }
-
-                EmitAddressResult::AddressInReg0{ptr_type: inner_type}
+                
+                EmitAddressResult::AddressInRegister{reg: Register(0), ptr_type: inner_type}
             },
             Expression::LocalFieldDeref(local_name, field_name) => {
-                LogicalReference::LocalField(field_name.to_owned()).try_emit_local_address_to_reg0(ctxt, local_name)
+                LogicalReference::LocalField(field_name.to_owned()).try_emit_local_address(ctxt, local_name, target_register)
             }
             Expression::PtrFieldDeref(local_name, field_name) => {
-                LogicalReference::DerefField(field_name.to_owned()).try_emit_local_address_to_reg0(ctxt, local_name)
+                LogicalReference::DerefField(field_name.to_owned()).try_emit_local_address(ctxt, local_name, target_register)
             }
             _ => {
                 panic!("Don't know how to emit address of {:?}", self);
@@ -565,56 +636,91 @@ impl Expression {
         t
     }
 
-    pub fn emit(&self, ctxt: &mut FunctionContext) -> Type {
+    pub fn emit(&self, ctxt: &mut FunctionContext, target_register: Option<Register>) -> (Option<Register>,Type) {
         // dbg!(&self);
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluating expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));
         let result = match self {
-            Expression::Call(args) => {
-                let t = args.emit(ctxt);
-                for r in (0..t.byte_count(ctxt.program)).rev() {
-                    ctxt.add_inst(Instruction {
-                        source: format!("pushing result on stack {:?}", &self),
-                        opcode: Opcode::Push8,
-                        args: vec![Value::Register(r.try_into().unwrap())],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset += 1;
-                }
-                t
-            }
-            Expression::Optimized{original:_, optimized} => {
-                optimized.emit(ctxt)
-            }
-            Expression::AddressOf(inner) => {
-                let emit_result = inner.try_emit_address_to_reg0(ctxt);
-
-                match emit_result {
-                    EmitAddressResult::ValueInRegister{..} => 
-                        panic!("Address cannot be determined because value is in register: {:?}", &self),
-                    EmitAddressResult::AddressInReg0{ptr_type: ptr_to_stack_type} => {
-                        for r in (0..4).rev() {
+            Expression::Call(call) => {
+                let t = call.emit(ctxt);
+                match target_register {
+                    Some(Register(0)) => {
+                        (Some(Register(0)), t)
+                    }
+                    None => {
+                        for r in (0..t.byte_count(ctxt.program)).rev() {
                             ctxt.add_inst(Instruction {
-                                source: format!("pushing deref result {:?}", &self),
+                                source: format!("pushing result on stack {:?}", &self),
                                 opcode: Opcode::Push8,
-                                args: vec![Value::Register(r)],
+                                args: vec![Value::Register(r.try_into().unwrap())],
                                 resolved: None,
                             });
                             ctxt.additional_offset += 1;
                         }
-                        ptr_to_stack_type
+                        (None, t)
+                    }
+                    Some(r) => {
+                        match t.byte_count(ctxt.program) {
+                            1 => {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("pushing result on stack {:?}", &self),
+                                    opcode: Opcode::Or8,
+                                    args: vec![Value::Register(0), Value::Register(0), r.into()],
+                                    resolved: None,
+                                });
+                            }
+                            4 => {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("copying result to register {:?}", &self),
+                                    opcode: Opcode::Copy32,
+                                    args: vec![Value::Register(0), r.into()],
+                                    resolved: None,
+                                });
+                            }
+                            _ => unimplemented!(),
+                        }
+                        (Some(r), t)
+                    }
+                }
+            }
+            Expression::Optimized{original:_, optimized} => {
+                optimized.emit(ctxt, target_register)
+            }
+            Expression::AddressOf(inner) => {
+                let address_register = target_register.unwrap_or(Register(0));
+                let emit_result = inner.try_emit_address(ctxt, address_register);
+
+                match emit_result {
+                    EmitAddressResult::ValueInRegister{..} => 
+                        panic!("Address cannot be determined because value is in register: {:?}", &self),
+                    EmitAddressResult::AddressInRegister{reg, ptr_type: ptr_to_stack_type} => {
+                        if let Some(r) = target_register {
+                            (Some(r), ptr_to_stack_type)
+                        } else {
+                            for r in (0..4).rev() {
+                                let r = r + reg.0;
+                                ctxt.add_inst(Instruction {
+                                    source: format!("pushing deref result {:?}", &self),
+                                    opcode: Opcode::Push8,
+                                    args: vec![Value::Register(r)],
+                                    resolved: None,
+                                });
+                                ctxt.additional_offset += 1;
+                            }
+                            (None, ptr_to_stack_type)
+                        }
                     }
                 }
             }
             Expression::Cast{old_type, new_type, value} => {
-                let emitted_type = value.emit(ctxt);
+                let (actual_reg, emitted_type) = value.emit(ctxt, target_register);
                 if let Some(old_type) = old_type {
                     assert_eq!(old_type, &emitted_type);
                 }
                 assert_eq!(emitted_type.byte_count(ctxt.program), new_type.byte_count(ctxt.program));
-                new_type.clone()
+                (actual_reg, new_type.clone())
             }
             Expression::Ident(name) => {
-                self.emit_ref(ctxt, &LogicalReference::Local, name)
+                self.emit_ref(ctxt, &LogicalReference::Local, name, target_register)
             },
             Expression::Index(name, index) => {
                 let (local_is_ptr, entry_type) = {
@@ -665,133 +771,194 @@ impl Expression {
 
                 deref.optimize(ctxt.program);
 
-                deref.emit(ctxt)
+                deref.emit(ctxt, target_register)
             },
             Expression::LocalFieldDeref(local_name, field_name) => {
                 let reference = LogicalReference::LocalField(field_name.to_owned());
-                self.emit_ref(ctxt, &reference, local_name)
+                self.emit_ref(ctxt, &reference, local_name, target_register)
             }
             Expression::PtrFieldDeref(local_name, field_name) => {
                 let reference = LogicalReference::DerefField(field_name.to_owned());
-                self.emit_ref(ctxt, &reference, local_name)
+                self.emit_ref(ctxt, &reference, local_name, target_register)
             }
             Expression::Deref(inner) => {
-                let ptr_type = inner.emit(ctxt); 
+                let address_reg = 4;
+                let (actual_reg, ptr_type) = inner.emit(ctxt, Some(Register(address_reg))); 
                 let inner_type = match ptr_type {
                     Type::Ptr(inner) => inner.as_ref().clone(),
                     other => panic!("Expected a pointer but found {:?}", other),
                 };
 
-                for r in 4..8 {
-                    ctxt.add_inst(Instruction {
-                        source: format!("popping address off stack {:?}", &self),
-                        opcode: Opcode::Pop8,
-                        args: vec![Value::Register(r)],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset -= 1;
+                match actual_reg {
+                    None => {
+                        for r in 0..4 {
+                            let r = r + address_reg;
+                            ctxt.add_inst(Instruction {
+                                source: format!("popping address off stack {:?}", &self),
+                                opcode: Opcode::Pop8,
+                                args: vec![Value::Register(r)],
+                                resolved: None,
+                            });
+                            ctxt.additional_offset -= 1;
+                        }
+                    }
+                    Some(r) if r.0 == address_reg => { }
+                    _ => panic!()
                 }
+                
 
-                match inner_type.byte_count(ctxt.program) {
-                    1 => {
+                if let Some(target_register) = target_register {
+                    match inner_type.byte_count(ctxt.program) {
+                        1 => {
+                            ctxt.add_inst(Instruction {
+                                source: format!("fetching deref {:?}", &self),
+                                opcode: Opcode::Load8,
+                                args: vec![Value::Register(4), target_register.into()],
+                                resolved: None,
+                            });
+                        }
+                        4 => {
+                            ctxt.add_inst(Instruction {
+                                source: format!("fetching deref {:?}", &self),
+                                opcode: Opcode::Load32,
+                                args: vec![Value::Register(4), target_register.into()],
+                                resolved: None,
+                            });
+                        }
+                        _ => unimplemented!(),
+                    }
+                } else {
+                    match inner_type.byte_count(ctxt.program) {
+                        1 => {
+                            ctxt.add_inst(Instruction {
+                                source: format!("fetching deref {:?}", &self),
+                                opcode: Opcode::Load8,
+                                args: vec![Value::Register(4), Value::Register(0)],
+                                resolved: None,
+                            });
+                        }
+                        4 => {
+                            ctxt.add_inst(Instruction {
+                                source: format!("fetching deref {:?}", &self),
+                                opcode: Opcode::Load32,
+                                args: vec![Value::Register(4), Value::Register(0)],
+                                resolved: None,
+                            });
+                        }
+                        _ => unimplemented!(),
+                    }
+
+                    for r in (0..inner_type.byte_count(ctxt.program)).rev() {
                         ctxt.add_inst(Instruction {
-                            source: format!("fetching deref {:?}", &self),
-                            opcode: Opcode::Load8,
-                            args: vec![Value::Register(4), Value::Register(0)],
+                            source: format!("pushing deref result {:?}", &self),
+                            opcode: Opcode::Push8,
+                            args: vec![Value::Register(r.try_into().unwrap())],
                             resolved: None,
                         });
+                        ctxt.additional_offset += 1;
                     }
-                    4 => {
-                        ctxt.add_inst(Instruction {
-                            source: format!("fetching deref {:?}", &self),
-                            opcode: Opcode::Load32,
-                            args: vec![Value::Register(4), Value::Register(0)],
-                            resolved: None,
-                        });
-                    }
-                    _ => unimplemented!(),
                 }
 
-                for r in (0..inner_type.byte_count(ctxt.program)).rev() {
-                    ctxt.add_inst(Instruction {
-                        source: format!("pushing deref result {:?}", &self),
-                        opcode: Opcode::Push8,
-                        args: vec![Value::Register(r.try_into().unwrap())],
-                        resolved: None,
-                    });
-                    ctxt.additional_offset += 1;
-                }
-
-                inner_type
+                (target_register, inner_type)
             }
             Expression::Number(t, n) => {
                 match t {
                     NumberType::U8 => {
                         let n: u8 = (*n).try_into().expect(&format!("Couldn't cast {} to U8", *n));
-                        ctxt.add_inst(Instruction {
-                            source: format!("{:?}", &self),
-                            opcode: Opcode::LoadImm8,
-                            args: vec![Value::Register(0), Value::Constant8(n)],
-                            resolved: None,
-                        });
-    
-                        ctxt.add_inst(Instruction {
-                            source: format!("{:?}", &self),
-                            opcode: Opcode::Push8,
-                            args: vec![Value::Register(0)],
-                            resolved: None,
-                        });
-                        ctxt.additional_offset += 1;
-                    }
-                    NumberType::USIZE => {
-                        let n: u32 = (*n).try_into().expect(&format!("Couldn't cast {} to UPTR", *n));
-                        ctxt.add_inst(Instruction {
-                            source: format!("{:?}", &self),
-                            opcode: Opcode::LoadImm32,
-                            args: vec![Value::Register(0), Value::Constant32(n)],
-                            resolved: None,
-                        });
-                        for r in (0..4).rev() {
+                        
+                        if let Some(target_register) = target_register {
+                            ctxt.add_inst(Instruction {
+                                source: format!("{:?}", &self),
+                                opcode: Opcode::LoadImm8,
+                                args: vec![target_register.into(), Value::Constant8(n)],
+                                resolved: None,
+                            });
+                        } else {
+                            ctxt.add_inst(Instruction {
+                                source: format!("{:?}", &self),
+                                opcode: Opcode::LoadImm8,
+                                args: vec![Value::Register(0), Value::Constant8(n)],
+                                resolved: None,
+                            });
+
                             ctxt.add_inst(Instruction {
                                 source: format!("{:?}", &self),
                                 opcode: Opcode::Push8,
-                                args: vec![Value::Register(r)],
+                                args: vec![Value::Register(0)],
                                 resolved: None,
                             });
                             ctxt.additional_offset += 1;
                         }
                     }
+                    NumberType::USIZE => {
+                        let n: u32 = (*n).try_into().expect(&format!("Couldn't cast {} to UPTR", *n));
+                        if let Some(target_register) = target_register {
+                            ctxt.add_inst(Instruction {
+                                source: format!("{:?}", &self),
+                                opcode: Opcode::LoadImm32,
+                                args: vec![target_register.into(), Value::Constant32(n)],
+                                resolved: None,
+                            });
+                        } else {
+                            ctxt.add_inst(Instruction {
+                                source: format!("{:?}", &self),
+                                opcode: Opcode::LoadImm32,
+                                args: vec![Value::Register(0), Value::Constant32(n)],
+                                resolved: None,
+                            });
+                            for r in (0..4).rev() {
+                                ctxt.add_inst(Instruction {
+                                    source: format!("{:?}", &self),
+                                    opcode: Opcode::Push8,
+                                    args: vec![Value::Register(r)],
+                                    resolved: None,
+                                });
+                                ctxt.additional_offset += 1;
+                            }
+                        }
+                    }
                 }
-                Type::Number(*t)
+                (target_register, Type::Number(*t))
             },
             Expression::TtyIn() => {
-                ctxt.add_inst(Instruction {
-                    source: format!("{:?}", &self),
-                    opcode: Opcode::TtyIn,
-                    args: vec![Value::Register(0)],
-                    resolved: None,
-                });
+                if let Some(target_register) = target_register {
+                    ctxt.add_inst(Instruction {
+                        source: format!("{:?}", &self),
+                        opcode: Opcode::TtyIn,
+                        args: vec![target_register.into()],
+                        resolved: None,
+                    });
+                } else {
+                    ctxt.add_inst(Instruction {
+                        source: format!("{:?}", &self),
+                        opcode: Opcode::TtyIn,
+                        args: vec![Value::Register(0)],
+                        resolved: None,
+                    });
 
-                ctxt.add_inst(Instruction {
-                    source: format!("{:?}", &self),
-                    opcode: Opcode::Push8,
-                    args: vec![Value::Register(0)],
-                    resolved: None,
-                });
-                ctxt.additional_offset += 1;
-                Type::Number(NumberType::U8)
+                    ctxt.add_inst(Instruction {
+                        source: format!("{:?}", &self),
+                        opcode: Opcode::Push8,
+                        args: vec![Value::Register(0)],
+                        resolved: None,
+                    });
+                    ctxt.additional_offset += 1;
+                }
+                (target_register, Type::Number(NumberType::U8))
             }
             Expression::Arithmetic(op, left, right) => {
                 
                 // left in 4..8; right in 8..C, result in 0 (&1)
-                let left_emit_type = left.emit(ctxt);
+                let (_, left_emit_type) = left.emit(ctxt, None);
                 let (left_math_type, left_result_type) = match left_emit_type {
                     Type::Number(nt) => (nt, None),
                     Type::Ptr(_) => (NumberType::USIZE, Some(left_emit_type)),
                     _ => panic!("can't do math on {:?}", left_emit_type),
                 };
 
-                let right_emit_type = right.emit(ctxt);
+                let (right_reg, right_emit_type) = right.emit(ctxt, Some(Register(8)));
+                assert_eq!(right_reg, Some(Register(8)));
+                let right_reg = right_reg.unwrap().0;
                 let (right_math_type, right_result_type) = match right_emit_type {
                     Type::Number(nt) => (nt, None),
                     Type::Ptr(_) => (NumberType::USIZE, Some(right_emit_type)),
@@ -811,24 +978,23 @@ impl Expression {
 
                 // dbg!((&left_math_type, &right_math_type, op_math_type, &final_result_type));
 
-                let right_reg: u8 = 8;
-                for i in 0..(right_math_type.byte_count(ctxt.program)) {
-                    let r = (right_reg as u32 + i).try_into().unwrap();
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Pop8,
-                        resolved: None,
-                        source: format!("pop right {:?}", &self),
-                        args: vec![Value::Register(r)]
-                    });
-                    ctxt.additional_offset -= 1;
-                }
+                // let right_reg: u8 = 8;
+                // for i in 0..(right_math_type.byte_count(ctxt.program)) {
+                //     let r = (right_reg as u32 + i).try_into().unwrap();
+                //     ctxt.add_inst(Instruction {
+                //         opcode: Opcode::Pop8,
+                //         resolved: None,
+                //         source: format!("pop right {:?}", &self),
+                //         args: vec![Value::Register(r)]
+                //     });
+                //     ctxt.additional_offset -= 1;
+                // }
 
                 for i in right_math_type.byte_count(ctxt.program)..op_math_type.byte_count(ctxt.program) {
-                    let r = (right_reg as u32 + i).try_into().unwrap();
                     ctxt.add_inst(Instruction {
                         source: format!("zero ext right {:?}", &self),
                         opcode: Opcode::LoadImm8,
-                        args: vec![Value::Register(r), Value::Constant8(0)],
+                        args: vec![Value::Register(right_reg + i as u8), Value::Constant8(0)],
                         resolved: None,
                     });
                 }
@@ -855,7 +1021,7 @@ impl Expression {
                     });
                 }
 
-                let result_reg = 0;
+                let result_reg = target_register.unwrap_or(Register(0));
 
                 match op {
                     ArithmeticOperator::And => {
@@ -865,7 +1031,7 @@ impl Expression {
                                     opcode: Opcode::And8,
                                     resolved: None,
                                     source: format!("u8 and {:?}", &self),
-                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
                                 });
                             }
                             NumberType::USIZE => {
@@ -873,7 +1039,7 @@ impl Expression {
                                     opcode: Opcode::And32,
                                     resolved: None,
                                     source: format!("uptr and {:?}", &self),
-                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
                                 });
                             }
                         }
@@ -885,7 +1051,7 @@ impl Expression {
                                     opcode: Opcode::Add8NoCarry,
                                     resolved: None,
                                     source: format!("u8 add {:?}", &self),
-                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
                                 });
                             }
                             NumberType::USIZE => {
@@ -893,7 +1059,7 @@ impl Expression {
                                     opcode: Opcode::Add32NoCarryIn,
                                     resolved: None,
                                     source: format!("uptr add {:?}", &self),
-                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
                                 });
                             }
                         }
@@ -905,16 +1071,22 @@ impl Expression {
                                     opcode: Opcode::Or8,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
                                 });
                             }
-                            NumberType::USIZE => unimplemented!(),
+                            NumberType::USIZE => {
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Or32,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
+                                });
+                            }
                         }
                     },
                     ArithmeticOperator::Multiply => {
                         match op_math_type {
                             NumberType::U8 => {
-                                assert_eq!(0, result_reg);
                                 ctxt.add_inst(Instruction {
                                     opcode: Opcode::Mul8Part1,
                                     resolved: None,
@@ -927,6 +1099,14 @@ impl Expression {
                                     source: format!("{:?}", &self),
                                     args: vec![]
                                 });
+                                if result_reg.0 != 0 {
+                                    ctxt.add_inst(Instruction {
+                                        opcode: Opcode::Or8,
+                                        resolved: None,
+                                        source: format!("{:?}", &self),
+                                        args: vec![Value::Register(0), Value::Register(0), result_reg.into()]
+                                    });
+                                }
                             }
                             NumberType::USIZE => unimplemented!()
                         }
@@ -944,7 +1124,7 @@ impl Expression {
                                     opcode: Opcode::Add8NoCarry,
                                     resolved: None,
                                     source: format!("{:?}", &self),
-                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
                                 });
                             }
                             NumberType::USIZE => {
@@ -966,25 +1146,27 @@ impl Expression {
                                     opcode: Opcode::Add32NoCarryIn,
                                     resolved: None,
                                     source: format!("uptr sub {:?}", &self),
-                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), Value::Register(result_reg)]
+                                    args: vec![Value::Register(left_reg), Value::Register(right_reg), result_reg.into()]
                                 });
                             }
                         }
                     },
                 }
 
-                for i in (0..op_math_type.byte_count(ctxt.program)).rev() {
-                    let r = (result_reg as u32 + i).try_into().unwrap();
-                    ctxt.add_inst(Instruction {
-                        opcode: Opcode::Push8,
-                        resolved: None,
-                        source: format!("store result of expression {:?}", &self),
-                        args: vec![Value::Register(r)]
-                    });
-                    ctxt.additional_offset += 1;
+                if None == target_register {
+                    for i in (0..op_math_type.byte_count(ctxt.program) as u8).rev() {
+                        let r = (result_reg.0 + i).try_into().unwrap();
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::Push8,
+                            resolved: None,
+                            source: format!("store result of expression {:?}", &self),
+                            args: vec![Value::Register(r)]
+                        });
+                        ctxt.additional_offset += 1;
+                    }
                 }
 
-                final_result_type
+                (target_register, final_result_type)
             },
             Expression::Comparison(_,_,_) => panic!("cannot evaluate comparison expression.")
         };
