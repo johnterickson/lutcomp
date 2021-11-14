@@ -1,5 +1,5 @@
 fn main() -> u8 {
-    sum:u8 := seven();
+    sum:u8 = seven();
     return sum;
 }
 

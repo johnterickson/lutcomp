@@ -5,13 +5,13 @@ struct  request {
 }
 
 fn add(r: &request) {
-    r->sum := (r->in1 + r->in2);
+    r->sum = (r->in1 + r->in2);
 }
 
 fn test_add(x: usize, y: usize) -> usize {
     r:request;
-    r.in1 := x;
-    r.in2 := y;
+    r.in1 = x;
+    r.in2 = y;
     add(&r);
     return r.sum;
 }

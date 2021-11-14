@@ -19,28 +19,18 @@ impl FunctionDefinition {
         where F : FnMut(&String, Option<&Scope>, Option<&Type>),
     {
         match s {
-            Statement::Assign{target, var_type, value:_} => {
+            Statement::Assign{target, var_type, value} => {
+                let value_type = value.try_emit_type(ctxt);
+                let var_type = var_type.as_ref().or(value_type.as_ref());
                 match target {
                     Expression::Ident(name) => {
-                        visitor(name, None, var_type.as_ref());
+                        visitor(name, None, var_type);
                     }
                     _ => {}
                 }
             }
             Statement::Declare {scope, name: local, var_type} => {
                 visitor(local, Some(scope), Some(var_type));
-            }
-            Statement::CallAssign{ name: local, var_type, call}  => {
-                if let Some(local) = local {
-                    let var_type = Some(match var_type {
-                        Some(t) => t,
-                        None => &ctxt.function_defs
-                                    .get(&call.function)
-                                    .expect(&format!("could not find function '{}'", &call.function))
-                                    .return_type,
-                    });
-                    visitor(local, None, var_type);
-                }
             }
             Statement::IfElse{ predicate:_, when_true, when_false } => {
                 for s in when_true {
@@ -56,7 +46,8 @@ impl FunctionDefinition {
                 }
             },
             Statement::Return{ value:_ } |
-            Statement::TtyOut{ value:_ }
+            Statement::TtyOut{ value:_ } |
+            Statement::VoidExpression { expression:_ }
             => {}
         }
     }
@@ -175,11 +166,6 @@ impl FunctionDefinition {
                     find_address_of_exp(ctxt, value, needs_to_be_on_stack);
                 }
                 Statement::Declare {scope:_, name:_, var_type:_} => {}
-                Statement::CallAssign{ name:_, var_type:_, call}  => {
-                    for p in &call.parameters {
-                        find_address_of_exp(ctxt, p, needs_to_be_on_stack);
-                    }
-                }
                 Statement::IfElse{ predicate, when_true, when_false } => {
                     find_address_of_exp(ctxt, predicate, needs_to_be_on_stack);
                     for s in when_true {
@@ -195,7 +181,8 @@ impl FunctionDefinition {
                     }
                 },
                 Statement::Return{ value } |
-                Statement::TtyOut{ value } => {
+                Statement::TtyOut{ value } |
+                Statement::VoidExpression{ expression: value}=> {
                     find_address_of_exp(ctxt, value, needs_to_be_on_stack);
                 }
             }

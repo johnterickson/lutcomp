@@ -1,7 +1,7 @@
 fn getchar() -> u8 {
-    tty: u8 := 0;
+    tty: u8 = 0;
     while ((tty & 128) == 0) {
-        tty := ttyin;
+        tty = ttyin;
     }
     return (tty & 127);
 }
@@ -11,13 +11,13 @@ fn main() -> u8 {
     ttyout('i');
     ttyout('!');
     ttyout(10);
-    ch: u8 := 0;
+    ch: u8 = 0;
     while (0 == 0) {
         ttyout(':');
         ttyout('>');
-        ch := 0;
+        ch = 0;
         while (ch != 10) {
-            ch := getchar();
+            ch = getchar();
             ttyout(ch);
 
             if (ch == 'q') {

@@ -2,9 +2,9 @@ fn counter(n:u8) -> u8 {
     static c: u8;
 
     if (n == 0) {
-        c := 0;
+        c = 0;
     } else {
-        c := (c+n);
+        c = (c+n);
     }
 
     return c;

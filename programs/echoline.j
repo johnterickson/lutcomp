@@ -1,24 +1,24 @@
 
 fn readline(buf:&u8) {
-    ch: u8 := 0;
+    ch: u8 = 0;
     while (ch != 10) {
-        tty: u8 := 0;
+        tty: u8 = 0;
         while ((tty & 128) == 0) {
-            tty := ttyin;
+            tty = ttyin;
         }
-        ch := (tty & 127);
-        *buf := ch;
-        buf := (buf + 0x1);
+        ch = (tty & 127);
+        *buf = ch;
+        buf = (buf + 0x1);
     }
-    *buf := 0;
+    *buf = 0;
 }
 
 fn println(buf: &u8) {
-    ch: u8 := *buf;
+    ch: u8 = *buf;
     while (ch != 0) {
         ttyout(ch);
-        buf := (buf + 0x1);
-        ch := *buf;
+        buf = (buf + 0x1);
+        ch = *buf;
     }
 }
 

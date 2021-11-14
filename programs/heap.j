@@ -19,17 +19,17 @@ fn get_heap() -> &heap {
 }
 
 fn get_heap_head() -> &heap_entry {
-    heap: &heap := get_heap();
+    heap: &heap = get_heap();
     return heap->head;
 }
 
 fn heap_init() -> &heap {
-    heap: &heap := get_heap();
-    head: &heap_entry := ((&(heap->bytes)) AS &heap_entry);
-    heap->head := head;
-    head->next := ((0x0) AS &heap_entry);
-    head->len := (1024 - 0xc);
-    head->free := 1;
+    heap: &heap = get_heap();
+    head: &heap_entry = ((&(heap->bytes)) AS &heap_entry);
+    heap->head = head;
+    head->next = ((0x0) AS &heap_entry);
+    head->len = (1024 - 0xc);
+    head->free = 1;
     return heap;
 }
 
@@ -44,25 +44,25 @@ fn heap_is_entry_bad(head: &heap_entry, alloc: usize) -> u8 {
 }
 
 fn heap_alloc(n: usize) -> &u8 {
-    head: &heap_entry := get_heap_head();
-    alloc: usize := (n + 0xc);
+    head: &heap_entry = get_heap_head();
+    alloc: usize = (n + 0xc);
     while (heap_is_entry_bad(head,alloc) != 0) {
-        head := head->next;
+        head = head->next;
         if (head == ((0x0) AS &heap_entry)) {
             return ((0x0) AS &u8);
         }
     }
 
-    new: &heap_entry := head;
-    new := (new + 0xc);
-    new := (new + head->len);
-    new := (new - alloc);
-    new->next := head->next;
-    new->len := n;
-    new->free := 0;
+    new: &heap_entry = head;
+    new = (new + 0xc);
+    new = (new + head->len);
+    new = (new - alloc);
+    new->next = head->next;
+    new->len = n;
+    new->free = 0;
 
-    head->len := (head->len - alloc);
-    head->next := new;
+    head->len = (head->len - alloc);
+    head->next = new;
 
     return (((new) AS &u8) + 0xc);
 }
@@ -74,7 +74,7 @@ fn test_get_heap_head() -> &heap_entry {
 
 fn test_heap_is_entry_bad(n: usize) -> u8 {
     heap_init();
-    head: &heap_entry := get_heap_head();
+    head: &heap_entry = get_heap_head();
     return heap_is_entry_bad(head, n);
 }
 

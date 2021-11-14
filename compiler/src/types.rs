@@ -91,7 +91,7 @@ pub trait TryByteSize {
 impl ByteSize for Type {
     fn byte_count(&self, ctxt: &ProgramContext ) -> u32 {
         match self {
-            Type::Void => panic!(),
+            Type::Void => 0,
             Type::Number(nt) => nt.byte_count(ctxt),
             Type::Ptr(_) => 4,
             Type::Struct(struct_name) => ctxt.types.get(struct_name)

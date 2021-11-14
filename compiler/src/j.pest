@@ -65,14 +65,13 @@ while_loop = { "while" ~ expression ~ "{" ~ statement* ~ "}" }
 assign_declare = { variable_decl | ident }
 assign_deref = { deref_operator ~ ident }
 assign_target = { index_expression | local_field_expression | ptr_field_expression | assign_deref | assign_declare }
-assign = { assign_target ~ ":=" ~ expression ~ ";" }
+assign = { assign_target ~ "=" ~ expression ~ ";" }
 ttyout = { "ttyout" ~ "(" ~ expression ~ ")" ~ ";" }
 return_statement = { "return" ~ expression ~ ";" }
-call_return_value = {ident ~ (":" ~ variable_type)? ~ ":="}
+call_return_value = {ident ~ (":" ~ variable_type)? ~ "="}
+void_expression_statement = { expression ~ ";" }
 
-call = { call_return_value? ~ call_expression ~ ";" }
-
-statement = { if_else_statement | ttyout | return_statement | while_loop | call | assign | static_statement | declare_statement }
+statement = { if_else_statement | ttyout | return_statement | while_loop | assign | static_statement | declare_statement | void_expression_statement}
 body = { (statement)+ }
 paramters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}

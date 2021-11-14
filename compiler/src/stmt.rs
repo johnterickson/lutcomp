@@ -4,7 +4,7 @@ use super::*;
 pub enum Statement {
     Declare { scope: Scope, name: String, var_type: Type },
     Assign { target: Expression, var_type: Option<Type>, value: Expression},
-    CallAssign { name: Option<String>, var_type: Option<Type>, call: Call },
+    VoidExpression { expression: Expression },
     IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Expression, while_true: Vec<Statement>},
     Return { value: Expression},
@@ -29,10 +29,9 @@ impl Statement {
                 while value.optimize(ctxt) { optimized = true; }
             }
             Statement::Declare { .. } =>  {},
-            Statement::CallAssign { name:_, var_type:_, call } => {
-                for p in &mut call.parameters {
-                    while p.optimize(ctxt) { optimized = true; } 
-                }
+            Statement::VoidExpression {expression } => {
+                while expression.optimize(ctxt) { optimized = true; } 
+
             }
             Statement::IfElse { predicate, when_true, when_false } => {
                 while predicate.optimize(ctxt) { optimized = true; }
@@ -141,34 +140,6 @@ impl Statement {
                     value
                 }
             },
-            Rule::call => {
-                // dbg!(&pair);
-                let mut pairs = pair.into_inner();
-                let mut token = pairs.next().unwrap();
-                let (var_name, var_type) = match token.as_rule() {
-                    Rule::call_return_value => {
-                        let mut variable = token.into_inner();
-                        let var_name = variable.next().unwrap().as_str().trim().to_owned();
-                        let var_type = if let Some(token) = variable.next() {
-                            Some(Type::parse(token, false))
-                        } else {
-                            None
-                        };
-                    
-                        token = pairs.next().unwrap();
-
-                        (Some(var_name), var_type)
-                    }
-                    Rule::call_expression => {
-                        (None, None)
-                    }
-                    _ => panic!("Unexpected {:?}", &token)
-                };
-
-                let call = Call::parse(token);
-
-                Statement::CallAssign { name:var_name, var_type, call }
-            },
             Rule::if_else_statement => {
                 let mut pairs = pair.into_inner();
                 let predicate = Expression::parse(pairs.next().unwrap());
@@ -205,6 +176,11 @@ impl Statement {
                 }
                 Statement::While { predicate, while_true }
             },
+            Rule::void_expression_statement => {
+                let mut pairs = pair.into_inner();
+                let expression = Expression::parse(pairs.next().unwrap());
+                Statement::VoidExpression { expression }
+            }
             _ => panic!("Unexpected {:?}", pair)
         }
     }
@@ -241,8 +217,24 @@ impl Statement {
                 }
             },
             Statement::Declare{scope:_, name:_, var_type:_} => {}
+            Statement::VoidExpression { expression} => {
+                let (actual_reg, returned_type) = expression.emit(ctxt, None);
+                assert_eq!(actual_reg, None);
+                if let Some(_) = actual_reg {
+                    // nothing to pop off stack
+                } else {
+                    let bytes_to_discard = returned_type.byte_count(ctxt.program);
+                    if bytes_to_discard != 0 {
+                        ctxt.add_inst(Instruction {
+                            opcode: Opcode::AddImm32IgnoreCarry,
+                            source: format!("{:?} discarding unneeded value", &self),
+                            args: vec![Value::Register(REG_SP), Value::Constant32(bytes_to_discard)],
+                            resolved: None,
+                        });
+                    }
+                }
+            }
             Statement::Assign{target, var_type, value} => {
-
                 let emit_addr_result = target.try_emit_address(ctxt, Register(0));
                 let (target_value_reg, type_in_reg)  = match emit_addr_result {
                     EmitAddressResult::ValueInRegister{reg, value_type} => {
@@ -402,125 +394,6 @@ impl Statement {
                     args: vec![Value::Label24(format!(":{}__{}", &ctxt.function.def.name, EPILOGUE))],
                     resolved: None                    
                 });
-            },
-            Statement::CallAssign{ name: local, var_type, call } => { 
-
-                let start_offset = ctxt.additional_offset;
-
-                let return_type = call.emit(ctxt).clone();
-
-                // result is now in r0..
-                // stack is now back to normal
-                assert_eq!(start_offset, ctxt.additional_offset);
-
-                let var_type = match (var_type, &return_type) {
-                    (None, Type::Void) => {
-                        &Type::Void
-                    }
-                    (Some(_), Type::Void) => {
-                        panic!("Function `{}` does not return a value.", &call.function);
-                    }
-                    (Some(explicit), return_type) => {
-                        assert_eq!(explicit, return_type);
-                        explicit
-                    }
-                    (None, return_type) => {
-                        return_type
-                    }
-                };
-
-                let byte_count = match var_type {
-                    Type::Void => 0,
-                    t => t.byte_count(ctxt.program),
-                };
-                
-                if byte_count != 0 {
-                    match local {
-                        None => {
-                            // nothing to do
-                        }
-                        Some(local) => {
-                            let local = ctxt.find_var(local);
-                            let store_reg0_to_addr_in_reg8 = match local.storage {
-                                Storage::Register(r) => {
-                                    match byte_count {
-                                        1 => {
-                                            ctxt.add_inst(Instruction {
-                                                opcode: Opcode::Or8,
-                                                resolved: None,
-                                                source: format!("save call result in target register {:?}", &self),
-                                                args: vec![Value::Register(0), Value::Register(0), Value::Register(r.0)]
-                                            });
-                                        }
-                                        4 => {
-                                            ctxt.add_inst(Instruction {
-                                                opcode: Opcode::Copy32,
-                                                resolved: None,
-                                                source: format!("save call result in target register {:?}", &self),
-                                                args: vec![Value::Register(0), Value::Register(r.0)]
-                                            });
-                                        }
-                                        _ => unimplemented!(),
-                                    }
-                                    false
-                                }
-                                Storage::FixedAddress(addr) => {
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::LoadImm32,
-                                        resolved: None,
-                                        source: format!("load fixed address {:?}", &self),
-                                        args: vec![Value::Register(8), Value::Constant32(addr)]
-                                    });
-                                    true
-                                }
-                                Storage::Stack(offset) => {
-                                    let offset = ctxt.get_stack_offset(offset);
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::LoadImm32,
-                                        resolved: None,
-                                        source: format!("load stack offset for call result {:?}", &self),
-                                        args: vec![Value::Register(4), Value::Constant32(offset)]
-                                    });
-                                    ctxt.add_inst(Instruction {
-                                        opcode: Opcode::Add32NoCarryIn,
-                                        resolved: None,
-                                        source: format!("add stack pointer to offset {:?}", &self),
-                                        args: vec![Value::Register(REG_SP),Value::Register(4),Value::Register(8)]
-                                    });
-                                    true
-                                }
-                            };
-
-                            if store_reg0_to_addr_in_reg8 {
-                                match byte_count {
-                                    1 => {
-                                        ctxt.add_inst(Instruction {
-                                            opcode: Opcode::Store8,
-                                            resolved: None,
-                                            source: format!("{:?}", &self),
-                                            args: vec![Value::Register(0), Value::Register(8)]
-                                        });
-                                    }
-                                    4 => {
-                                        ctxt.add_inst(Instruction {
-                                            opcode: Opcode::Store32Part1,
-                                            resolved: None,
-                                            source: format!("{:?}", &self),
-                                            args: vec![Value::Register(0), Value::Register(8)]
-                                        });
-                                        ctxt.add_inst(Instruction {
-                                            opcode: Opcode::Store32Part2,
-                                            resolved: None,
-                                            source: format!("{:?}", &self),
-                                            args: vec![]
-                                        });
-                                    }
-                                    s => panic!("Unexpected size {}", s)
-                                }
-                            }
-                        }
-                    }
-                }
             },
             Statement::While{predicate, while_true} => {
                 let source = format!("WHILE ({:?})  ... ", predicate);
