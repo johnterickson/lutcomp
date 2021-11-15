@@ -1118,9 +1118,9 @@ mod tests {
         assert_eq!(0x12345678, c.reg_u32(8));
     }
 
-    fn add_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
-        add32_tester(carry_in, in1, in2, sum, carry_out);
-        add32_tester(carry_in, in2, in1, sum, carry_out);
+    fn run_add32_tests(carry_in: bool, in1: u32, in2: u32) {
+        add32_tester(carry_in, in1, in2);
+        add32_tester(carry_in, in2, in1);
         add32nocarryin_tester(carry_in, in1, in2, 0, 4, 8);
         add32nocarryin_tester(carry_in, in2, in1, 0, 4, 8);
         add32nocarryin_tester(carry_in, in1, in2, 0, 4, 0); //re-use reg1
@@ -1129,7 +1129,11 @@ mod tests {
         addimm32nocarry_tester(carry_in, in2, in1);
     }
 
-    fn add32_tester(carry_in: bool, in1: u32, in2: u32, sum: u32, carry_out: bool) {
+    fn add32_tester(carry_in: bool, in1: u32, in2: u32) {
+        let sum = in1 as u64 + in2 as u64 + carry_in as u64;
+        let carry_out = sum > u32::max_value() as u64;
+        let sum = (sum & 0xFFFFFFFF) as u32;
+
         println!(
             "add32_tester test case {:?} + {:08x} + {:08x} -> {:08x} + {:?}",
             carry_in, in1, in2, sum, carry_out
@@ -1229,52 +1233,83 @@ mod tests {
 
     #[test]
     fn add_no_carry() {
-        add_tester(false, 1, 2, 3, false);
-        add_tester(false, 0x01010101, 0x02020202, 0x03030303, false);
-        add_tester(false, 0x01010101, 0xFEFEFEFE, 0xFFFFFFFF, false);
+        run_add32_tests(false, 1, 2);
+        run_add32_tests(false, 0x01010101, 0x02020202);
+        run_add32_tests(false, 0x01010101, 0xFEFEFEFE);
     }
 
     #[test]
     fn add_internal_carry() {
-        add_tester(false, 0xFF, 1, 0x100, false);
-        add_tester(false, 0xFFFF, 1, 0x10000, false);
-        add_tester(false, 0xFFFFFF, 1, 0x1000000, false);
-        add_tester(false, 0xFFFFFFFF, 1, 0x0, true);
+        run_add32_tests(false, 0xFF, 1);
+        run_add32_tests(false, 0xFFFF, 1);
+        run_add32_tests(false, 0xFFFFFF, 1);
+        run_add32_tests(false, 0xFFFFFFFF, 1);
     }
 
     #[test]
     fn add_incoming_carry() {
-        add_tester(true, 1, 2, 4, false);
-        add_tester(true, 0xFF, 0, 0x100, false);
+        run_add32_tests(true, 1, 2);
+        run_add32_tests(true, 0xFF, 0);
     }
 
-    #[test]
-    fn add32_coverage() {
+
+    fn run_u32_pairs<F: Fn(u32, u32) -> ()>(f : F) {
         use itertools::Itertools;
         let values = &[0x0, 0x1, 0xFF];
-        for carry_in in &[false, true] {
-            for (((a1, a2), a3), a4) in values
+        for (((a1, a2), a3), a4) in values
+            .iter()
+            .cartesian_product(values)
+            .cartesian_product(values)
+            .cartesian_product(values)
+        {
+            let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
+            for (((b1, b2), b3), b4) in values
                 .iter()
                 .cartesian_product(values)
                 .cartesian_product(values)
                 .cartesian_product(values)
             {
-                let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
-                for (((b1, b2), b3), b4) in values
-                    .iter()
-                    .cartesian_product(values)
-                    .cartesian_product(values)
-                    .cartesian_product(values)
-                {
-                    let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
-                    if a >= b {
-                        let sum = a as u64 + b as u64 + *carry_in as u64;
-                        let carry_out = sum > u32::max_value() as u64;
-                        let sum = (sum & 0xFFFFFFFF) as u32;
-                        add_tester(*carry_in, a, b, sum, carry_out);
-                    }
-                }
+                let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
+                f(a,b);
             }
         }
+    }
+
+    fn run_add_cases<F: Fn(bool, u32, u32) -> ()>(f : F) {
+        for carry_in in &[false, true] {
+            let carry_in = *carry_in;
+            run_u32_pairs(|in1, in2| {
+                if in1 >= in2 {
+
+                    f(carry_in, in1, in2);
+                }
+            });
+        }
+    }
+
+    #[test]
+    fn add32_coverage() {
+        run_add_cases(|carry_in, in1, in2| {
+            add32_tester(carry_in, in1, in2);
+            add32_tester(carry_in, in2, in1);
+        });
+    }
+
+    #[test]
+    fn add32nocarryin_coverage() {
+        run_add_cases(|carry_in, in1, in2| {
+            add32nocarryin_tester(carry_in, in1, in2, 0, 4, 8);
+            add32nocarryin_tester(carry_in, in2, in1, 0, 4, 8);
+            add32nocarryin_tester(carry_in, in1, in2, 0, 4, 0); //re-use reg1
+            add32nocarryin_tester(carry_in, in1, in2, 0, 4, 4); //re-use reg2
+        });
+    }
+
+    #[test]
+    fn addimm32nocarryin_coverage() {
+        run_add_cases(|carry_in, in1, in2| {
+            addimm32nocarry_tester(carry_in, in1, in2);
+            addimm32nocarry_tester(carry_in, in2, in1);
+        });
     }
 }
