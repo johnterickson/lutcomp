@@ -15,12 +15,24 @@ pub struct FunctionDefinition {
 }
 
 impl FunctionDefinition {
+
+    pub fn find_arg_or_var(&self, name: &str) -> Option<(&Scope, &Type)> {
+        if let Some((s,t)) = self.vars.get(name) {
+            Some((s,t))
+        }
+        else if let Some((n,t)) = self.args.iter().filter(|(n,t)| n == name).next() {
+            Some((&Scope::Local, t))
+        } else {
+            None
+        }
+    }
+
     fn walk_decls<F>(ctxt: &ProgramContext, s: &Statement, visitor: &mut F)
         where F : FnMut(&String, Option<&Scope>, Option<&Type>),
     {
         match s {
             Statement::Assign{target, var_type, value} => {
-                let value_type = value.try_emit_type(ctxt);
+                let value_type = value.try_emit_type(ctxt, None);
                 let var_type = var_type.as_ref().or(value_type.as_ref());
                 match target {
                     Expression::Ident(name) => {

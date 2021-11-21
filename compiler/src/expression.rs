@@ -113,11 +113,20 @@ impl Expression {
         }
     }
 
-    pub fn try_emit_type(&self, ctxt: &ProgramContext) -> Option<Type> {
+    pub fn try_emit_type(&self, ctxt: &ProgramContext, f: Option<&FunctionDefinition>) -> Option<Type> {
         match self {
+            Expression::Ident(n) => {
+                if let Some(f) = f {
+                    let (_,t) = f.find_arg_or_var(n)
+                        .expect(&format!("Cannot find {} in {:?}", n, f));
+                    Some(t.clone())
+                } else {
+                    None
+                }
+            }
             Expression::Number(nt, _) => Some(Type::Number(nt.clone())),
             Expression::AddressOf(inner) => {
-                if let Some(inner_type) = inner.try_emit_type(ctxt) {
+                if let Some(inner_type) = inner.try_emit_type(ctxt, f) {
                     Some(Type::Ptr(Box::new(inner_type)))
                 } else {
                     None
@@ -168,7 +177,7 @@ impl Expression {
            }
            Expression::Cast{old_type, new_type, value} => {
                if old_type.is_none() {
-                   *old_type = value.try_emit_type(ctxt);
+                   *old_type = value.try_emit_type(ctxt, None);
                }
 
                if let (Some(Type::Number(NumberType::U8)), Type::Number(NumberType::USIZE), Some(v)) = 

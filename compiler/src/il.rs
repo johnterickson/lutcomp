@@ -25,6 +25,7 @@ pub struct IlLabelId(String);
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct IlFunctionId(String);
 
+#[derive(Debug)]
 pub struct IlFunction {
     pub id: IlFunctionId,
     pub args: Vec<IlVarId>,
@@ -55,6 +56,10 @@ impl IlFunction {
     fn alloc_tmp(&mut self, size: Size, description: String) -> IlVarId {
         let id = IlVarId(format!("t{}", self.next_temp_num));
         self.next_temp_num += 1;
+        match &size {
+            Size::U8 | Size::U32 => {},
+            _ => panic!(),
+        }
         assert!(self.vars.insert(id.clone(), IlVarInfo { description, size }).is_none());
         id
     }
@@ -72,18 +77,53 @@ impl IlFunction {
         id
     }
 
-    fn emit_address(&mut self, ctxt: &ProgramContext, def: &FunctionDefinition, target: &Expression) -> (IlVarId, Size) {
+    fn emit_address(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, Size) {
         match target {
             Expression::Index(var, index) => {
-                let (_, ptr_type) = &def.vars[var];
+                let (scope, ptr_type) = ctxt.func.find_arg_or_var(var)
+                    .expect(&format!("Could not find {}", var));
+
                 let element_size = match ptr_type {
-                    Type::Ptr(element_type) |
-                    Type::Array(element_type, _) => element_type.byte_count(ctxt),
+                    Type::Ptr(element_type) | Type::Array(element_type, _) => {
+                        element_type.byte_count(ctxt.program)
+                    }
                     _ => panic!(),
                 };
 
+                let base_address = match scope {
+                    Scope::Local => IlVarId(var.clone()),
+                    Scope::Static => {
+                        let key= (Some(self.id.clone()), IlVarId(var.clone()));
+                        let addr = ctxt.il.statics.get(&key).expect(&format!("Could not find {:?}", key));
+                        let base = self.alloc_tmp_with_debug(Size::U32, index);
+                        self.body.push(IlInstruction::AssignAtom {
+                            dest: base.clone(),
+                            src: IlAtom::Number(IlNumber::U32(*addr))
+                        });
+
+                        base
+                    }
+                };
+
+
+                let index_size = index.try_emit_type(ctxt.program, Some(ctxt.func)).unwrap().byte_count(ctxt.program);
                 let index_val = self.alloc_tmp_with_debug(Size::U32, index);
-                self.emit_expression(ctxt, def, index_val.clone(), index);
+                match index_size {
+                    1 => {
+                        let index_u8 = self.alloc_tmp_with_debug(Size::U8, index);
+                        self.emit_expression(ctxt, index_u8.clone(), index);
+                        self.body.push(IlInstruction::Resize {
+                            dest: index_val.clone(),
+                            dest_size: Size::U32,
+                            src: index_u8,
+                            src_size: Size::U8
+                        });
+                    }
+                    4 => {
+                        self.emit_expression(ctxt, index_val.clone(), index);
+                    }
+                    _ => panic!(),
+                }
 
                 if element_size != 1 {
                     self.body.push(IlInstruction::AssignBinary {
@@ -93,8 +133,6 @@ impl IlFunction {
                         src2: IlAtom::Number(IlNumber::U8(element_size.try_into().unwrap())),
                     });
                 }
-
-                let base_address = IlVarId(var.clone());
 
                 self.body.push(IlInstruction::AssignBinary {
                     dest: index_val.clone(),
@@ -109,38 +147,46 @@ impl IlFunction {
         }
     }
 
-    fn emit_target_expression(&mut self, ctxt: &ProgramContext, def: &FunctionDefinition, target: &Expression) -> (IlVarId, Option<Size>) {
+    fn emit_target_expression(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, Option<Size>) {
         match target {
-            Expression::Ident(n) => (IlVarId(n.clone()), None),
+            Expression::Ident(n) => {
+                let (scope, _) = ctxt.func.find_arg_or_var(n).unwrap();
+                match scope {
+                    Scope::Local =>  (IlVarId(n.clone()), None),
+                    Scope::Static => {
+                        todo!();
+                    }
+                }
+            },
             Expression::Deref(_) => todo!(),
             Expression::LocalFieldDeref(_, _) => todo!(),
             Expression::PtrFieldDeref(_, _) => todo!(),
             Expression::Index(_, _) => {
-                let (address, size) = self.emit_address(ctxt, def, target);
+                let (address, size) = self.emit_address(ctxt,  target);
                 (address, Some(size))
             },
             Expression::Optimized { original:_, optimized } => 
-                self.emit_target_expression(ctxt, def, optimized),
+                self.emit_target_expression(ctxt, optimized),
             _ => panic!(),
         }
     }
     
-    fn emit_statement(&mut self, ctxt: &ProgramContext, def: &FunctionDefinition, s: &Statement) {
+    fn emit_statement(&mut self, ctxt: &IlContext, s: &Statement) {
         match s {
             Statement::Declare { .. } => {},
             Statement::Assign { target, var_type: _, value } => {
-                let (target, mem_size) = self.emit_target_expression(ctxt, def, target);
+                let (target, mem_size) = self.emit_target_expression(ctxt, target);
                 if let Some(size) = mem_size {
                     let value_reg = self.alloc_tmp_with_debug(size, &value);
-                    self.emit_expression(ctxt, def, value_reg.clone(), value);
+                    self.emit_expression(ctxt, value_reg.clone(), value);
                     self.body.push(IlInstruction::WriteMemory{addr: IlAtom::Var(target), src: value_reg, size})
                 } else {
-                    self.emit_expression(ctxt, def, target, value);
+                    self.emit_expression(ctxt, target, value);
                 }
             },
             Statement::VoidExpression { expression } => {
                 let value_reg = self.alloc_tmp_with_debug(Size::U8, &expression);
-                self.emit_expression(ctxt, def, value_reg, expression);
+                self.emit_expression(ctxt, value_reg, expression);
             },
             Statement::IfElse { predicate, when_true, when_false } => {
                 let true_label= self.alloc_label("if true");
@@ -148,9 +194,9 @@ impl IlFunction {
                 let end_label= self.alloc_label("if end");
 
                 let left = self.alloc_tmp_with_debug(Size::U8, &predicate.left);
-                self.emit_expression(ctxt, def, left.clone(), &predicate.left);
+                self.emit_expression(ctxt, left.clone(), &predicate.left);
                 let right = self.alloc_tmp_with_debug(Size::U8, &predicate.right);
-                self.emit_expression(ctxt, def, right.clone(), &predicate.right);
+                self.emit_expression(ctxt, right.clone(), &predicate.right);
                 
                 self.body.push(IlInstruction::IfThenElse{
                     left, 
@@ -162,13 +208,13 @@ impl IlFunction {
 
                 self.body.push(IlInstruction::Label(true_label.clone()));
                 for s in when_true {
-                    self.emit_statement(ctxt, def, s);
+                    self.emit_statement(ctxt, s);
                 }
                 self.body.push(IlInstruction::Goto(end_label.clone()));
 
                 self.body.push(IlInstruction::Label(false_label.clone()));
                 for s in when_false {
-                    self.emit_statement(ctxt, def, s);
+                    self.emit_statement(ctxt, s);
                 }
 
                 self.body.push(IlInstruction::Label(end_label.clone()));
@@ -181,9 +227,9 @@ impl IlFunction {
                 self.body.push(IlInstruction::Label(pred_label.clone()));
 
                 let left = self.alloc_tmp_with_debug(Size::U8, &predicate.left);
-                self.emit_expression(ctxt, def, left.clone(), &predicate.left);
+                self.emit_expression(ctxt, left.clone(), &predicate.left);
                 let right = self.alloc_tmp_with_debug(Size::U8, &predicate.right);
-                self.emit_expression(ctxt, def, right.clone(), &predicate.right);
+                self.emit_expression(ctxt, right.clone(), &predicate.right);
                 
                 self.body.push(IlInstruction::IfThenElse{
                     left, 
@@ -196,7 +242,7 @@ impl IlFunction {
                 self.body.push(IlInstruction::Label(body_label.clone()));
 
                 for s in while_true {
-                    self.emit_statement(ctxt, def, s);
+                    self.emit_statement(ctxt, s);
                 }
 
                 self.body.push(IlInstruction::Goto(pred_label.clone()));
@@ -205,22 +251,33 @@ impl IlFunction {
             },
             Statement::Return { value } => {
                 let val = self.alloc_tmp_with_debug(Size::U8, &value);
-                self.emit_expression(ctxt, def, val.clone(), value);
+                self.emit_expression(ctxt, val.clone(), value);
                 self.body.push(IlInstruction::Return{val})
             },
             Statement::TtyOut { value } => {
                 let value_reg = self.alloc_tmp_with_debug(Size::U8, &value);
-                self.emit_expression(ctxt, def, value_reg.clone(), value);
+                self.emit_expression(ctxt, value_reg.clone(), value);
                 self.body.push(IlInstruction::TtyOut{src: value_reg})
             },
         }
     }
 
-    fn emit_expression(&mut self, ctxt: &ProgramContext, def: &FunctionDefinition, dest: IlVarId, e: &Expression) {
+    fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
+        dbg!(&e);
         match e {
             Expression::Ident(v) => {
-                let src = IlAtom::Var(IlVarId(v.clone()));
-                self.body.push(IlInstruction::AssignAtom{dest, src});
+                let (scope,_) = ctxt.func.find_arg_or_var(v)
+                    .expect(&format!("Could not find {}", v));
+                match scope {
+                    Scope::Local =>  {
+                        let src = IlAtom::Var(IlVarId(v.clone()));
+                        self.body.push(IlInstruction::AssignAtom{dest, src});
+                    },
+                    Scope::Static => {
+                        todo!();
+                    }
+                }
+                
             },
             Expression::Number(num_type, val) => {
                 let src = IlAtom::Number(match num_type {
@@ -234,9 +291,9 @@ impl IlFunction {
             },
             Expression::Arithmetic(op, left, right) => {
                 let left_tmp = self.alloc_tmp_with_debug(Size::U8, left);
-                self.emit_expression(ctxt, def, left_tmp.clone(), left);
+                self.emit_expression(ctxt, left_tmp.clone(), left);
                 let right_tmp = self.alloc_tmp_with_debug(Size::U8, right);
-                self.emit_expression(ctxt, def, right_tmp.clone(), right);
+                self.emit_expression(ctxt, right_tmp.clone(), right);
                 self.body.push(IlInstruction::AssignBinary {
                     dest,
                     op: IlBinaryOp::from(op),
@@ -250,7 +307,7 @@ impl IlFunction {
             Expression::PtrFieldDeref(_, _) => todo!(),
             Expression::AddressOf(_) => todo!(),
             Expression::Index(_, _) => {
-                let (addr, size) = self.emit_address(ctxt, def, e);
+                let (addr, size) = self.emit_address(ctxt, e);
 
                 self.body.push(IlInstruction::ReadMemory {
                     dest,
@@ -259,19 +316,38 @@ impl IlFunction {
                 });
             },
             Expression::Cast { old_type, new_type, value } => todo!(),
-            Expression::Call(_) => todo!(),
+            Expression::Call(c) => {
+
+                let callee_def = &ctxt.program.function_defs[&c.function];
+
+                assert_eq!(callee_def.args.len(), c.parameters.len());
+
+                let mut params = Vec::new();
+                for (i, ((_, arg_type), p)) in callee_def.args.iter().zip(&c.parameters).enumerate() {
+                    let size  = arg_type.byte_count(ctxt.program).try_into().unwrap();
+                    let p_value = self.alloc_tmp_with_debug(size, p);
+                    self.emit_expression(ctxt, p_value.clone(), p);
+                    params.push(p_value);
+                }
+                
+                self.body.push(IlInstruction::Call {
+                    f: IlFunctionId(c.function.clone()),
+                    ret: dest,
+                    args: params,
+                });
+            },
             Expression::Optimized { original, optimized } => todo!(),
         }
     }
 }
 
 impl IlFunction {
-    pub fn emit_from(ctxt: &ProgramContext, f: &FunctionDefinition) -> IlFunction {
-        let id = IlFunctionId(f.name.clone());
-        let mut func = IlFunction::new(id);
+    fn emit_from(ctxt: &mut IlContext) -> IlFunction {
+        let id = IlFunctionId(ctxt.func.name.clone());
+        let mut func = IlFunction::new(id.clone());
         
-        for (i, (name, var_type)) in f.args.iter().enumerate() {
-            let size = var_type.byte_count(ctxt).into();
+        for (i, (name, var_type)) in ctxt.func.args.iter().enumerate() {
+            let size = var_type.byte_count(ctxt.program).try_into().unwrap();
             let id = func.alloc_named(
                 name.clone(),
                 size,
@@ -279,16 +355,27 @@ impl IlFunction {
             func.args.push(id);
         }
 
-        for (name, (scope, var_type)) in f.vars.iter() {
-            assert_eq!(scope, &Scope::Local);
-            let size = var_type.byte_count(ctxt);
-            let size = match var_type {
-                Type::Struct(_) | Type::Array(_, _) => {
-                    let size = (size + 3)/4*4;  // round up
-                    Size::Stack(size)
+        for (name, (scope, var_type)) in ctxt.func.vars.iter() {
+            let size = var_type.byte_count(ctxt.program);
+            let size = match scope {
+                Scope::Local => {
+                    match var_type {
+                        Type::Struct(_) | Type::Array(_, _) => {
+                            let size = (size + 3)/4*4;  // round up
+                            Size::Stack(size)
+                        },
+                        _ => size.try_into().unwrap()
+                    }
                 },
-                _ => size.into()
+                Scope::Static => {
+                    assert!(ctxt.il.statics.insert(
+                        (Some(id.clone()),IlVarId(name.clone())),
+                        ctxt.next_static_addr).is_none());
+                    ctxt.next_static_addr += size;
+                    Size::Static(size)
+                },
             };
+            
 
             func.alloc_named(
                 name.clone(),
@@ -296,8 +383,8 @@ impl IlFunction {
                 format!("Local {} {:?} {:?}", name, var_type, size));
         }
         
-        for s in &f.body {
-            func.emit_statement(ctxt, f, s);
+        for s in &ctxt.func.body {
+            func.emit_statement(ctxt, s);
         }
         
         func
@@ -322,7 +409,7 @@ impl IlBinaryOp {
         match op {
             ArithmeticOperator::Add => IlBinaryOp::Add,
             ArithmeticOperator::Subtract => IlBinaryOp::Subtract,
-            ArithmeticOperator::Multiply => todo!(),
+            ArithmeticOperator::Multiply => IlBinaryOp::Multiply,
             ArithmeticOperator::Or => todo!(),
             ArithmeticOperator::And => todo!(),
         }
@@ -367,15 +454,18 @@ impl From<ComparisonOperator> for IlCmpOp {
 pub enum Size {
     U8,
     U32,
-    Stack(u32)
+    Stack(u32),
+    Static(u32),
 }
 
-impl From<u32> for Size {
-    fn from(value: u32) -> Self {
+impl TryFrom<u32> for Size {
+    type Error = ();
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
-            1 => Size::U8,
-            2..=4 => Size::U32,
-            n => Size::Stack(n),
+            1 => Ok(Size::U8),
+            2..=4 => Ok(Size::U32),
+            _ => Err(()),
         }
     }
 }
@@ -390,6 +480,7 @@ pub enum IlInstruction {
     Goto(IlLabelId),
     IfThenElse {left: IlVarId, op: IlCmpOp, right: IlAtom, then_label: IlLabelId, else_label: IlLabelId},
     Call {ret: IlVarId, f: IlFunctionId, args: Vec<IlVarId> },
+    Resize {dest: IlVarId, dest_size: Size, src:IlVarId, src_size: Size},
     Return { val: IlVarId },
     TtyIn { dest: IlVarId },
     TtyOut { src: IlVarId },
@@ -417,6 +508,8 @@ impl Debug for IlInstruction {
             Self::Return { val } => write!(f, "return {}", val.0),
             Self::TtyIn { dest } => f.debug_struct("TtyIn").field("dest", dest).finish(),
             Self::TtyOut { src } => f.debug_struct("TtyOut").field("src", src).finish(),
+            Self::Resize { dest, dest_size, src, src_size } => 
+                write!(f, "{} {:?} <- {} {:?}", dest.0, dest_size, src.0, src_size),
         }
     }
 }
@@ -467,16 +560,18 @@ impl Debug for IlAtom {
     }
 }
 
+#[derive(Debug)]
 pub struct IlProgram {
     pub entry: IlFunctionId,
     pub functions: BTreeMap<IlFunctionId, IlFunction>,
+    pub statics: BTreeMap<(Option<IlFunctionId>,IlVarId), u32>,
 }
 
-struct SimulationContext<'a> {
-    program: &'a IlProgram,
-    stack: Vec<u8>,
-    stack_pointer: u32,
-    stack_slice_start_addr: u32,
+struct IlContext<'a> {
+    next_static_addr: u32,
+    program: &'a ProgramContext,
+    il: &'a mut IlProgram,
+    func: &'a FunctionDefinition,
 }
 
 impl IlProgram {
@@ -484,283 +579,20 @@ impl IlProgram {
         let mut il = IlProgram {
             entry: IlFunctionId(ctxt.entry.clone()),
             functions: BTreeMap::new(),
+            statics: BTreeMap::new(),
         };
 
         for (_, def) in &ctxt.function_defs {
-            let f = IlFunction::emit_from(ctxt, def);
+            let mut il_ctxt = IlContext {
+                next_static_addr: 0x100,
+                program: ctxt,
+                il: &mut il,
+                func: def,
+            };
+            let f = IlFunction::emit_from(&mut il_ctxt);
             il.functions.insert(f.id.clone(), f);
         }
 
         il
-    }
-
-    pub fn simulate(&self, args: &[IlNumber]) -> IlNumber {
-        let mut ctxt = SimulationContext {
-            program: &self,
-            stack: vec![0u8; 1024],
-            stack_pointer: u32::max_value()-4+1,
-            stack_slice_start_addr: u32::max_value()-1024+1,
-        };
-
-        let entry = self.functions.get(&self.entry).unwrap();
-        entry.simulate(&mut ctxt, args)
-    }
-}
-
-impl IlAtom {
-    fn value(&self, vars: &BTreeMap<&IlVarId, Option<IlNumber>>) -> IlNumber {
-        match self {
-            IlAtom::Number(n) => *n,
-            IlAtom::Var(v) => vars[v].unwrap(),
-        }
-    }
-}
-
-impl IlFunction {
-    fn find_label(&self, label: &IlLabelId) -> Option<usize> {
-        self.body.iter()
-            .enumerate()
-            .filter_map(|(i,s)| {
-                if let IlInstruction::Label(l) = s {
-                    if l == label {
-                        return Some(i);
-                    }
-                }
-                None
-            })
-            .next()
-    }
-
-    fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> IlNumber {
-        let mut vars: BTreeMap<&IlVarId, Option<IlNumber>> = BTreeMap::new();
-
-        for (id, info) in self.vars.iter().rev() {
-            if let Size::Stack(stack_size) = info.size {
-                ctxt.stack_pointer -= stack_size;
-                assert!(vars.insert(id, Some(IlNumber::U32(ctxt.stack_pointer))).is_none());
-            }
-        }
-
-        assert_eq!(self.args.len(), args.len());
-        for (arg_id, arg_value) in self.args.iter().zip(args) {
-            assert!(vars.insert(arg_id, Some(*arg_value)).is_none());
-        }
-
-        let mut mem: BTreeMap<u32, u8> = BTreeMap::new();
-        let mut s_index = 0;
-        loop {
-            let mut inc_pc = true;
-
-            let s = &self.body[s_index];
-            dbg!(s);
-
-            match s {
-                IlInstruction::Label(_) => {},
-                IlInstruction::AssignAtom { dest, src } => {
-                    vars.insert(dest, Some(src.value(&vars)));
-                },
-                IlInstruction::AssignUnary { dest, op, src } => {
-                    let src = src.value(&vars);
-                    let result = match src {
-                        IlNumber::U32(n) => {
-                            IlNumber::U32(match op {
-                                IlUnaryOp::Negate => n.wrapping_neg(),
-                                IlUnaryOp::BinaryInvert => !n,
-                            })
-                        }
-                        IlNumber::U8(n) => {
-                            IlNumber::U8(match op {
-                                IlUnaryOp::Negate => n.wrapping_neg(),
-                                IlUnaryOp::BinaryInvert => !n,
-                            })
-                        }
-                    };
-                    vars.insert(dest, Some(result));
-                },
-                IlInstruction::AssignBinary { dest, op, src1, src2 } => {
-                    let src1 = vars[src1].unwrap();
-                    let src2 = src2.value(&vars);                    
-                    let result = match (src1, src2) {
-                        (IlNumber::U8(n1), IlNumber::U8(n2)) => {
-                            IlNumber::U8(match op {
-                                IlBinaryOp::Add => n1.wrapping_add(n2),
-                                IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => n1.wrapping_mul(n2),
-                            })
-                        }
-                        (IlNumber::U32(n1), IlNumber::U32(n2)) => {
-                            IlNumber::U32(match op {
-                                IlBinaryOp::Add => n1.wrapping_add(n2),
-                                IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => unimplemented!(),
-                            })
-                        }
-                        _ => panic!(),
-                    };
-                    
-                    vars.insert(dest, Some(result));
-                }
-                IlInstruction::ReadMemory { dest, addr, size } => {
-                    let addr = addr.value(&vars);
-                    if let IlNumber::U32(addr) = addr {
-                        match size {
-                            Size::U8 => {
-                                vars.insert(dest, Some(IlNumber::U8(mem[&addr])));
-                            }
-                            Size::U32 => {
-                                assert_eq!(0, addr % 4);
-                                let r = u32::from_le_bytes([
-                                    mem[&(addr+0)],
-                                    mem[&(addr+1)],
-                                    mem[&(addr+2)],
-                                    mem[&(addr+3)],
-                                ]);
-                                vars.insert(dest, Some(IlNumber::U32(r)));
-                            }
-                            Size::Stack(_) => panic!(),
-                        }
-                    } else {
-                        panic!();
-                    }
-                }
-                IlInstruction::WriteMemory { addr, src, size} => {
-                    let src = vars[src].unwrap();
-                    let addr = addr.value(&vars);
-                    if let IlNumber::U32(addr) = addr {
-                        match src {
-                            IlNumber::U8(n) => {
-                                assert_eq!(size, &Size::U8);
-                                mem.insert(addr, n);
-                            },
-                            IlNumber::U32(n) => {
-                                assert_eq!(0, addr % 4);
-                                assert_eq!(size, &Size::U32);
-                                let bytes = n.to_le_bytes();
-                                for (i, b) in bytes.iter().enumerate() {
-                                    let i = i as u32;
-                                    mem.insert(addr + i, *b);
-                                }
-                            },
-                        }
-                    } else {
-                        panic!();
-                    }
-                },
-                IlInstruction::Goto(label) => {
-                    inc_pc = false;
-                    s_index = self.find_label(label).unwrap();
-                },
-                IlInstruction::IfThenElse { left, op, right, then_label, else_label } => {
-                    let left = vars[left].unwrap();
-                    let right = right.value(&vars);
-                    let condition_true = match (left, right) {
-                        (IlNumber::U8(left), IlNumber::U8(right)) => {
-                            match op {
-                                IlCmpOp::Equals => left == right,
-                                IlCmpOp::NotEquals => left != right,
-                                IlCmpOp::GreaterThan => left > right,
-                                IlCmpOp::GreaterThanOrEqual => left >= right,
-                                IlCmpOp::LessThan => left < right,
-                                IlCmpOp::LessThanOrEqual => left <= right,
-                            }
-                        }
-                        (IlNumber::U32(left), IlNumber::U32(right)) => {
-                            match op {
-                                IlCmpOp::Equals => left == right,
-                                IlCmpOp::NotEquals => left != right,
-                                IlCmpOp::GreaterThan => left > right,
-                                IlCmpOp::GreaterThanOrEqual => left >= right,
-                                IlCmpOp::LessThan => left < right,
-                                IlCmpOp::LessThanOrEqual => left <= right,
-                            }
-                        }
-                        _ => panic!(),
-                    };
-
-                    inc_pc = false;
-                    s_index = self.find_label(if condition_true {then_label} else {else_label}).unwrap();
-                },
-                IlInstruction::Call { ret, f, args } => {
-                    let f = &ctxt.program.functions[f];
-                    let args: Vec<_> = args.iter().map(|a| vars[a].unwrap()).collect();
-                    let result = f.simulate(ctxt, &args);
-                    vars.insert(ret, Some(result));
-                },
-                IlInstruction::Return { val } => {
-                    return vars[val].unwrap();
-                },
-                IlInstruction::TtyIn { dest } => todo!(),
-                IlInstruction::TtyOut { src } => todo!(),
-            }
-
-            if inc_pc {
-                s_index += 1;
-            }
-
-            println!("{:?}", &vars);
-        }
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use crate::tests::test_programs_dir;
-
-    use super::*;
-
-    fn emit_il(entry: &str, input: &str) -> IlProgram {
-        let ctxt = create_program(
-            entry, 
-            input,
-            &test_programs_dir());
-        
-        IlProgram::from_program(&ctxt)
-    }
-
-    #[test]
-    fn halt() {
-        let il = emit_il(
-            "main",
-            include_str!("../../programs/halt.j"));
-
-        assert_eq!(IlNumber::U8(1), il.simulate(&[]));
-    }
-
-    #[test]
-    fn divide() {
-        let il = emit_il(
-            "divide",
-            include_str!("../../programs/divide.j"));
-
-        assert_eq!(il.simulate(&[1u8.into(), 1u8.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[2u8.into(), 1u8.into()]), 2u8.into());
-        assert_eq!(il.simulate(&[1u8.into(), 2u8.into()]), 0u8.into());
-        assert_eq!(il.simulate(&[100u8.into(), 10u8.into()]), 10u8.into());
-    }
-
-    #[test]
-    fn if_ne_uptr() {
-        let il = emit_il(
-            "main",
-            include_str!("../../programs/if_ne_uptr.j"));
-
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABBCCDDu32.into()]), 0u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABBCCDEu32.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABBCDDDu32.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABCCCDDu32.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xABBBCCDDu32.into()]), 1u8.into());
-    }
-
-    #[test]
-    fn local_array() {
-        let il = emit_il(
-            "main",
-            include_str!("../../programs/local_array.j"));
-
-        assert_eq!(il.simulate(&[0u8.into(), 0u8.into()]), 0u8.into());
-        assert_eq!(il.simulate(&[0u8.into(), 1u8.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[1u8.into(), 0u8.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[1u8.into(), 0xFFu8.into()]), 0u8.into());
     }
 }

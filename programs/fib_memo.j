@@ -2,11 +2,9 @@ fn fib(n:u8) -> u8 {
     static fib_memo: u8[14];
 
     if (n == 0) {
-        if (fib_memo[0] != 0) {
-            while (n < 14) {
-                fib_memo[n] = 0;
-                n = (n+1);
-            }
+        while (n < 14) {
+            fib_memo[n] = 0;
+            n = (n+1);
         }
         return 0;
     }

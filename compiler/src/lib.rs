@@ -22,6 +22,7 @@ use expression::*;
 mod func;
 use func::*;
 pub mod il;
+pub mod ilsim;
 mod optimize;
 use optimize::*;
 mod resolved;
