@@ -5,8 +5,8 @@ pub enum Statement {
     Declare { scope: Scope, name: String, var_type: Type },
     Assign { target: Expression, var_type: Option<Type>, value: Expression},
     VoidExpression { expression: Expression },
-    IfElse {predicate: Expression, when_true: Vec<Statement>, when_false: Vec<Statement> },
-    While {predicate: Expression, while_true: Vec<Statement>},
+    IfElse {predicate: Comparison, when_true: Vec<Statement>, when_false: Vec<Statement> },
+    While {predicate: Comparison, while_true: Vec<Statement>},
     Return { value: Expression},
     TtyOut {value: Expression},
 }
@@ -20,7 +20,8 @@ impl Statement {
                 while value.optimize(ctxt) { optimized = true; }
             }
             Statement::While { predicate, while_true} => {
-                while predicate.optimize(ctxt) { optimized = true; }
+                while predicate.left.optimize(ctxt) { optimized = true; }
+                while predicate.right.optimize(ctxt) { optimized = true; }
                 for s in while_true {
                     while s.optimize(ctxt) { optimized = true; }
                 }
@@ -34,7 +35,8 @@ impl Statement {
 
             }
             Statement::IfElse { predicate, when_true, when_false } => {
-                while predicate.optimize(ctxt) { optimized = true; }
+                while predicate.left.optimize(ctxt) { optimized = true; }
+                while predicate.right.optimize(ctxt) { optimized = true; }
                 for s in when_true {
                     while s.optimize(ctxt) { optimized = true; }
                 }
@@ -142,7 +144,10 @@ impl Statement {
             },
             Rule::if_else_statement => {
                 let mut pairs = pair.into_inner();
-                let predicate = Expression::parse(pairs.next().unwrap());
+                let predicate = match Expression::parse(pairs.next().unwrap()) {
+                    Expression::Comparison(c) => *c,
+                    _ => panic!()
+                };
                 let mut when_true = Vec::new();
                 let mut when_false = Vec::new();
                 while let Some(pair) = pairs.next() {
@@ -169,7 +174,10 @@ impl Statement {
             },
             Rule::while_loop => {
                 let mut pairs = pair.into_inner();
-                let predicate = Expression::parse(pairs.next().unwrap());
+                let predicate = match Expression::parse(pairs.next().unwrap()) {
+                    Expression::Comparison(c) => *c,
+                    _ => panic!()
+                };
                 let mut while_true = Vec::new();
                 while let Some(pair) = pairs.next() {
                     while_true.push(Statement::parse(pair));

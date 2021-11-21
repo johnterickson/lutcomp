@@ -31,7 +31,6 @@ impl<'a> FunctionContext<'a> {
 
 pub struct ProgramContext {
     pub entry: String,
-    pub globals: BTreeMap<String, Variable>,
     pub function_defs: BTreeMap<String, FunctionDefinition>,
     pub function_impls: BTreeMap<String, AllocatedFunction>,
     pub types: BTreeMap<String, StructDefinition>,

@@ -167,7 +167,8 @@ impl FunctionDefinition {
                 }
                 Statement::Declare {scope:_, name:_, var_type:_} => {}
                 Statement::IfElse{ predicate, when_true, when_false } => {
-                    find_address_of_exp(ctxt, predicate, needs_to_be_on_stack);
+                    find_address_of_exp(ctxt, &predicate.left, needs_to_be_on_stack);
+                    find_address_of_exp(ctxt, &predicate.right, needs_to_be_on_stack);
                     for s in when_true {
                         find_address_of_stmt(ctxt, s, needs_to_be_on_stack);
                     }

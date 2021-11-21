@@ -35,42 +35,18 @@ impl ArithmeticOperator {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum ComparisonOperator {
-    Equals,
-    NotEquals,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LessThan,
-    LessThanOrEqual,
-}
-
-impl ComparisonOperator {
-    fn parse(pair: pest::iterators::Pair<Rule>) -> ComparisonOperator {
-        match pair.as_str() {
-            "==" => ComparisonOperator::Equals,
-            "!=" => ComparisonOperator::NotEquals,
-            ">" => ComparisonOperator::GreaterThan,
-            ">=" => ComparisonOperator::GreaterThanOrEqual,
-            "<" => ComparisonOperator::LessThan,
-            "<=" => ComparisonOperator::LessThanOrEqual,
-            op => panic!("Unknown op: {}", op),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub enum Expression {
     Ident(String),
     Number(NumberType, u32),
     TtyIn(),
     Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
-    Comparison(ComparisonOperator, Box<Expression>, Box<Expression>),
+    Comparison(Box<Comparison>),
     Deref(Box<Expression>),
     LocalFieldDeref(String,String),
     PtrFieldDeref(String,String),
     AddressOf(Box<Expression>),
-    Index(String,Box<Expression>),
+    Index(String, Box<Expression>),
     Cast{old_type: Option<Type>, new_type: Type, value:Box<Expression>},
     Call(Call),
     Optimized{original: Box<Expression>, optimized: Box<Expression>},
@@ -85,10 +61,13 @@ impl Expression {
                     param.visit_inner_expressions(f);
                 }
             }
-            Expression::Arithmetic(_, left, right) |
-            Expression::Comparison(_, left, right) => {
+            Expression::Arithmetic(_, left, right) => {
                 left.visit_inner_expressions(f);
                 right.visit_inner_expressions(f);
+            }
+            Expression::Comparison(c) => {
+                c.left.visit_inner_expressions(f);
+                c.right.visit_inner_expressions(f);
             }
             Expression::Deref(inner) |
             Expression::AddressOf(inner) |
@@ -156,73 +135,73 @@ impl Expression {
     }
 
     pub fn optimize(&mut self, ctxt: &ProgramContext) -> bool {
-         let (optimized, new_self) = match self {
-            Expression::Arithmetic(op, left, right) => {
-                let inner = left.optimize(ctxt) || right.optimize(ctxt);
-                if inner {
-                    (true, None)
-                } else {
-                    let (left_val, right_val) = (left.try_get_const(), right.try_get_const());
-                    match (op, left_val, right_val) {
-                        (ArithmeticOperator::Add, Some(0), _) => {
-                            (true, Some((*right).clone()))
-                        }
-                        (ArithmeticOperator::Add, _, Some(0)) => {
-                            (true, Some((*left).clone()))
-                        }
-                        _ => (false, None)
-                    }
-                }
-            }
-            Expression::Comparison(_op, left, right) => {
-                (left.optimize(ctxt) || right.optimize(ctxt), None)
+        let (optimized, new_self) = match self {
+           Expression::Arithmetic(op, left, right) => {
+               let inner = left.optimize(ctxt) || right.optimize(ctxt);
+               if inner {
+                   (true, None)
+               } else {
+                   let (left_val, right_val) = (left.try_get_const(), right.try_get_const());
+                   match (op, left_val, right_val) {
+                       (ArithmeticOperator::Add, Some(0), _) => {
+                           (true, Some((*right).clone()))
+                       }
+                       (ArithmeticOperator::Add, _, Some(0)) => {
+                           (true, Some((*left).clone()))
+                       }
+                       _ => (false, None)
+                   }
+               }
+           }
+           Expression::Comparison(c) => {
+               (c.left.optimize(ctxt) || c.right.optimize(ctxt), None)
 
-            }
-            Expression::Deref(inner) => {
-                (inner.optimize(ctxt), None)
-            }
-            Expression::AddressOf(inner) => {
-                (inner.optimize(ctxt), None)
-            }
-            Expression::Index(_, index_exp) => {
-                (index_exp.optimize(ctxt), None)
-            }
-            Expression::Cast{old_type, new_type, value} => {
-                if old_type.is_none() {
-                    *old_type = value.try_emit_type(ctxt);
-                }
+           }
+           Expression::Deref(inner) => {
+               (inner.optimize(ctxt), None)
+           }
+           Expression::AddressOf(inner) => {
+               (inner.optimize(ctxt), None)
+           }
+           Expression::Index(_, index_exp) => {
+               (index_exp.optimize(ctxt), None)
+           }
+           Expression::Cast{old_type, new_type, value} => {
+               if old_type.is_none() {
+                   *old_type = value.try_emit_type(ctxt);
+               }
 
-                if let (Some(Type::Number(NumberType::U8)), Type::Number(NumberType::USIZE), Some(v)) = 
-                       (&old_type, &new_type, value.try_get_const())
-                {
-                    let v: u32 = v.try_into().unwrap();
-                    (true, Some(Box::new(Expression::Number(NumberType::USIZE, v.into()))))
-                }
-                else if let (Some(Type::Number(NumberType::U8)), 4, Some(v)) = 
-                              (&old_type, &new_type.byte_count(ctxt), value.try_get_const())
-                {
-                    let v: u32 = v.try_into().unwrap();
-                    (true, Some(Box::new(Expression::Cast {
-                        old_type: Some(Type::Number(NumberType::USIZE)),
-                        new_type: new_type.clone(),
-                        value: Box::new(Expression::Number(NumberType::USIZE, v.into()))
-                    })))
-                } else {
-                    (value.optimize(ctxt), None)
-                }
-            }
-            Expression::Optimized{original:_, optimized} => {
-                (optimized.optimize(ctxt), None)
-            }
-            _ => (false, None)
-        };
+               if let (Some(Type::Number(NumberType::U8)), Type::Number(NumberType::USIZE), Some(v)) = 
+                      (&old_type, &new_type, value.try_get_const())
+               {
+                   let v: u32 = v.try_into().unwrap();
+                   (true, Some(Box::new(Expression::Number(NumberType::USIZE, v.into()))))
+               }
+               else if let (Some(Type::Number(NumberType::U8)), 4, Some(v)) = 
+                             (&old_type, &new_type.byte_count(ctxt), value.try_get_const())
+               {
+                   let v: u32 = v.try_into().unwrap();
+                   (true, Some(Box::new(Expression::Cast {
+                       old_type: Some(Type::Number(NumberType::USIZE)),
+                       new_type: new_type.clone(),
+                       value: Box::new(Expression::Number(NumberType::USIZE, v.into()))
+                   })))
+               } else {
+                   (value.optimize(ctxt), None)
+               }
+           }
+           Expression::Optimized{original:_, optimized} => {
+               (optimized.optimize(ctxt), None)
+           }
+           _ => (false, None)
+       };
 
-        if let Some(new_self) = new_self {
-            *self = Expression::Optimized{original: Box::new(self.clone()), optimized: new_self};
-        }
+       if let Some(new_self) = new_self {
+           *self = Expression::Optimized{original: Box::new(self.clone()), optimized: new_self};
+       }
 
-        optimized
-    }
+       optimized
+   }
 
     pub fn parse(pair: pest::iterators::Pair<Rule>) -> Expression {
         assert_eq!(Rule::expression, pair.as_rule());
@@ -291,7 +270,7 @@ impl Expression {
                 let left = Expression::parse(pairs.next().unwrap());
                 let op = ComparisonOperator::parse(pairs.next().unwrap());
                 let right = Expression::parse(pairs.next().unwrap());
-                Expression::Comparison(op, Box::new(left), Box::new(right))
+                Expression::Comparison(Box::new(Comparison { op, left, right}))
             },
             Rule::arithmetic_expression => {
                 let mut pairs = pair.into_inner();
@@ -332,115 +311,6 @@ impl Expression {
                 unimplemented!();
             }
         }
-    }
-
-
-    pub fn emit_branch(&self, ctxt: &mut FunctionContext, when_true:&str, when_false: &str) {
-        let (op, left, right) = if let Expression::Comparison(op, left, right) = self {
-            (op, left, right)
-        } else {
-            panic!("expected comparison expression, but found: {:?}", &self);
-        };
-
-        let (actual_left_reg, left_type) = left.emit(ctxt, None);
-        assert_eq!(actual_left_reg, None);
-        let (actual_right_reg, right_type) = right.emit(ctxt, None);
-        assert_eq!(actual_right_reg, None);
-
-        let size = left_type.byte_count(ctxt.program);
-        if size != right_type.byte_count(ctxt.program) {
-            panic!("'{:?}' and '{:?}' are different sizes.", &left_type, &right_type);
-        }
-
-        let size: u8 = size.try_into().expect("Comparison size is too big.");
-        assert!(size == 1 || size == 4);
-
-        if left_type != right_type {
-            panic!("'{:?}' and '{:?}' are different types.", &left_type, &right_type);
-        }
-
-        let right_reg = 8;
-        for r in 0..size {
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::Pop8,
-                resolved: None,
-                source: format!("{:?}", &self),
-                args: vec![Value::Register(right_reg + r)]
-            });
-            ctxt.additional_offset -= 1;
-        }
-
-        let left_reg = 4;
-        for r in 0..size {
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::Pop8,
-                resolved: None,
-                source: format!("{:?}", &self),
-                args: vec![Value::Register(left_reg + r)]
-            });
-            ctxt.additional_offset -= 1;
-        }
-
-        let (first_base_reg, second_base_reg) = match op {
-            ComparisonOperator::Equals | ComparisonOperator::NotEquals => (right_reg, left_reg),
-            ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => (left_reg, right_reg),
-            ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => (right_reg, left_reg),
-        };
-
-        // compare MSB
-        ctxt.add_inst(Instruction {
-            opcode: Opcode::Cmp8,
-            resolved: None,
-            source: format!("{:?}", &self),
-            args: vec![Value::Register(first_base_reg+size-1), Value::Register(second_base_reg+size-1)]
-        });
-        
-        // compare other bytes if needed
-        for r in 1..size {
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::Cmp8IfZero,
-                resolved: None,
-                source: format!("{:?}", &self),
-                args: vec![Value::Register(first_base_reg+size-1-r), Value::Register(second_base_reg+size-1-r)]
-            });
-        }
-
-        let (cond, uncond, jmp_op) = match op {
-            ComparisonOperator::Equals | ComparisonOperator::NotEquals => {
-                if op == &ComparisonOperator::Equals {
-                    (when_true, when_false, Opcode::JzImm)
-                } else {
-                    (when_false,when_true, Opcode::JzImm)
-                }
-            },
-            ComparisonOperator::GreaterThan | ComparisonOperator::LessThanOrEqual => {
-                if op == &ComparisonOperator::LessThanOrEqual {
-                    (when_true,when_false,Opcode::JcImm)
-                } else {
-                    (when_false,when_true,Opcode::JcImm)
-                }
-            },
-            ComparisonOperator::LessThan | ComparisonOperator::GreaterThanOrEqual => {
-                if op == &ComparisonOperator::GreaterThanOrEqual {
-                    (when_true,when_false,Opcode::JcImm)
-                } else {
-                    (when_false,when_true,Opcode::JcImm)
-                }
-            }
-        };
-
-        ctxt.add_inst(Instruction {
-            opcode: jmp_op,
-            source: format!("{:?}", &self),
-            args: vec![Value::Label24(cond.to_owned())],
-            resolved: None,
-        });
-        ctxt.add_inst(Instruction {
-            opcode: Opcode::JmpImm,
-            source: format!("{:?}", &self),
-            args: vec![Value::Label24(uncond.to_owned())],
-            resolved: None,
-        });
     }
 
     fn emit_ref(&self, ctxt: &mut FunctionContext, reference: &LogicalReference, local_name: &str, target_register: Option<Register>) -> (Option<Register>,Type) {
@@ -767,7 +637,7 @@ impl Expression {
                 let ptr = Expression::Arithmetic(
                     ArithmeticOperator::Add,
                     array_start_address,
-                    ptr_offset_expression    
+                    ptr_offset_expression
                 );
 
                 let cast = Expression::Cast{
@@ -1175,7 +1045,7 @@ impl Expression {
 
                 (target_register, final_result_type)
             },
-            Expression::Comparison(_,_,_) => panic!("cannot evaluate comparison expression.")
+            Expression::Comparison(_) => panic!("cannot evaluate comparison expression.")
         };
         
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Evaluated expression: {:?} additional_offset:{}", &self, ctxt.additional_offset)));

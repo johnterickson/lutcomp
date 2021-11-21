@@ -2,6 +2,7 @@ use alu::*;
 use assemble::*;
 use common::*;
 use compiler::*;
+use compiler::il::IlProgram;
 use sim::*;
 use ucode::*;
 use std::{borrow::Cow, collections::HashMap, fs::File, io::Read, path::Path};
@@ -46,6 +47,32 @@ fn main() {
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
                 c.stdin_out = true;
                 while c.step() { }
+            }
+        }
+        Some("il") => {
+            let file_path: &Path = Path::new(args.get(2).unwrap());
+            let input = {
+                let mut input = String::new();
+                let mut file = File::open(file_path).unwrap();
+                file.read_to_string(&mut input).unwrap();
+                input
+            };
+            let entry = get_param("entry").unwrap_or("main");
+            let ctxt = create_program(entry, &input, file_path.parent().unwrap());
+            let il = IlProgram::from_program(&ctxt);
+            for (name, f) in &il.functions {
+                print!("// {:?}(", name);
+                for a in &f.args {
+                    print!("{:?},", a);
+                }
+                println!(")");
+                for s in &f.body {
+                    println!("{:?}", s);
+                }
+                println!();
+            }
+            if let Some("true") = get_param("sim") {
+                il.simulate(&[]);
             }
         }
         Some("compile") => {

@@ -17,15 +17,18 @@ use std::{convert::TryInto};
 
 mod call;
 use call::*;
+mod comparison;
+use comparison::*;
 mod ctxt;
 use ctxt::*;
 mod expression;
 use expression::*;
 mod func;
 use func::*;
-mod il;
+pub mod il;
 mod optimize;
 use optimize::*;
+mod resolved;
 mod stmt;
 use stmt::*;
 mod storage;
@@ -54,7 +57,6 @@ pub struct Variable {
     decl: Declaration,
     storage: Storage,
 }
-
 
 pub fn print_state(c: &Computer) {
     let pc = u32::from_le_bytes(c.pc);
@@ -147,7 +149,7 @@ pub fn main_inner(rom: &Image, args: Vec<u8>) {
 }
 const INITIAL_STACK: u32 = (RAM_MAX as u32/4)*4;
 
-fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
+fn emit(ctxt: &ProgramContext) -> Vec<AssemblyInputLine> {
     let mut program = Vec::new();
     program.push(AssemblyInputLine::ImageBaseAddress(ctxt.image_base_address));
 
@@ -240,7 +242,7 @@ fn emit(ctxt: &mut ProgramContext) -> Vec<AssemblyInputLine> {
 
 pub const STATICS_START_ADDRESS: u32 = common::RAM_MIN as u32 + common::REGISTER_COUNT;
 
-pub fn compile(entry: &str, input: &str, root: &Path) -> (ProgramContext, Vec<AssemblyInputLine>) {
+pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
     let mut input = input.to_owned();
 
     'reparse: loop {
@@ -248,7 +250,6 @@ pub fn compile(entry: &str, input: &str, root: &Path) -> (ProgramContext, Vec<As
             entry: entry.to_owned(),
             function_impls: BTreeMap::new(),
             function_defs: BTreeMap::new(),
-            globals: BTreeMap::new(),
             types: BTreeMap::new(),
             registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
             statics_cur_address: STATICS_START_ADDRESS,
@@ -339,9 +340,14 @@ pub fn compile(entry: &str, input: &str, root: &Path) -> (ProgramContext, Vec<As
             ctxt.function_impls.insert(name.clone(), allocated);
         }
 
-        let assembly = emit(&mut ctxt);
-        break (ctxt, assembly);
+        break ctxt;
     }
+}
+
+pub fn compile(entry: &str, input: &str, root: &Path) -> (ProgramContext, Vec<AssemblyInputLine>) {
+    let ctxt = create_program(entry, input, root);
+    let assembly = emit(&ctxt);
+    (ctxt, assembly)
 }
 
 #[cfg(test)]
@@ -349,6 +355,16 @@ mod tests {
     use std::env;
 
     use super::*;
+
+    pub fn test_programs_dir() -> PathBuf {
+        let mut dir = env::current_exe().unwrap();
+        dir.pop();
+        dir.pop();
+        dir.pop();
+        dir.pop();
+        dir.push("programs");
+        dir
+    }
 
 
     #[derive(Debug, PartialEq, Clone)]
@@ -392,7 +408,7 @@ mod tests {
         }
     }
 
-    struct TestComputer<'a> {
+    pub struct TestComputer<'a> {
         pub comp: Computer<'a>,
         ctxt: &'a ProgramContext
     }
@@ -404,16 +420,6 @@ mod tests {
 
         fn arg_base_addr_var(offset: u32) -> TestVar {
             TestVar::Usize(TestComputer::arg_base_addr() + offset)
-        }
-
-        fn test_programs_dir() -> PathBuf {
-            let mut dir = env::current_exe().unwrap();
-            dir.pop();
-            dir.pop();
-            dir.pop();
-            dir.pop();
-            dir.push("programs");
-            dir
         }
 
         fn from_rom(ctxt: &'a ProgramContext, rom: &'a Image) -> TestComputer<'a> {
@@ -457,7 +463,7 @@ mod tests {
     }
 
     fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
-        let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
+        let (ctxt, assembly) = compile(entry, program, &test_programs_dir());
         let rom = assemble::assemble(assembly);
         for (ttyin, input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&ctxt, &rom);
@@ -478,7 +484,7 @@ mod tests {
     }
 
     fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
-        let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
+        let (ctxt, assembly) = compile(entry, program, &test_programs_dir());
         let rom = assemble::assemble(assembly);
         let addr1 = STATICS_START_ADDRESS+100;
         let addr2 = STATICS_START_ADDRESS+200;
@@ -517,7 +523,7 @@ mod tests {
     }
 
     fn assemble(entry: &str, program: &str) -> (ProgramContext, Image) {
-        let (ctxt, assembly) = compile(entry, program, &TestComputer::test_programs_dir());
+        let (ctxt, assembly) = compile(entry, program, &test_programs_dir());
 
         let rom = assemble::assemble(assembly);
         (ctxt, rom)
@@ -946,10 +952,10 @@ mod tests {
             include_str!("../../programs/divide.j"),
             &[
                 (0x1u8,0x1u8,0x1u8),
-                // (0x2,0x1,0x2),
-                // (0x1,0x2,0x0),
-                // (100,10,10),
-                // (255,16,15),
+                (0x2,0x1,0x2),
+                (0x1,0x2,0x0),
+                (100,10,10),
+                (255,16,15),
                 ]);
     }
 
