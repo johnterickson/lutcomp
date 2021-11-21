@@ -9,11 +9,7 @@ use strum::IntoEnumIterator;
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 use std::{collections::BTreeSet, fs::File, unimplemented};
-use std::io::Read;
-use std::collections::{BTreeMap, HashSet};
-use std::{convert::TryInto};
-
-
+use std::{collections::BTreeMap, convert::TryInto, io::Read};
 
 mod call;
 use call::*;
@@ -110,7 +106,7 @@ pub fn print_state(c: &Computer) {
     // }
 
     if let Some(symbol) = c.image.symbols.get(&pc) {
-        let mut seen = HashSet::new();
+        let mut seen = BTreeSet::new();
         for note in &symbol.notes {
             if seen.insert(note) {
                 println!("   {}", note);
@@ -259,7 +255,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
 
         let to_parse = input.clone();
 
-        let mut includes = HashSet::new();
+        let mut includes = BTreeSet::new();
 
         let mut program = ProgramParser::parse(Rule::program, &to_parse)
             .expect(&format!("Could not parse `{}`.", &to_parse));

@@ -2,10 +2,10 @@ use alu::*;
 use assemble::*;
 use common::*;
 use compiler::*;
-use compiler::il::IlProgram;
+use compiler::il::*;
 use sim::*;
 use ucode::*;
-use std::{borrow::Cow, collections::HashMap, fs::File, io::Read, path::Path};
+use std::{borrow::Cow, collections::BTreeMap, fs::File, io::Read, path::Path};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -13,7 +13,7 @@ fn main() {
     let arg2 = args.get(2).map(|s| s.as_str());
 
     let params = {
-        let mut params: HashMap<&str,_> = HashMap::new();
+        let mut params: BTreeMap<&str,_> = BTreeMap::new();
         for arg in args.iter().skip(2) {
             if arg.starts_with("--") {
                 if let Some((key,value)) = arg.split_once('=') {
@@ -25,7 +25,7 @@ fn main() {
         params
     };
 
-    let get_param = |k| params.get(k).map(|s| s.as_str());
+    let get_param = |k: &str| params.get(k).map(|s| s.as_str());
 
     //let arg3 = args.get(3).map(|s| s.as_str());
     match arg1 {
@@ -72,7 +72,16 @@ fn main() {
                 println!();
             }
             if let Some("true") = get_param("sim") {
-                il.simulate(&[]);
+                let mut args: Vec<IlNumber> = Vec::new();
+                for i in 1..=4 {
+                    let param_name = format!("arg{}",i);
+                    if let Some(v) = get_param(&param_name) {
+                        let v = v.parse().unwrap();
+                        args.push(IlNumber::U8(v))
+                    }
+                }
+                
+                println!("{:?}", il.simulate(&args));
             }
         }
         Some("compile") => {

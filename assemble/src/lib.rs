@@ -8,7 +8,7 @@ extern crate strum;
 extern crate packed_struct;
 
 use common::*;
-use std::{collections::{BTreeMap, HashMap}, convert::TryInto, fmt::Debug};
+use std::{collections::{BTreeMap}, convert::TryInto, fmt::Debug};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
@@ -406,7 +406,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
     }
 
     let mut rom = Vec::new();
-    let mut symbols = HashMap::new();
+    let mut symbols = BTreeMap::new();
     let mut notes = Some(Vec::new());
     let mut pc = start_pc;
     for (_pc, in_line, out_line) in lines.as_mut_slice() {

@@ -5,7 +5,7 @@ use strum::IntoEnumIterator;
 
 use alu::*;
 use common::*;
-use std::{borrow::Cow, collections::{BTreeSet, HashMap, VecDeque}, convert::TryInto, fmt::Debug, io, ops::Range, sync::{Mutex, mpsc::{self, Receiver}}, thread};
+use std::{borrow::Cow, collections::{BTreeSet, BTreeMap, VecDeque}, convert::TryInto, fmt::Debug, io, ops::Range, sync::{Mutex, mpsc::{self, Receiver}}, thread};
 use ucode::*;
 
 fn spawn_stdin_channel() -> Receiver<String> {
@@ -71,7 +71,7 @@ impl<'a> Computer<'a> {
             Cow::Owned(Image{
                 bytes: rom,
                 start_addr: 0,
-                symbols: HashMap::new(),
+                symbols: BTreeMap::new(),
             }),
             print)
     }

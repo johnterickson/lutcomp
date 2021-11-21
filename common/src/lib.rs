@@ -4,7 +4,7 @@ extern crate strum_macros;
 
 extern crate packed_struct;
 extern crate packed_struct_codegen;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use packed_struct::prelude::*;
 
@@ -272,5 +272,5 @@ pub struct Symbol {
 pub struct Image {
     pub start_addr: u32,
     pub bytes: Vec<u8>,
-    pub symbols: HashMap<u32,Symbol>,
+    pub symbols: BTreeMap<u32,Symbol>,
 }
