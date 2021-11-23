@@ -365,7 +365,7 @@ mod tests {
 
 
     #[derive(Debug, PartialEq, Clone)]
-    enum TestVar {
+    pub enum TestVar {
         Ascii(&'static [u8]),
         Ptr(Vec<u8>),
         U8(u8),
@@ -411,11 +411,11 @@ mod tests {
     }
 
     impl<'a> TestComputer<'a> {
-        fn arg_base_addr() -> u32 {
+        pub fn arg_base_addr() -> u32 {
             STATICS_START_ADDRESS+1000
         }
 
-        fn arg_base_addr_var(offset: u32) -> TestVar {
+        pub fn arg_base_addr_var(offset: u32) -> TestVar {
             TestVar::Usize(TestComputer::arg_base_addr() + offset)
         }
 

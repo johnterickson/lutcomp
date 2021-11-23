@@ -24,15 +24,15 @@ impl ArithmeticOperator {
         }
     }
 
-    fn is_symmetric(&self) -> bool {
-        match self {
-            ArithmeticOperator::Add => true,
-            ArithmeticOperator::Subtract => false,
-            ArithmeticOperator::Multiply => true,
-            ArithmeticOperator::Or => true,
-            ArithmeticOperator::And => true,
-        }
-    }
+    // fn is_symmetric(&self) -> bool {
+    //     match self {
+    //         ArithmeticOperator::Add => true,
+    //         ArithmeticOperator::Subtract => false,
+    //         ArithmeticOperator::Multiply => true,
+    //         ArithmeticOperator::Or => true,
+    //         ArithmeticOperator::And => true,
+    //     }
+    // }
 }
 
 #[derive(Debug, Clone)]
@@ -124,6 +124,19 @@ impl Expression {
                     None
                 }
             }
+            Expression::Index(name, _) => {
+                if let Some(f) = f {
+                    let (_,t) = f.find_arg_or_var(name)
+                        .expect(&format!("Cannot find {} in {:?}", name, f));
+                    match t {
+                        Type::Array(element_type, _) |
+                        Type::Ptr(element_type) => Some(element_type.as_ref().clone()),
+                        _ => panic!(),
+                    }
+                } else {
+                    None
+                }
+            }
             Expression::Number(nt, _) => Some(Type::Number(nt.clone())),
             Expression::AddressOf(inner) => {
                 if let Some(inner_type) = inner.try_emit_type(ctxt, f) {
@@ -135,6 +148,28 @@ impl Expression {
             Expression::Call(call) => {
                 if let Some(f) = ctxt.function_defs.get(&call.function) {
                     Some(f.return_type.clone())
+                } else {
+                    None
+                }
+            }
+            Expression::Arithmetic(_, left, right) => {
+                match (left.try_emit_type(ctxt, f), right.try_emit_type(ctxt, f)) {
+                    (Some(t1), Some(t2)) => {
+                        if t1 == t2 {
+                            Some(t1)
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            }
+            Expression::Deref(e) => {
+                if let Some(ptr_type) = e.try_emit_type(ctxt, f) {
+                    match ptr_type {
+                        Type::Ptr(t) => Some(*t),
+                        _ => todo!(),
+                    }
                 } else {
                     None
                 }

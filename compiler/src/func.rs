@@ -20,7 +20,7 @@ impl FunctionDefinition {
         if let Some((s,t)) = self.vars.get(name) {
             Some((s,t))
         }
-        else if let Some((n,t)) = self.args.iter().filter(|(n,t)| n == name).next() {
+        else if let Some((_,t)) = self.args.iter().filter(|(n,_)| n == name).next() {
             Some((&Scope::Local, t))
         } else {
             None
