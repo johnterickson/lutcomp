@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::BTreeMap, convert::TryFrom, fmt::Debug, hash::Hash, thread::LocalKey};
+use std::{collections::BTreeMap, convert::TryFrom, fmt::Debug, hash::Hash};
 
 use crate::*;
 
@@ -96,6 +96,26 @@ impl IlFunction {
         id
     }
 
+    fn find_static<'a>(&'a self, ctxt: &'a IlContext, name: &'a str) -> &'a (Type, u32) {
+        let key= (Some(self.id.clone()), IlVarId(name.to_owned()));
+        ctxt.il.statics.get(&key).expect(&format!("Could not find {:?}", key))
+    }
+
+    fn emit_static_address(&mut self, ctxt: &IlContext, name: &str) -> (IlVarId, Type) {
+        let (t, addr) = self.find_static(ctxt, name);
+        let (t, addr) =  (t.clone(), *addr);
+        let addr_var = self.alloc_tmp(IlVarInfo {
+            description: format!("static {:?}", &name),
+            location: Location::U32,
+            var_type: Type::Ptr(Box::new(t.clone())),
+        });
+        self.body.push(IlInstruction::AssignAtom {
+            dest: addr_var.clone(),
+            src: IlAtom::Number(IlNumber::U32(addr))
+        });
+        (addr_var, t)
+    }
+
     fn emit_address(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, IlType) {
         match target {
             Expression::Index(var, index) => {
@@ -109,19 +129,9 @@ impl IlFunction {
                 let base_address = match scope {
                     Scope::Local => IlVarId(var.clone()),
                     Scope::Static => {
-                        let key= (Some(self.id.clone()), IlVarId(var.clone()));
-                        let (t, addr) = ctxt.il.statics.get(&key).expect(&format!("Could not find {:?}", key));
-                        let base = self.alloc_tmp(IlVarInfo {
-                            description: format!("{:?}", &key),
-                            location: Location::U32,
-                            var_type: Type::Ptr(Box::new(t.clone())),
-                        });
-                        self.body.push(IlInstruction::AssignAtom {
-                            dest: base.clone(),
-                            src: IlAtom::Number(IlNumber::U32(*addr))
-                        });
-
-                        base
+                        let (addr, t) = self.emit_static_address(ctxt, var);
+                        assert_eq!(&t, ptr_type);
+                        addr
                     }
                 };
 
@@ -167,6 +177,17 @@ impl IlFunction {
 
                 (addr, element_size.try_into().unwrap())
             }
+            Expression::Ident(n) => {
+                let (scope, var_type) = ctxt.func.find_arg_or_var(n).unwrap();
+                match scope {
+                    Scope::Local => todo!(),
+                    Scope::Static => {
+                        let (addr, t) = self.emit_static_address(ctxt, n);
+                        assert_eq!(var_type, &t);
+                        (addr, t.byte_count(ctxt.program).try_into().unwrap())
+                    }
+                }
+            }
             _ => todo!(),
         }
     }
@@ -178,11 +199,16 @@ impl IlFunction {
                 match scope {
                     Scope::Local =>  (IlVarId(n.clone()), None),
                     Scope::Static => {
-                        todo!();
+                        let (address, size) = self.emit_address(ctxt,  target);
+                        (address, Some(size))
                     }
                 }
             },
-            Expression::Deref(_) => todo!(),
+            Expression::Deref(e) => {
+                let (addr, info) = self.alloc_tmp_and_emit_value(ctxt, e);
+                let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
+                (addr, Some(size))
+            },
             Expression::LocalFieldDeref(_, _) => todo!(),
             Expression::PtrFieldDeref(_, _) => todo!(),
             Expression::Index(_, _) => {
@@ -281,16 +307,23 @@ impl IlFunction {
 
     fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
         match e {
-            Expression::Ident(v) => {
-                let (scope, t) = ctxt.func.find_arg_or_var(v)
-                    .expect(&format!("Could not find {}", v));
+            Expression::Ident(name) => {
+                let (scope, t) = ctxt.func.find_arg_or_var(name)
+                    .expect(&format!("Could not find {}", name));
                 match scope {
                     Scope::Local =>  {
-                        let src = IlAtom::Var(IlVarId(v.clone()));
+                        let src = IlAtom::Var(IlVarId(name.clone()));
                         self.body.push(IlInstruction::AssignAtom{dest, src});
                     },
                     Scope::Static => {
-                        todo!();
+                        let (t, addr) = self.find_static(ctxt, name);
+                        let (t, addr) = (t.clone(), *addr);
+                        let size = t.byte_count(ctxt.program).try_into().unwrap();
+                        self.body.push(IlInstruction::ReadMemory {
+                            dest,
+                            addr: IlAtom::Number(IlNumber::U32(addr)),
+                            size,
+                        })
                     }
                 }
             },

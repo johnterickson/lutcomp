@@ -380,6 +380,179 @@ mod tests {
     }
 
     #[test]
+    fn if_gte_unsigned() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/if_gte.j"),
+            &[(6u8,7u8,0u8), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 1), (7,7,1)]);
+    }
+
+    #[test]
+    fn if_lt_unsigned() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/if_lt.j"),
+            &[
+            (0u8,0u8,0u8),
+            (0,1,1),
+            (6,7,1), (8,7,0), (0,7,1), (7,0,0), (0x7F,7,0), (0xFF, 7, 0), (7,7,0)]);
+    }
+
+    #[test]
+    fn if_lte_unsigned() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/if_lte.j"),
+            &[(6u8,7u8,1u8), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 0), (7,7,1)]);
+    }
+
+    #[test]
+    fn if_ne() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/if_ne.j"),
+            &[(6u8,7u8,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
+    }
+
+    #[test]
+    fn if_ne_uptr() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/if_ne_uptr.j"),
+            &[
+                (6u32,7u32,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0),
+                (0x0,0x100,1),(0x100,0x100,0),(0xAABBCCDD,0xAABBCCDD,0),
+                (0xAABBCCDD,0xAABBCCDE,1),(0xAABBCCDD,0xAABBCDDD,1),
+                (0xAABBCCDD,0xAABCCCDD,1),(0xAABBCCDD,0xABBBCCDD,1)]);
+    }
+
+    #[test]
+    fn plusone() {
+        test_var_inputs(
+            "main",
+            include_str!("../../programs/plusone.j"),
+            &[(vec![],7u8.into())]);
+
+    }
+
+    #[test]
+    fn fac_rec() {
+        test_var_inputs(
+            "main",
+            include_str!("../../programs/fac_rec.j"),
+            &[
+                (vec![0x0u8.into()],1u8.into()),
+                (vec![0x1u8.into()],1u8.into()),
+                (vec![0x2u8.into()],2u8.into()),
+                (vec![0x5u8.into()],120u8.into()),
+            ]);
+    }
+
+    #[test]
+    fn fac_iter() {
+        test_var_inputs(
+            "fac",
+            include_str!("../../programs/fac_iter.j"),
+            &[
+                (vec![0u8.into()],1u8.into()),
+                (vec![1u8.into()],1u8.into()),
+                (vec![2u8.into()],2u8.into()),
+                (vec![5u8.into()],120u8.into()),
+            ]);
+    }
+
+    #[test]
+    fn fib() {
+        test_var_inputs(
+            "fib",
+            include_str!("../../programs/fib.j"),
+            &[
+                (vec![0u8.into()],0u8.into()),
+                (vec![1u8.into()],1u8.into()),
+                (vec![2u8.into()],1u8.into()),
+                (vec![3u8.into()],2u8.into()),
+                // (vec![13u8.into()],233u8.into()),
+                ]);
+    }
+
+    #[test]
+    fn fib_memo() {
+        test_var_inputs(
+            "main",
+            include_str!("../../programs/fib_memo.j"),
+            &[
+                (vec![0u8.into()],0u8.into()),
+                (vec![1u8.into()],1u8.into()),
+                (vec![2u8.into()],1u8.into()),
+                (vec![3u8.into()],2u8.into()),
+                (vec![13u8.into()],233u8.into()),
+                ]);
+    }
+
+
+    #[test]
+    fn statics() {
+        test_var_inputs(
+            "main",
+            include_str!("../../programs/static.j"),
+            &[
+                (vec![1u8.into()],2u8.into()),
+                (vec![2u8.into()],4u8.into()),
+                ]);
+    }
+    
+    #[test]
+    fn add_uptr() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/add_uptr.j"),
+            &[
+                (0x0u32,0x0u32,0x0u32),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0x1,0x2),
+                (0x1,0xFF,0x100),
+                (0xAABBCCDD, 0x0, 0xAABBCCDD),
+                (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
+                (0xFFFFFFFF, 0x1, 0x0),
+                ]);
+    }
+
+    #[test]
+    fn cmp_usize() {
+        test_inputs(
+            "cmp_usize",
+            include_str!("../../programs/cmp_usize.j"),
+            &[
+                (0x0u32,0x0u32,0x0u8),
+                (0x0,0x1,0xFF),
+                (0x1,0x0,0x1),
+                (0x100,0x0,0x1),
+                (0x100,0x2,0x1),
+                (0x0,0x100,0xFF),
+                (0x2,0x100,0xFF),
+                (0xbbccddee,0xbbccddee,0x0),
+                (0x01020304,0x04030201,0xFF),
+                (0x04030201,0x01020304,0x1),
+                ]);
+    }
+
+    #[test]
+    fn ptr() {
+        test_var_inputs(
+            "main",
+            include_str!("../../programs/ptr.j"),
+            &[
+                (vec![0u32.to_le_bytes().into(), 0u32.to_le_bytes().into()], 0u32.into()),
+                (vec![0u32.to_le_bytes().into(), 1u32.to_le_bytes().into()], 1u32.into()),
+                (vec![1u32.to_le_bytes().into(), 2u32.to_le_bytes().into()], 3u32.into()),
+                (vec![0xAABBCCDDu32.to_le_bytes().into(), 0x11111111u32.to_le_bytes().into()], 0xBBCCDDEEu32.into()),
+                (vec![0xFFFFFFFFu32.to_le_bytes().into(), 0x1u32.to_le_bytes().into()], 0x0u32.into()),
+            ]
+        );
+    }
+
+    #[test]
     fn divide() {
         let il = emit_il(
             "divide",
@@ -389,19 +562,6 @@ mod tests {
         assert_eq!(il.simulate(&[2u8.into(), 1u8.into()]), 2u8.into());
         assert_eq!(il.simulate(&[1u8.into(), 2u8.into()]), 0u8.into());
         assert_eq!(il.simulate(&[100u8.into(), 10u8.into()]), 10u8.into());
-    }
-
-    #[test]
-    fn if_ne_uptr() {
-        let il = emit_il(
-            "main",
-            include_str!("../../programs/if_ne_uptr.j"));
-
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABBCCDDu32.into()]), 0u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABBCCDEu32.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABBCDDDu32.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xAABCCCDDu32.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[0xAABBCCDDu32.into(), 0xABBBCCDDu32.into()]), 1u8.into());
     }
 
     #[test]
@@ -415,76 +575,6 @@ mod tests {
         assert_eq!(il.simulate(&[1u8.into(), 0u8.into()]), 1u8.into());
         assert_eq!(il.simulate(&[1u8.into(), 0xFFu8.into()]), 0u8.into());
     }
-
-    #[test]
-    fn fac_rec() {
-        let il = emit_il(
-            "main",
-            include_str!("../../programs/fac_rec.j"));
-        for (ins, out) in 
-            &[
-                ([0x0u8.into()],1u8.into()),
-                ([0x1u8.into()],1u8.into()),
-                ([0x2u8.into()],2u8.into()),
-                ([0x5u8.into()],120u8.into()),
-            ]
-        {
-            assert_eq!(il.simulate(ins), *out);
-        }
-    }
-
-    #[test]
-    fn fac_iter() {
-        let il = emit_il(
-            "fac",
-            include_str!("../../programs/fac_iter.j"));
-        for (ins, out) in 
-            &[
-                (vec![0u8.into()],1u8.into()),
-                (vec![1u8.into()],1u8.into()),
-                (vec![2u8.into()],2u8.into()),
-                (vec![5u8.into()],120u8.into()),
-            ]
-        {
-            assert_eq!(il.simulate(ins), *out);
-        }
-    }
-
-    #[test]
-    fn fib() {
-        let il = emit_il(
-            "fib",
-            include_str!("../../programs/fib.j"));
-        for (ins, out) in 
-            &[
-                (vec![0u8.into()],0u8.into()),
-                (vec![1u8.into()],1u8.into()),
-                (vec![2u8.into()],1u8.into()),
-                (vec![3u8.into()],2u8.into()),
-            ]
-        {
-            assert_eq!(il.simulate(ins), *out);
-        }
-    }
-
-    #[test]
-    fn fib_memo() {
-        let il = emit_il(
-            "main",
-            include_str!("../../programs/fib_memo.j"));
-        for (ins, out) in 
-            &[
-                (vec![0u8.into()],0u8.into()),
-                (vec![1u8.into()],1u8.into()),
-                (vec![2u8.into()],1u8.into()),
-                (vec![3u8.into()],2u8.into()),
-                (vec![13u8.into()],233u8.into()),
-            ]
-        {
-            assert_eq!(il.simulate(ins), *out);
-        }
-    }
-
 
     #[test]
     fn strstr() {

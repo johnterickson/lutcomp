@@ -405,6 +405,12 @@ mod tests {
         }
     }
 
+    impl From<[u8;4]> for TestVar {
+        fn from(bytes: [u8;4]) -> Self {
+            TestVar::Ptr(bytes.iter().cloned().collect())
+        }
+    }
+
     pub struct TestComputer<'a> {
         pub comp: Computer<'a>,
         ctxt: &'a ProgramContext
