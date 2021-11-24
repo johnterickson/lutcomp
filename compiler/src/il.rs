@@ -18,6 +18,7 @@ pub struct IlVarInfo {
     pub description: String,
     pub location: Location,
     pub var_type: Type,
+    pub scope: Scope,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -59,7 +60,7 @@ impl IlFunction {
 
     fn alloc_tmp_for_expression(&mut self, ctxt: &IlContext, e: &Expression) -> (IlVarId, IlVarInfo) {
         let id = IlVarId(format!("t{}", self.next_temp_num));
-        let t = e.try_emit_type(ctxt.program, Some(ctxt.func))
+        let t = e.try_emit_type(ctxt.program, Some(ctxt.func_def))
             .expect(&format!("Could not determine type for '{:?}'.", e));
         let location = match t.byte_count(ctxt.program) {
             1 => Location::U8,
@@ -68,7 +69,8 @@ impl IlFunction {
         };
         let info = IlVarInfo {
             description: format!("{} {:?}", &id.0, e),
-            var_type: e.try_emit_type(ctxt.program, Some(ctxt.func)).unwrap(),
+            var_type: e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap(),
+            scope: Scope::Local,
             location
         };
         self.vars.insert(id.clone(), info);
@@ -96,30 +98,34 @@ impl IlFunction {
         id
     }
 
-    fn find_static<'a>(&'a self, ctxt: &'a IlContext, name: &'a str) -> &'a (Type, u32) {
+    fn find_static<'a>(&'a self, ctxt: &'a IlContext, name: &'a str) -> &'a IlVarInfo {
         let key= (Some(self.id.clone()), IlVarId(name.to_owned()));
         ctxt.il.statics.get(&key).expect(&format!("Could not find {:?}", key))
     }
 
     fn emit_static_address(&mut self, ctxt: &IlContext, name: &str) -> (IlVarId, Type) {
-        let (t, addr) = self.find_static(ctxt, name);
-        let (t, addr) =  (t.clone(), *addr);
+        let info = self.find_static(ctxt, name).clone();
+        let addr = match &info.location {
+            Location::Static(addr) => *addr,
+            _ => panic!(),
+        };
         let addr_var = self.alloc_tmp(IlVarInfo {
             description: format!("static {:?}", &name),
             location: Location::U32,
-            var_type: Type::Ptr(Box::new(t.clone())),
+            var_type: Type::Ptr(Box::new(info.var_type.clone())),
+            scope: Scope::Local,
         });
         self.body.push(IlInstruction::AssignAtom {
             dest: addr_var.clone(),
             src: IlAtom::Number(IlNumber::U32(addr))
         });
-        (addr_var, t)
+        (addr_var, info.var_type)
     }
 
     fn emit_address(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, IlType) {
         match target {
             Expression::Index(var, index) => {
-                let (scope, ptr_type) = ctxt.func.find_arg_or_var(var)
+                let (scope, ptr_type) = ctxt.func_def.find_arg_or_var(var)
                     .expect(&format!("Could not find {}", var));
 
                 let element_type = ptr_type.get_element_type().unwrap();
@@ -134,7 +140,6 @@ impl IlFunction {
                         addr
                     }
                 };
-
 
                 let (index_val, index_info) = self.alloc_tmp_for_expression(ctxt, index);
                 match index_info.location {
@@ -167,6 +172,7 @@ impl IlFunction {
                     description: format!("Final address of {:?}", target),
                     location: Location::U32,
                     var_type: Type::Ptr(Box::new(element_type.clone())),
+                    scope: Scope::Local,
                 });
                 self.body.push(IlInstruction::AssignBinary {
                     dest: addr.clone(),
@@ -178,7 +184,7 @@ impl IlFunction {
                 (addr, element_size.try_into().unwrap())
             }
             Expression::Ident(n) => {
-                let (scope, var_type) = ctxt.func.find_arg_or_var(n).unwrap();
+                let (scope, var_type) = ctxt.func_def.find_arg_or_var(n).unwrap();
                 match scope {
                     Scope::Local => todo!(),
                     Scope::Static => {
@@ -188,6 +194,38 @@ impl IlFunction {
                     }
                 }
             }
+            Expression::PtrFieldDeref(n, field) => {
+                let (scope, ptr_type) = ctxt.func_def.find_arg_or_var(n).unwrap();
+
+                let addr = match scope {
+                    Scope::Local => IlVarId(n.clone()),
+                    Scope::Static => {
+                        let (addr, t) = self.emit_static_address(ctxt, n);
+                        assert_eq!(&t, ptr_type);
+                        addr
+                    }
+                };
+
+                let element_type = ptr_type.get_element_type().unwrap();
+                let struct_type = match element_type { 
+                    Type::Struct(struct_type) => {
+                        &ctxt.program.types[struct_type]
+                    }
+                    _ => panic!()
+                };
+                let (offset, field_type) = struct_type.get_field(field);
+
+                if offset != 0 {
+                    self.body.push(IlInstruction::AssignBinary {
+                        dest: addr.clone(),
+                        op: IlBinaryOp::Add,
+                        src1: addr.clone(),
+                        src2: IlAtom::Number(IlNumber::U32(offset))
+                    });
+                }
+
+                (addr, field_type.byte_count(ctxt.program).try_into().unwrap())
+            }
             _ => todo!(),
         }
     }
@@ -195,7 +233,7 @@ impl IlFunction {
     fn emit_target_expression(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, Option<IlType>) {
         match target {
             Expression::Ident(n) => {
-                let (scope, _) = ctxt.func.find_arg_or_var(n).unwrap();
+                let (scope, _) = ctxt.func_def.find_arg_or_var(n).unwrap();
                 match scope {
                     Scope::Local =>  (IlVarId(n.clone()), None),
                     Scope::Static => {
@@ -209,8 +247,14 @@ impl IlFunction {
                 let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
                 (addr, Some(size))
             },
-            Expression::LocalFieldDeref(_, _) => todo!(),
-            Expression::PtrFieldDeref(_, _) => todo!(),
+            Expression::LocalFieldDeref(n, field) => {
+                let info = ctxt.find_arg_or_var(ctxt, n);
+                todo!();
+            },
+            Expression::PtrFieldDeref(n,  field) => {
+                let (addr, mem_size) = self.emit_address(ctxt,  target);
+                (addr, Some(mem_size))
+            }
             Expression::Index(_, _) => {
                 let (address, size) = self.emit_address(ctxt,  target);
                 (address, Some(size))
@@ -224,6 +268,8 @@ impl IlFunction {
     fn emit_comparison(&mut self, ctxt: &IlContext, c: &Comparison, true_label: IlLabelId, false_label: IlLabelId) {
         let (left, left_info) = self.alloc_tmp_and_emit_value(ctxt, &c.left);
         let (right, right_info) = self.alloc_tmp_and_emit_value(ctxt, &c.right);
+
+        assert_eq!(left_info.var_type, right_info.var_type);
 
         self.body.push(IlInstruction::IfThenElse{
             left: left.clone(),
@@ -308,7 +354,7 @@ impl IlFunction {
     fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
         match e {
             Expression::Ident(name) => {
-                let (scope, t) = ctxt.func.find_arg_or_var(name)
+                let (scope, t) = ctxt.func_def.find_arg_or_var(name)
                     .expect(&format!("Could not find {}", name));
                 match scope {
                     Scope::Local =>  {
@@ -316,8 +362,11 @@ impl IlFunction {
                         self.body.push(IlInstruction::AssignAtom{dest, src});
                     },
                     Scope::Static => {
-                        let (t, addr) = self.find_static(ctxt, name);
-                        let (t, addr) = (t.clone(), *addr);
+                        let info = self.find_static(ctxt, name).clone();
+                        let addr = match &info.location {
+                            Location::Static(addr) => *addr,
+                            _ => panic!(),
+                        };
                         let size = t.byte_count(ctxt.program).try_into().unwrap();
                         self.body.push(IlInstruction::ReadMemory {
                             dest,
@@ -358,7 +407,14 @@ impl IlFunction {
                 });
             },
             Expression::LocalFieldDeref(_, _) => todo!(),
-            Expression::PtrFieldDeref(_, _) => todo!(),
+            Expression::PtrFieldDeref(n, f) => {
+                let (addr, size) = self.emit_address(ctxt, e);
+                self.body.push(IlInstruction::ReadMemory {
+                    dest,
+                    addr: IlAtom::Var(addr),
+                    size,
+                })
+            },
             Expression::AddressOf(_) => todo!(),
             Expression::Index(_, _) => {
                 let (addr, size) = self.emit_address(ctxt, e);
@@ -370,7 +426,7 @@ impl IlFunction {
                 });
             },
             Expression::Cast { old_type, new_type, value } => {
-                let old_type = old_type.as_ref().cloned().or_else(|| value.try_emit_type(ctxt.program, Some(ctxt.func))).unwrap();
+                let old_type = old_type.as_ref().cloned().or_else(|| value.try_emit_type(ctxt.program, Some(ctxt.func_def))).unwrap();
                 if old_type.byte_count(ctxt.program) == new_type.byte_count(ctxt.program) {
                     self.emit_expression(ctxt, dest, value);
                 } else {
@@ -403,10 +459,10 @@ impl IlFunction {
 
 impl IlFunction {
     fn emit_from(ctxt: &mut IlContext) -> IlFunction {
-        let id = IlFunctionId(ctxt.func.name.clone());
+        let id = IlFunctionId(ctxt.func_def.name.clone());
         let mut func = IlFunction::new(id.clone());
         
-        for (i, (name, var_type)) in ctxt.func.args.iter().enumerate() {
+        for (i, (name, var_type)) in ctxt.func_def.args.iter().enumerate() {
             let size = var_type.byte_count(ctxt.program).try_into().unwrap();
             let id = func.alloc_named(
                 name.clone(),
@@ -414,11 +470,12 @@ impl IlFunction {
                     description: format!("Arg{} {} {:?}", i, name, var_type),
                     location: size,
                     var_type: var_type.clone(),
+                    scope: Scope::Local,
                 });
             func.args.push(id);
         }
 
-        for (name, (scope, var_type)) in ctxt.func.vars.iter() {
+        for (name, (scope, var_type)) in ctxt.func_def.vars.iter() {
             let size = var_type.byte_count(ctxt.program);
             let size = match scope {
                 Scope::Local => {
@@ -434,7 +491,12 @@ impl IlFunction {
                     assert!(
                         ctxt.il.statics.insert(
                             (Some(id.clone()), IlVarId(name.clone())),
-                            (var_type.clone(), ctxt.next_static_addr)
+                            IlVarInfo {
+                                location: Location::Static(ctxt.next_static_addr),
+                                scope: Scope::Static,
+                                var_type: var_type.clone(),
+                                description: format!("static {}", name)
+                            }
                         ).is_none()
                     );
                     ctxt.next_static_addr += size;
@@ -449,10 +511,11 @@ impl IlFunction {
                     location: size,
                     description: format!("Local {} {:?} {:?}", name, var_type, size),
                     var_type: var_type.clone(),
+                    scope: *scope,
                 });
         }
         
-        for s in &ctxt.func.body {
+        for s in &ctxt.func_def.body {
             func.emit_statement(ctxt, s);
         }
         
@@ -669,14 +732,7 @@ impl Debug for IlAtom {
 pub struct IlProgram {
     pub entry: IlFunctionId,
     pub functions: BTreeMap<IlFunctionId, IlFunction>,
-    pub statics: BTreeMap<(Option<IlFunctionId>,IlVarId), (Type, u32)>,
-}
-
-struct IlContext<'a> {
-    next_static_addr: u32,
-    program: &'a ProgramContext,
-    il: &'a mut IlProgram,
-    func: &'a FunctionDefinition,
+    pub statics: BTreeMap<(Option<IlFunctionId>,IlVarId), IlVarInfo>,
 }
 
 impl IlProgram {
@@ -692,12 +748,39 @@ impl IlProgram {
                 next_static_addr: 0x100,
                 program: ctxt,
                 il: &mut il,
-                func: def,
+                func_def: def,
+                il_func: None,
             };
             let f = IlFunction::emit_from(&mut il_ctxt);
             il.functions.insert(f.id.clone(), f);
         }
 
         il
+    }
+}
+
+struct IlContext<'a> {
+    next_static_addr: u32,
+    program: &'a ProgramContext,
+    il: &'a mut IlProgram,
+    il_func: Option<&'a IlFunction>,
+    func_def: &'a FunctionDefinition,
+}
+
+impl<'a> IlContext<'a> {
+    fn find_arg_or_var(&self, ctxt: &IlContext, n: &str) -> IlVarInfo {
+        let n = IlVarId(n.to_owned());
+        if let Some(il_func) = ctxt.il_func {
+            if let Some(var) = il_func.vars.get(&n) {
+                return var.clone();
+            }
+
+            let static_key = (Some(il_func.id.clone()), n.clone());
+            if let Some(var) = ctxt.il.statics.get(&static_key) {
+                return var.clone();
+            }
+        }
+
+        panic!("Could not find '{}'", &n.0);
     }
 }

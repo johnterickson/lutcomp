@@ -486,25 +486,6 @@ mod tests {
         }
     }
 
-    fn test_ptr_inputs(entry: &str, program: &str, pairs: &[(&[u8],&[u8],u32)]) {
-        let (ctxt, assembly) = compile(entry, program, &test_programs_dir());
-        let rom = assemble::assemble(assembly);
-        let addr1 = STATICS_START_ADDRESS+100;
-        let addr2 = STATICS_START_ADDRESS+200;
-
-        for (input1, input2, expected) in pairs {
-            let mut c = TestComputer::from_rom(&ctxt, &rom);
-            dbg!((input1, input2, expected));
-            for (i,b) in input1.iter().enumerate() {
-                *c.comp.mem_byte_mut(addr1 + i as u32) = *b;
-            }
-            for (i,b) in input2.iter().enumerate() {
-                *c.comp.mem_byte_mut(addr2 + i as u32) = *b;
-            }
-            assert_eq!(*expected, c.run(&[addr1, addr2]));
-        }
-    }
-
     fn check_args(ctxt: &ProgramContext, test_case: &(Vec<TestVar>, TestVar)) {
         let entry = &ctxt.function_defs[&ctxt.entry];
         let entry_args = &entry.args;
@@ -830,15 +811,15 @@ mod tests {
 
     #[test]
     fn ptr() {
-        test_ptr_inputs(
+        test_var_inputs(
             "main",
             include_str!("../../programs/ptr.j"),
             &[
-                (&0u32.to_le_bytes(), &0u32.to_le_bytes(), 0u32),
-                (&0u32.to_le_bytes(), &1u32.to_le_bytes(), 1u32),
-                (&1u32.to_le_bytes(), &2u32.to_le_bytes(), 3u32),
-                (&0xAABBCCDDu32.to_le_bytes(), &0x11111111u32.to_le_bytes(), 0xBBCCDDEEu32),
-                (&0xFFFFFFFFu32.to_le_bytes(), &0x1u32.to_le_bytes(), 0x0u32),
+                (vec![0u32.to_le_bytes().into(), 0u32.to_le_bytes().into()], 0u32.into()),
+                (vec![0u32.to_le_bytes().into(), 1u32.to_le_bytes().into()], 1u32.into()),
+                (vec![1u32.to_le_bytes().into(), 2u32.to_le_bytes().into()], 3u32.into()),
+                (vec![0xAABBCCDDu32.to_le_bytes().into(), 0x11111111u32.to_le_bytes().into()], 0xBBCCDDEEu32.into()),
+                (vec![0xFFFFFFFFu32.to_le_bytes().into(), 0x1u32.to_le_bytes().into()], 0x0u32.into()),
             ]
         );
     }

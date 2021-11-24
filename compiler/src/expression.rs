@@ -173,6 +173,23 @@ impl Expression {
                 } else {
                     None
                 }
+            },
+            Expression::PtrFieldDeref(n, field) => {
+                if let Some(f) = f {
+                    let (_, ptr_type) = f.find_arg_or_var(n)
+                        .expect(&format!("Cannot find {} in {:?}", n, f));
+                    let element_type = ptr_type.get_element_type().unwrap();
+                    let struct_type = match element_type { 
+                        Type::Struct(struct_type) => {
+                            &ctxt.types[struct_type]
+                        }
+                        _ => panic!()
+                    };
+                    let (_, field_type) = struct_type.get_field(field);
+                    Some(field_type.clone())
+                } else {
+                    None
+                }
             }
             _ => None
         }

@@ -71,7 +71,11 @@ impl IlFunction {
             }
             if let Location::Static(size) = info.location {
                 let key = (Some(self.id.clone()), id.clone());
-                let (_, addr) = *ctxt.program.statics.get(&key).unwrap();
+                let info = ctxt.program.statics.get(&key).unwrap();
+                let addr = match &info.location {
+                    Location::Static(addr) => *addr,
+                    _ => panic!(),
+                };
                 assert!(vars.insert(id, Some(IlNumber::U32(addr))).is_none());
             }
         }
@@ -153,7 +157,6 @@ impl IlFunction {
                                 ]);
                                 vars.insert(dest, Some(IlNumber::U32(r)));
                             }
-                            _ => panic!(),
                         }
                     } else {
                         panic!();
@@ -551,6 +554,24 @@ mod tests {
             ]
         );
     }
+
+    // #[test]
+    // fn struct_pass_by_ref() {
+    //     test_inputs(
+    //         "test_add",
+    //         include_str!("../../programs/struct.j"),
+    //         &[
+    //             (0x0u32,0x0u32,0x0u32),
+    //             (0x0,0x1,0x1),
+    //             (0x1,0x0,0x1),
+    //             (0x1,0x1,0x2),
+    //             (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
+    //             (0x1,0xFF,0x100),
+    //             (0xAABBCCDD, 0x0, 0xAABBCCDD),
+    //             (0xFFFFFFFF, 0x1, 0x0),
+    //             ]);
+    // }
+
 
     #[test]
     fn divide() {
