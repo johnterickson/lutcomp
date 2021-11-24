@@ -65,7 +65,7 @@ impl IlFunction {
         let mut vars: BTreeMap<&IlVarId, Option<IlNumber>> = BTreeMap::new();
 
         for (id, info) in self.vars.iter().rev() {
-            if let Location::Stack(stack_size) = info.location {
+            if let Location::FrameOffset(stack_size) = info.location {
                 ctxt.stack_pointer -= stack_size;
                 assert!(vars.insert(id, Some(IlNumber::U32(ctxt.stack_pointer))).is_none());
             }
@@ -240,6 +240,9 @@ impl IlFunction {
                     };
                     
                     vars.insert(dest, Some(n));
+                },
+                IlInstruction::GetFrameAddress { dest } => {
+                    vars.insert(dest, Some(IlNumber::U32(ctxt.stack_pointer)));
                 },
             }
 

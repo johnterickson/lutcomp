@@ -35,6 +35,7 @@ pub struct IlFunction {
     labels: BTreeSet<IlLabelId>,
     next_temp_num: usize,
     next_label_num: usize,
+    vars_stack_size: u32, 
 }
 
 impl IlFunction {
@@ -47,6 +48,7 @@ impl IlFunction {
             labels: BTreeSet::new(),
             next_temp_num: 0,
             next_label_num: 0,
+            vars_stack_size: 0,
         }
     }
 
@@ -90,13 +92,13 @@ impl IlFunction {
     }
 
     fn alloc_label(&mut self, info: &str) -> IlLabelId {
-        let id = IlLabelId(format!("{}_{}", info, self.next_label_num));
+        let id = IlLabelId(format!("{}_{}_{}", self.id.0, info, self.next_label_num));
         self.next_label_num += 1;
         assert!(self.labels.insert(id.clone()));
         id
     }
 
-    fn alloc_tmp_and_emit_static_address(&mut self, ctxt: &IlContext, name: &str, info: &IlVarInfo) -> IlVarId {
+    fn alloc_tmp_and_emit_static_address(&mut self, name: &str, info: &IlVarInfo) -> IlVarId {
         let addr = match info.location {
             Location::Static(addr) => addr,
             _ => panic!(),
@@ -119,12 +121,13 @@ impl IlFunction {
                 let info = ctxt.find_arg_or_var(&self, n);
                 match info.location {
                     Location::U8 | Location::U32 => panic!(),
-                    Location::Stack(_) => todo!(),
+                    Location::FrameOffset(_) => todo!(),
                     Location::Static(addr) => {
                         let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
-                        let id = self.alloc_tmp_and_emit_static_address(ctxt, n, &info);
+                        let id = self.alloc_tmp_and_emit_static_address(n, &info);
                         (id, size)
                     }
+                    Location::FramePointer => panic!(),
                 }
             }
             Expression::Index(var, index) => {
@@ -165,14 +168,27 @@ impl IlFunction {
 
                 let base_addr_num_expression = match info.location {
                     Location::Static(addr) => Expression::Number(NumberType::USIZE, addr),
-                    Location::U8 | Location::U32 => {
+                    Location::U32 => Expression::Ident(var.clone()),
+                    Location::U8 => {
                         Expression::Cast {
                             old_type: Some(ptr_type.clone()),
                             new_type: Type::Number(NumberType::USIZE),
                             value: Box::new(Expression::Ident(var.clone())),
                         }
                     },
-                    Location::Stack(_) => todo!(),
+                    Location::FrameOffset(offset) => {
+                        let frame = Expression::Ident("__frame_pointer".to_owned());
+                        if offset == 0 {
+                            frame
+                        } else {
+                            Expression::Arithmetic(
+                                ArithmeticOperator::Add,
+                                Box::new(frame),
+                                Box::new(Expression::Number(NumberType::USIZE, offset))
+                            )
+                        }
+                    },
+                    Location::FramePointer => panic!(),
                 };
 
                 let addr_expression = Expression::Arithmetic(
@@ -216,7 +232,8 @@ impl IlFunction {
                             value: Box::new(Expression::Ident(n.clone())),
                         }
                     },
-                    Location::Stack(_) => todo!(),
+                    Location::FrameOffset(_) => todo!(),
+                    Location::FramePointer => panic!(),
                 };
 
                 let addr_expression = if byte_offset == 0 {
@@ -244,6 +261,7 @@ impl IlFunction {
     }
 
     fn emit_target_expression(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, Option<IlType>) {
+        dbg!(target);
         match target {
             Expression::Ident(n) => {
                 let info= ctxt.find_arg_or_var(&self, n);
@@ -251,10 +269,11 @@ impl IlFunction {
                     Location::U8 | Location::U32 => {
                         (IlVarId(n.clone()), None)
                     },
-                    Location::Stack(_) | Location::Static(_) => {
+                    Location::FrameOffset(_) | Location::Static(_) => {
                         let (address, size) = self.emit_address(ctxt,  target);
                         (address, Some(size))
                     },
+                    Location::FramePointer => panic!(),
                 }
             },
             Expression::Deref(e) => {
@@ -295,7 +314,7 @@ impl IlFunction {
         });
     }
     
-    fn emit_statement(&mut self, ctxt: &IlContext, s: &Statement) {
+    fn emit_statement(&mut self, ctxt: &mut IlContext, s: &Statement) {
         match s {
             Statement::Declare { .. } => {},
             Statement::Assign { target, var_type, value } => {
@@ -376,7 +395,7 @@ impl IlFunction {
                         let src = IlAtom::Var(IlVarId(name.clone()));
                         self.body.push(IlInstruction::AssignAtom{dest, src});
                     }
-                    Location::Stack(_) => todo!(),
+                    Location::FrameOffset(_) => todo!(),
                     Location::Static(addr) => {
                         let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
                         self.body.push(IlInstruction::ReadMemory {
@@ -384,6 +403,9 @@ impl IlFunction {
                             addr: IlAtom::Number(IlNumber::U32(addr)),
                             size,
                         })
+                    },
+                    Location::FramePointer => {
+                        self.body.push(IlInstruction::GetFrameAddress { dest });
                     },
                 }
             },
@@ -483,9 +505,7 @@ impl IlFunction {
         println!("END   {:?}", &e);
         println!("{:#?}", &self.body);
     }
-}
 
-impl IlFunction {
     fn emit_from(ctxt: &mut IlContext) -> IlFunction {
         let id = IlFunctionId(ctxt.func_def.name.clone());
         let mut func = IlFunction::new(id.clone());
@@ -508,8 +528,10 @@ impl IlFunction {
                 Scope::Local => {
                     match var_type {
                         Type::Struct(_) | Type::Array(_, _) => {
+                            let offset = func.vars_stack_size;
                             let size = (size + 3)/4*4;  // round up
-                            Location::Stack(size)
+                            func.vars_stack_size += size;
+                            Location::FrameOffset(offset)
                         },
                         _ => size.try_into().unwrap()
                     }
@@ -537,6 +559,16 @@ impl IlFunction {
                     location: size,
                     description: format!("Local {} {:?} {:?}", name, var_type, size),
                     var_type: var_type.clone(),
+                });
+        }
+
+        if func.vars_stack_size > 0 {
+            func.alloc_named(
+                "__frame_pointer".to_owned(),
+                IlVarInfo {
+                    description: "__frame_pointer".to_owned(),
+                    location: Location::FramePointer,
+                    var_type: Type::Number(NumberType::USIZE),
                 });
         }
 
@@ -638,8 +670,9 @@ impl ByteSize for IlType {
 pub enum Location {
     U8,
     U32,
-    Stack(u32),
+    FrameOffset(u32),
     Static(u32),
+    FramePointer,
 }
 
 impl TryFrom<u32> for Location {
@@ -668,32 +701,34 @@ pub enum IlInstruction {
     Return { val: IlVarId },
     TtyIn { dest: IlVarId },
     TtyOut { src: IlVarId },
+    GetFrameAddress { dest: IlVarId },
 }
 
 impl Debug for IlInstruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Label(arg0) => write!(f, ":{}", arg0.0),
-            Self::AssignAtom { dest, src } => write!(f, "{} <- {:?}", dest.0, src),
-            Self::AssignUnary { dest, op, src } => write!(f, "{} <- {:?}({:?})", dest.0, op, src),
-            Self::AssignBinary { dest, op, src1, src2 } => write!(f, "{} <- {} {:?} {:?}", dest.0, src1.0, op, src2),
-            Self::ReadMemory { dest, addr, size } => write!(f, "{} <- mem[{:?}] {:?}", dest.0, addr, size),
-            Self::WriteMemory { addr, src, size } => write!(f, "mem[{:?}] <- {} {:?}", addr, src.0, size),
-            Self::Goto(arg0) => write!(f, "goto {}", arg0.0),
-            Self::IfThenElse { left, op, right, then_label, else_label } => 
+            IlInstruction::Label(arg0) => write!(f, ":{}", arg0.0),
+            IlInstruction::AssignAtom { dest, src } => write!(f, "{} <- {:?}", dest.0, src),
+            IlInstruction::AssignUnary { dest, op, src } => write!(f, "{} <- {:?}({:?})", dest.0, op, src),
+            IlInstruction::AssignBinary { dest, op, src1, src2 } => write!(f, "{} <- {} {:?} {:?}", dest.0, src1.0, op, src2),
+            IlInstruction::ReadMemory { dest, addr, size } => write!(f, "{} <- mem[{:?}] {:?}", dest.0, addr, size),
+            IlInstruction::WriteMemory { addr, src, size } => write!(f, "mem[{:?}] <- {} {:?}", addr, src.0, size),
+            IlInstruction::Goto(arg0) => write!(f, "goto {}", arg0.0),
+            IlInstruction::IfThenElse { left, op, right, then_label, else_label } => 
                 write!(f, "if {} {:?} {:?} then '{}' else '{}'", left.0, op, right, then_label.0, else_label.0),
-            Self::Call { ret, f: func, args } => {
+            IlInstruction::Call { ret, f: func, args } => {
                 write!(f, "{} <= call {}(", ret.0, func.0)?;
                 for a in args {
                     write!(f, "{},", a.0)?;
                 }
                 write!(f, ")")
             }
-            Self::Return { val } => write!(f, "return {}", val.0),
-            Self::TtyIn { dest } => f.debug_struct("TtyIn").field("dest", dest).finish(),
-            Self::TtyOut { src } => f.debug_struct("TtyOut").field("src", src).finish(),
-            Self::Resize { dest, dest_size, src, src_size } => 
+            IlInstruction::Return { val } => write!(f, "return {}", val.0),
+            IlInstruction::TtyIn { dest } => write!(f, "{} <- ttyin", dest.0),
+            IlInstruction::TtyOut { src } => write!(f, "ttyout <- {}", src.0),
+            IlInstruction::Resize { dest, dest_size, src, src_size } => 
                 write!(f, "{} {:?} <- {} {:?}", dest.0, dest_size, src.0, src_size),
+            IlInstruction::GetFrameAddress { dest } => write!(f, "{} <- frame_pointer", dest.0),
         }
     }
 }

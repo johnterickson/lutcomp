@@ -116,7 +116,9 @@ impl Expression {
     pub fn try_emit_type(&self, ctxt: &ProgramContext, f: Option<&FunctionDefinition>) -> Option<Type> {
         match self {
             Expression::Ident(n) => {
-                if let Some(f) = f {
+                if n == "__frame_pointer" {
+                    Some(Type::Number(NumberType::USIZE))
+                } else if let Some(f) = f {
                     let (_,t) = f.find_arg_or_var(n)
                         .expect(&format!("Cannot find {} in {:?}", n, f));
                     Some(t.clone())
