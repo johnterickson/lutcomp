@@ -31,6 +31,13 @@ impl TryByteSize for NumberType {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Scope {
+    Local,
+    Static,
+}
+
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Void,
@@ -40,20 +47,21 @@ pub enum Type {
     Array(Box<Type>,u32),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Scope {
-    Local,
-    Static,
-}
-
 impl Type {
+    pub fn get_numeber_type(&self) -> Option<NumberType> {
+        match self {
+            Type::Number(nt) => Some(*nt),
+            _ => None,
+        }
+    }
+
     pub fn get_element_type(&self) -> Option<&Type> {
         match self {
             Type::Ptr(element_type) | Type::Array(element_type, _) => Some(element_type),
             _ => None
         }
     }
-    
+
     pub fn parse(pair: pest::iterators::Pair<Rule>, is_decl: bool) -> Type {
         assert_eq!(pair.as_rule(), Rule::variable_type);
         let mut tokens = pair.into_inner();

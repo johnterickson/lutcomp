@@ -272,6 +272,7 @@ mod tests {
     
     fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
         let il = emit_il(entry,program);
+        dbg!(&il);
 
         for case in cases
         {

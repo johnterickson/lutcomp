@@ -18,7 +18,6 @@ pub struct IlVarInfo {
     pub description: String,
     pub location: Location,
     pub var_type: Type,
-    pub scope: Scope,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -70,7 +69,6 @@ impl IlFunction {
         let info = IlVarInfo {
             description: format!("{} {:?}", &id.0, e),
             var_type: e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap(),
-            scope: Scope::Local,
             location
         };
         self.vars.insert(id.clone(), info);
@@ -98,113 +96,105 @@ impl IlFunction {
         id
     }
 
-    fn find_static<'a>(&'a self, ctxt: &'a IlContext, name: &'a str) -> &'a IlVarInfo {
-        let key= (Some(self.id.clone()), IlVarId(name.to_owned()));
-        ctxt.il.statics.get(&key).expect(&format!("Could not find {:?}", key))
-    }
-
-    fn emit_static_address(&mut self, ctxt: &IlContext, name: &str) -> (IlVarId, Type) {
-        let info = self.find_static(ctxt, name).clone();
-        let addr = match &info.location {
-            Location::Static(addr) => *addr,
+    fn alloc_tmp_and_emit_static_address(&mut self, ctxt: &IlContext, name: &str, info: &IlVarInfo) -> IlVarId {
+        let addr = match info.location {
+            Location::Static(addr) => addr,
             _ => panic!(),
         };
         let addr_var = self.alloc_tmp(IlVarInfo {
             description: format!("static {:?}", &name),
             location: Location::U32,
             var_type: Type::Ptr(Box::new(info.var_type.clone())),
-            scope: Scope::Local,
         });
         self.body.push(IlInstruction::AssignAtom {
             dest: addr_var.clone(),
             src: IlAtom::Number(IlNumber::U32(addr))
         });
-        (addr_var, info.var_type)
+        addr_var
     }
 
     fn emit_address(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, IlType) {
         match target {
+            Expression::Ident(n) => {
+                let info = ctxt.find_arg_or_var(&self, n);
+                match info.location {
+                    Location::U8 | Location::U32 => panic!(),
+                    Location::Stack(_) => todo!(),
+                    Location::Static(addr) => {
+                        let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
+                        let id = self.alloc_tmp_and_emit_static_address(ctxt, n, &info);
+                        (id, size)
+                    }
+                }
+            }
             Expression::Index(var, index) => {
                 let info = ctxt.find_arg_or_var(&self, var);
                 let ptr_type = info.var_type;
                 let element_type = ptr_type.get_element_type().unwrap();
-
                 let element_size = element_type.byte_count(ctxt.program);
 
-                let base_address = match info.scope {
-                    Scope::Local => IlVarId(var.clone()),
-                    Scope::Static => {
-                        let (addr, t) = self.emit_static_address(ctxt, var);
-                        assert_eq!(t, ptr_type);
-                        addr
-                    }
-                };
-
-                let (index_val, index_info) = self.alloc_tmp_for_expression(ctxt, index);
-                match index_info.location {
-                    Location::U8 => {
-                        let (index_u8, _) = self.alloc_tmp_for_expression(ctxt, index);
-                        self.emit_expression(ctxt, index_u8.clone(), index);
-                        self.body.push(IlInstruction::Resize {
-                            dest: index_val.clone(),
-                            dest_size: IlType::U32,
-                            src: index_u8.clone(),
-                            src_size: IlType::U8
-                        });
-                    }
-                    Location::U32 => {
-                        self.emit_expression(ctxt, index_val.clone(), index);
+                let index_type = ctxt.try_emit_type(index).unwrap();
+                let index = match index_type {
+                    Type::Number(nt) => {
+                        match nt {
+                            NumberType::U8 => {
+                                Box::new(Expression::Cast {
+                                    old_type: Some(index_type),
+                                    new_type: Type::Number(NumberType::USIZE),
+                                    value: index.clone()
+                                })
+                            },
+                            NumberType::USIZE => {
+                                index.clone()
+                            },
+                        }
                     }
                     _ => panic!(),
-                }
+                };
 
-                if element_size != 1 {
-                    self.body.push(IlInstruction::AssignBinary {
-                        dest: index_val.clone(),
-                        op: IlBinaryOp::Multiply,
-                        src1: index_val.clone(),
-                        src2: IlAtom::Number(IlNumber::U8(element_size.try_into().unwrap())),
-                    });
-                }
+                let byte_index_expression = if element_size == 1 {
+                    index.clone()
+                } else {
+                    Box::new(Expression::Arithmetic(
+                        ArithmeticOperator::Multiply,
+                        index.clone(),
+                        Box::new(Expression::Number(NumberType::USIZE, element_size))
+                    ))
+                };
 
-                let addr = self.alloc_tmp(IlVarInfo {
-                    description: format!("Final address of {:?}", target),
-                    location: Location::U32,
-                    var_type: Type::Ptr(Box::new(element_type.clone())),
-                    scope: Scope::Local,
-                });
-                self.body.push(IlInstruction::AssignBinary {
-                    dest: addr.clone(),
-                    op: IlBinaryOp::Add,
-                    src1: base_address,
-                    src2: IlAtom::Var(index_val.clone()),
-                });
+
+                let base_addr_num_expression = match info.location {
+                    Location::Static(addr) => Expression::Number(NumberType::USIZE, addr),
+                    Location::U8 | Location::U32 => {
+                        Expression::Cast {
+                            old_type: Some(ptr_type.clone()),
+                            new_type: Type::Number(NumberType::USIZE),
+                            value: Box::new(Expression::Ident(var.clone())),
+                        }
+                    },
+                    Location::Stack(_) => todo!(),
+                };
+
+                let addr_expression = Expression::Arithmetic(
+                    ArithmeticOperator::Add,
+                    Box::new(base_addr_num_expression),
+                    byte_index_expression,
+                );
+
+                let addr_expression = Expression::Cast{
+                    value: Box::new(addr_expression),
+                    old_type: Some(Type::Number(NumberType::USIZE)),
+                    new_type: Type::Ptr(Box::new(element_type.clone())),
+                };
+
+                let (addr, _) = self.alloc_tmp_and_emit_value(ctxt, &addr_expression);
 
                 (addr, element_size.try_into().unwrap())
             }
-            Expression::Ident(n) => {
-                let info = ctxt.find_arg_or_var(&self, n);
-                match info.scope {
-                    Scope::Local => todo!(),
-                    Scope::Static => {
-                        let (addr, t) = self.emit_static_address(ctxt, n);
-                        assert_eq!(info.var_type, t);
-                        (addr, t.byte_count(ctxt.program).try_into().unwrap())
-                    }
-                }
-            }
+
             Expression::PtrFieldDeref(n, field) => {
                 let info = ctxt.find_arg_or_var(&self, n);
                 let ptr_type = info.var_type;
-                let addr = match info.scope {
-                    Scope::Local => IlVarId(n.clone()),
-                    Scope::Static => {
-                        let (addr, t) = self.emit_static_address(ctxt, n);
-                        assert_eq!(t, ptr_type);
-                        addr
-                    }
-                };
-
                 let element_type = ptr_type.get_element_type().unwrap();
                 let struct_type = match element_type { 
                     Type::Struct(struct_type) => {
@@ -212,18 +202,42 @@ impl IlFunction {
                     }
                     _ => panic!()
                 };
-                let (offset, field_type) = struct_type.get_field(field);
+                let (byte_offset, field_type) = struct_type.get_field(field);
+                let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();
 
-                if offset != 0 {
-                    self.body.push(IlInstruction::AssignBinary {
-                        dest: addr.clone(),
-                        op: IlBinaryOp::Add,
-                        src1: addr.clone(),
-                        src2: IlAtom::Number(IlNumber::U32(offset))
-                    });
-                }
+                let base_expression = match info.location {
+                    Location::Static(addr) => {
+                        Expression::Number(NumberType::USIZE, addr)
+                    }
+                    Location::U8 | Location::U32 => {
+                        Expression::Cast {
+                            old_type: Some(ptr_type.clone()),
+                            new_type: Type::Number(NumberType::USIZE),
+                            value: Box::new(Expression::Ident(n.clone())),
+                        }
+                    },
+                    Location::Stack(_) => todo!(),
+                };
 
-                (addr, field_type.byte_count(ctxt.program).try_into().unwrap())
+                let addr_expression = if byte_offset == 0 {
+                    base_expression
+                } else {
+                    Expression::Arithmetic(
+                        ArithmeticOperator::Add,
+                        Box::new(base_expression),
+                        Box::new(Expression::Number(NumberType::USIZE, byte_offset)),
+                    )
+                };
+
+                let addr_expression = Expression::Cast {
+                    value: Box::new(addr_expression),
+                    old_type: Some(Type::Number(NumberType::USIZE)),
+                    new_type: Type::Ptr(Box::new(field_type.clone()))
+                };
+
+                let (addr, _) = self.alloc_tmp_and_emit_value(ctxt, &addr_expression);
+
+                (addr, field_bytes)
             }
             _ => todo!(),
         }
@@ -233,12 +247,14 @@ impl IlFunction {
         match target {
             Expression::Ident(n) => {
                 let info= ctxt.find_arg_or_var(&self, n);
-                match info.scope {
-                    Scope::Local =>  (IlVarId(n.clone()), None),
-                    Scope::Static => {
+                match info.location {
+                    Location::U8 | Location::U32 => {
+                        (IlVarId(n.clone()), None)
+                    },
+                    Location::Stack(_) | Location::Static(_) => {
                         let (address, size) = self.emit_address(ctxt,  target);
                         (address, Some(size))
-                    }
+                    },
                 }
             },
             Expression::Deref(e) => {
@@ -351,27 +367,24 @@ impl IlFunction {
     }
 
     fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
+        println!("START {:?}", e);
         match e {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);
-                match info.scope {
-                    Scope::Local =>  {
+                match info.location {
+                    Location::U8 | Location::U32 => {
                         let src = IlAtom::Var(IlVarId(name.clone()));
                         self.body.push(IlInstruction::AssignAtom{dest, src});
-                    },
-                    Scope::Static => {
-                        let info = self.find_static(ctxt, name).clone();
-                        let addr = match &info.location {
-                            Location::Static(addr) => *addr,
-                            _ => panic!(),
-                        };
+                    }
+                    Location::Stack(_) => todo!(),
+                    Location::Static(addr) => {
                         let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
                         self.body.push(IlInstruction::ReadMemory {
                             dest,
                             addr: IlAtom::Number(IlNumber::U32(addr)),
                             size,
                         })
-                    }
+                    },
                 }
             },
             Expression::Number(num_type, val) => {
@@ -425,12 +438,26 @@ impl IlFunction {
             },
             Expression::Cast { old_type, new_type, value } => {
                 let old_type = old_type.as_ref().cloned().or_else(|| value.try_emit_type(ctxt.program, Some(ctxt.func_def))).unwrap();
-                if old_type.byte_count(ctxt.program) == new_type.byte_count(ctxt.program) {
-                    self.emit_expression(ctxt, dest, value);
-                } else {
-                    todo!();
+                let (old_num, new_num) = (old_type.get_numeber_type(), new_type.get_numeber_type());
+                let (old_size, new_size) = (old_type.byte_count(ctxt.program), new_type.byte_count(ctxt.program));
+                match (old_size, old_num, new_size, new_num) {
+                    (old_size, _, new_size, _) if old_size == new_size => {
+                        self.emit_expression(ctxt, dest, value);
+                    }
+                    (_, Some(old_nt), _, Some(new_nt)) => {
+                        let (old_var, old_var_info) = self.alloc_tmp_and_emit_value(ctxt, value);
+                        assert_eq!(&old_type, &old_var_info.var_type);
+
+                        self.body.push(IlInstruction::Resize {
+                            src: old_var,
+                            src_size: old_size.try_into().unwrap(),
+                            dest,
+                            dest_size: new_size.try_into().unwrap()
+                        });
+                    }
+                    _ => todo!("{:?}", e),
                 }
-            },
+            },  
             Expression::Call(c) => {
 
                 let callee_def = &ctxt.program.function_defs[&c.function];
@@ -451,7 +478,10 @@ impl IlFunction {
                 });
             },
             Expression::Optimized { original, optimized } => todo!(),
+        
         }
+        println!("END   {:?}", &e);
+        println!("{:#?}", &self.body);
     }
 }
 
@@ -468,7 +498,6 @@ impl IlFunction {
                     description: format!("Arg{} {} {:?}", i, name, var_type),
                     location: size,
                     var_type: var_type.clone(),
-                    scope: Scope::Local,
                 });
             func.args.push(id);
         }
@@ -491,7 +520,6 @@ impl IlFunction {
                             (Some(id.clone()), IlVarId(name.clone())),
                             IlVarInfo {
                                 location: Location::Static(ctxt.next_static_addr),
-                                scope: Scope::Static,
                                 var_type: var_type.clone(),
                                 description: format!("static {}", name)
                             }
@@ -509,7 +537,6 @@ impl IlFunction {
                     location: size,
                     description: format!("Local {} {:?} {:?}", name, var_type, size),
                     var_type: var_type.clone(),
-                    scope: *scope,
                 });
         }
 
@@ -765,7 +792,7 @@ struct IlContext<'a> {
 
 impl<'a> IlContext<'a> {
     fn find_arg_or_var(&self, il_func: &IlFunction, n: &str) -> IlVarInfo {
-    let n = IlVarId(n.to_owned());
+        let n = IlVarId(n.to_owned());
         if let Some(var) = il_func.vars.get(&n) {
             return var.clone();
         }
@@ -776,5 +803,9 @@ impl<'a> IlContext<'a> {
         }
 
         panic!("Could not find '{}'", &n.0);
+    }
+
+    fn try_emit_type(&self, e: &Expression) -> Option<Type> {
+        e.try_emit_type(self.program, Some(self.func_def))
     }
 }

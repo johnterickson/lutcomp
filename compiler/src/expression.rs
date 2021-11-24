@@ -174,6 +174,22 @@ impl Expression {
                     None
                 }
             },
+            Expression::LocalFieldDeref(n, field) => {
+                if let Some(f) = f {
+                    let (_, struct_type) = f.find_arg_or_var(n)
+                        .expect(&format!("Cannot find {} in {:?}", n, f));
+                    let struct_type = match struct_type { 
+                        Type::Struct(struct_type) => {
+                            &ctxt.types[struct_type]
+                        }
+                        _ => panic!()
+                    };
+                    let (_, field_type) = struct_type.get_field(field);
+                    Some(field_type.clone())
+                } else {
+                    None
+                }
+            }
             Expression::PtrFieldDeref(n, field) => {
                 if let Some(f) = f {
                     let (_, ptr_type) = f.find_arg_or_var(n)
@@ -191,7 +207,10 @@ impl Expression {
                     None
                 }
             }
-            _ => None
+            Expression::TtyIn() => Some(Type::Number(NumberType::U8)),
+            Expression::Comparison(_) => todo!(),
+            Expression::Cast { old_type:_, new_type, value:_ } => Some(new_type.clone()),
+            Expression::Optimized { original:_, optimized } => optimized.try_emit_type(ctxt, f),
         }
     }
 
