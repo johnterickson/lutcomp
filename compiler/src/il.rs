@@ -125,18 +125,17 @@ impl IlFunction {
     fn emit_address(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, IlType) {
         match target {
             Expression::Index(var, index) => {
-                let (scope, ptr_type) = ctxt.func_def.find_arg_or_var(var)
-                    .expect(&format!("Could not find {}", var));
-
+                let info = ctxt.find_arg_or_var(&self, var);
+                let ptr_type = info.var_type;
                 let element_type = ptr_type.get_element_type().unwrap();
 
                 let element_size = element_type.byte_count(ctxt.program);
 
-                let base_address = match scope {
+                let base_address = match info.scope {
                     Scope::Local => IlVarId(var.clone()),
                     Scope::Static => {
                         let (addr, t) = self.emit_static_address(ctxt, var);
-                        assert_eq!(&t, ptr_type);
+                        assert_eq!(t, ptr_type);
                         addr
                     }
                 };
@@ -184,24 +183,24 @@ impl IlFunction {
                 (addr, element_size.try_into().unwrap())
             }
             Expression::Ident(n) => {
-                let (scope, var_type) = ctxt.func_def.find_arg_or_var(n).unwrap();
-                match scope {
+                let info = ctxt.find_arg_or_var(&self, n);
+                match info.scope {
                     Scope::Local => todo!(),
                     Scope::Static => {
                         let (addr, t) = self.emit_static_address(ctxt, n);
-                        assert_eq!(var_type, &t);
+                        assert_eq!(info.var_type, t);
                         (addr, t.byte_count(ctxt.program).try_into().unwrap())
                     }
                 }
             }
             Expression::PtrFieldDeref(n, field) => {
-                let (scope, ptr_type) = ctxt.func_def.find_arg_or_var(n).unwrap();
-
-                let addr = match scope {
+                let info = ctxt.find_arg_or_var(&self, n);
+                let ptr_type = info.var_type;
+                let addr = match info.scope {
                     Scope::Local => IlVarId(n.clone()),
                     Scope::Static => {
                         let (addr, t) = self.emit_static_address(ctxt, n);
-                        assert_eq!(&t, ptr_type);
+                        assert_eq!(t, ptr_type);
                         addr
                     }
                 };
@@ -233,8 +232,8 @@ impl IlFunction {
     fn emit_target_expression(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, Option<IlType>) {
         match target {
             Expression::Ident(n) => {
-                let (scope, _) = ctxt.func_def.find_arg_or_var(n).unwrap();
-                match scope {
+                let info= ctxt.find_arg_or_var(&self, n);
+                match info.scope {
                     Scope::Local =>  (IlVarId(n.clone()), None),
                     Scope::Static => {
                         let (address, size) = self.emit_address(ctxt,  target);
@@ -248,7 +247,7 @@ impl IlFunction {
                 (addr, Some(size))
             },
             Expression::LocalFieldDeref(n, field) => {
-                let info = ctxt.find_arg_or_var(ctxt, n);
+                let info = ctxt.find_arg_or_var(&self, n);
                 todo!();
             },
             Expression::PtrFieldDeref(n,  field) => {
@@ -354,9 +353,8 @@ impl IlFunction {
     fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
         match e {
             Expression::Ident(name) => {
-                let (scope, t) = ctxt.func_def.find_arg_or_var(name)
-                    .expect(&format!("Could not find {}", name));
-                match scope {
+                let info = ctxt.find_arg_or_var(&self, name);
+                match info.scope {
                     Scope::Local =>  {
                         let src = IlAtom::Var(IlVarId(name.clone()));
                         self.body.push(IlInstruction::AssignAtom{dest, src});
@@ -367,7 +365,7 @@ impl IlFunction {
                             Location::Static(addr) => *addr,
                             _ => panic!(),
                         };
-                        let size = t.byte_count(ctxt.program).try_into().unwrap();
+                        let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
                         self.body.push(IlInstruction::ReadMemory {
                             dest,
                             addr: IlAtom::Number(IlNumber::U32(addr)),
@@ -514,7 +512,7 @@ impl IlFunction {
                     scope: *scope,
                 });
         }
-        
+
         for s in &ctxt.func_def.body {
             func.emit_statement(ctxt, s);
         }
@@ -749,7 +747,6 @@ impl IlProgram {
                 program: ctxt,
                 il: &mut il,
                 func_def: def,
-                il_func: None,
             };
             let f = IlFunction::emit_from(&mut il_ctxt);
             il.functions.insert(f.id.clone(), f);
@@ -763,22 +760,19 @@ struct IlContext<'a> {
     next_static_addr: u32,
     program: &'a ProgramContext,
     il: &'a mut IlProgram,
-    il_func: Option<&'a IlFunction>,
     func_def: &'a FunctionDefinition,
 }
 
 impl<'a> IlContext<'a> {
-    fn find_arg_or_var(&self, ctxt: &IlContext, n: &str) -> IlVarInfo {
-        let n = IlVarId(n.to_owned());
-        if let Some(il_func) = ctxt.il_func {
-            if let Some(var) = il_func.vars.get(&n) {
-                return var.clone();
-            }
+    fn find_arg_or_var(&self, il_func: &IlFunction, n: &str) -> IlVarInfo {
+    let n = IlVarId(n.to_owned());
+        if let Some(var) = il_func.vars.get(&n) {
+            return var.clone();
+        }
 
-            let static_key = (Some(il_func.id.clone()), n.clone());
-            if let Some(var) = ctxt.il.statics.get(&static_key) {
-                return var.clone();
-            }
+        let static_key = (Some(il_func.id.clone()), n.clone());
+        if let Some(var) = self.il.statics.get(&static_key) {
+            return var.clone();
         }
 
         panic!("Could not find '{}'", &n.0);
