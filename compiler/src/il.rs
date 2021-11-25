@@ -315,7 +315,7 @@ impl IlFunction {
     }
 
     fn emit_target_expression(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, Option<IlType>) {
-        dbg!(target);
+        // dbg!(target);
         match target {
             Expression::Ident(n) => {
                 let info= ctxt.find_arg_or_var(&self, n);
@@ -434,7 +434,7 @@ impl IlFunction {
     }
 
     fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
-        println!("START {:?}", e);
+        // println!("START {:?}", e);
         match e {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);
@@ -548,6 +548,7 @@ impl IlFunction {
                     (_, Some(old_nt), _, Some(new_nt)) => {
                         let (old_var, old_var_info) = self.alloc_tmp_and_emit_value(ctxt, value);
                         assert_eq!(&old_type, &old_var_info.var_type);
+                        assert_ne!(&old_nt, &new_nt);
 
                         self.body.push(IlInstruction::Resize {
                             src: old_var,
@@ -578,11 +579,11 @@ impl IlFunction {
                     args: params,
                 });
             },
-            Expression::Optimized { original, optimized } => todo!(),
+            Expression::Optimized { .. } => todo!(),
         
         }
-        println!("END   {:?}", &e);
-        println!("{:#?}", &self.body);
+        // println!("END   {:?}", &e);
+        // println!("{:#?}", &self.body);
     }
 
     fn emit_from(ctxt: &mut IlContext) -> IlFunction {

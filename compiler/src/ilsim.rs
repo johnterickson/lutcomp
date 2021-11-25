@@ -5,9 +5,7 @@ struct SimulationContext<'a> {
     program: &'a IlProgram,
     entry_function: &'a IlFunctionId,
     entry_args: &'a [IlNumber],
-    stack: Vec<u8>,
     stack_pointer: u32,
-    stack_slice_start_addr: u32,
     mem: BTreeMap<u32, u8>,
 }
 
@@ -24,9 +22,7 @@ impl IlProgram {
             program: &self,
             entry_function: &self.entry,
             entry_args: args,
-            stack: vec![0u8; 1024],
             stack_pointer: u32::max_value()-4+1,
-            stack_slice_start_addr: u32::max_value()-1024+1,
             mem: BTreeMap::new(),
         }
     }
@@ -226,8 +222,8 @@ impl IlFunction {
                 IlInstruction::Return { val } => {
                     return vars[val].unwrap();
                 },
-                IlInstruction::TtyIn { dest } => todo!(),
-                IlInstruction::TtyOut { src } => todo!(),
+                IlInstruction::TtyIn { .. } => todo!(),
+                IlInstruction::TtyOut { .. } => todo!(),
                 IlInstruction::Resize { dest, dest_size, src, src_size } => {
                     let src = vars.get(src).unwrap().unwrap();
                     assert_eq!(&src.il_type(), src_size);
