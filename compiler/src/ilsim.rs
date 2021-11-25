@@ -84,8 +84,15 @@ impl IlFunction {
 
             match s {
                 IlInstruction::Label(_) => {},
-                IlInstruction::AssignAtom { dest, src } => {
-                    vars.insert(dest, Some(src.value(&vars)));
+                IlInstruction::AssignAtom { dest, src , size} => {
+
+                    if let Some(Some(n)) = vars.get(dest) {
+                        assert_eq!(&n.il_type(), size);
+                    }
+                    
+                    let value = src.value(&vars);
+                    assert_eq!(&value.il_type(), size);
+                    vars.insert(dest, Some(value));
                 },
                 IlInstruction::AssignUnary { dest, op, src } => {
                     let src = src.value(&vars);

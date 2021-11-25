@@ -116,7 +116,8 @@ impl IlFunction {
         });
         self.body.push(IlInstruction::AssignAtom {
             dest: addr_var.clone(),
-            src: IlAtom::Number(IlNumber::U32(addr))
+            src: IlAtom::Number(IlNumber::U32(addr)),
+            size: IlType::U32,
         });
         addr_var
     }
@@ -441,7 +442,8 @@ impl IlFunction {
                 match info.location {
                     Location::U8 | Location::U32 => {
                         let src = IlAtom::Var(IlVarId(name.clone()));
-                        self.body.push(IlInstruction::AssignAtom{dest, src});
+                        let size = info.location.try_into().unwrap();
+                        self.body.push(IlInstruction::AssignAtom{dest, src, size});
                     }
                     Location::FrameOffset(_) => todo!(),
                     Location::Static(addr) => {
@@ -462,7 +464,7 @@ impl IlFunction {
                     NumberType::U8 => IlNumber::U8((*val).try_into().unwrap()),
                     NumberType::USIZE => IlNumber::U32(*val)
                 });
-                self.body.push(IlInstruction::AssignAtom{dest, src});
+                self.body.push(IlInstruction::AssignAtom{dest, src, size: num_type.into()});
             },
             Expression::TtyIn() => {
                 self.body.push(IlInstruction::TtyIn {dest});
@@ -522,10 +524,11 @@ impl IlFunction {
                 })
             },
             Expression::AddressOf(n) => {
-                let (addr, size) = self.emit_address(ctxt, n);
+                let (addr, _mem_size) = self.emit_address(ctxt, n);
                 self.body.push(IlInstruction::AssignAtom {
                     dest,
-                    src: IlAtom::Var(addr)
+                    src: IlAtom::Var(addr),
+                    size: IlType::U32,
                 });
             },
             Expression::Index(_, _) => {
@@ -744,6 +747,27 @@ impl TryFrom<u32> for IlType {
     }
 }
 
+impl TryFrom<Location> for IlType {
+    type Error = ();
+
+    fn try_from(value: Location) -> Result<Self, Self::Error> {
+        match value {
+            Location::U8 => Ok(IlType::U8),
+            Location::U32 =>Ok(IlType::U32),
+            _ => Err(())
+        }
+    }
+}
+
+impl From<&NumberType> for IlType {
+    fn from(nt: &NumberType) -> Self {
+        match nt {
+            NumberType::U8 => IlType::U8,
+            NumberType::USIZE => IlType::U32,
+        }
+    }
+}
+
 impl ByteSize for IlType {
     fn byte_count(&self, _ctxt: &ProgramContext) -> u32 {
         match self {
@@ -776,7 +800,7 @@ impl TryFrom<u32> for Location {
 
 pub enum IlInstruction {
     Label(IlLabelId),
-    AssignAtom{ dest: IlVarId, src: IlAtom},
+    AssignAtom{ dest: IlVarId, src: IlAtom, size: IlType},
     AssignUnary{ dest: IlVarId, op: IlUnaryOp, src: IlAtom },
     AssignBinary { dest: IlVarId, op: IlBinaryOp, src1: IlVarId, src2: IlAtom },
     ReadMemory {dest: IlVarId, addr: IlAtom, size: IlType},
@@ -795,7 +819,7 @@ impl Debug for IlInstruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             IlInstruction::Label(arg0) => write!(f, ":{}", arg0.0),
-            IlInstruction::AssignAtom { dest, src } => write!(f, "{} <- {:?}", dest.0, src),
+            IlInstruction::AssignAtom { dest, src, size } => write!(f, "{} <- {:?} {:?}", dest.0, src, size),
             IlInstruction::AssignUnary { dest, op, src } => write!(f, "{} <- {:?}({:?})", dest.0, op, src),
             IlInstruction::AssignBinary { dest, op, src1, src2 } => write!(f, "{} <- {} {:?} {:?}", dest.0, src1.0, op, src2),
             IlInstruction::ReadMemory { dest, addr, size } => write!(f, "{} <- mem[{:?}] {:?}", dest.0, addr, size),
