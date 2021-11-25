@@ -559,22 +559,22 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn struct_pass_by_ref() {
-    //     test_inputs(
-    //         "test_add",
-    //         include_str!("../../programs/struct.j"),
-    //         &[
-    //             (0x0u32,0x0u32,0x0u32),
-    //             (0x0,0x1,0x1),
-    //             (0x1,0x0,0x1),
-    //             (0x1,0x1,0x2),
-    //             (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
-    //             (0x1,0xFF,0x100),
-    //             (0xAABBCCDD, 0x0, 0xAABBCCDD),
-    //             (0xFFFFFFFF, 0x1, 0x0),
-    //             ]);
-    // }
+    #[test]
+    fn struct_pass_by_ref() {
+        test_inputs(
+            "test_add",
+            include_str!("../../programs/struct.j"),
+            &[
+                (0x0u32,0x0u32,0x0u32),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0x1,0x2),
+                (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
+                (0x1,0xFF,0x100),
+                (0xAABBCCDD, 0x0, 0xAABBCCDD),
+                (0xFFFFFFFF, 0x1, 0x0),
+                ]);
+    }
 
 
     #[test]

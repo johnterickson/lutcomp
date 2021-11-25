@@ -1,3 +1,5 @@
+use crate::il::IlVarId;
+
 use super::*;
 use assemble::{AssemblyInputLine, Instruction, Value};
 use super::storage::*;
@@ -116,7 +118,7 @@ impl Expression {
     pub fn try_emit_type(&self, ctxt: &ProgramContext, f: Option<&FunctionDefinition>) -> Option<Type> {
         match self {
             Expression::Ident(n) => {
-                if n == "__frame_pointer" {
+                if n == IlVarId::frame_pointer() {
                     Some(Type::Number(NumberType::USIZE))
                 } else if let Some(f) = f {
                     let (_,t) = f.find_arg_or_var(n)

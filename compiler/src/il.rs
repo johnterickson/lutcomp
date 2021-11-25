@@ -7,6 +7,12 @@ use crate::*;
 #[derive(Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct IlVarId(String);
 
+impl IlVarId {
+    pub fn frame_pointer() -> &'static str {
+        "__frame_pointer"
+    }
+}
+
 impl Debug for IlVarId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f,"{}", self.0)
@@ -64,7 +70,7 @@ impl IlFunction {
         let t = e.try_emit_type(ctxt.program, Some(ctxt.func_def))
             .expect(&format!("Could not determine type for '{:?}'.", e));
         let location = match t.byte_count(ctxt.program) {
-            1 => Location::U8,
+            0 | 1 => Location::U8,
             4 => Location::U32,
             _ => panic!(),
         };
@@ -115,17 +121,25 @@ impl IlFunction {
         addr_var
     }
 
-    fn emit_address(&mut self, ctxt: &IlContext, target: &Expression) -> (IlVarId, IlType) {
-        match target {
+    fn emit_address(&mut self, ctxt: &IlContext, value: &Expression) -> (IlVarId, Option<IlType>) {
+        match value {
             Expression::Ident(n) => {
                 let info = ctxt.find_arg_or_var(&self, n);
                 match info.location {
                     Location::U8 | Location::U32 => panic!(),
-                    Location::FrameOffset(_) => todo!(),
-                    Location::Static(addr) => {
+                    Location::FrameOffset(offset) => {
+                        let addr = Expression::Arithmetic(
+                            ArithmeticOperator::Add,
+                            Box::new(Expression::Ident(IlVarId::frame_pointer().to_owned())),
+                            Box::new(Expression::Number(NumberType::USIZE, offset))
+                        );
+                        let (id, _) = self.alloc_tmp_and_emit_value(ctxt, &addr);
+                        (id, None)
+                    },
+                    Location::Static(_) => {
                         let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
                         let id = self.alloc_tmp_and_emit_static_address(n, &info);
-                        (id, size)
+                        (id, Some(size))
                     }
                     Location::FramePointer => panic!(),
                 }
@@ -177,7 +191,7 @@ impl IlFunction {
                         }
                     },
                     Location::FrameOffset(offset) => {
-                        let frame = Expression::Ident("__frame_pointer".to_owned());
+                        let frame = Expression::Ident(IlVarId::frame_pointer().to_owned());
                         if offset == 0 {
                             frame
                         } else {
@@ -205,9 +219,50 @@ impl IlFunction {
 
                 let (addr, _) = self.alloc_tmp_and_emit_value(ctxt, &addr_expression);
 
-                (addr, element_size.try_into().unwrap())
+                (addr, Some(element_size.try_into().unwrap()))
             }
+            Expression::LocalFieldDeref(n, field) => {
+                let info = ctxt.find_arg_or_var(&self, n);
+                let struct_type = match &info.var_type { 
+                    Type::Struct(struct_type) => {
+                        &ctxt.program.types[struct_type]
+                    }
+                    _ => panic!()
+                };
+                let (byte_offset, field_type) = struct_type.get_field(field);
+                let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();
 
+                let base_expression = match info.location {
+                    Location::Static(addr) => Expression::Number(NumberType::USIZE, addr),
+                    Location::U8 | Location::U32 => todo!(),
+                    Location::FrameOffset(offset) => Expression::Arithmetic(
+                        ArithmeticOperator::Add,
+                        Box::new(Expression::Ident(IlVarId::frame_pointer().to_owned())),
+                        Box::new(Expression::Number(NumberType::USIZE, offset)),
+                    ),
+                    Location::FramePointer => panic!(),
+                };
+
+                let addr_expression = if byte_offset == 0 {
+                    base_expression
+                } else {
+                    Expression::Arithmetic(
+                        ArithmeticOperator::Add,
+                        Box::new(base_expression),
+                        Box::new(Expression::Number(NumberType::USIZE, byte_offset)),
+                    )
+                };
+
+                let addr_expression = Expression::Cast {
+                    value: Box::new(addr_expression),
+                    old_type: Some(Type::Number(NumberType::USIZE)),
+                    new_type: Type::Ptr(Box::new(field_type.clone()))
+                };
+
+                let (addr, _) = self.alloc_tmp_and_emit_value(ctxt, &addr_expression);
+
+                (addr, Some(field_bytes))
+            }
             Expression::PtrFieldDeref(n, field) => {
                 let info = ctxt.find_arg_or_var(&self, n);
                 let ptr_type = info.var_type;
@@ -223,7 +278,7 @@ impl IlFunction {
 
                 let base_expression = match info.location {
                     Location::Static(addr) => {
-                        Expression::Number(NumberType::USIZE, addr)
+                        todo!()//Expression::Number(NumberType::USIZE, addr)
                     }
                     Location::U8 | Location::U32 => {
                         Expression::Cast {
@@ -254,7 +309,7 @@ impl IlFunction {
 
                 let (addr, _) = self.alloc_tmp_and_emit_value(ctxt, &addr_expression);
 
-                (addr, field_bytes)
+                (addr, Some(field_bytes))
             }
             _ => todo!(),
         }
@@ -271,7 +326,7 @@ impl IlFunction {
                     },
                     Location::FrameOffset(_) | Location::Static(_) => {
                         let (address, size) = self.emit_address(ctxt,  target);
-                        (address, Some(size))
+                        (address, Some(size.unwrap()))
                     },
                     Location::FramePointer => panic!(),
                 }
@@ -281,17 +336,11 @@ impl IlFunction {
                 let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
                 (addr, Some(size))
             },
-            Expression::LocalFieldDeref(n, field) => {
-                let info = ctxt.find_arg_or_var(&self, n);
-                todo!();
-            },
-            Expression::PtrFieldDeref(n,  field) => {
-                let (addr, mem_size) = self.emit_address(ctxt,  target);
-                (addr, Some(mem_size))
-            }
+            Expression::LocalFieldDeref(_,_) |
+            Expression::PtrFieldDeref(_,_) | 
             Expression::Index(_, _) => {
                 let (address, size) = self.emit_address(ctxt,  target);
-                (address, Some(size))
+                (address, Some(size.unwrap()))
             },
             Expression::Optimized { original:_, optimized } => 
                 self.emit_target_expression(ctxt, optimized),
@@ -439,23 +488,29 @@ impl IlFunction {
                     size: derefed_type.byte_count(ctxt.program).try_into().unwrap(),
                 });
             },
-            Expression::LocalFieldDeref(_, _) => todo!(),
-            Expression::PtrFieldDeref(n, f) => {
+            Expression::LocalFieldDeref(_,_) |
+            Expression::PtrFieldDeref(_,_) => {
                 let (addr, size) = self.emit_address(ctxt, e);
                 self.body.push(IlInstruction::ReadMemory {
                     dest,
                     addr: IlAtom::Var(addr),
-                    size,
+                    size: size.unwrap(),
                 })
             },
-            Expression::AddressOf(_) => todo!(),
+            Expression::AddressOf(n) => {
+                let (addr, size) = self.emit_address(ctxt, n);
+                self.body.push(IlInstruction::AssignAtom {
+                    dest,
+                    src: IlAtom::Var(addr)
+                });
+            },
             Expression::Index(_, _) => {
                 let (addr, size) = self.emit_address(ctxt, e);
 
                 self.body.push(IlInstruction::ReadMemory {
                     dest,
                     addr: IlAtom::Var(addr),
-                    size,
+                    size: size.unwrap(),
                 });
             },
             Expression::Cast { old_type, new_type, value } => {
@@ -564,9 +619,9 @@ impl IlFunction {
 
         if func.vars_stack_size > 0 {
             func.alloc_named(
-                "__frame_pointer".to_owned(),
+                IlVarId::frame_pointer().to_owned(),
                 IlVarInfo {
-                    description: "__frame_pointer".to_owned(),
+                    description: IlVarId::frame_pointer().to_owned(),
                     location: Location::FramePointer,
                     var_type: Type::Number(NumberType::USIZE),
                 });
@@ -574,6 +629,10 @@ impl IlFunction {
 
         for s in &ctxt.func_def.body {
             func.emit_statement(ctxt, s);
+        }
+
+        if ctxt.func_def.return_type == Type::Void {
+            func.emit_statement(ctxt, &Statement::Return{value: Expression::Number(NumberType::U8, 0) });
         }
         
         func
