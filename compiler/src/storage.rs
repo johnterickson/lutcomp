@@ -62,7 +62,8 @@ impl LogicalReference {
                     panic!("'{}' is accessed as a struct but it is '{:?}'", field_name, inner);
                 }
             }
-            (LogicalReference::ArrayIndex{multiplier, index_reg}, Type::Array(num_type, _)) => {
+            (LogicalReference::ArrayIndex{multiplier, index_reg}, Type::Array(num_type, _)) |
+            (LogicalReference::ArrayIndex{multiplier, index_reg}, Type::Ptr(num_type)) => {
                 assert_eq!(*multiplier, 1);
                 assert_eq!(num_type.as_ref(), &Type::Number(NumberType::U8));
                 (MemoryReference {local_offset:0, deref_offset: DerefOffset::Register(*multiplier, *index_reg)}, num_type.as_ref())
@@ -70,8 +71,6 @@ impl LogicalReference {
             _ => panic!("Don't know how to reference '{:?}' via '{:?}'", var_type, &self)
         }
     }
-
-
 
     pub fn try_emit_local_address(&self, ctxt: &mut FunctionContext, local_name: &str, target_register:Register) -> EmitAddressResult {
         let local = ctxt.find_var(local_name);
@@ -144,6 +143,18 @@ impl LogicalReference {
                     }
                     (DerefOffset::None, byte_count) if byte_count >= 1 && byte_count <=4 => {
                         EmitAddressResult::ValueInRegister{reg:r, value_type: final_type}
+                    }
+                    (DerefOffset::Register(multiplier, index_reg), _) => {
+                        assert_eq!(multiplier, 1);
+                        assert_eq!(index_reg.0, 0);
+                        ctxt.add_inst(Instruction {
+                            source: format!("adding base {:?} and index {:?} -> {:?} for {:?}", &r, &index_reg, &target_register, &self),
+                            opcode: Opcode::Add32NoCarryIn,
+                            args: vec![Value::Register(r.0), Value::Register(index_reg.0), target_register.into()],
+                            resolved: None,
+                        });
+
+                        EmitAddressResult::AddressInRegister{reg: target_register, ptr_type: Type::Ptr(Box::new(final_type))}
                     }
                     (d,b) => unimplemented!("{:?} is {:?} and does not fit in a register.", &final_type, &(d, b)),
                 }

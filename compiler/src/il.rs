@@ -137,9 +137,9 @@ impl IlFunction {
                         (id, None)
                     },
                     Location::Static(_) => {
-                        let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
+                        let size = info.var_type.byte_count(ctxt.program).try_into().ok();
                         let id = self.alloc_tmp_and_emit_static_address(n, &info);
-                        (id, Some(size))
+                        (id, size)
                     }
                     Location::FramePointer => panic!(),
                 }
@@ -182,8 +182,7 @@ impl IlFunction {
 
                 let base_addr_num_expression = match info.location {
                     Location::Static(addr) => Expression::Number(NumberType::USIZE, addr),
-                    Location::U32 => Expression::Ident(var.clone()),
-                    Location::U8 => {
+                    Location::U32 | Location::U8 => {
                         Expression::Cast {
                             old_type: Some(ptr_type.clone()),
                             new_type: Type::Number(NumberType::USIZE),
@@ -274,11 +273,11 @@ impl IlFunction {
                     _ => panic!()
                 };
                 let (byte_offset, field_type) = struct_type.get_field(field);
-                let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();
+                let field_bytes = field_type.byte_count(ctxt.program).try_into().ok();
 
                 let base_expression = match info.location {
-                    Location::Static(addr) => {
-                        todo!()//Expression::Number(NumberType::USIZE, addr)
+                    Location::Static(_) => {
+                        todo!()
                     }
                     Location::U8 | Location::U32 => {
                         Expression::Cast {
@@ -309,7 +308,7 @@ impl IlFunction {
 
                 let (addr, _) = self.alloc_tmp_and_emit_value(ctxt, &addr_expression);
 
-                (addr, Some(field_bytes))
+                (addr, field_bytes)
             }
             _ => todo!(),
         }
@@ -469,8 +468,33 @@ impl IlFunction {
                 self.body.push(IlInstruction::TtyIn {dest});
             },
             Expression::Arithmetic(op, left, right) => {
-                let (left_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, left);
-                let (right_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, right);
+
+                let left_type = ctxt.try_emit_type(left).unwrap().get_number_type().unwrap();
+                let right_type = ctxt.try_emit_type(right).unwrap().get_number_type().unwrap();
+
+                let promo_needed = left_type != right_type;
+
+                let promote = |side: &Box<Expression>, side_type| {
+                    if promo_needed && side_type == NumberType::U8 {
+                        if let Some(c) = side.try_get_const() {
+                            Expression::Number(NumberType::USIZE, c)
+                        } else {
+                            Expression::Cast {
+                                value: side.clone(),
+                                old_type: Some(Type::Number(side_type)),
+                                new_type: Type::Number(NumberType::USIZE)
+                            }
+                        }
+                    } else {
+                        *(side.clone())
+                    }
+                };
+
+                let left = promote(left, left_type);
+                let right = promote(right, right_type);
+
+                let (left_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, &left);
+                let (right_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, &right);
                 self.body.push(IlInstruction::AssignBinary {
                     dest,
                     op: IlBinaryOp::from(op),
@@ -515,7 +539,7 @@ impl IlFunction {
             },
             Expression::Cast { old_type, new_type, value } => {
                 let old_type = old_type.as_ref().cloned().or_else(|| value.try_emit_type(ctxt.program, Some(ctxt.func_def))).unwrap();
-                let (old_num, new_num) = (old_type.get_numeber_type(), new_type.get_numeber_type());
+                let (old_num, new_num) = (old_type.get_number_type(), new_type.get_number_type());
                 let (old_size, new_size) = (old_type.byte_count(ctxt.program), new_type.byte_count(ctxt.program));
                 match (old_size, old_num, new_size, new_num) {
                     (old_size, _, new_size, _) if old_size == new_size => {
@@ -602,8 +626,9 @@ impl IlFunction {
                             }
                         ).is_none()
                     );
+                    let addr = ctxt.next_static_addr;
                     ctxt.next_static_addr += size;
-                    Location::Static(size)
+                    Location::Static(addr)
                 },
             };
             
@@ -650,6 +675,8 @@ pub enum IlBinaryOp {
     Add,
     Subtract,
     Multiply,
+    BitwiseAnd,
+    BitwiseOr,
 }
 
 impl IlBinaryOp {
@@ -658,8 +685,8 @@ impl IlBinaryOp {
             ArithmeticOperator::Add => IlBinaryOp::Add,
             ArithmeticOperator::Subtract => IlBinaryOp::Subtract,
             ArithmeticOperator::Multiply => IlBinaryOp::Multiply,
-            ArithmeticOperator::Or => todo!(),
-            ArithmeticOperator::And => todo!(),
+            ArithmeticOperator::Or => IlBinaryOp::BitwiseOr,
+            ArithmeticOperator::And => IlBinaryOp::BitwiseAnd,
         }
     }
 }
@@ -861,15 +888,18 @@ impl IlProgram {
             functions: BTreeMap::new(),
             statics: BTreeMap::new(),
         };
+            
+        let mut next_static_addr = STATICS_START_ADDRESS;
 
         for (_, def) in &ctxt.function_defs {
             let mut il_ctxt = IlContext {
-                next_static_addr: 0x100,
+                next_static_addr,
                 program: ctxt,
                 il: &mut il,
                 func_def: def,
             };
             let f = IlFunction::emit_from(&mut il_ctxt);
+            next_static_addr = il_ctxt.next_static_addr;
             il.functions.insert(f.id.clone(), f);
         }
 

@@ -41,7 +41,7 @@ fn parseHexNibble(ch: char) -> u8 {
 
 fn parseHex(c: &char) -> u8 {
     h: u8 = (16 * (parseHexNibble(*c)));
-    c = (c + 1);
+    c = &c[0x1];
     h = (h + parseHexNibble(*c));
     return h;
 }

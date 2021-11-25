@@ -1,4 +1,3 @@
-
 /* 
 Compares up to num characters of the C string str1 to those of the C string str2.
 This function starts comparing the first character of each string.
@@ -21,8 +20,8 @@ fn strncmp(str1: &char, str2: &char, num: usize) -> u8 {
             return 0;
         }
 
-        str1 = (str1 + 0x1);
-        str2 = (str2 + 0x1);
+        str1 = &str1[0x1];
+        str2 = &str2[0x1];
         num = (num - 0x1);
     }
     return 0;

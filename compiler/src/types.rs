@@ -48,7 +48,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn get_numeber_type(&self) -> Option<NumberType> {
+    pub fn get_number_type(&self) -> Option<NumberType> {
         match self {
             Type::Number(nt) => Some(*nt),
             _ => None,

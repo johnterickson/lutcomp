@@ -69,13 +69,7 @@ impl IlFunction {
                 ctxt.stack_pointer -= stack_size;
                 assert!(vars.insert(id, Some(IlNumber::U32(ctxt.stack_pointer))).is_none());
             }
-            if let Location::Static(size) = info.location {
-                let key = (Some(self.id.clone()), id.clone());
-                let info = ctxt.program.statics.get(&key).unwrap();
-                let addr = match &info.location {
-                    Location::Static(addr) => *addr,
-                    _ => panic!(),
-                };
+            if let Location::Static(addr) = info.location {
                 assert!(vars.insert(id, Some(IlNumber::U32(addr))).is_none());
             }
         }
@@ -126,6 +120,8 @@ impl IlFunction {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
                                 IlBinaryOp::Multiply => n1.wrapping_mul(n2),
+                                IlBinaryOp::BitwiseAnd => n1 & n2,
+                                IlBinaryOp::BitwiseOr => n1 | n2,
                             })
                         }
                         (IlNumber::U32(n1), IlNumber::U32(n2)) => {
@@ -133,6 +129,8 @@ impl IlFunction {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
                                 IlBinaryOp::Multiply => unimplemented!(),
+                                IlBinaryOp::BitwiseAnd => n1 & n2,
+                                IlBinaryOp::BitwiseOr => n1 | n2,
                             })
                         }
                         _ => panic!(),
@@ -576,6 +574,99 @@ mod tests {
                 ]);
     }
 
+    #[test]
+    fn struct_return_by_ref() {
+        test_inputs(
+            "test_ret_static",
+            include_str!("../../programs/struct_ret.j"),
+            &[
+                (0xAABBCCDDu32, 0x11111111u32, 0xBBCCDDEEu32)
+                ]);
+    }
+
+    #[test]
+    fn heap_nofree() {
+        test_var_inputs(
+            "get_heap",
+            include_str!("../../programs/heap_nofree.j"),
+            &[
+                (vec![], STATICS_START_ADDRESS.into())
+            ]
+        );
+    }
+
+    
+    // #[test]
+    // fn heap_nofree_alloc() {
+    //     let (ctxt, rom) = assemble("test1", include_str!("../../programs/heap_nofree.j"));
+    //     let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
+    //     assert_eq!(heap_start, 0);
+    // }
+
+    // #[test]
+    // fn heap_init() {
+    //     let (ctxt, rom) = assemble("heap_init", include_str!("../../programs/heap.j"));
+    //     let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
+    //     assert_eq!(heap_start, STATICS_START_ADDRESS);
+
+    //     let (ctxt, rom) = assemble("test_get_heap_head", include_str!("../../programs/heap.j"));
+    //     let (c, heap_entry) = test_var_input(&ctxt, &rom, &vec![]);
+    //     assert_eq!(heap_entry, STATICS_START_ADDRESS+4);
+
+    //     let heap_type = c.ctxt.types.get("heap").unwrap();
+    //     let (head_offset, _) = heap_type.get_field("head");
+    //     let heap_entry_type = c.ctxt.types.get("heap_entry").unwrap();
+
+    //     let header_size = heap_entry_type.byte_count(c.ctxt);
+
+    //     let head_entry_addr = heap_start + 4;
+    //     assert_eq!(c.comp.mem_word(heap_start + head_offset), head_entry_addr);
+    //     assert_eq!(c.comp.mem_word(head_entry_addr), 0); 
+    //     let len = 1024-header_size;
+    //     assert_eq!(c.comp.mem_word(head_entry_addr+4), len); 
+    //     assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
+
+    //     let max_static = ctxt.statics_cur_address;
+    //     assert_eq!(max_static, head_entry_addr + header_size + len);
+    // }
+
+    // #[test]
+    // fn heap_is_entry_bad() {
+    //     let (ctxt, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/heap.j"));
+    //     let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1u32.into()]);
+    //     assert_eq!(is_bad & 0xFF, 0);
+
+    //     let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1024u32.into()]);
+    //     assert_eq!(is_bad & 0xFF, 1);
+    // }
+
+    // #[test]
+    // fn heap_alloc() {
+    //     let alloc_size = 4u32;
+    //     let (ctxt, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
+    //     let (c, allocated_addr) = test_var_input(&ctxt, &rom, &vec![alloc_size.into()]);
+
+    //     const HEADER_SIZE : u32 = 0xc;
+        
+    //     let heap_addr = STATICS_START_ADDRESS;
+    //     let max_static = ctxt.statics_cur_address;
+    //     let head_entry_addr = heap_addr + 4;
+    //     assert_eq!(c.comp.mem_word(heap_addr), head_entry_addr);
+    //     let new_entry_addr = c.comp.mem_word(head_entry_addr);
+    //     assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-alloc_size); 
+    //     let head_entry_len = 1024-HEADER_SIZE-HEADER_SIZE-alloc_size;
+    //     assert_eq!(c.comp.mem_word(head_entry_addr+4), head_entry_len); 
+    //     assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
+
+    //     assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
+
+    //     assert_eq!(c.comp.mem_word(new_entry_addr), 0);
+    //     assert_eq!(c.comp.mem_word(new_entry_addr+4), alloc_size);
+    //     assert_eq!(c.comp.mem_byte(new_entry_addr+8), 0);
+    //     assert_eq!(max_static-alloc_size, allocated_addr);
+    //     assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
+    // }
+
 
     #[test]
     fn divide() {
@@ -589,6 +680,46 @@ mod tests {
         assert_eq!(il.simulate(&[100u8.into(), 10u8.into()]), 10u8.into());
     }
 
+    
+    // #[test]
+    // fn print_hex() {
+    //     test_tty(
+    //         "printHexTest",
+    //         include_str!("../../programs/print_hex.j"),
+    //         &[
+    //             ("",0x0,0x0,"00\n"),
+    //             ("",0x1,0x0,"01\n"),
+    //             ("",0x9,0x0,"09\n"),
+    //             ("",0xA,0x0,"0A\n"),
+    //             ("",0xF,0x0,"0F\n"),
+    //             ("",0x10,0x0,"10\n"),
+    //             ("",0xAA,0x0,"AA\n"),
+    //             ("",0xFF,0x0,"FF\n"),
+    //             ]);
+    // }
+
+    // #[test]
+    // fn echo() {
+    //     test_tty(
+    //         "main",
+    //         include_str!("../../programs/echo.j"),
+    //         &[
+    //             ("0\nq",0x0,0x0,"Hi!\n:>0\n:>q"),
+    //             ("01\nq",0x0,0x0,"Hi!\n:>01\n:>q"),
+    //             ]);
+    // }
+
+    // #[test]
+    // fn echoline() {
+    //     test_tty(
+    //         "test_echoline",
+    //         include_str!("../../programs/echoline.j"),
+    //         &[
+    //             ("0\n",0x0,0x0,"0\n"),
+    //             ("01\n",0x0,0x0,"01\n"),
+    //             ]);
+    // }
+
     #[test]
     fn local_array() {
         let il = emit_il(
@@ -599,6 +730,77 @@ mod tests {
         assert_eq!(il.simulate(&[0u8.into(), 1u8.into()]), 1u8.into());
         assert_eq!(il.simulate(&[1u8.into(), 0u8.into()]), 1u8.into());
         assert_eq!(il.simulate(&[1u8.into(), 0xFFu8.into()]), 0u8.into());
+    }
+
+    #[test]
+    fn array_to_ptr() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/array_to_ptr.j"),
+            &[
+                (0x0u8,0x0u8,0x0u8),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0xFF,0x0),
+                ]);
+    }
+
+    #[test]
+    fn array_loop() {
+        test_inputs(
+            "main",
+            include_str!("../../programs/array_loop.j"),
+            &[
+                (0x0u8,0x0u8,0x0u8),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0xFF,0x0),
+                ]);
+    }
+
+    #[test]
+    fn strlen() {
+        let mut long: Vec<u8> = (0..300).map(|_| 'a' as u8).collect();
+        long.push(0);
+        let expected = long.len() as u32 - 1;
+
+        test_var_inputs(
+            "strlen",
+            include_str!("../../programs/strlen.j"),
+            &[
+                (vec![TestVar::Ascii(b"\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"hello\0")], TestVar::Usize(5)),
+                (vec![TestVar::Ptr(long)], TestVar::Usize(expected)),
+            ]
+        );
+    }
+
+    #[test]
+    fn strncmp() {
+        let same_len = 300u32;
+        let mut long1: Vec<u8> = (0..same_len).map(|_| 'a' as u8).collect();
+        let mut long2 = long1.clone();
+        long1.push(b'a');
+        long1.push(0);
+        long2.push(b'b');
+        long2.push(0);
+
+        test_var_inputs(
+            "strncmp",
+            include_str!("../../programs/strncmp.j"),
+            &[
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(0)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(1)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(2)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Usize(1)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(1)], TestVar::U8(0)),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(2)], TestVar::U8(255)),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(2)], TestVar::U8(1)),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(1000)], TestVar::U8(1)),
+                (vec![TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Usize(same_len)], TestVar::U8(0)),
+                (vec![TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Usize(same_len+1)], TestVar::U8(255)),
+            ]
+        );
     }
 
     #[test]
@@ -619,5 +821,17 @@ mod tests {
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"lo\0")], TestComputer::arg_base_addr_var(3)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"l\0")], TestComputer::arg_base_addr_var(2)),
             ]);
+    }
+
+    #[test]
+    fn parse_hex_nibble() {
+        test_var_inputs(
+            "parseHexNibble",
+            include_str!("../../programs/bootram.j"),
+            &[
+                (vec![TestVar::U8('9' as u8)], TestVar::U8(0x9)),
+                (vec![TestVar::U8('a' as u8)], TestVar::U8(0xA)),
+            ]
+        );
     }
 }

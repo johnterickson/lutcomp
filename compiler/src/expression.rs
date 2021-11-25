@@ -157,15 +157,16 @@ impl Expression {
                 }
             }
             Expression::Arithmetic(_, left, right) => {
-                match (left.try_emit_type(ctxt, f), right.try_emit_type(ctxt, f)) {
-                    (Some(t1), Some(t2)) => {
-                        if t1 == t2 {
-                            Some(t1)
-                        } else {
-                            None
-                        }
+                let left = left.try_emit_type(ctxt, f);
+                let right = right.try_emit_type(ctxt, f);
+                if let (Some(left), Some(right)) = (left, right) {
+                    match (left.byte_count(ctxt),right.byte_count(ctxt)) {
+                        (1,1) => Some(Type::Number(NumberType::U8)),
+                        (1,4) | (4,1) | (4,4) => Some(Type::Number(NumberType::USIZE)),
+                        _ => None,
                     }
-                    _ => None,
+                } else {
+                    None
                 }
             }
             Expression::Deref(e) => {

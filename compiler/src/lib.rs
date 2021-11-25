@@ -853,9 +853,13 @@ mod tests {
 
     #[test]
     fn heap_nofree() {
-        let (ctxt, rom) = assemble("get_heap", include_str!("../../programs/heap_nofree.j"));
-        let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
-        assert_eq!(heap_start, STATICS_START_ADDRESS);
+        test_var_inputs(
+            "get_heap",
+            include_str!("../../programs/heap_nofree.j"),
+            &[
+                (vec![], STATICS_START_ADDRESS.into())
+            ]
+        );
     }
 
     #[test]

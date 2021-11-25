@@ -18,7 +18,7 @@ fn heap_init() -> &heap {
 fn heap_alloc(n: usize) -> &u8 {
     heap: &heap = get_heap();
     b: &u8 = heap->current;
-    heap->current = (heap->current + n);
+    heap->current = &b[n];
     return b;
 }
 

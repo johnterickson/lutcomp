@@ -12,7 +12,7 @@ fn strstr(str1: &char, str2: &char) -> &char {
             return str1;
         }
 
-        str1 = (str1 + 0x1);
+        str1 = &(str1[0x1]);
     }
     str1 = ((0x0) AS &char);
     return str1;
