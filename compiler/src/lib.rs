@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use std::{collections::BTreeSet, fs::File, unimplemented};
 use std::{collections::BTreeMap, convert::TryInto, io::Read};
 
+mod backend;
 mod call;
 use call::*;
 mod comparison;
@@ -144,7 +145,7 @@ pub fn main_inner(rom: &Image, args: Vec<u8>) {
 
     eprintln!("Final R0:{:02x}", c.reg_u32(0));
 }
-const INITIAL_STACK: u32 = (RAM_MAX as u32/4)*4;
+pub const INITIAL_STACK: u32 = (RAM_MAX as u32/4)*4;
 
 fn emit(ctxt: &ProgramContext) -> Vec<AssemblyInputLine> {
     let mut program = Vec::new();
@@ -161,7 +162,7 @@ fn emit(ctxt: &ProgramContext) -> Vec<AssemblyInputLine> {
     program.push(AssemblyInputLine::Comment(format!("set up stack and call entry {}", ctxt.entry)));
     program.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
-        source: format!("init stack to 0x{:x}", INITIAL_STACK),
+        source: format!("init stack to 0x{:08x}", INITIAL_STACK),
         args: vec![Value::Register(REG_SP), Value::Constant32(INITIAL_STACK)],
         resolved: None
     }));
@@ -425,14 +426,14 @@ mod tests {
             TestVar::Usize(TestComputer::arg_base_addr() + offset)
         }
 
-        fn from_rom(ctxt: &'a ProgramContext, rom: &'a Image) -> TestComputer<'a> {
+        pub fn from_rom(ctxt: &'a ProgramContext, rom: &'a Image) -> TestComputer<'a> {
             TestComputer{
                 comp: Computer::from_image(Cow::Borrowed(&rom), false),
                 ctxt
             }
         }
 
-        fn run(&mut self, inputs: &[u32]) -> u32{
+        pub fn run(&mut self, inputs: &[u32]) -> u32{
             dbg!(inputs);
             assert!(inputs.len() <= 3);
             for (i,val) in inputs.iter().rev().enumerate() {
@@ -486,7 +487,7 @@ mod tests {
         }
     }
 
-    fn check_args(ctxt: &ProgramContext, test_case: &(Vec<TestVar>, TestVar)) {
+    pub fn check_args(ctxt: &ProgramContext, test_case: &(Vec<TestVar>, TestVar)) {
         let entry = &ctxt.function_defs[&ctxt.entry];
         let entry_args = &entry.args;
         let (test_args, test_return) = test_case;

@@ -5,7 +5,7 @@ use std::{collections::BTreeMap, convert::TryFrom, fmt::Debug, hash::Hash};
 use crate::*;
 
 #[derive(Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
-pub struct IlVarId(String);
+pub struct IlVarId(pub String);
 
 impl IlVarId {
     pub fn frame_pointer() -> &'static str {
@@ -27,10 +27,10 @@ pub struct IlVarInfo {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
-pub struct IlLabelId(String);
+pub struct IlLabelId(pub String);
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
-pub struct IlFunctionId(String);
+pub struct IlFunctionId(pub String);
 
 #[derive(Debug)]
 pub struct IlFunction {
@@ -38,10 +38,11 @@ pub struct IlFunction {
     pub args: Vec<IlVarId>,
     pub body: Vec<IlInstruction>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
+    pub ret: Option<IlType>,
     labels: BTreeSet<IlLabelId>,
     next_temp_num: usize,
     next_label_num: usize,
-    vars_stack_size: u32, 
+    pub vars_stack_size: u32, 
 }
 
 impl IlFunction {
@@ -55,6 +56,7 @@ impl IlFunction {
             next_temp_num: 0,
             next_label_num: 0,
             vars_stack_size: 0,
+            ret: None,
         }
     }
 
@@ -575,10 +577,10 @@ impl IlFunction {
                     assert_eq!(arg_type, &info.var_type);
                     params.push(p_value.clone());
                 }
-                
+
                 self.body.push(IlInstruction::Call {
                     f: IlFunctionId(c.function.clone()),
-                    ret: dest,
+                    ret: Some(dest),
                     args: params,
                 });
             },
@@ -592,6 +594,14 @@ impl IlFunction {
     fn emit_from(ctxt: &mut IlContext) -> IlFunction {
         let id = IlFunctionId(ctxt.func_def.name.clone());
         let mut func = IlFunction::new(id.clone());
+
+        let return_size = ctxt.func_def.return_type.byte_count(ctxt.program);
+        func.ret = match return_size {
+            0 => None,
+            1 => Some(IlType::U8),
+            4 => Some(IlType::U32),
+            _ => panic!(),
+        };
         
         for (i, (name, var_type)) in ctxt.func_def.args.iter().enumerate() {
             let size = var_type.byte_count(ctxt.program).try_into().unwrap();
@@ -777,6 +787,15 @@ impl ByteSize for IlType {
     }
 }
 
+impl IlType {
+    pub fn byte_count(&self) -> u32 {
+        match self {
+            IlType::U8 => 1,
+            IlType::U32 => 4,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Location {
     U8,
@@ -807,7 +826,7 @@ pub enum IlInstruction {
     WriteMemory {addr: IlAtom, src: IlVarId, size: IlType},
     Goto(IlLabelId),
     IfThenElse {left: IlVarId, op: IlCmpOp, right: IlAtom, then_label: IlLabelId, else_label: IlLabelId},
-    Call {ret: IlVarId, f: IlFunctionId, args: Vec<IlVarId> },
+    Call {ret: Option<IlVarId>, f: IlFunctionId, args: Vec<IlVarId> },
     Resize {dest: IlVarId, dest_size: IlType, src:IlVarId, src_size: IlType},
     Return { val: IlVarId },
     TtyIn { dest: IlVarId },
@@ -828,7 +847,7 @@ impl Debug for IlInstruction {
             IlInstruction::IfThenElse { left, op, right, then_label, else_label } => 
                 write!(f, "if {} {:?} {:?} then '{}' else '{}'", left.0, op, right, then_label.0, else_label.0),
             IlInstruction::Call { ret, f: func, args } => {
-                write!(f, "{} <= call {}(", ret.0, func.0)?;
+                write!(f, "{:?} <= call {}(", ret.as_ref(), func.0)?;
                 for a in args {
                     write!(f, "{},", a.0)?;
                 }
@@ -856,6 +875,13 @@ impl IlNumber {
         match self {
             IlNumber::U8(_) => IlType::U8,
             IlNumber::U32(_) => IlType::U32,
+        }
+    }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+        match self {
+            IlNumber::U8(n) => vec![*n],
+            IlNumber::U32(n) => n.to_le_bytes().iter().cloned().collect(),
         }
     }
 }
@@ -904,6 +930,7 @@ pub struct IlProgram {
     pub entry: IlFunctionId,
     pub functions: BTreeMap<IlFunctionId, IlFunction>,
     pub statics: BTreeMap<(Option<IlFunctionId>,IlVarId), IlVarInfo>,
+    pub image_base_address: u32,
 }
 
 impl IlProgram {
@@ -912,9 +939,10 @@ impl IlProgram {
             entry: IlFunctionId(ctxt.entry.clone()),
             functions: BTreeMap::new(),
             statics: BTreeMap::new(),
+            image_base_address: ctxt.image_base_address,
         };
             
-        let mut next_static_addr = STATICS_START_ADDRESS;
+        let mut next_static_addr = ctxt.statics_base_address;
 
         for (_, def) in &ctxt.function_defs {
             let mut il_ctxt = IlContext {

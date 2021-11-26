@@ -89,7 +89,7 @@ impl IlFunction {
                     if let Some(Some(n)) = vars.get(dest) {
                         assert_eq!(&n.il_type(), size);
                     }
-                    
+
                     let value = src.value(&vars);
                     assert_eq!(&value.il_type(), size);
                     vars.insert(dest, Some(value));
@@ -224,7 +224,9 @@ impl IlFunction {
                     let f = &ctxt.program.functions[f];
                     let args: Vec<_> = args.iter().map(|a| vars[a].unwrap()).collect();
                     let result = f.simulate(ctxt, &args);
-                    vars.insert(ret, Some(result));
+                    if let Some(ret) = ret {
+                        vars.insert(ret, Some(result));
+                    }
                 },
                 IlInstruction::Return { val } => {
                     return vars[val].unwrap();
@@ -260,27 +262,34 @@ impl IlFunction {
 
 #[cfg(test)]
 mod tests {
-    use crate::tests::{TestComputer, TestVar, test_programs_dir};
+    use assemble::assemble;
+
+    use crate::{backend::emit_assembly, tests::{TestComputer, TestVar, check_args, test_programs_dir}};
 
     use super::*;
 
-    fn emit_il(entry: &str, input: &str) -> IlProgram {
+    fn emit_il(entry: &str, input: &str) -> (ProgramContext, IlProgram) {
         let ctxt = create_program(
             entry, 
             input,
             &test_programs_dir());
         
-        IlProgram::from_program(&ctxt)
+        let p =  IlProgram::from_program(&ctxt);
+        (ctxt, p)
     }
 
     
     fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
-        let il = emit_il(entry,program);
+        let (ctxt, il) = emit_il(entry,program);
         dbg!(&il);
+
+        let asm = emit_assembly(&ctxt, &il);
+        let assembled = assemble(asm);
 
         for case in cases
         {
-            let  (ins, expected) = case;
+            check_args(&ctxt, case);
+            let (ins, expected) = case;
             let mut ptr = TestComputer::arg_base_addr();
             let mut args = Vec::new();
             let mut mem = BTreeMap::new();
@@ -303,6 +312,12 @@ mod tests {
                 }
             }
 
+            let mut c = TestComputer::from_rom(&ctxt, &assembled);
+            for (addr, b) in &mem {
+                *c.comp.mem_byte_mut(*addr) = *b;
+            }
+
+            // run in IL simulator
             let mut sim = il.create_sim(&args);
             sim.mem.append(&mut mem);
             let expected= match expected {
@@ -312,6 +327,18 @@ mod tests {
                 TestVar::Usize(n) => IlNumber::U32(*n),
             };
             assert_eq!(expected, sim.run(), "{:?}", &case);
+
+            // run in HW simulator
+            let hw_sim_args: Vec<_> = args.iter().map(|a| match a {
+                IlNumber::U8(n) => (*n).into(),
+                IlNumber::U32(n) => *n,
+            }).collect();
+            let actual = c.run(hw_sim_args.as_slice());
+            let actual = match expected.il_type() {
+                IlType::U8 => IlNumber::U8((actual & 0xFF) as u8),
+                IlType::U32 => IlNumber::U32(actual),
+            };
+            assert_eq!(expected, actual, "{:?}", &case);
         }
     }
 
@@ -673,7 +700,7 @@ mod tests {
 
     #[test]
     fn divide() {
-        let il = emit_il(
+        let (_ctxt, il) = emit_il(
             "divide",
             include_str!("../../programs/divide.j"));
 
@@ -725,7 +752,7 @@ mod tests {
 
     #[test]
     fn local_array() {
-        let il = emit_il(
+        let (_ctxt, il) = emit_il(
             "main",
             include_str!("../../programs/local_array.j"));
 
