@@ -287,7 +287,7 @@ mod tests {
         let (ctxt, il) = emit_il(entry,program);
         dbg!(&il);
 
-        let asm = emit_assembly(&ctxt, &il);
+        let (_, asm) = emit_assembly(&ctxt, &il);
         let assembled = assemble(asm);
 
         for case in cases

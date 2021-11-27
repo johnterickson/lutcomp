@@ -1,16 +1,17 @@
 use crate::*;
 use crate::il::*;
 
-struct BackendProgram<'a> {
-    frontend_context: &'a ProgramContext,
-    il: &'a IlProgram,
-    function_info: BTreeMap<IlFunctionId, FunctionInfo>,
+pub struct BackendProgram<'a> {
+    pub frontend_context: &'a ProgramContext,
+    pub il: &'a IlProgram,
+    pub function_info: BTreeMap<IlFunctionId, FunctionInfo>,
     available_registers: BTreeSet<u8>,
 }
 
-struct FunctionInfo {
-    register_assignments: BTreeMap<IlVarId, Vec<u8>>,
-    functions_called: BTreeSet<IlFunctionId>,
+#[derive(Debug)]
+pub struct FunctionInfo {
+    pub register_assignments: BTreeMap<IlVarId, Vec<u8>>,
+    pub functions_called: BTreeSet<IlFunctionId>,
 }
 
 struct FunctionContext<'a,'b> {
@@ -161,7 +162,7 @@ impl<'a,'b> FunctionContext<'a,'b> {
     }
 }
 
-pub fn emit_assembly(ctxt: &ProgramContext, program: &IlProgram) -> Vec<AssemblyInputLine> {
+pub fn emit_assembly<'a>(ctxt: &'a ProgramContext, program: &'a IlProgram) -> (BackendProgram<'a>, Vec<AssemblyInputLine>) {
     let mut ctxt = BackendProgram {
         frontend_context: ctxt,
         il: program,
@@ -171,7 +172,10 @@ pub fn emit_assembly(ctxt: &ProgramContext, program: &IlProgram) -> Vec<Assembly
 
     ctxt.create_function_infos();
 
-    emit_assembly_inner(&mut ctxt)
+    dbg!(&ctxt.function_info);
+
+    let lines = emit_assembly_inner(&mut ctxt);
+    (ctxt, lines)
 }
 
 fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {

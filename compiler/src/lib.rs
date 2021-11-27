@@ -441,7 +441,6 @@ mod tests {
                 self.comp.reg_u32_set(4*i, *val);
             }
 
-
             let mut last_pc = None;
             let mut step_count = 0;
             while self.comp.step() {
