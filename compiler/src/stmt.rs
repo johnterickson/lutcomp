@@ -7,7 +7,7 @@ pub enum Statement {
     VoidExpression { expression: Expression },
     IfElse {predicate: Comparison, when_true: Vec<Statement>, when_false: Vec<Statement> },
     While {predicate: Comparison, while_true: Vec<Statement>},
-    Return { value: Expression},
+    Return { value: Option<Expression>},
     TtyOut {value: Expression},
 }
 
@@ -27,7 +27,9 @@ impl Statement {
                 }
             }
             Statement::Return {value} => {
-                while value.optimize(ctxt) { optimized = true; }
+                if let Some(value) = value {
+                    while value.optimize(ctxt) { optimized = true; }
+                }
             }
             Statement::Declare { .. } =>  {},
             Statement::VoidExpression {expression } => {
@@ -164,8 +166,8 @@ impl Statement {
                 Statement::IfElse { predicate, when_true, when_false }
             },
             Rule::return_statement => {
-                let expr = pair.into_inner().next().unwrap();
-                Statement::Return { value: Expression::parse(expr) }
+                let value = pair.into_inner().next().map(|e| Expression::parse(e));
+                Statement::Return { value }
             },
             Rule::ttyout => {
                 let mut pairs = pair.into_inner();
@@ -335,65 +337,72 @@ impl Statement {
                     (return_var.storage.clone(), return_var.var_type.clone())
                 };
 
-                let byte_count = return_type.byte_count(ctxt.program);
-                assert!(byte_count <= 4);
+                if let Some(value) = value {
+                    assert_ne!(return_type, Type::Void);
 
-                let target_reg = match return_storage {
-                    Storage::FixedAddress(_) => panic!(),
-                    Storage::Register(r) => {
-                        assert_eq!(r.0, 0);
-                        Some(r)
-                    },
-                    Storage::Stack(_) => None,
-                };
+                    let byte_count = return_type.byte_count(ctxt.program);
+                    assert!(byte_count <= 4);
 
-                let (actual_reg, expression_type) = value.emit(ctxt, target_reg);
-                assert_eq!(return_type, expression_type);
-                assert_eq!(actual_reg, target_reg);
+                    let target_reg = match return_storage {
+                        Storage::FixedAddress(_) => panic!(),
+                        Storage::Register(r) => {
+                            assert_eq!(r.0, 0);
+                            Some(r)
+                        },
+                        Storage::Stack(_) => None,
+                    };
 
-                match (target_reg, actual_reg, return_storage) {
-                    (Some(target_reg), Some(actual_reg), Storage::Register(final_reg))
-                        if target_reg == actual_reg && actual_reg == final_reg => {}
-                    (None, None, Storage::Stack(offset)) => {
-                        for i in 0..byte_count {
-                            let r = i.try_into().unwrap();
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Pop8,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(r)]
-                            });
-                            ctxt.additional_offset -= 1;
+                    let (actual_reg, expression_type) = value.emit(ctxt, target_reg);
+                    assert_eq!(return_type, expression_type);
+                    assert_eq!(actual_reg, target_reg);
 
-                            let result_offset = ctxt.get_stack_offset(offset);
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::LoadImm32,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(4), Value::Constant32(result_offset as u32)]
-                            });
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Add32NoCarryIn,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(REG_SP),Value::Register(4), Value::Register(8)]
-                            });
-            
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Store32Part1,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![Value::Register(0), Value::Register(8)]
-                            });
-                            ctxt.add_inst(Instruction {
-                                opcode: Opcode::Store32Part2,
-                                resolved: None,
-                                source: format!("{:?}", &self),
-                                args: vec![]
-                            });
+                    match (target_reg, actual_reg, return_storage) {
+                        (Some(target_reg), Some(actual_reg), Storage::Register(final_reg))
+                            if target_reg == actual_reg && actual_reg == final_reg => {}
+                        (None, None, Storage::Stack(offset)) => {
+                            for i in 0..byte_count {
+                                let r = i.try_into().unwrap();
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Pop8,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(r)]
+                                });
+                                ctxt.additional_offset -= 1;
+
+                                let result_offset = ctxt.get_stack_offset(offset);
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::LoadImm32,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(4), Value::Constant32(result_offset as u32)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Add32NoCarryIn,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(REG_SP),Value::Register(4), Value::Register(8)]
+                                });
+                
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store32Part1,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![Value::Register(0), Value::Register(8)]
+                                });
+                                ctxt.add_inst(Instruction {
+                                    opcode: Opcode::Store32Part2,
+                                    resolved: None,
+                                    source: format!("{:?}", &self),
+                                    args: vec![]
+                                });
+                            }
                         }
+                        _ => panic!(),
                     }
-                    _ => panic!(),
+
+                } else {
+                    assert_eq!(return_type, Type::Void);
                 }
                 
                 ctxt.add_inst(Instruction {

@@ -12,7 +12,7 @@ struct SimulationContext<'a> {
 impl<'a> SimulationContext<'a> {
     fn run(&mut self) -> IlNumber {
         let entry = self.program.functions.get(&self.entry_function).unwrap();
-        entry.simulate(self, &self.entry_args)
+        entry.simulate(self, &self.entry_args).unwrap()
     }
 }
 
@@ -57,7 +57,7 @@ impl IlFunction {
             .next()
     }
 
-    fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> IlNumber {
+    fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> Option<IlNumber> {
         let mut vars: BTreeMap<&IlVarId, Option<IlNumber>> = BTreeMap::new();
 
         for (id, info) in self.vars.iter().rev() {
@@ -224,12 +224,16 @@ impl IlFunction {
                     let f = &ctxt.program.functions[f];
                     let args: Vec<_> = args.iter().map(|a| vars[a].unwrap()).collect();
                     let result = f.simulate(ctxt, &args);
-                    if let Some(ret) = ret {
-                        vars.insert(ret, Some(result));
+                    match (result, ret) {
+                        (Some(result), Some(ret)) => {
+                            vars.insert(ret, Some(result));
+                        }
+                        (None, None) => {}
+                        _ => panic!("Callee '{}' returned {:?}, but {:?} was expected.", f.id.0, result, f.ret),
                     }
                 },
                 IlInstruction::Return { val } => {
-                    return vars[val].unwrap();
+                    return val.as_ref().map(|v| vars[v].unwrap());
                 },
                 IlInstruction::TtyIn { .. } => todo!(),
                 IlInstruction::TtyOut { .. } => todo!(),

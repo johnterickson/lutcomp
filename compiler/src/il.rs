@@ -426,8 +426,14 @@ impl IlFunction {
                 self.body.push(IlInstruction::Label(end_label.clone()));
             },
             Statement::Return { value } => {
-                let (val,_) = self.alloc_tmp_and_emit_value(ctxt, &value);
-                self.body.push(IlInstruction::Return{val: val.clone()})
+                let val = if let Some(value) = value {
+                    let (val,_) = self.alloc_tmp_and_emit_value(ctxt, value);
+                    Some(val.clone())
+                } else {
+                    None
+                };
+                
+                self.body.push(IlInstruction::Return{val})
             },
             Statement::TtyOut { value } => {
                 let (value_reg, _) = self.alloc_tmp_and_emit_value(ctxt, &value);
@@ -578,9 +584,14 @@ impl IlFunction {
                     params.push(p_value.clone());
                 }
 
+                let ret = match &callee_def.return_type {
+                    Type::Void => None,
+                    t => Some(dest),
+                };
+
                 self.body.push(IlInstruction::Call {
                     f: IlFunctionId(c.function.clone()),
-                    ret: Some(dest),
+                    ret,
                     args: params,
                 });
             },
@@ -671,7 +682,7 @@ impl IlFunction {
         }
 
         if ctxt.func_def.return_type == Type::Void {
-            func.emit_statement(ctxt, &Statement::Return{value: Expression::Number(NumberType::U8, 0) });
+            func.emit_statement(ctxt, &Statement::Return{value: None });
         }
         
         func
@@ -828,7 +839,7 @@ pub enum IlInstruction {
     IfThenElse {left: IlVarId, op: IlCmpOp, right: IlAtom, then_label: IlLabelId, else_label: IlLabelId},
     Call {ret: Option<IlVarId>, f: IlFunctionId, args: Vec<IlVarId> },
     Resize {dest: IlVarId, dest_size: IlType, src:IlVarId, src_size: IlType},
-    Return { val: IlVarId },
+    Return { val: Option<IlVarId> },
     TtyIn { dest: IlVarId },
     TtyOut { src: IlVarId },
     GetFrameAddress { dest: IlVarId },
@@ -853,7 +864,7 @@ impl Debug for IlInstruction {
                 }
                 write!(f, ")")
             }
-            IlInstruction::Return { val } => write!(f, "return {}", val.0),
+            IlInstruction::Return { val } => write!(f, "return {:?}", val),
             IlInstruction::TtyIn { dest } => write!(f, "{} <- ttyin", dest.0),
             IlInstruction::TtyOut { src } => write!(f, "ttyout <- {}", src.0),
             IlInstruction::Resize { dest, dest_size, src, src_size } => 

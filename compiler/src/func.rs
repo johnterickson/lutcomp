@@ -193,7 +193,11 @@ impl FunctionDefinition {
                         find_address_of_stmt(ctxt, s, needs_to_be_on_stack);
                     }
                 },
-                Statement::Return{ value } |
+                Statement::Return{ value } => {
+                    if let Some(value) = value {
+                        find_address_of_exp(ctxt, value , needs_to_be_on_stack);
+                    }
+                }
                 Statement::TtyOut{ value } |
                 Statement::VoidExpression{ expression: value}=> {
                     find_address_of_exp(ctxt, value, needs_to_be_on_stack);

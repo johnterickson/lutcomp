@@ -436,7 +436,7 @@ mod tests {
         pub fn run(&mut self, inputs: &[u32]) -> u32{
             dbg!(inputs);
             assert!(inputs.len() <= 3);
-            for (i,val) in inputs.iter().rev().enumerate() {
+            for (i,val) in inputs.iter().enumerate() {
                 let i = i as u8;
                 self.comp.reg_u32_set(4*i, *val);
             }
