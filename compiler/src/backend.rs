@@ -6,6 +6,7 @@ pub struct BackendProgram<'a> {
     pub il: &'a IlProgram,
     pub function_info: BTreeMap<IlFunctionId, FunctionInfo>,
     available_registers: BTreeSet<u8>,
+    next_round_robin_reg: u8,
 }
 
 #[derive(Debug)]
@@ -14,11 +15,24 @@ pub struct FunctionInfo {
     pub functions_called: BTreeSet<IlFunctionId>,
 }
 
+impl FunctionInfo {
+    fn regs_used(&self) -> BTreeSet<u8> {
+        self.register_assignments.values().flatten().cloned().collect()
+    }
+}
+
 struct FunctionContext<'a,'b> {
     program: &'a BackendProgram<'b>,
     f_il: &'a IlFunction,
     f_info: &'a FunctionInfo,
     lines: &'a mut Vec<AssemblyInputLine>,
+}
+
+fn are_regs_aligned_and_contiguous(regs: &[u8]) -> bool {
+    let len: u8 = regs.len().try_into().unwrap();
+    let aligned = (regs[0] % len) == 0;
+    let contiguous = regs.windows(2).all(|pair| pair[0] + 1 == pair[1]);
+    aligned && contiguous
 }
 
 impl<'a> BackendProgram<'a> {
@@ -53,27 +67,38 @@ impl<'a> BackendProgram<'a> {
     fn alloc_registers(&mut self, count: u8, align: u8) -> Option<Vec<u8>> {
         let mut alloced = Vec::new();
 
-        let reg_array: Vec<_> = self.available_registers.iter().collect();
+        let reg_array: Vec<_> = self.available_registers.iter().cloned().collect();
         for w in reg_array.as_slice().windows(count as usize) {
-            if w[0] % align != 0 {
-                continue;
-            }
-            let contiguous = w.windows(2).all(|pair| pair[0] + 1 == *pair[1]);
-            if contiguous {
+            if are_regs_aligned_and_contiguous(w) {
                 alloced.extend(w.iter().cloned());
-                break;            
+                break;
             }
         }
 
-        if alloced.len() == 0 {
-            return None;
+        if alloced.len() != 0 {
+            for r in &alloced {
+                self.available_registers.remove(&r);
+            }
+    
+            Some(alloced)
+        } else {
+            while (self.next_round_robin_reg % align) != 0 {
+                self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(1)
+            }
+
+            if self.next_round_robin_reg < 0x10 {
+                self.next_round_robin_reg = 0x10;
+            }
+
+            let r = self.next_round_robin_reg;
+            let regs = (r..=(r-1+count)).collect();
+
+            self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(count);
+
+            Some(regs)
         }
 
-        for r in &alloced {
-            self.available_registers.remove(&r);
-        }
-
-        Some(alloced)
+        
     }
 }
 
@@ -167,12 +192,13 @@ pub fn emit_assembly<'a>(ctxt: &'a ProgramContext, program: &'a IlProgram) -> (B
         frontend_context: ctxt,
         il: program,
         function_info: BTreeMap::new(),
-        available_registers: (0x10u8..=0xFFu8).collect(),
+        available_registers: (0x10u8..=0xFF).collect(),
+        next_round_robin_reg: 0x10
     };
 
     ctxt.create_function_infos();
 
-    dbg!(&ctxt.function_info);
+    // dbg!(&ctxt.function_info);
 
     let lines = emit_assembly_inner(&mut ctxt);
     (ctxt, lines)
@@ -246,7 +272,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         IlAtom::Var(var) => ctxt.emit_var_to_reg(&dest_regs, var, size, source),
                     }
                 },
-                IlInstruction::AssignUnary { dest, op, src } => todo!(),
+                IlInstruction::AssignUnary { dest:_, op:_, src:_ } => todo!(),
                 IlInstruction::AssignBinary { dest, op, src1, src2 } => {
                     let src1_regs = ctxt.find_registers(src1);
                     let byte_count = ctxt.byte_count(src1);
@@ -259,7 +285,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let dest_regs = ctxt.find_registers(dest);
                     assert_eq!(dest_regs.len(), dest_size as usize);
 
-                    if let (IlBinaryOp::Add, IlAtom::Number(n)) = (op, src2) {
+                    if let (IlBinaryOp::Add, IlAtom::Number(_)) = (op, src2) {
                         todo!();
                     } else {
                         let (src2_regs, src2_size) = match src2 {
@@ -531,10 +557,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 },
                 IlInstruction::Call { ret, f: target, args} => {
 
-                    if target == &ctxt.f_il.id {
-                        todo!("need to save registers between function calls.");
-                    }
-
                     let target = &ctxt.program.il.functions[target];
                     assert_eq!(target.args.len(), args.len());
 
@@ -549,9 +571,56 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             format!("Arg{}[{}]={} {}", i, arg_name.0, arg_value.0, source));
                     }
 
+                    let target_info = &ctxt.program.function_info[&target.id];
+                    let target_regs = target_info.regs_used();
+
+                    let my_regs = ctxt.f_info.regs_used();
+
+                    let regs_to_save: Vec<_> = target_regs.intersection(&my_regs).cloned().collect();
+
+                    ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers to save: {:?}", regs_to_save)));
+
+                    // let u32_regs : Vec<_> = regs_to_save
+                    //     .windows(4)
+                    //     .filter(|w| are_regs_aligned_and_contiguous(w))
+                    //     .map(|w| (w[0], w))
+                    //     .collect();
+
+                    // let u8_regs = {
+                    //     let mut u8_regs: BTreeSet<u8> = regs_to_save.iter().cloned().collect();
+                    
+                    //     for (_,all) in u32_regs {
+                    //         for r in all {
+                    //             u8_regs.remove(r);
+                    //         }
+                    //     }
+
+                    //     u8_regs
+                    // };
+
+                    for r in regs_to_save.iter().rev() {
+                        assert!(*r >= 0x10);
+                        ctxt.lines.push(AssemblyInputLine::Instruction(
+                            Instruction {
+                                opcode: Opcode::Push8,
+                                args: vec![Value::Register(*r)],
+                                source: format!("Saving reg0x{:02x} before {}", *r, &source),
+                                resolved: None,
+                            }));
+                    }
+
                     ctxt.lines.push(AssemblyInputLine::from_str(&format!("!call :{}", target.id.0)));
 
-                    dbg!(&(target.ret, ret));
+                    for r in &regs_to_save {
+                        assert!(*r >= 0x10);
+                        ctxt.lines.push(AssemblyInputLine::Instruction(
+                            Instruction {
+                                opcode: Opcode::Pop8,
+                                args: vec![Value::Register(*r)],
+                                source: format!("Restoring reg0x{:02x} after {}", *r, &source),
+                                resolved: None,
+                            }));
+                    }
 
                     match (target.ret, ret) {
                         (None, None) => {}
@@ -563,7 +632,33 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         _ => panic!("{:?} vs {:?}", target.ret, ret),
                     }
                 },
-                IlInstruction::Resize { dest, dest_size, src, src_size } => todo!(),
+                IlInstruction::Resize { dest, dest_size, src, src_size } => {
+                    let src_regs = ctxt.find_registers(src);
+                    assert_eq!(src_size.byte_count() as usize, src_regs.len());
+
+                    let dest_regs = ctxt.find_registers(dest);
+                    assert_eq!(dest_size.byte_count() as usize, dest_regs.len());
+
+                    match (src_size, dest_size) {
+                        (IlType::U8, IlType::U32) => {
+                            ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                opcode: Opcode::LoadImm32,
+                                args: vec![Value::Register(dest_regs[0]), Value::Constant32(0)],
+                                resolved: None,
+                                source: format!("Zero-pad for {}", &source)
+                            }));
+                        }
+                        (IlType::U32, IlType::U8) => { }
+                        _ => panic!(),
+                    }
+
+                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                        opcode: Opcode::Or8,
+                        args: vec![Value::Register(src_regs[0]), Value::Register(src_regs[0]), Value::Register(dest_regs[0])],
+                        resolved: None,
+                        source
+                    }));
+                },
                 IlInstruction::Return { val } => {
                     if let Some(val) = val {
                         let src_regs = ctxt.find_registers(val);
@@ -595,8 +690,26 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
                     ctxt.lines.push(AssemblyInputLine::from_str("!return"));
                 },
-                IlInstruction::TtyIn { dest } => todo!(),
-                IlInstruction::TtyOut { src } => todo!(),
+                IlInstruction::TtyIn { dest } => {
+                    let dest_regs = ctxt.find_registers(dest);
+                    assert_eq!(dest_regs.len(), 1);
+                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                        opcode: Opcode::TtyIn,
+                        source,
+                        args: vec![Value::Register(dest_regs[0])],
+                        resolved: None,
+                    }));
+                },
+                IlInstruction::TtyOut { src } => {
+                    let src_regs = ctxt.find_registers(src);
+                    assert_eq!(src_regs.len(), 1);
+                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                        opcode: Opcode::TtyOut,
+                        source,
+                        args: vec![Value::Register(src_regs[0])],
+                        resolved: None,
+                    }));
+                },
                 IlInstruction::GetFrameAddress { dest } => {
                     let src_regs = (REG_SP..(REG_SP+4)).collect();
                     let size = IlType::U32;

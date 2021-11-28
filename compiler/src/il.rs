@@ -4,6 +4,14 @@ use std::{collections::BTreeMap, convert::TryFrom, fmt::Debug, hash::Hash};
 
 use crate::*;
 
+pub fn emit_il(entry: &str, input: &str, root: &Path) -> (ProgramContext, IlProgram) {
+    let ctxt = create_program(entry, input, root);
+    
+    let p =  IlProgram::from_program(&ctxt);
+    (ctxt, p)
+}
+
+
 #[derive(Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct IlVarId(pub String);
 
@@ -335,7 +343,11 @@ impl IlFunction {
             },
             Expression::Deref(e) => {
                 let (addr, info) = self.alloc_tmp_and_emit_value(ctxt, e);
-                let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
+                let element_type = match info.var_type {
+                    Type::Ptr(t) |Type::Array(t, _) => t,
+                    _ => panic!(),
+                };
+                let size = element_type.byte_count(ctxt.program).try_into().unwrap();
                 (addr, Some(size))
             },
             Expression::LocalFieldDeref(_,_) |
@@ -366,12 +378,14 @@ impl IlFunction {
     }
     
     fn emit_statement(&mut self, ctxt: &mut IlContext, s: &Statement) {
+        // dbg!(s);
         match s {
             Statement::Declare { .. } => {},
             Statement::Assign { target, var_type, value } => {
                 let (target, mem_size) = self.emit_target_expression(ctxt, target);
                 let emitted_type = if let Some(size) = mem_size {
                     let (value_reg, info) = self.alloc_tmp_and_emit_value(ctxt, value);
+                    assert_eq!(size.byte_count(), info.var_type.byte_count(ctxt.program));
                     self.body.push(IlInstruction::WriteMemory{addr: IlAtom::Var(target), src: value_reg.clone(), size});
                     info.var_type
                 } else {
@@ -479,7 +493,8 @@ impl IlFunction {
             },
             Expression::Arithmetic(op, left, right) => {
 
-                let left_type = ctxt.try_emit_type(left).unwrap().get_number_type().unwrap();
+                let left_type = ctxt.try_emit_type(left).expect(&format!("Could not find type for {:?}.", left));
+                let left_type = left_type.get_number_type().expect(&format!("Expected Number, but is {:?}.", left_type));
                 let right_type = ctxt.try_emit_type(right).unwrap().get_number_type().unwrap();
 
                 let promo_needed = left_type != right_type;
@@ -586,7 +601,7 @@ impl IlFunction {
 
                 let ret = match &callee_def.return_type {
                     Type::Void => None,
-                    t => Some(dest),
+                    _ => Some(dest),
                 };
 
                 self.body.push(IlInstruction::Call {
@@ -893,6 +908,13 @@ impl IlNumber {
         match self {
             IlNumber::U8(n) => vec![*n],
             IlNumber::U32(n) => n.to_le_bytes().iter().cloned().collect(),
+        }
+    }
+
+    pub fn as_u32(&self) -> u32 {
+        match self {
+            IlNumber::U8(n) => (*n).into(),
+            IlNumber::U32(n) => *n,
         }
     }
 }

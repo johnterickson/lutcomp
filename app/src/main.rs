@@ -2,6 +2,7 @@ use alu::*;
 use assemble::*;
 use common::*;
 use compiler::*;
+use compiler::backend::emit_assembly;
 use compiler::il::*;
 use sim::*;
 use ucode::*;
@@ -93,8 +94,16 @@ fn main() {
                 input
             };
             let entry = get_param("entry").unwrap_or("main");
-            let (_program, assembly) = compile(
-                entry, &input, file_path.parent().unwrap());
+            let root = file_path.parent().unwrap();
+            let assembly = if let Some("2") = get_param("passes") {
+                let (ctxt, il) = emit_il(entry, &input, root);
+                let (_, asm) = emit_assembly(&ctxt, &il);
+                asm
+            } else {
+                let (_ctxt, assembly) = compile(
+                    entry, &input, root);
+                assembly
+            };
             let rom = assemble::assemble(assembly);
 
             if let Some("true") = get_param("sim") {

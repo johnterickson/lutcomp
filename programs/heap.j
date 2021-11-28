@@ -53,10 +53,11 @@ fn heap_alloc(n: usize) -> &u8 {
         }
     }
 
-    new: &heap_entry = head;
+    new_addr: usize = ((head) AS usize);
     new = (new + 0xc);
     new = (new + head->len);
     new = (new - alloc);
+    new: &heap_entry = ((new_addr) AS &heap_entry);
     new->next = head->next;
     new->len = n;
     new->free = 0;

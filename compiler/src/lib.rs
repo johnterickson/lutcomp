@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::{collections::BTreeSet, fs::File, unimplemented};
 use std::{collections::BTreeMap, convert::TryInto, io::Read};
 
-mod backend;
+pub mod backend;
 mod call;
 use call::*;
 mod comparison;
@@ -167,7 +167,7 @@ fn emit(ctxt: &ProgramContext) -> Vec<AssemblyInputLine> {
         resolved: None
     }));
 
-    let mut arg_stack_bytes = 0;
+    // let mut arg_stack_bytes = 0;
     for (i, (arg_name, _arg_type)) in main.def.args.iter().rev().enumerate() {
         let i: u8 = i.try_into().unwrap();
         let var = &main.variables[arg_name];
@@ -195,30 +195,61 @@ fn emit(ctxt: &ProgramContext) -> Vec<AssemblyInputLine> {
                 }
             }
             Storage::Stack(_) => {
-                for b in (0..4).rev() {
-                    program.push(AssemblyInputLine::Instruction(Instruction {
-                        opcode: Opcode::Push8,
-                        source: format!("push arg {}, byte {} for main", i, b),
-                        args: vec![Value::Register(4*i+b)],
-                        resolved: None
-                    }));
-                }
+                todo!();
+                // for b in (0..4).rev() {
+                //     program.push(AssemblyInputLine::Instruction(Instruction {
+                //         opcode: Opcode::Push8,
+                //         source: format!("push arg {}, byte {} for main", i, b),
+                //         args: vec![Value::Register(4*i+b)],
+                //         resolved: None
+                //     }));
+                // }
 
-                arg_stack_bytes += 4;
+                // arg_stack_bytes += 4;
             }
         }
-        
+    }
+
+    
+    for (i, (arg_name, _arg_type)) in main.def.args.iter().enumerate() {
+        let i: u8 = i.try_into().unwrap();
+        let var = &main.variables[arg_name];
+        match var.storage {
+            Storage::FixedAddress(..) => panic!(),
+            Storage::Register(base_reg) => {
+                match var.var_type.byte_count(ctxt) {
+                    1 => {
+                        program.push(AssemblyInputLine::Instruction(Instruction {
+                            opcode: Opcode::Or8,
+                            source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
+                            args: vec![Value::Register(4*i), Value::Register(4*i), Value::Register(base_reg.0)],
+                            resolved: None
+                        }));
+                    }
+                    4 => {
+                        program.push(AssemblyInputLine::Instruction(Instruction {
+                            opcode: Opcode::Copy32,
+                            source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
+                            args: vec![Value::Register(4*i), Value::Register(base_reg.0)],
+                            resolved: None
+                        }));
+                    }
+                    _ => panic!()
+                }
+            }
+            Storage::Stack(_) => { }
+        }
     }
     program.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.entry)));
 
-    if arg_stack_bytes != 0 {
-        program.push(AssemblyInputLine::Instruction(Instruction {
-            source: format!("discard args from main"),
-            opcode: Opcode::AddImm32IgnoreCarry,
-            args: vec![Value::Register(REG_SP), Value::Constant32(arg_stack_bytes as u32)],
-            resolved: None,
-        }));
-    }
+    // if arg_stack_bytes != 0 {
+    //     program.push(AssemblyInputLine::Instruction(Instruction {
+    //         source: format!("discard args from main"),
+    //         opcode: Opcode::AddImm32IgnoreCarry,
+    //         args: vec![Value::Register(REG_SP), Value::Constant32(arg_stack_bytes as u32)],
+    //         resolved: None,
+    //     }));
+    // }
 
     program.push(AssemblyInputLine::from_str("halt"));
 
