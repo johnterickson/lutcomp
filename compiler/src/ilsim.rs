@@ -280,6 +280,7 @@ mod tests {
         for input in ins {
             if let Some(bytes) = match input {
                 TestVar::Ascii(s) => Some(*s),
+                TestVar::String(s) => Some(s.as_bytes()),
                 TestVar::Ptr(s) => Some(s.as_slice()),
                 TestVar::U8(u8) => { args.push(IlNumber::U8(*u8)); None}
                 TestVar::Usize(u32) => { args.push(IlNumber::U32(*u32)); None}
@@ -340,6 +341,7 @@ mod tests {
                 TestVar::Ptr(_) => todo!(),
                 TestVar::U8(n) => IlNumber::U8(*n),
                 TestVar::Usize(n) => IlNumber::U32(*n),
+                TestVar::String(_) => todo!(),
             };
             assert_eq!(expected, actual, "{:?}", &(ins, expected));
         }
@@ -700,42 +702,43 @@ mod tests {
         assert_eq!(max_static, head_entry_addr + header_size + len);
     }
 
-    // #[test]
-    // fn heap_is_entry_bad() {
-    //     let (ctxt, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/heap.j"));
-    //     let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1u32.into()]);
-    //     assert_eq!(is_bad & 0xFF, 0);
+    #[test]
+    fn heap_is_entry_bad() {
+        let (ctxt, il, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/heap.j"));
+        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1u32.into()]);
+        assert_eq!(is_bad.as_u32(), 0);
 
-    //     let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1024u32.into()]);
-    //     assert_eq!(is_bad & 0xFF, 1);
-    // }
+        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1024u32.into()]);
+        assert_eq!(is_bad.as_u32(), 1);
+    }
 
-    // #[test]
-    // fn heap_alloc() {
-    //     let alloc_size = 4u32;
-    //     let (ctxt, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
-    //     let (c, allocated_addr) = test_var_input(&ctxt, &rom, &vec![alloc_size.into()]);
+    #[test]
+    fn heap_alloc() {
+        let alloc_size = 4u32;
+        let (ctxt, il, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
+        let (c, allocated_addr) = run_var_input(&ctxt, &il, &rom, &vec![alloc_size.into()]);
+        let allocated_addr = allocated_addr.as_u32();
 
-    //     const HEADER_SIZE : u32 = 0xc;
+        const HEADER_SIZE : u32 = 0xc;
         
-    //     let heap_addr = STATICS_START_ADDRESS;
-    //     let max_static = ctxt.statics_cur_address;
-    //     let head_entry_addr = heap_addr + 4;
-    //     assert_eq!(c.comp.mem_word(heap_addr), head_entry_addr);
-    //     let new_entry_addr = c.comp.mem_word(head_entry_addr);
-    //     assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-alloc_size); 
-    //     let head_entry_len = 1024-HEADER_SIZE-HEADER_SIZE-alloc_size;
-    //     assert_eq!(c.comp.mem_word(head_entry_addr+4), head_entry_len); 
-    //     assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
+        let heap_addr = STATICS_START_ADDRESS;
+        let max_static = ctxt.statics_cur_address;
+        let head_entry_addr = heap_addr + 4;
+        assert_eq!(c.comp.mem_word(heap_addr), head_entry_addr);
+        let new_entry_addr = c.comp.mem_word(head_entry_addr);
+        assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-alloc_size); 
+        let head_entry_len = 1024-HEADER_SIZE-HEADER_SIZE-alloc_size;
+        assert_eq!(c.comp.mem_word(head_entry_addr+4), head_entry_len); 
+        assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
 
-    //     assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
+        assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
 
-    //     assert_eq!(c.comp.mem_word(new_entry_addr), 0);
-    //     assert_eq!(c.comp.mem_word(new_entry_addr+4), alloc_size);
-    //     assert_eq!(c.comp.mem_byte(new_entry_addr+8), 0);
-    //     assert_eq!(max_static-alloc_size, allocated_addr);
-    //     assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
-    // }
+        assert_eq!(c.comp.mem_word(new_entry_addr), 0);
+        assert_eq!(c.comp.mem_word(new_entry_addr+4), alloc_size);
+        assert_eq!(c.comp.mem_byte(new_entry_addr+8), 0);
+        assert_eq!(max_static-alloc_size, allocated_addr);
+        assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
+    }
 
 
     #[test]
@@ -780,16 +783,16 @@ mod tests {
                 ]);
     }
 
-    // #[test]
-    // fn echoline() {
-    //     test_tty(
-    //         "test_echoline",
-    //         include_str!("../../programs/echoline.j"),
-    //         &[
-    //             ("0\n",0x0,0x0,"0\n"),
-    //             ("01\n",0x0,0x0,"01\n"),
-    //             ]);
-    // }
+    #[test]
+    fn echoline() {
+        test_tty(
+            "test_echoline",
+            include_str!("../../programs/echoline.j"),
+            &[
+                ("0\n",0x0,0x0,"0\n"),
+                ("01\n",0x0,0x0,"01\n"),
+                ]);
+    }
 
     #[test]
     fn local_array() {
@@ -905,5 +908,80 @@ mod tests {
                 (vec![TestVar::U8('a' as u8)], TestVar::U8(0xA)),
             ]
         );
+    }
+
+    #[test]
+    fn parse_hex() {
+        let mut cases = Vec::new();
+        for i in 0..=0xFFu8 {
+            cases.push((vec![TestVar::String(format!("{:02x}", i))], TestVar::U8(i)));
+            cases.push((vec![TestVar::String(format!("{:02X}", i))], TestVar::U8(i)));
+        }
+        test_var_inputs(
+            "parseHex",
+            include_str!("../../programs/bootram.j"),
+            &cases
+        );
+    }
+
+    #[test]
+    fn bootram() {
+        let (_ctxt, _ram_il, ram_image) = assemble(
+            "main", 
+            include_str!("../../programs/hello_ram.j"));
+        
+        let (_loader_ctxt, _loader_il, loader_image) = assemble(
+            "main",
+            include_str!("../../programs/bootram.j"));
+
+        let mut c = Computer::from_image(Cow::Owned(loader_image), true);
+
+        for ch in (format!("s{:08x}\n", ram_image.start_addr)).chars() {
+            c.tty_in.push_back(ch as u8);
+        }
+
+        for b in ram_image.bytes {
+            for ch in (format!("w{:02x}\n", b)).chars() {
+                c.tty_in.push_back(ch as u8);
+            }
+        }
+
+        for ch in (format!("s{:08x}\n", INITIAL_STACK-4)).chars() {
+            c.tty_in.push_back(ch as u8);
+        }
+
+        for b in ram_image.start_addr.to_le_bytes() {
+            for ch in (format!("w{:02x}\n", b)).chars() {
+                c.tty_in.push_back(ch as u8);
+            }
+        }
+
+        c.tty_in.push_back('q' as u8);
+        c.tty_in.push_back('\n' as u8);
+
+        println!("{}", std::str::from_utf8(c.tty_in.as_slices().0).unwrap());
+        println!("{}", std::str::from_utf8(c.tty_in.as_slices().1).unwrap());
+
+        let mut last_ir0 = None;
+        let mut running: bool = true;
+        while running {
+            running = c.step();
+
+            if last_ir0 != Some(c.ir0) {
+                print_state(&c);
+            }
+
+            last_ir0 = Some(c.ir0);
+        }
+
+        let r0 = c.reg_u32(0);
+        assert_eq!(r0, 0xAABBCCDD);
+
+        let mut out = String::new();
+        for c in &c.tty_out {
+            out.push(*c as char);
+        }
+
+        assert_eq!(out.as_str(), "Hi_from_RAM!");
     }
 }

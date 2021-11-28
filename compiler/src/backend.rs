@@ -13,12 +13,7 @@ pub struct BackendProgram<'a> {
 pub struct FunctionInfo {
     pub register_assignments: BTreeMap<IlVarId, Vec<u8>>,
     pub functions_called: BTreeSet<IlFunctionId>,
-}
-
-impl FunctionInfo {
-    fn regs_used(&self) -> BTreeSet<u8> {
-        self.register_assignments.values().flatten().cloned().collect()
-    }
+    pub registers_used: BTreeSet<u8>,
 }
 
 struct FunctionContext<'a,'b> {
@@ -41,6 +36,7 @@ impl<'a> BackendProgram<'a> {
             let mut info = FunctionInfo {
                 functions_called: BTreeSet::new(),
                 register_assignments: BTreeMap::new(),
+                registers_used: BTreeSet::new(),
             };
 
             for s in &f.body {
@@ -55,8 +51,8 @@ impl<'a> BackendProgram<'a> {
                     Location::U32 => Some(4),
                     _ => None,
                 } {
-                    let regs = self.alloc_registers(regs_needed, regs_needed).unwrap();
-                    info.register_assignments.insert(name.clone(), regs);
+                    let regs = self.alloc_registers(&mut info, regs_needed, regs_needed).unwrap();
+                    assert!(info.register_assignments.insert(name.clone(), regs).is_none());
                 }
             }
 
@@ -64,7 +60,7 @@ impl<'a> BackendProgram<'a> {
         }
     }
 
-    fn alloc_registers(&mut self, count: u8, align: u8) -> Option<Vec<u8>> {
+    fn alloc_registers(&mut self, info: &mut FunctionInfo, count: u8, align: u8) -> Option<Vec<u8>> {
         let mut alloced = Vec::new();
 
         let reg_array: Vec<_> = self.available_registers.iter().cloned().collect();
@@ -82,20 +78,35 @@ impl<'a> BackendProgram<'a> {
     
             Some(alloced)
         } else {
-            while (self.next_round_robin_reg % align) != 0 {
-                self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(1)
+            let mut attempts = 1000;
+            loop {
+                while (self.next_round_robin_reg % align) != 0 {
+                    self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(1)
+                }
+
+                if self.next_round_robin_reg < 0x10 {
+                    self.next_round_robin_reg = 0x10;
+                }
+
+                let r = self.next_round_robin_reg;
+                let regs: Vec<_> = (r..=(r-1+count)).collect();
+
+                let conflict = regs.iter().any(|r| info.registers_used.contains(r));
+
+                if conflict {
+                    attempts -= 1;
+                    if attempts == 0 {
+                        break None;
+                    }
+                    self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(1);
+                } else {
+                    for r in &regs {
+                        assert!(info.registers_used.insert(*r));
+                    }
+                    self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(count);
+                    break Some(regs);
+                }
             }
-
-            if self.next_round_robin_reg < 0x10 {
-                self.next_round_robin_reg = 0x10;
-            }
-
-            let r = self.next_round_robin_reg;
-            let regs = (r..=(r-1+count)).collect();
-
-            self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(count);
-
-            Some(regs)
         }
 
         
@@ -238,7 +249,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         if stack_size > 0 {
             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                 opcode: Opcode::AddImm32IgnoreCarry,
-                source: format!("get stack pointing to RA"),
+                source: format!("reserve {} bytes of stack space for locals", stack_size),
                 args: vec![Value::Register(REG_SP), Value::Constant32(stack_size.wrapping_neg())],
                 resolved: None,
             }));
@@ -572,9 +583,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     }
 
                     let target_info = &ctxt.program.function_info[&target.id];
-                    let target_regs = target_info.regs_used();
+                    let target_regs = target_info.registers_used.clone();
 
-                    let my_regs = ctxt.f_info.regs_used();
+                    let my_regs = ctxt.f_info.registers_used.clone();
 
                     let regs_to_save: Vec<_> = target_regs.intersection(&my_regs).cloned().collect();
 
@@ -682,7 +693,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     if stack_size > 0 {
                         ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                             opcode: Opcode::AddImm32IgnoreCarry,
-                            source: format!("get stack pointing to RA"),
+                            source: format!("Dealloc {} bytes from stack", stack_size),
                             args: vec![Value::Register(REG_SP), Value::Constant32(stack_size)],
                             resolved: None,
                         }));

@@ -81,15 +81,20 @@ pub fn print_state(c: &Computer) {
             print!("err     ");
         }
     }
-    println!(
-        " r0:{:08x} r4:{:08x} r8:{:08x} r10:{:08x} r14:{:08x} ir0:{:?}",
-        c.reg_u32(0),
-        c.reg_u32(4),
-        c.reg_u32(8),
-        c.reg_u32(0x10),
-        c.reg_u32(0x14),
-        &op,
-    );
+    for r in 0u8..=255u8 {
+        if (r % 4) != 0 { continue; }
+        print!(" r{:02x}:{:08x}", r, c.reg_u32(r));
+    }
+    println!(" ir0:{:?}", &op);
+    // println!(
+    //     " r0:{:08x} r4:{:08x} r8:{:08x} r10:{:08x} r14:{:08x} ir0:{:?}",
+    //     c.reg_u32(0),
+    //     c.reg_u32(4),
+    //     c.reg_u32(8),
+    //     c.reg_u32(0x10),
+    //     c.reg_u32(0x14),
+    //     &op,
+    // );
     // match op {
     //     Some(Opcode::Store32Part1) | Some(Opcode::Store32Part2) => {
     //         let value_reg_offset = if op == Some(Opcode::Store32Part1) { 1 } else { 0xFFFFFFFE };
@@ -399,6 +404,7 @@ mod tests {
     #[derive(Debug, PartialEq, Clone)]
     pub enum TestVar {
         Ascii(&'static [u8]),
+        String(String),
         Ptr(Vec<u8>),
         U8(u8),
         Usize(u32),
@@ -407,7 +413,7 @@ mod tests {
     impl TestVar {
         fn byte_count(&self) -> u32 {
             match self {
-                TestVar::Ascii(_) | TestVar::Ptr(_) | TestVar::Usize(_) => 4,
+                TestVar::String(_) | TestVar::Ascii(_) | TestVar::Ptr(_) | TestVar::Usize(_) => 4,
                 TestVar::U8(_) => 1
             }
         }
@@ -544,7 +550,7 @@ mod tests {
         (ctxt, rom)
     }
 
-    fn test_var_input<'a>(ctxt: &'a ProgramContext, rom: &'a Image, args: &Vec<TestVar>) -> (TestComputer<'a>, u32) {
+    fn run_var_input<'a>(ctxt: &'a ProgramContext, rom: &'a Image, args: &Vec<TestVar>) -> (TestComputer<'a>, u32) {
         let mut c = TestComputer::from_rom(ctxt, &rom);
         let mut arg_addr = TestComputer::arg_base_addr();
         let mut ptr_arg = |bytes: &[u8]| -> u32 {
@@ -571,6 +577,7 @@ mod tests {
             match arg {
                 TestVar::Ascii(bytes) => ptr_arg(bytes),
                 TestVar::Ptr(bytes) => ptr_arg(&bytes),
+                TestVar::String(s) => ptr_arg(s.as_bytes()),
                 TestVar::U8(i) => *i as u32,
                 TestVar::Usize(i) => *i as u32,
             }
@@ -586,7 +593,7 @@ mod tests {
         {
             check_args(&ctxt, case);
             let (args, expected) = case;
-            let (_comp, result) = test_var_input(&ctxt, &rom, args);
+            let (_comp, result) = run_var_input(&ctxt, &rom, args);
             let expected: &TestVar = expected.into();
             let result  = match expected {
                 TestVar::U8(_) => TestVar::U8((result & 0xFF) as u8),
@@ -896,18 +903,18 @@ mod tests {
     #[test]
     fn heap_nofree_alloc() {
         let (ctxt, rom) = assemble("test1", include_str!("../../programs/heap_nofree.j"));
-        let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
+        let (_, heap_start) = run_var_input(&ctxt, &rom, &vec![0u8.into()]);
         assert_eq!(heap_start, 0);
     }
 
     #[test]
     fn heap_init() {
         let (ctxt, rom) = assemble("heap_init", include_str!("../../programs/heap.j"));
-        let (_, heap_start) = test_var_input(&ctxt, &rom, &vec![0u8.into()]);
+        let (_, heap_start) = run_var_input(&ctxt, &rom, &vec![0u8.into()]);
         assert_eq!(heap_start, STATICS_START_ADDRESS);
 
         let (ctxt, rom) = assemble("test_get_heap_head", include_str!("../../programs/heap.j"));
-        let (c, heap_entry) = test_var_input(&ctxt, &rom, &vec![]);
+        let (c, heap_entry) = run_var_input(&ctxt, &rom, &vec![]);
         assert_eq!(heap_entry, STATICS_START_ADDRESS+4);
 
         let heap_type = c.ctxt.types.get("heap").unwrap();
@@ -930,10 +937,10 @@ mod tests {
     #[test]
     fn heap_is_entry_bad() {
         let (ctxt, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/heap.j"));
-        let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1u32.into()]);
+        let (_, is_bad) = run_var_input(&ctxt, &rom, &vec![1u32.into()]);
         assert_eq!(is_bad & 0xFF, 0);
 
-        let (_, is_bad) = test_var_input(&ctxt, &rom, &vec![1024u32.into()]);
+        let (_, is_bad) = run_var_input(&ctxt, &rom, &vec![1024u32.into()]);
         assert_eq!(is_bad & 0xFF, 1);
     }
 
@@ -941,7 +948,7 @@ mod tests {
     fn heap_alloc() {
         let alloc_size = 4u32;
         let (ctxt, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
-        let (c, allocated_addr) = test_var_input(&ctxt, &rom, &vec![alloc_size.into()]);
+        let (c, allocated_addr) = run_var_input(&ctxt, &rom, &vec![alloc_size.into()]);
 
         const HEADER_SIZE : u32 = 0xc;
         

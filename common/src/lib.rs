@@ -187,7 +187,71 @@ pub enum Opcode {
     Halt = 0xFF,
 }
 
+pub enum RegOperation {
+    Read,
+    Write,
+}
+
+pub struct RegUsage {
+    pub pc_offset: u32,
+    pub reg_count: u32,
+    pub op: RegOperation,
+}
+
 impl Opcode {
+    pub fn reg_usages(&self) -> &[RegUsage] {
+        match &self {
+            Opcode::LoadImm8 => &[RegUsage {
+                pc_offset: 1,
+                reg_count: 1,
+                op: RegOperation::Write,
+            }],
+            Opcode::Invert8 => todo!(),
+            Opcode::Negate8 => todo!(),
+            Opcode::Load8 => todo!(),
+            Opcode::Store8 => todo!(),
+            Opcode::TtyIn => todo!(),
+            Opcode::TtyOut => todo!(),
+            Opcode::Push8 => todo!(),
+            Opcode::Pop8 => todo!(),
+            Opcode::Mul8Part1 => todo!(),
+            Opcode::Mul8Part2 => todo!(),
+            Opcode::Add8 => todo!(),
+            Opcode::Add8NoCarry => todo!(),
+            Opcode::Add8NoCarryIn => todo!(),
+            Opcode::Cmp8 => todo!(),
+            Opcode::Cmp8IfZero => todo!(),
+            Opcode::AndImm8 => todo!(),
+            Opcode::OrImm8 => todo!(),
+            Opcode::XorImm8 => todo!(),
+            Opcode::And8 => todo!(),
+            Opcode::Or8 => todo!(),
+            Opcode::Xor8 => todo!(),
+            Opcode::ShiftImm8 => todo!(),
+            Opcode::JmpImm => todo!(),
+            Opcode::JcImm => todo!(),
+            Opcode::JzImm => todo!(),
+            Opcode::JnImm => todo!(),
+            Opcode::JmpReg => todo!(),
+            Opcode::JmpMem => todo!(),
+            Opcode::LoadImm32 => todo!(),
+            Opcode::Copy32 => todo!(),
+            Opcode::Load32 => todo!(),
+            Opcode::Store32Part1 => todo!(),
+            Opcode::Store32Part2 => todo!(),
+            Opcode::StoreImm32 => todo!(),
+            Opcode::Add32NoCarryIn => todo!(),
+            Opcode::Add32Part1 => todo!(),
+            Opcode::Add32Part2 => todo!(),
+            Opcode::AddImm32IgnoreCarry => todo!(),
+            Opcode::Or32 => todo!(),
+            Opcode::And32 => todo!(),
+            Opcode::OrImm32 => todo!(),
+            Opcode::AndImm32 => todo!(),
+            Opcode::HaltRAM => todo!(),
+            Opcode::Halt => todo!(),
+        }
+    }
     pub fn expected_arg_sizes(&self) -> &[u32] {
         match &self {
             Opcode::LoadImm8 => &[1,1],

@@ -245,11 +245,17 @@ impl IlFunction {
                 let base_expression = match info.location {
                     Location::Static(addr) => Expression::Number(NumberType::USIZE, addr),
                     Location::U8 | Location::U32 => todo!(),
-                    Location::FrameOffset(offset) => Expression::Arithmetic(
-                        ArithmeticOperator::Add,
-                        Box::new(Expression::Ident(IlVarId::frame_pointer().to_owned())),
-                        Box::new(Expression::Number(NumberType::USIZE, offset)),
-                    ),
+                    Location::FrameOffset(offset) => {
+                        let frame = Expression::Ident(IlVarId::frame_pointer().to_owned());
+                        if offset == 0 {
+                            frame
+                        } else {
+                            Expression::Arithmetic(
+                                ArithmeticOperator::Add,
+                                Box::new(frame),
+                                Box::new(Expression::Number(NumberType::USIZE, offset)))
+                        }
+                    },
                     Location::FramePointer => panic!(),
                 };
 

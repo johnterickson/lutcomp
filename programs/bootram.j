@@ -19,8 +19,9 @@ fn main() -> u8 {
     addr[1] = 2;
     addr[0] = 1;
 
-    addr_usize: &usize = ((&addr) AS &usize);
-    p_addr: &u8;
+    p_addr_usize: &usize = ((&addr) AS &usize);
+    addr_usize: usize;
+    p_byte: &u8;
 
     while (0 == 0) {
         /* ttyout('#'); */
@@ -66,15 +67,17 @@ fn main() -> u8 {
         }
 
         if (buf[0] == 'r') {
-            p_addr = ((*addr_usize) AS &u8);
-            printHex(*p_addr);
+            addr_usize = *p_addr_usize;
+            p_byte = ((addr_usize) AS &u8);
+            printHex(*p_byte);
             ttyout(10);
         }
 
         if (buf[0] == 'w') {
-            p_addr = ((*addr_usize) AS &u8);
-            *p_addr = parseHex(&buf[1]);
-            *addr_usize = (*addr_usize + 1);
+            addr_usize = *p_addr_usize;
+            p_byte = ((addr_usize) AS &u8);
+            *p_byte = parseHex(&buf[1]);
+            *p_addr_usize = (*p_addr_usize + 1);
         }
 
         if (buf[0] == 'q') {

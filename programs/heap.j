@@ -54,9 +54,9 @@ fn heap_alloc(n: usize) -> &u8 {
     }
 
     new_addr: usize = ((head) AS usize);
-    new = (new + 0xc);
-    new = (new + head->len);
-    new = (new - alloc);
+    new_addr = (new_addr + 0xc);
+    new_addr = (new_addr + head->len);
+    new_addr = (new_addr - alloc);
     new: &heap_entry = ((new_addr) AS &heap_entry);
     new->next = head->next;
     new->len = n;
@@ -65,7 +65,7 @@ fn heap_alloc(n: usize) -> &u8 {
     head->len = (head->len - alloc);
     head->next = new;
 
-    return (((new) AS &u8) + 0xc);
+    return ((new_addr + 0xc) AS &u8);
 }
 
 fn test_get_heap_head() -> &heap_entry {
