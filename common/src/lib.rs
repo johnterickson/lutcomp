@@ -193,23 +193,27 @@ pub enum RegOperation {
 }
 
 pub struct RegUsage {
-    pub pc_offset: u32,
-    pub reg_count: u32,
+    pub arg_index: u8,
+    pub reg_count: u8,
     pub op: RegOperation,
 }
 
 impl Opcode {
     pub fn reg_usages(&self) -> &[RegUsage] {
         match &self {
-            Opcode::LoadImm8 => &[RegUsage {
-                pc_offset: 1,
-                reg_count: 1,
-                op: RegOperation::Write,
-            }],
+            Opcode::LoadImm8 => &[
+                RegUsage { arg_index: 1, reg_count: 1, op: RegOperation::Write }
+                ],
             Opcode::Invert8 => todo!(),
             Opcode::Negate8 => todo!(),
-            Opcode::Load8 => todo!(),
-            Opcode::Store8 => todo!(),
+            Opcode::Load8 => &[
+                RegUsage { arg_index: 1, reg_count: 4, op: RegOperation::Read },
+                RegUsage { arg_index: 2, reg_count: 1, op: RegOperation::Write }
+            ],
+            Opcode::Store8 => &[
+                RegUsage { arg_index: 1, reg_count: 1, op: RegOperation::Read },
+                RegUsage { arg_index: 2, reg_count: 4, op: RegOperation::Write }
+            ],
             Opcode::TtyIn => todo!(),
             Opcode::TtyOut => todo!(),
             Opcode::Push8 => todo!(),
@@ -236,9 +240,15 @@ impl Opcode {
             Opcode::JmpMem => todo!(),
             Opcode::LoadImm32 => todo!(),
             Opcode::Copy32 => todo!(),
-            Opcode::Load32 => todo!(),
-            Opcode::Store32Part1 => todo!(),
-            Opcode::Store32Part2 => todo!(),
+            Opcode::Load32 => &[
+                RegUsage { arg_index: 1, reg_count: 4, op: RegOperation::Read },
+                RegUsage { arg_index: 2, reg_count: 4, op: RegOperation::Write }
+            ],
+            Opcode::Store32Part1 => &[
+                RegUsage { arg_index: 1, reg_count: 4, op: RegOperation::Read },
+                RegUsage { arg_index: 2, reg_count: 4, op: RegOperation::Write }
+            ],
+            Opcode::Store32Part2 => &[],
             Opcode::StoreImm32 => todo!(),
             Opcode::Add32NoCarryIn => todo!(),
             Opcode::Add32Part1 => todo!(),

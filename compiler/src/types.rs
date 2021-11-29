@@ -51,6 +51,7 @@ impl Type {
     pub fn get_number_type(&self) -> Option<NumberType> {
         match self {
             Type::Number(nt) => Some(*nt),
+            Type::Ptr(_) => Some(NumberType::USIZE),
             _ => None,
         }
     }

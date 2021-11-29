@@ -83,6 +83,9 @@ pub fn print_state(c: &Computer) {
     }
     for r in 0u8..=255u8 {
         if (r % 4) != 0 { continue; }
+        if r == REG_SP { continue; }
+        let v = c.reg_u32(r);
+        if v == 0xCCCCCCCC { continue; }
         print!(" r{:02x}:{:08x}", r, c.reg_u32(r));
     }
     println!(" ir0:{:?}", &op);

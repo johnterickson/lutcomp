@@ -51,7 +51,11 @@ impl<'a> BackendProgram<'a> {
                     Location::U32 => Some(4),
                     _ => None,
                 } {
-                    let regs = self.alloc_registers(&mut info, regs_needed, regs_needed).unwrap();
+                    let regs = self.alloc_registers(&mut info, regs_needed, regs_needed)
+                        .expect(&format!("Could not allocate a register for {:#?}", &f.body));
+                    for r in &regs {
+                        info.registers_used.insert(*r);
+                    }
                     assert!(info.register_assignments.insert(name.clone(), regs).is_none());
                 }
             }
@@ -96,6 +100,8 @@ impl<'a> BackendProgram<'a> {
                 if conflict {
                     attempts -= 1;
                     if attempts == 0 {
+                        dbg!(&self.available_registers);
+                        dbg!(info);
                         break None;
                     }
                     self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(1);
@@ -219,6 +225,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
     let mut lines = Vec::new();
 
     lines.push(AssemblyInputLine::ImageBaseAddress(ctxt.il.image_base_address));
+    lines.push(AssemblyInputLine::Label(format!("entry")));
     lines.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
         args: vec![Value::Register(REG_SP), Value::Constant32(INITIAL_STACK)],
@@ -243,6 +250,14 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         };
 
         ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &f.id.0)));
+        for (i, arg_name) in f.args.iter().enumerate() { 
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("Arg{}={}", i, arg_name.0)));
+        }
+        for (var_name, var_info) in &f.vars {
+            let reg_assignment = ctxt.f_info.register_assignments.get(var_name);
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("Var {} ({}) {:?} {:?}", 
+                var_name.0, var_info.description, var_info.location, reg_assignment)));
+        }
 
         let stack_size = f.vars_stack_size;
 
@@ -273,15 +288,19 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
             dbg!(s);
             let source = format!("{:?}", &s);
             match s {
+                IlInstruction::Comment(c) => {
+                    ctxt.lines.push(AssemblyInputLine::Comment(c.to_owned()));
+                },
                 IlInstruction::Label(label) => {
                     ctxt.lines.push(AssemblyInputLine::Label(label.0.to_owned()));
                 },
-                IlInstruction::AssignAtom { dest, src, size } => {
+                IlInstruction::AssignNumber { dest, src} => {
                     let dest_regs = ctxt.find_registers(dest);
-                    match src {
-                        IlAtom::Number(n) => ctxt.emit_num_to_reg(&dest_regs, n, size, source),
-                        IlAtom::Var(var) => ctxt.emit_var_to_reg(&dest_regs, var, size, source),
-                    }
+                    ctxt.emit_num_to_reg(&dest_regs, src, &src.il_type(), source);
+                }
+                IlInstruction::AssignVar { dest, src, size} => {
+                    let dest_regs = ctxt.find_registers(dest);
+                    ctxt.emit_var_to_reg(&dest_regs, src, size, source);
                 },
                 IlInstruction::AssignUnary { dest:_, op:_, src:_ } => todo!(),
                 IlInstruction::AssignBinary { dest, op, src1, src2 } => {
@@ -296,137 +315,121 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let dest_regs = ctxt.find_registers(dest);
                     assert_eq!(dest_regs.len(), dest_size as usize);
 
-                    if let (IlBinaryOp::Add, IlAtom::Number(_)) = (op, src2) {
-                        todo!();
-                    } else {
-                        let (src2_regs, src2_size) = match src2 {
-                            IlAtom::Number(n) => {
-                                ctxt.emit_num_to_reg(&dest_regs, n, &size, source.clone());
-                                (dest_regs.clone(), n.il_type().byte_count())
-                            }
-                            IlAtom::Var(n) => {
-                                let src2 = ctxt.find_registers(n);
-                                let len = src2.len() as u32;
-                                (src2, len)
-                            }
-                        };
+                    let src2_regs = ctxt.find_registers(src2);
+                    let src2_size = src2_regs.len() as u32;
 
-                        assert_eq!(dest_size, src2_size);
+                    assert_eq!(dest_size, src2_size);
 
-                        match op {
-                            IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr => {
+                    match op {
+                        IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr => {
 
-                                let opcode = match (op, size) {
-                                    (IlBinaryOp::Add, IlType::U8) => Opcode::Add8NoCarryIn,
-                                    (IlBinaryOp::Add, IlType::U32) => Opcode::Add32NoCarryIn,
-                                    (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::And8,
-                                    (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::And32,
-                                    (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::Or8,
-                                    (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::Or32,
-                                    _ => panic!(),
-                                };
+                            let opcode = match (op, size) {
+                                (IlBinaryOp::Add, IlType::U8) => Opcode::Add8NoCarryIn,
+                                (IlBinaryOp::Add, IlType::U32) => Opcode::Add32NoCarryIn,
+                                (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::And8,
+                                (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::And32,
+                                (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::Or8,
+                                (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::Or32,
+                                _ => panic!(),
+                            };
 
-                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                    opcode,
-                                    args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
-                                    resolved: None,
-                                    source
-                                }));
-                            },
-                            IlBinaryOp::Subtract => {
-                                match size {
-                                    IlType::U8 => {
+                            ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                opcode,
+                                args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
+                                resolved: None,
+                                source
+                            }));
+                        },
+                        IlBinaryOp::Subtract => {
+                            let temp_regs: Vec<_> = (0u8..(src2_size.try_into().unwrap())).collect();
+                            match size {
+                                IlType::U8 => {
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Or8,
+                                        args: vec![Value::Register(src2_regs[0]), Value::Register(src2_regs[0]), Value::Register(temp_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Negate8,
+                                        args: vec![Value::Register(temp_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Add8NoCarryIn,
+                                        args: vec![Value::Register(src1_regs[0]), Value::Register(temp_regs[0]), Value::Register(dest_regs[0])],
+                                        resolved: None,
+                                        source
+                                    }));
+                                }
+                                IlType::U32 => {
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Copy32,
+                                        args: vec![Value::Register(src2_regs[0]), Value::Register(temp_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+
+                                    for r in &temp_regs {
                                         ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                            opcode: Opcode::Negate8,
-                                            args: vec![Value::Register(src2_regs[0])],
+                                            opcode: Opcode::Invert8,
+                                            args: vec![Value::Register(*r)],
                                             resolved: None,
                                             source: source.clone()
-                                        }));
-
-                                        ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                            opcode: Opcode::Add8NoCarryIn,
-                                            args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
-                                            resolved: None,
-                                            source
                                         }));
                                     }
-                                    IlType::U32 => {
-                                        for r in &src2_regs {
-                                            ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                                opcode: Opcode::Invert8,
-                                                args: vec![Value::Register(*r)],
-                                                resolved: None,
-                                                source: source.clone()
-                                            }));
-                                        }
 
-                                        ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                            opcode: Opcode::AddImm32IgnoreCarry,
-                                            args: vec![Value::Register(src2_regs[0]), Value::Constant32(1)],
-                                            resolved: None,
-                                            source: source.clone()
-                                        }));
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::AddImm32IgnoreCarry,
+                                        args: vec![Value::Register(temp_regs[0]), Value::Constant32(1)],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
 
-                                        ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                            opcode: Opcode::Add32NoCarryIn,
-                                            args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
-                                            resolved: None,
-                                            source: source.clone()
-                                        }));
-                                    },
-                                }
-                            },
-                            IlBinaryOp::Multiply => {
-                                match size {
-                                    IlType::U8 => {
-                                        ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                            opcode: Opcode::Mul8Part1,
-                                            args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
-                                            resolved: None,
-                                            source: source.clone()
-                                        }));
-                                        ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                            opcode: Opcode::Mul8Part2,
-                                            args: vec![],
-                                            resolved: None,
-                                            source: source.clone()
-                                        }));
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Add32NoCarryIn,
+                                        args: vec![Value::Register(src1_regs[0]), Value::Register(temp_regs[0]), Value::Register(dest_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                },
+                            }
+                        },
+                        IlBinaryOp::Multiply => {
+                            match size {
+                                IlType::U8 => {
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Mul8Part1,
+                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Mul8Part2,
+                                        args: vec![],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
 
-                                        let product_regs = vec![0u8];
-                                        let product_size = IlType::U8;
-                                        ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
-                                    },
-                                    IlType::U32 => todo!(),
-                                }
-                            },
-                        }
+                                    let product_regs = vec![0u8];
+                                    let product_size = IlType::U8;
+                                    ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
+                                },
+                                IlType::U32 => todo!(),
+                            }
+                        },
                     }
                 },
                 IlInstruction::ReadMemory { dest, addr, size } => {
                     let dest_regs = ctxt.find_registers(dest);
                     assert_eq!(size.byte_count() as usize, dest_regs.len());
 
-                    let first_addr_reg = match addr {
-                        IlAtom::Number(n) => {
-                            match n {
-                                IlNumber::U8(_) => panic!(),
-                                IlNumber::U32(n) => {
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::LoadImm32,
-                                        args: vec![Value::Register(4), Value::Constant32(*n)],
-                                        resolved: None,
-                                        source: source.clone(),
-                                    }));
-                                    4u8
-                                },
-                            }
-                        }
-                        IlAtom::Var(n) => {
-                            let regs = ctxt.find_registers(n);
-                            assert_eq!(regs.len(), 4);
-                            regs[0]
-                        },
-                    };
+                    let addr_regs = ctxt.find_registers(addr);
+                    assert_eq!(addr_regs.len(), 4);
+                    let first_addr_reg = addr_regs[0];
 
                     let op = match size {
                         IlType::U8 => Opcode::Load8,
@@ -444,27 +447,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let src_regs = ctxt.find_registers(src);
                     assert_eq!(src_regs.len(), size.byte_count() as usize);
 
-                    let first_addr_reg = match addr {
-                        IlAtom::Number(n) => {
-                            match n {
-                                IlNumber::U8(_) => panic!(),
-                                IlNumber::U32(n) => {
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::LoadImm32,
-                                        args: vec![Value::Register(4), Value::Constant32(*n)],
-                                        resolved: None,
-                                        source: source.clone(),
-                                    }));
-                                    4u8
-                                },
-                            }
-                        }
-                        IlAtom::Var(n) => {
-                            let regs = ctxt.find_registers(n);
-                            assert_eq!(regs.len(), 4);
-                            regs[0]
-                        },
-                    };
+                    let addr_regs = ctxt.find_registers(addr);
+                    assert_eq!(addr_regs.len(), 4);
+                    let first_addr_reg = addr_regs[0];
 
                     match size {
                         IlType::U8 => {
@@ -503,20 +488,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let left_regs = ctxt.find_registers(left);
                     let left_byte_count = ctxt.byte_count(left);
 
-                    let (right_regs, right_byte_count) = match right {
-                        IlAtom::Number(n) => {
-                            let right_size = n.il_type();
-                            let byte_count: u8 = right_size.byte_count().try_into().unwrap();
-                            let dest_regs = (4..(4 + byte_count)).collect();
-                            ctxt.emit_num_to_reg(&dest_regs, n, &right_size, source.clone());
-                            (dest_regs.clone(), right_size.byte_count())
-                        }
-                        IlAtom::Var(n) => {
-                            let src2 = ctxt.find_registers(n);
-                            let len = src2.len() as u32;
-                            (src2, len)
-                        }
-                    };
+                    let right_regs = ctxt.find_registers(right);
+                    let right_byte_count = ctxt.byte_count(right);
 
                     assert_eq!(left_byte_count, right_byte_count);
 
@@ -582,13 +555,15 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             format!("Arg{}[{}]={} {}", i, arg_name.0, arg_value.0, source));
                     }
 
+                    let my_regs = ctxt.f_info.registers_used.clone();
+                    ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by this function: {:?}", my_regs)));
+
                     let target_info = &ctxt.program.function_info[&target.id];
                     let target_regs = target_info.registers_used.clone();
+                    ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by callee: {:?}", target_regs)));
 
-                    let my_regs = ctxt.f_info.registers_used.clone();
 
                     let regs_to_save: Vec<_> = target_regs.intersection(&my_regs).cloned().collect();
-
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers to save: {:?}", regs_to_save)));
 
                     // let u32_regs : Vec<_> = regs_to_save

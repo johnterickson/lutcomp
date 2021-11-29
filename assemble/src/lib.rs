@@ -8,7 +8,7 @@ extern crate strum;
 extern crate packed_struct;
 
 use common::*;
-use std::{collections::{BTreeMap}, convert::TryInto, fmt::Debug};
+use std::{collections::BTreeMap, convert::TryInto, fmt::Debug};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]

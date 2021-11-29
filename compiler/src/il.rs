@@ -124,10 +124,9 @@ impl IlFunction {
             location: Location::U32,
             var_type: Type::Ptr(Box::new(info.var_type.clone())),
         });
-        self.body.push(IlInstruction::AssignAtom {
+        self.body.push(IlInstruction::AssignNumber {
             dest: addr_var.clone(),
-            src: IlAtom::Number(IlNumber::U32(addr)),
-            size: IlType::U32,
+            src: IlNumber::U32(addr),
         });
         addr_var
     }
@@ -377,7 +376,7 @@ impl IlFunction {
         self.body.push(IlInstruction::IfThenElse{
             left: left.clone(),
             op: c.op.into(), 
-            right: IlAtom::Var(right.clone()),
+            right: right.clone(),
             then_label: true_label.clone(),
             else_label: false_label.clone(),
         });
@@ -392,7 +391,7 @@ impl IlFunction {
                 let emitted_type = if let Some(size) = mem_size {
                     let (value_reg, info) = self.alloc_tmp_and_emit_value(ctxt, value);
                     assert_eq!(size.byte_count(), info.var_type.byte_count(ctxt.program));
-                    self.body.push(IlInstruction::WriteMemory{addr: IlAtom::Var(target), src: value_reg.clone(), size});
+                    self.body.push(IlInstruction::WriteMemory{addr: target, src: value_reg.clone(), size});
                     info.var_type
                 } else {
                     self.emit_expression(ctxt, target.clone(), value);
@@ -469,16 +468,18 @@ impl IlFunction {
                 let info = ctxt.find_arg_or_var(&self, name);
                 match info.location {
                     Location::U8 | Location::U32 => {
-                        let src = IlAtom::Var(IlVarId(name.clone()));
+                        let src = IlVarId(name.clone());
                         let size = info.location.try_into().unwrap();
-                        self.body.push(IlInstruction::AssignAtom{dest, src, size});
+                        self.body.push(IlInstruction::AssignVar{dest, src, size});
                     }
                     Location::FrameOffset(_) => todo!(),
-                    Location::Static(addr) => {
+                    Location::Static(_) => {
                         let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
+                        let addr = self.alloc_tmp_and_emit_static_address(name, &info);
+
                         self.body.push(IlInstruction::ReadMemory {
                             dest,
-                            addr: IlAtom::Number(IlNumber::U32(addr)),
+                            addr,
                             size,
                         })
                     },
@@ -488,11 +489,11 @@ impl IlFunction {
                 }
             },
             Expression::Number(num_type, val) => {
-                let src = IlAtom::Number(match num_type {
+                let src = match num_type {
                     NumberType::U8 => IlNumber::U8((*val).try_into().unwrap()),
                     NumberType::USIZE => IlNumber::U32(*val)
-                });
-                self.body.push(IlInstruction::AssignAtom{dest, src, size: num_type.into()});
+                };
+                self.body.push(IlInstruction::AssignNumber{dest, src});
             },
             Expression::TtyIn() => {
                 self.body.push(IlInstruction::TtyIn {dest});
@@ -530,7 +531,7 @@ impl IlFunction {
                     dest,
                     op: IlBinaryOp::from(op),
                     src1: left_tmp.clone(),
-                    src2: IlAtom::Var(right_tmp.clone()),
+                    src2: right_tmp.clone(),
                 });
             },
             Expression::Comparison(_) => todo!(),
@@ -539,7 +540,7 @@ impl IlFunction {
                 let derefed_type = ptr_info.var_type.get_element_type().unwrap();
                 self.body.push(IlInstruction::ReadMemory {
                     dest,
-                    addr: IlAtom::Var(addr),
+                    addr,
                     size: derefed_type.byte_count(ctxt.program).try_into().unwrap(),
                 });
             },
@@ -548,15 +549,15 @@ impl IlFunction {
                 let (addr, size) = self.emit_address(ctxt, e);
                 self.body.push(IlInstruction::ReadMemory {
                     dest,
-                    addr: IlAtom::Var(addr),
+                    addr,
                     size: size.unwrap(),
                 })
             },
             Expression::AddressOf(n) => {
                 let (addr, _mem_size) = self.emit_address(ctxt, n);
-                self.body.push(IlInstruction::AssignAtom {
+                self.body.push(IlInstruction::AssignVar {
                     dest,
-                    src: IlAtom::Var(addr),
+                    src: addr,
                     size: IlType::U32,
                 });
             },
@@ -565,7 +566,7 @@ impl IlFunction {
 
                 self.body.push(IlInstruction::ReadMemory {
                     dest,
-                    addr: IlAtom::Var(addr),
+                    addr,
                     size: size.unwrap(),
                 });
             },
@@ -705,9 +706,80 @@ impl IlFunction {
         if ctxt.func_def.return_type == Type::Void {
             func.emit_statement(ctxt, &Statement::Return{value: None });
         }
+
+        func.optimize();
         
         func
     }
+
+    fn optimize(&mut self) {
+        while self.optimze_round() {}
+    }
+
+    fn find_refs(&mut self) -> BTreeMap<IlVarId, VarReferences> {
+        let mut refs = BTreeMap::new();
+
+        for v in self.vars.keys() {
+            refs.insert(v.clone(), VarReferences { reads: BTreeSet::new(), writes: BTreeSet::new()});
+        }
+
+        for (index, usages) in self.body.iter_mut().map(|s| s.var_usages()).enumerate() {
+            
+            if let Some(dest) = usages.dest {
+                let refs = refs.get_mut(dest).unwrap();
+                refs.writes.insert(index);
+            }
+
+            for src in usages.srcs {
+                let refs = refs.get_mut(src).unwrap();
+                refs.reads.insert(index);
+            }
+        }
+
+        refs
+    }
+
+    fn optimze_round(&mut self) -> bool {
+        let refs = self.find_refs();
+
+        // dbg!(&self.body);
+
+        for (var, refs) in &refs {
+            if refs.writes.len() == 1 && refs.reads.len() == 1 {
+                let (read, write) = (refs.reads.iter().next().unwrap(), refs.writes.iter().next().unwrap());
+                if read != write {
+                    let var_to_remove = var;
+
+                    if let Some(write_src) = match &self.body[*write] {
+                        IlInstruction::AssignVar {dest, src, size:_ } => {
+                            assert_eq!(dest, var_to_remove);
+                            Some(src.clone())
+                        }
+                        _ => None,
+                    } {
+                        dbg!((&self.body[*write], &self.body[*read]));
+                        for src in self.body[*read].var_usages().srcs {
+                            if src == var_to_remove {
+                                *src = write_src.clone();
+                            }
+                        }
+                        dbg!(&self.body[*read]);
+
+                        self.body.remove(*write);
+                        self.vars.remove(var_to_remove);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        false
+    }
+}
+
+struct VarReferences {
+    reads: BTreeSet<usize>,
+    writes: BTreeSet<usize>,
 }
 
 #[derive(Debug)]
@@ -850,14 +922,16 @@ impl TryFrom<u32> for Location {
 }
 
 pub enum IlInstruction {
+    Comment(String),
     Label(IlLabelId),
-    AssignAtom{ dest: IlVarId, src: IlAtom, size: IlType},
-    AssignUnary{ dest: IlVarId, op: IlUnaryOp, src: IlAtom },
-    AssignBinary { dest: IlVarId, op: IlBinaryOp, src1: IlVarId, src2: IlAtom },
-    ReadMemory {dest: IlVarId, addr: IlAtom, size: IlType},
-    WriteMemory {addr: IlAtom, src: IlVarId, size: IlType},
+    AssignNumber{ dest: IlVarId, src: IlNumber },
+    AssignVar{ dest: IlVarId, src: IlVarId, size: IlType},
+    AssignUnary{ dest: IlVarId, op: IlUnaryOp, src: IlVarId },
+    AssignBinary { dest: IlVarId, op: IlBinaryOp, src1: IlVarId, src2: IlVarId },
+    ReadMemory {dest: IlVarId, addr: IlVarId, size: IlType},
+    WriteMemory {addr: IlVarId, src: IlVarId, size: IlType},
     Goto(IlLabelId),
-    IfThenElse {left: IlVarId, op: IlCmpOp, right: IlAtom, then_label: IlLabelId, else_label: IlLabelId},
+    IfThenElse {left: IlVarId, op: IlCmpOp, right: IlVarId, then_label: IlLabelId, else_label: IlLabelId},
     Call {ret: Option<IlVarId>, f: IlFunctionId, args: Vec<IlVarId> },
     Resize {dest: IlVarId, dest_size: IlType, src:IlVarId, src_size: IlType},
     Return { val: Option<IlVarId> },
@@ -866,11 +940,54 @@ pub enum IlInstruction {
     GetFrameAddress { dest: IlVarId },
 }
 
+pub struct IlUsages<'a> {
+    srcs: Vec<&'a mut IlVarId>,
+    dest: Option<&'a mut IlVarId>,
+}
+
+impl IlInstruction {
+    fn var_usages(&mut self) -> IlUsages {
+        let (srcs, dest) = match self {
+            IlInstruction::Comment(_) => (vec![], None),
+            IlInstruction::AssignNumber { dest, src:_} => 
+                (vec![], Some(dest)),
+            IlInstruction::AssignVar { dest, src, size:_} => 
+                (vec![src], Some(dest)),
+            IlInstruction::AssignUnary { dest, op:_, src } => 
+                (vec![src], Some(dest)),
+            IlInstruction::AssignBinary { dest, op:_, src1, src2 } =>
+                (vec![src1, src2], Some(dest)),
+            IlInstruction::ReadMemory { dest, addr, size:_ } =>
+                (vec![addr], Some(dest)),
+            IlInstruction::WriteMemory { addr, src, size:_ } => 
+                (vec![addr, src], None),
+            IlInstruction::Goto(_) => (vec![], None),
+            IlInstruction::IfThenElse { left, op:_, right, then_label:_ , else_label:_ } => 
+                (vec![left, right], None),
+            IlInstruction::Call { ret, f:_, args } =>
+                (args.iter_mut().collect(), ret.as_mut()),
+            IlInstruction::Resize { dest, dest_size:_, src, src_size:_ } => 
+                (vec![src], Some(dest)),
+            IlInstruction::Return { val } => (
+                if let Some(v) = val { vec![v] } else {vec![]},
+                None),
+            IlInstruction::TtyIn { dest } => (vec![], Some(dest)),
+            IlInstruction::TtyOut { src } => (vec![src], None),
+            IlInstruction::GetFrameAddress { dest } => (vec![], Some(dest)),
+            IlInstruction::Label(_) => (vec![], None),
+        };
+
+        IlUsages { srcs, dest }
+    }
+}
+
 impl Debug for IlInstruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            IlInstruction::Comment(arg0) => write!(f, "#{}", arg0),
             IlInstruction::Label(arg0) => write!(f, ":{}", arg0.0),
-            IlInstruction::AssignAtom { dest, src, size } => write!(f, "{} <- {:?} {:?}", dest.0, src, size),
+            IlInstruction::AssignNumber { dest, src } => write!(f, "{} <- {:?} ", dest.0, src),
+            IlInstruction::AssignVar { dest, src, size } => write!(f, "{} <- {:?} {:?}", dest.0, src, size),
             IlInstruction::AssignUnary { dest, op, src } => write!(f, "{} <- {:?}({:?})", dest.0, op, src),
             IlInstruction::AssignBinary { dest, op, src1, src2 } => write!(f, "{} <- {} {:?} {:?}", dest.0, src1.0, op, src2),
             IlInstruction::ReadMemory { dest, addr, size } => write!(f, "{} <- mem[{:?}] {:?}", dest.0, addr, size),
@@ -950,19 +1067,6 @@ impl From<u32> for IlNumber {
     }
 }
 
-pub enum IlAtom {
-    Number(IlNumber),
-    Var(IlVarId)
-}
-
-impl Debug for IlAtom {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Number(arg0) => write!(f, "{:?}", arg0),
-            Self::Var(arg0) => write!(f, "{}", arg0.0),
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct IlProgram {

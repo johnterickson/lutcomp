@@ -32,16 +32,6 @@ impl IlProgram {
     }
 }
 
-impl IlAtom {
-    fn value(&self, vars: &BTreeMap<&IlVarId, Option<IlNumber>>) -> IlNumber {
-        match self {
-            IlAtom::Number(n) => *n,
-            IlAtom::Var(v) => vars[v].unwrap(),
-        }
-    }
-}
-
-
 impl IlFunction {
     fn find_label(&self, label: &IlLabelId) -> Option<usize> {
         self.body.iter()
@@ -83,19 +73,27 @@ impl IlFunction {
             dbg!(s);
 
             match s {
-                IlInstruction::Label(_) => {},
-                IlInstruction::AssignAtom { dest, src , size} => {
+                IlInstruction::Comment(_) | IlInstruction::Label(_) => {},
+                IlInstruction::AssignVar { dest, src , size} => {
 
                     if let Some(Some(n)) = vars.get(dest) {
                         assert_eq!(&n.il_type(), size);
                     }
 
-                    let value = src.value(&vars);
+                    let value = vars.get(src).unwrap().unwrap();
                     assert_eq!(&value.il_type(), size);
                     vars.insert(dest, Some(value));
                 },
+                IlInstruction::AssignNumber { dest, src} => {
+
+                    if let Some(Some(n)) = vars.get(dest) {
+                        assert_eq!(n.il_type(), src.il_type());
+                    }
+
+                    vars.insert(dest, Some(*src));
+                },
                 IlInstruction::AssignUnary { dest, op, src } => {
-                    let src = src.value(&vars);
+                    let src = vars.get(src).unwrap().unwrap();
                     let result = match src {
                         IlNumber::U32(n) => {
                             IlNumber::U32(match op {
@@ -116,7 +114,9 @@ impl IlFunction {
                     let src1 = vars.get(src1)
                         .expect(&format!("Could not find {:?}.", &src1))
                         .expect(&format!("{:?} has no value.", &src1));
-                    let src2 = src2.value(&vars);                    
+                    let src2 = vars.get(src2)
+                        .expect(&format!("Could not find {:?}.", &src2))
+                        .expect(&format!("{:?} has no value.", &src2));                
                     let result = match (src1, src2) {
                         (IlNumber::U8(n1), IlNumber::U8(n2)) => {
                             IlNumber::U8(match op {
@@ -142,7 +142,7 @@ impl IlFunction {
                     vars.insert(dest, Some(result));
                 }
                 IlInstruction::ReadMemory { dest, addr, size } => {
-                    let addr = addr.value(&vars);
+                    let addr = vars.get(addr).unwrap().unwrap();
                     if let IlNumber::U32(addr) = addr {
                         match size {
                             IlType::U8 => {
@@ -165,7 +165,7 @@ impl IlFunction {
                 }
                 IlInstruction::WriteMemory { addr, src, size} => {
                     let src = vars[src].unwrap();
-                    let addr = addr.value(&vars);
+                    let addr = vars.get(&addr).unwrap().unwrap();
                     if let IlNumber::U32(addr) = addr {
                         match src {
                             IlNumber::U8(n) => {
@@ -192,7 +192,7 @@ impl IlFunction {
                 },
                 IlInstruction::IfThenElse { left, op, right, then_label, else_label } => {
                     let left = vars[left].unwrap();
-                    let right = right.value(&vars);
+                    let right = vars[right].unwrap();
                     let condition_true = match (left, right) {
                         (IlNumber::U8(left), IlNumber::U8(right)) => {
                             match op {
@@ -378,7 +378,8 @@ mod tests {
                 out.push(c);
             }
 
-            assert_eq!(out.as_str(), *expected);
+            assert_eq!(out.as_str(), *expected,
+                "Failed for {:?},{:?},{:?}", input1, input2, expected);
         }
     }
 
@@ -752,6 +753,7 @@ mod tests {
         assert_eq!(il.simulate(&[2u8.into(), 1u8.into()]), 2u8.into());
         assert_eq!(il.simulate(&[1u8.into(), 2u8.into()]), 0u8.into());
         assert_eq!(il.simulate(&[100u8.into(), 10u8.into()]), 10u8.into());
+        assert_eq!(il.simulate(&[201u8.into(), 100u8.into()]), 2u8.into());
     }
 
     
@@ -761,12 +763,16 @@ mod tests {
             "printHexTest",
             include_str!("../../programs/print_hex.j"),
             &[
-                ("",0x0,0x0,"00\n"),
-                ("",0x1,0x0,"01\n"),
-                ("",0x9,0x0,"09\n"),
-                ("",0xA,0x0,"0A\n"),
-                ("",0xF,0x0,"0F\n"),
-                ("",0x10,0x0,"10\n"),
+                // ("",0x0,0x0,"00\n"),
+                // ("",0x1,0x0,"01\n"),
+                // ("",0x9,0x0,"09\n"),
+                // ("",0xA,0x0,"0A\n"),
+                // ("",0xF,0x0,"0F\n"),
+                // ("",0x10,0x0,"10\n"),
+                // ("",0x1F,0x0,"1F\n"),
+                ("",0x20,0x0,"20\n"),
+                ("",0x90,0x0,"90\n"),
+                ("",0xA0,0x0,"A0\n"),
                 ("",0xAA,0x0,"AA\n"),
                 ("",0xFF,0x0,"FF\n"),
                 ]);
