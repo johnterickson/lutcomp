@@ -28,7 +28,18 @@ fn main() {
 
     let get_param = |k: &str| params.get(k).map(|s| s.as_str());
 
-    //let arg3 = args.get(3).map(|s| s.as_str());
+    let mut sim_args: Vec<IlNumber> = Vec::new();
+    for i in 1..=3 {
+        let param_name = format!("arg{}",i);
+        if let Some(v) = get_param(&param_name) {
+            if let Ok(v) = v.parse() {
+                sim_args.push(IlNumber::U8(v))
+            } else {
+                sim_args.push(IlNumber::U32(v.parse().unwrap()))
+            }
+        }
+    }
+
     match arg1 {
         Some("ucode") => {
             ucode(true);
@@ -73,16 +84,7 @@ fn main() {
                 println!();
             }
             if let Some("true") = get_param("sim") {
-                let mut args: Vec<IlNumber> = Vec::new();
-                for i in 1..=4 {
-                    let param_name = format!("arg{}",i);
-                    if let Some(v) = get_param(&param_name) {
-                        let v = v.parse().unwrap();
-                        args.push(IlNumber::U8(v))
-                    }
-                }
-                
-                println!("{:?}", il.simulate(&args));
+                println!("{:?}", il.simulate(&sim_args));
             }
         }
         Some("compile") => {
@@ -107,6 +109,9 @@ fn main() {
             let rom = assemble::assemble(assembly);
 
             if let Some("true") = get_param("sim") {
+                if sim_args.len() != 0 {
+                    todo!();
+                }
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
                 c.stdin_out = true;
                 let mut last_ir0 = None;

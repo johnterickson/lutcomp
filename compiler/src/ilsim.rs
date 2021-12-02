@@ -73,6 +73,7 @@ impl IlFunction {
             dbg!(s);
 
             match s {
+                IlInstruction::Unreachable => panic!(),
                 IlInstruction::Comment(_) | IlInstruction::Label(_) => {},
                 IlInstruction::AssignVar { dest, src , size} => {
 

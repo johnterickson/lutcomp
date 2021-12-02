@@ -288,6 +288,14 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
             dbg!(s);
             let source = format!("{:?}", &s);
             match s {
+                IlInstruction::Unreachable => {
+                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                        opcode: Opcode::Halt,
+                        args: vec![],
+                        source,
+                        resolved: None,
+                    }));
+                }
                 IlInstruction::Comment(c) => {
                     ctxt.lines.push(AssemblyInputLine::Comment(c.to_owned()));
                 },

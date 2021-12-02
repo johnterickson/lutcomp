@@ -32,6 +32,7 @@ pub struct IlVarInfo {
     pub description: String,
     pub location: Location,
     pub var_type: Type,
+    pub byte_size: u32,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -40,7 +41,7 @@ pub struct IlLabelId(pub String);
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct IlFunctionId(pub String);
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct IlFunction {
     pub id: IlFunctionId,
     pub args: Vec<IlVarId>,
@@ -84,10 +85,12 @@ impl IlFunction {
             4 => Location::U32,
             _ => panic!(),
         };
+        let var_type = e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap();
         let info = IlVarInfo {
             description: format!("{} {:?}", &id.0, e),
-            var_type: e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap(),
-            location
+            byte_size: var_type.byte_count(ctxt.program),
+            var_type,
+            location,
         };
         self.vars.insert(id.clone(), info);
         self.next_temp_num += 1;
@@ -114,15 +117,17 @@ impl IlFunction {
         id
     }
 
-    fn alloc_tmp_and_emit_static_address(&mut self, name: &str, info: &IlVarInfo) -> IlVarId {
+    fn alloc_tmp_and_emit_static_address(&mut self, ctxt: &IlContext, name: &str, info: &IlVarInfo) -> IlVarId {
         let addr = match info.location {
             Location::Static(addr) => addr,
             _ => panic!(),
         };
+        let var_type = Type::Ptr(Box::new(info.var_type.clone()));
         let addr_var = self.alloc_tmp(IlVarInfo {
             description: format!("static {:?}", &name),
             location: Location::U32,
-            var_type: Type::Ptr(Box::new(info.var_type.clone())),
+            byte_size: var_type.byte_count(ctxt.program),
+            var_type
         });
         self.body.push(IlInstruction::AssignNumber {
             dest: addr_var.clone(),
@@ -148,7 +153,7 @@ impl IlFunction {
                     },
                     Location::Static(_) => {
                         let size = info.var_type.byte_count(ctxt.program).try_into().ok();
-                        let id = self.alloc_tmp_and_emit_static_address(n, &info);
+                        let id = self.alloc_tmp_and_emit_static_address(ctxt, n, &info);
                         (id, size)
                     }
                     Location::FramePointer => panic!(),
@@ -474,13 +479,12 @@ impl IlFunction {
                     }
                     Location::FrameOffset(_) => todo!(),
                     Location::Static(_) => {
-                        let size = info.var_type.byte_count(ctxt.program).try_into().unwrap();
-                        let addr = self.alloc_tmp_and_emit_static_address(name, &info);
+                        let addr = self.alloc_tmp_and_emit_static_address(ctxt, name, &info);
 
                         self.body.push(IlInstruction::ReadMemory {
                             dest,
                             addr,
-                            size,
+                            size: info.byte_size.try_into().unwrap(),
                         })
                     },
                     Location::FramePointer => {
@@ -637,13 +641,15 @@ impl IlFunction {
         };
         
         for (i, (name, var_type)) in ctxt.func_def.args.iter().enumerate() {
-            let size = var_type.byte_count(ctxt.program).try_into().unwrap();
+            let byte_size = var_type.byte_count(ctxt.program);
+            let location = byte_size.try_into().unwrap();
             let id = func.alloc_named(
                 name.clone(),
                 IlVarInfo {
                     description: format!("Arg{} {} {:?}", i, name, var_type),
-                    location: size,
+                    location,
                     var_type: var_type.clone(),
+                    byte_size,
                 });
             func.args.push(id);
         }
@@ -669,7 +675,8 @@ impl IlFunction {
                             IlVarInfo {
                                 location: Location::Static(ctxt.next_static_addr),
                                 var_type: var_type.clone(),
-                                description: format!("static {}", name)
+                                description: format!("static {}", name),
+                                byte_size: var_type.byte_count(ctxt.program),
                             }
                         ).is_none()
                     );
@@ -686,6 +693,7 @@ impl IlFunction {
                     location: size,
                     description: format!("Local {} {:?} {:?}", name, var_type, size),
                     var_type: var_type.clone(),
+                    byte_size: var_type.byte_count(ctxt.program)
                 });
         }
 
@@ -696,6 +704,7 @@ impl IlFunction {
                     description: IlVarId::frame_pointer().to_owned(),
                     location: Location::FramePointer,
                     var_type: Type::Number(NumberType::USIZE),
+                    byte_size: 4,
                 });
         }
 
@@ -706,6 +715,8 @@ impl IlFunction {
         if ctxt.func_def.return_type == Type::Void {
             func.emit_statement(ctxt, &Statement::Return{value: None });
         }
+
+        func.body.push(IlInstruction::Unreachable);
 
         func.optimize();
         
@@ -723,7 +734,7 @@ impl IlFunction {
             refs.insert(v.clone(), VarReferences { reads: BTreeSet::new(), writes: BTreeSet::new()});
         }
 
-        for (index, usages) in self.body.iter_mut().map(|s| s.var_usages()).enumerate() {
+        for (index, usages) in self.body.iter_mut().map(|s| s.var_usages_mut()).enumerate() {
             
             if let Some(dest) = usages.dest {
                 let refs = refs.get_mut(dest).unwrap();
@@ -758,7 +769,7 @@ impl IlFunction {
                         _ => None,
                     } {
                         dbg!((&self.body[*write], &self.body[*read]));
-                        for src in self.body[*read].var_usages().srcs {
+                        for src in self.body[*read].var_usages_mut().srcs {
                             if src == var_to_remove {
                                 *src = write_src.clone();
                             }
@@ -782,13 +793,13 @@ struct VarReferences {
     writes: BTreeSet<usize>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum IlUnaryOp {
     Negate,
     BinaryInvert
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum IlBinaryOp {
     Add,
     Subtract,
@@ -808,6 +819,8 @@ impl IlBinaryOp {
         }
     }
 }
+
+#[derive(Clone)]
 pub enum IlCmpOp {
     Equals,
     NotEquals,
@@ -921,6 +934,7 @@ impl TryFrom<u32> for Location {
     }
 }
 
+#[derive(Clone)]
 pub enum IlInstruction {
     Comment(String),
     Label(IlLabelId),
@@ -938,17 +952,57 @@ pub enum IlInstruction {
     TtyIn { dest: IlVarId },
     TtyOut { src: IlVarId },
     GetFrameAddress { dest: IlVarId },
+    Unreachable,
 }
 
 pub struct IlUsages<'a> {
+    srcs: Vec<&'a IlVarId>,
+    dest: Option<&'a IlVarId>,
+}
+
+pub struct IlUsagesMut<'a> {
     srcs: Vec<&'a mut IlVarId>,
     dest: Option<&'a mut IlVarId>,
 }
 
 impl IlInstruction {
-    fn var_usages(&mut self) -> IlUsages {
+    fn var_usages(&self) -> IlUsages {
         let (srcs, dest) = match self {
-            IlInstruction::Comment(_) => (vec![], None),
+            IlInstruction::Unreachable | IlInstruction::Comment(_) => (vec![], None),
+            IlInstruction::AssignNumber { dest, src:_} => 
+                (vec![], Some(dest)),
+            IlInstruction::AssignVar { dest, src, size:_} => 
+                (vec![src], Some(dest)),
+            IlInstruction::AssignUnary { dest, op:_, src } => 
+                (vec![src], Some(dest)),
+            IlInstruction::AssignBinary { dest, op:_, src1, src2 } =>
+                (vec![src1, src2], Some(dest)),
+            IlInstruction::ReadMemory { dest, addr, size:_ } =>
+                (vec![addr], Some(dest)),
+            IlInstruction::WriteMemory { addr, src, size:_ } => 
+                (vec![addr, src], None),
+            IlInstruction::Goto(_) => (vec![], None),
+            IlInstruction::IfThenElse { left, op:_, right, then_label:_ , else_label:_ } => 
+                (vec![left, right], None),
+            IlInstruction::Call { ret, f:_, args } =>
+                (args.iter().collect(), ret.as_ref()),
+            IlInstruction::Resize { dest, dest_size:_, src, src_size:_ } => 
+                (vec![src], Some(dest)),
+            IlInstruction::Return { val } => (
+                if let Some(v) = val { vec![v] } else {vec![]},
+                None),
+            IlInstruction::TtyIn { dest } => (vec![], Some(dest)),
+            IlInstruction::TtyOut { src } => (vec![src], None),
+            IlInstruction::GetFrameAddress { dest } => (vec![], Some(dest)),
+            IlInstruction::Label(_) => (vec![], None),
+        };
+
+        IlUsages { srcs, dest }
+    }
+
+    fn var_usages_mut(&mut self) -> IlUsagesMut {
+        let (srcs, dest) = match self {
+            IlInstruction::Unreachable | IlInstruction::Comment(_) => (vec![], None),
             IlInstruction::AssignNumber { dest, src:_} => 
                 (vec![], Some(dest)),
             IlInstruction::AssignVar { dest, src, size:_} => 
@@ -977,13 +1031,14 @@ impl IlInstruction {
             IlInstruction::Label(_) => (vec![], None),
         };
 
-        IlUsages { srcs, dest }
+        IlUsagesMut { srcs, dest }
     }
 }
 
 impl Debug for IlInstruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            IlInstruction::Unreachable => write!(f, "Unreachable"),
             IlInstruction::Comment(arg0) => write!(f, "#{}", arg0),
             IlInstruction::Label(arg0) => write!(f, ":{}", arg0.0),
             IlInstruction::AssignNumber { dest, src } => write!(f, "{} <- {:?} ", dest.0, src),
@@ -1068,7 +1123,7 @@ impl From<u32> for IlNumber {
 }
 
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct IlProgram {
     pub entry: IlFunctionId,
     pub functions: BTreeMap<IlFunctionId, IlFunction>,
@@ -1127,5 +1182,171 @@ impl<'a> IlContext<'a> {
 
     fn try_emit_type(&self, e: &Expression) -> Option<Type> {
         e.try_emit_type(self.program, Some(self.func_def))
+    }
+}
+
+#[derive(Debug)]
+struct IlLiveness<'a> {
+    f: &'a IlFunction,
+    ins: Vec<BTreeSet<&'a IlVarId>>, // live at start of i
+    outs: Vec<BTreeSet<&'a IlVarId>>, // live at end of i
+    succ: Vec<BTreeSet<usize>>,
+    labels: BTreeMap<&'a IlLabelId, usize>,
+    gen: Vec<BTreeSet<&'a IlVarId>>, //generates liveness
+    kill: Vec<Option<&'a IlVarId>>, //ends liveness
+}
+
+impl<'a> IlLiveness<'a> {
+    fn calculate(f: &'a IlFunction) -> IlLiveness<'a> {
+        let len = f.body.len();
+
+
+        let labels: BTreeMap<&IlLabelId, usize> = f.body.iter().enumerate()
+            .filter_map(|(i,s)| match s {
+                IlInstruction::Label(label) => Some((label, i)),
+                _ => None
+            })
+            .collect();
+
+        dbg!(&labels);
+        
+        let succ = f.body.iter().enumerate()
+            .map(|(i,s)| {
+                let nexts = match s {
+                    IlInstruction::Goto(target) => [Some(labels[target]), None],
+                    IlInstruction::IfThenElse { left:_, op:_, right:_, then_label, else_label } => {
+                        [Some(labels[then_label]), Some(labels[else_label])]
+                    },
+                    IlInstruction::Return {..} => [None, None],
+                    _ => [Some(i+1), None]
+                };
+                nexts.iter().filter_map(|next| next.as_ref()).cloned().collect()
+            }).collect();
+
+        let gen: Vec<BTreeSet<&IlVarId>> = f.body.iter()
+            .map(|s| {
+                let usages = s.var_usages();
+                usages.srcs.iter().map(|s| *s).collect()
+            }).collect();
+
+        
+
+        let kill: Vec<Option<&IlVarId>> = f.body.iter()
+            .map(|s| {
+                let usages = s.var_usages();
+                usages.dest
+            }).collect();
+
+        let mut l = IlLiveness {
+            f,
+            ins: vec![BTreeSet::new(); len],
+            outs: vec![BTreeSet::new(); len],
+            succ,
+            labels,
+            gen,
+            kill
+        };
+
+        println!("i | succ[i] | gen[i] | kill[i]");
+        for i in 0..len {
+            println!("{} | {:?} | {:?} | {:?} ", i, &l.succ[i], &l.gen[i], &l.kill[i]);
+        }
+
+        let mut run_more = true;
+
+        while run_more {
+            println!("i | outs[i] | ins[i]");
+            for i in 0..len {
+                println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
+            }
+
+            run_more = false;
+
+            for i in (0..len).rev() {
+                for j in &l.succ[i] {
+                    for k in &l.ins[*j] {
+                        run_more |= l.outs[i].insert(k);
+                    }
+                }
+
+                for g in &l.gen[i] {
+                    run_more |= l.ins[i].insert(g);
+                }
+
+                for o in &l.outs[i] {
+                    if l.kill[i] == Some(o) {
+                        // skip
+                    } else {
+                        run_more |= l.ins[i].insert(o);
+                    }
+                }
+            }
+        }
+
+        l
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fib_liveness() {
+        let n = IlVarId("n".to_owned());
+        let a = IlVarId("a".to_owned());
+        let b = IlVarId("b".to_owned());
+        let z = IlVarId("z".to_owned());
+        let t = IlVarId("t".to_owned());
+        let one = IlVarId("one".to_owned());
+        let loop_label = IlLabelId("loop".to_owned());
+        let end_label = IlLabelId("end".to_owned());
+        let body_label = IlLabelId("body".to_owned());
+
+        let mut vars = BTreeMap::new();
+        for v in [&n,&a,&b,&z,&t] {
+            vars.insert(
+                v.clone(),
+                IlVarInfo {
+                    byte_size: 1,
+                    description: v.0.to_owned(),
+                    location: Location::U8,
+                    var_type: Type::Number(NumberType::U8)
+                }
+            );
+        }
+
+        let f = IlFunction {
+            id: IlFunctionId("fib".to_owned()),
+            args: vec![n.clone()],
+            next_label_num: 0,
+            next_temp_num: 0,
+            vars_stack_size: 0, 
+            ret: Some(IlType::U8),
+            vars,
+            labels: ([&loop_label, &body_label, &end_label]).iter().map(|l| (**l).clone()).collect(),
+            body : vec![
+                IlInstruction::AssignNumber {dest: one.clone(), src: IlNumber::U8(1)},
+                IlInstruction::AssignNumber {dest: a.clone(), src: IlNumber::U8(0)},
+                IlInstruction::AssignNumber {dest: b.clone(), src: IlNumber::U8(1)},
+                IlInstruction::AssignNumber {dest: z.clone(), src: IlNumber::U8(0)},
+                IlInstruction::Label(loop_label.clone()),
+                IlInstruction::IfThenElse {left: n.clone(), op: IlCmpOp::Equals, right: z.clone(), 
+                    then_label: end_label.clone(), else_label: body_label.clone() },
+                IlInstruction::Label(body_label.clone()),
+                IlInstruction::AssignBinary { dest: t.clone(), op: IlBinaryOp::Add, src1: a.clone(), src2: b.clone() },
+                IlInstruction::AssignVar { dest: a.clone(), src: b.clone(), size: IlType::U8},
+                IlInstruction::AssignVar { dest: b.clone(), src: t.clone(), size: IlType::U8 },
+                IlInstruction::AssignBinary { dest: n.clone(), op: IlBinaryOp::Subtract, src1: n.clone(), src2: one.clone() },
+                IlInstruction::AssignNumber {dest: z.clone(), src: IlNumber::U8(0)},
+                IlInstruction::Goto(loop_label.clone()),
+                IlInstruction::Label(end_label.clone()),
+                IlInstruction::Return{val: Some(a.clone())},
+            ]
+        };
+
+        let l = IlLiveness::calculate(&f);
+        // dbg!(&l);
+        assert_eq!(l.ins[0].iter().next(), Some(&&n.clone()));
     }
 }
