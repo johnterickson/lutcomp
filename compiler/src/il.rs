@@ -768,13 +768,13 @@ impl IlFunction {
                         }
                         _ => None,
                     } {
-                        dbg!((&self.body[*write], &self.body[*read]));
+                        // dbg!((&self.body[*write], &self.body[*read]));
                         for src in self.body[*read].var_usages_mut().srcs {
                             if src == var_to_remove {
                                 *src = write_src.clone();
                             }
                         }
-                        dbg!(&self.body[*read]);
+                        // dbg!(&self.body[*read]);
 
                         self.body.remove(*write);
                         self.vars.remove(var_to_remove);
@@ -1186,19 +1186,22 @@ impl<'a> IlContext<'a> {
 }
 
 #[derive(Debug)]
-struct IlLiveness<'a> {
+pub struct IlLiveness<'a> {
     f: &'a IlFunction,
     ins: Vec<BTreeSet<&'a IlVarId>>, // live at start of i
     outs: Vec<BTreeSet<&'a IlVarId>>, // live at end of i
     succ: Vec<BTreeSet<usize>>,
     labels: BTreeMap<&'a IlLabelId, usize>,
     gen: Vec<BTreeSet<&'a IlVarId>>, //generates liveness
-    kill: Vec<Option<&'a IlVarId>>, //ends liveness
+    kill: Vec<BTreeSet<&'a IlVarId>>, //ends liveness
+    pub interferes: BTreeMap<&'a IlVarId, BTreeSet<&'a IlVarId>>,
 }
 
 impl<'a> IlLiveness<'a> {
-    fn calculate(f: &'a IlFunction) -> IlLiveness<'a> {
+    pub fn calculate(f: &'a IlFunction) -> IlLiveness<'a> {
         let len = f.body.len();
+
+        dbg!(&f.body);
 
 
         let labels: BTreeMap<&IlLabelId, usize> = f.body.iter().enumerate()
@@ -1208,7 +1211,7 @@ impl<'a> IlLiveness<'a> {
             })
             .collect();
 
-        dbg!(&labels);
+        // dbg!(&labels);
         
         let succ = f.body.iter().enumerate()
             .map(|(i,s)| {
@@ -1218,6 +1221,7 @@ impl<'a> IlLiveness<'a> {
                         [Some(labels[then_label]), Some(labels[else_label])]
                     },
                     IlInstruction::Return {..} => [None, None],
+                    IlInstruction::Unreachable => [None, None],
                     _ => [Some(i+1), None]
                 };
                 nexts.iter().filter_map(|next| next.as_ref()).cloned().collect()
@@ -1231,10 +1235,10 @@ impl<'a> IlLiveness<'a> {
 
         
 
-        let kill: Vec<Option<&IlVarId>> = f.body.iter()
+        let kill: Vec<BTreeSet<&IlVarId>> = f.body.iter()
             .map(|s| {
                 let usages = s.var_usages();
-                usages.dest
+                [usages.dest].iter().filter_map(|s| s.as_ref()).map(|s| *s).collect()
             }).collect();
 
         let mut l = IlLiveness {
@@ -1244,40 +1248,60 @@ impl<'a> IlLiveness<'a> {
             succ,
             labels,
             gen,
-            kill
+            kill,
+            interferes: f.vars.keys().map(|k| (k, BTreeSet::new())).collect(),
         };
 
-        println!("i | succ[i] | gen[i] | kill[i]");
-        for i in 0..len {
-            println!("{} | {:?} | {:?} | {:?} ", i, &l.succ[i], &l.gen[i], &l.kill[i]);
-        }
-
-        let mut run_more = true;
-
-        while run_more {
-            println!("i | outs[i] | ins[i]");
+        {
+            println!("i | succ[i] | gen[i] | kill[i]");
             for i in 0..len {
-                println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
+                println!("{} | {:?} | {:?} | {:?} ", i, &l.succ[i], &l.gen[i], &l.kill[i]);
             }
 
-            run_more = false;
+            let mut run_more = true;
 
-            for i in (0..len).rev() {
-                for j in &l.succ[i] {
-                    for k in &l.ins[*j] {
-                        run_more |= l.outs[i].insert(k);
+            while run_more {
+                println!("i | outs[i] | ins[i]");
+                for i in 0..len {
+                    println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
+                }
+
+                run_more = false;
+
+                for i in (0..len).rev() {
+                    for j in &l.succ[i] {
+                        for k in &l.ins[*j] {
+                            run_more |= l.outs[i].insert(k);
+                        }
+                    }
+
+                    for g in &l.gen[i] {
+                        run_more |= l.ins[i].insert(g);
+                    }
+
+                    for o in &l.outs[i] {
+                        if l.kill[i].contains(o) {
+                            // skip
+                        } else {
+                            run_more |= l.ins[i].insert(o);
+                        }
                     }
                 }
+            }
+        }
 
-                for g in &l.gen[i] {
-                    run_more |= l.ins[i].insert(g);
-                }
-
-                for o in &l.outs[i] {
-                    if l.kill[i] == Some(o) {
-                        // skip
-                    } else {
-                        run_more |= l.ins[i].insert(o);
+        for (i, inst) in l.f.body.iter().enumerate() {
+            for x in &l.kill[i] {
+                for y in  &l.outs[i] {
+                    if x == y { continue; }
+                    match inst {
+                        IlInstruction::AssignVar {dest, src, size:_ }
+                            if dest == *x && src == *y => {}
+                        _ => {
+                            // dbg!(i, x, y);
+                            l.interferes.get_mut(*x).unwrap().insert(*y);
+                            l.interferes.get_mut(*y).unwrap().insert(*x);
+                        }
                     }
                 }
             }

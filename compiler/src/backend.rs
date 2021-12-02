@@ -5,8 +5,6 @@ pub struct BackendProgram<'a> {
     pub frontend_context: &'a ProgramContext,
     pub il: &'a IlProgram,
     pub function_info: BTreeMap<IlFunctionId, FunctionInfo>,
-    available_registers: BTreeSet<u8>,
-    next_round_robin_reg: u8,
 }
 
 #[derive(Debug)]
@@ -14,6 +12,7 @@ pub struct FunctionInfo {
     pub register_assignments: BTreeMap<IlVarId, Vec<u8>>,
     pub functions_called: BTreeSet<IlFunctionId>,
     pub registers_used: BTreeSet<u8>,
+    available_registers: BTreeSet<u8>,
 }
 
 struct FunctionContext<'a,'b> {
@@ -37,6 +36,7 @@ impl<'a> BackendProgram<'a> {
                 functions_called: BTreeSet::new(),
                 register_assignments: BTreeMap::new(),
                 registers_used: BTreeSet::new(),
+                available_registers: (0x10u8..=0xFF).collect(),
             };
 
             for s in &f.body {
@@ -45,13 +45,15 @@ impl<'a> BackendProgram<'a> {
                 }
             }
 
+            let liveness = IlLiveness::calculate(f);
+
             for (name, var_info) in &f.vars {
                 if let Some(regs_needed) = match var_info.location {
                     Location::U8 => Some(1),
                     Location::U32 => Some(4),
                     _ => None,
                 } {
-                    let regs = self.alloc_registers(&mut info, regs_needed, regs_needed)
+                    let regs = self.alloc_registers(name, &liveness, &mut info, regs_needed, regs_needed)
                         .expect(&format!("Could not allocate a register for {:#?}", &f.body));
                     for r in &regs {
                         info.registers_used.insert(*r);
@@ -64,10 +66,10 @@ impl<'a> BackendProgram<'a> {
         }
     }
 
-    fn alloc_registers(&mut self, info: &mut FunctionInfo, count: u8, align: u8) -> Option<Vec<u8>> {
+    fn alloc_registers(&mut self, name: &IlVarId, liveness: &IlLiveness, info: &mut FunctionInfo, count: u8, align: u8) -> Option<Vec<u8>> {
         let mut alloced = Vec::new();
 
-        let reg_array: Vec<_> = self.available_registers.iter().cloned().collect();
+        let reg_array: Vec<_> = info.available_registers.iter().cloned().collect();
         for w in reg_array.as_slice().windows(count as usize) {
             if are_regs_aligned_and_contiguous(w) {
                 alloced.extend(w.iter().cloned());
@@ -77,45 +79,27 @@ impl<'a> BackendProgram<'a> {
 
         if alloced.len() != 0 {
             for r in &alloced {
-                self.available_registers.remove(&r);
+                info.available_registers.remove(&r);
             }
     
             Some(alloced)
         } else {
-            let mut attempts = 1000;
-            loop {
-                while (self.next_round_robin_reg % align) != 0 {
-                    self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(1)
-                }
+            // use the regs of another var that doesn't interfere
 
-                if self.next_round_robin_reg < 0x10 {
-                    self.next_round_robin_reg = 0x10;
-                }
+            let interferes = &liveness.interferes[name];
 
-                let r = self.next_round_robin_reg;
-                let regs: Vec<_> = (r..=(r-1+count)).collect();
-
-                let conflict = regs.iter().any(|r| info.registers_used.contains(r));
-
-                if conflict {
-                    attempts -= 1;
-                    if attempts == 0 {
-                        dbg!(&self.available_registers);
-                        dbg!(info);
-                        break None;
-                    }
-                    self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(1);
-                } else {
-                    for r in &regs {
-                        assert!(info.registers_used.insert(*r));
-                    }
-                    self.next_round_robin_reg = self.next_round_robin_reg.wrapping_add(count);
-                    break Some(regs);
+            let mut reused = None;
+            for (v, regs) in &info.register_assignments {
+                if regs.len() != count as usize { continue; }
+                if regs[0] % align != 0 { continue; }
+                if !interferes.contains(v) {
+                    println!("Reusing {}'s regs: {:?} for {}.", v.0, regs, name.0);
+                    reused = Some(regs.clone());
+                    break;
                 }
             }
+            reused
         }
-
-        
     }
 }
 
@@ -209,8 +193,7 @@ pub fn emit_assembly<'a>(ctxt: &'a ProgramContext, program: &'a IlProgram) -> (B
         frontend_context: ctxt,
         il: program,
         function_info: BTreeMap::new(),
-        available_registers: (0x10u8..=0xFF).collect(),
-        next_round_robin_reg: 0x10
+        // next_round_robin_reg: 0x10
     };
 
     ctxt.create_function_infos();
