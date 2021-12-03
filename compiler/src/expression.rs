@@ -389,6 +389,12 @@ impl Expression {
                 let new_type = Type::parse(pairs.next().unwrap(), false);
                 Expression::Cast{ old_type: None, new_type, value }
             }
+            Rule::byte_shift_left_expression => {
+                todo!();
+            }
+            Rule::byte_shift_right_expression => {
+                todo!();
+            }
             r => {
                 dbg!(r);
                 dbg!(&pair);

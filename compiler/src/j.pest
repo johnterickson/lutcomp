@@ -43,11 +43,14 @@ ptr_field_expression = {ident ~ "->" ~ ident}
 call_expression = {ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" }
 address_of_expression = {address_of_operator ~ expression}
 index_expression = {ident ~ "[" ~ expression ~ "]" }
+byte_shift_left_expression = { ident ~ "<<" ~ number }
+byte_shift_right_expression = { ident ~ ">>" ~ number }
 expression = {
     RAM_MIN_expression | number | cast_expression | 
     index_expression | local_field_expression | ptr_field_expression | call_expression |
     ttyin | arithmetic_expression | rotate_right_expression | 
-    comparison_expression | deref_expression | address_of_expression |
+    comparison_expression | deref_expression | address_of_expression | 
+    byte_shift_left_expression | byte_shift_right_expression |
     ident | parentheses_expression
     }
 

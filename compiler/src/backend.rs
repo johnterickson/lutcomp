@@ -85,15 +85,14 @@ impl<'a> BackendProgram<'a> {
             Some(alloced)
         } else {
             // use the regs of another var that doesn't interfere
-
-            let interferes = &liveness.interferes[name];
+            let color = liveness.colors[name];
 
             let mut reused = None;
             for (v, regs) in &info.register_assignments {
                 if regs.len() != count as usize { continue; }
                 if regs[0] % align != 0 { continue; }
-                if !interferes.contains(v) {
-                    println!("Reusing {}'s regs: {:?} for {}.", v.0, regs, name.0);
+                if liveness.colors[v] == color {
+                    println!("Reusing {}'s regs: {:?} for {} as they are both color {}.", v.0, regs, name.0, color);
                     reused = Some(regs.clone());
                     break;
                 }
@@ -233,6 +232,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         };
 
         ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &f.id.0)));
+        ctxt.lines.push(AssemblyInputLine::Comment(format!("Ret {:?}", f.ret)));
         for (i, arg_name) in f.args.iter().enumerate() { 
             ctxt.lines.push(AssemblyInputLine::Comment(format!("Arg{}={}", i, arg_name.0)));
         }
@@ -409,7 +409,29 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     let product_size = IlType::U8;
                                     ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
                                 },
-                                IlType::U32 => todo!(),
+                                IlType::U32 => {
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::LoadImm32,
+                                        args: vec![Value::Register(0), Value::Constant32(0)],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Mul8Part1,
+                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Mul8Part2,
+                                        args: vec![],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                    let product_regs = (0u8..4u8).collect();
+                                    let product_size = IlType::U32;
+                                    ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
+                                },
                             }
                         },
                     }

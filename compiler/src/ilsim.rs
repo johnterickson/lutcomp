@@ -132,7 +132,7 @@ impl IlFunction {
                             IlNumber::U32(match op {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => unimplemented!(),
+                                IlBinaryOp::Multiply => n1.wrapping_mul(n2) & 0xFFFF,
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
                             })
@@ -407,6 +407,36 @@ mod tests {
             "main",
             include_str!("../../programs/add_u8.j"),
             &[(vec![],7u8.into())]);
+    }
+
+    #[test]
+    fn mul8() {
+        test_var_inputs(
+            "mul8",
+            include_str!("../../programs/mul.j"),
+            &[
+                (vec![0u8.into(), 0u8.into()],0u8.into()),
+                (vec![128u8.into(), 0u8.into()],0u8.into()),
+                (vec![0u8.into(), 128u8.into()],0u8.into()),
+                (vec![8u8.into(), 8u8.into()],64u8.into()),
+                (vec![16u8.into(), 16u8.into()],0u8.into()),
+                (vec![51u8.into(), 5u8.into()],255u8.into()),
+            ]);
+    }
+
+    #[test]
+    fn mul8_16() {
+        test_var_inputs(
+            "mul8_16",
+            include_str!("../../programs/mul.j"),
+            &[
+                (vec![16u8.into(), 16u8.into()],256u32.into()),
+                (vec![0u8.into(), 0u8.into()],0u32.into()),
+                (vec![128u8.into(), 0u8.into()],0u32.into()),
+                (vec![0u8.into(), 128u8.into()],0u32.into()),
+                (vec![8u8.into(), 8u8.into()],64u32.into()),
+                (vec![51u8.into(), 5u8.into()],255u32.into()),
+            ]);
     }
 
     #[test]

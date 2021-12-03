@@ -1194,7 +1194,8 @@ pub struct IlLiveness<'a> {
     labels: BTreeMap<&'a IlLabelId, usize>,
     gen: Vec<BTreeSet<&'a IlVarId>>, //generates liveness
     kill: Vec<BTreeSet<&'a IlVarId>>, //ends liveness
-    pub interferes: BTreeMap<&'a IlVarId, BTreeSet<&'a IlVarId>>,
+    interferes: BTreeMap<&'a IlVarId, BTreeSet<&'a IlVarId>>,
+    pub colors: BTreeMap<&'a IlVarId, usize>,
 }
 
 impl<'a> IlLiveness<'a> {
@@ -1202,7 +1203,7 @@ impl<'a> IlLiveness<'a> {
         let len = f.body.len();
 
         dbg!(&f.body);
-
+        // dbg!(&f.vars);
 
         let labels: BTreeMap<&IlLabelId, usize> = f.body.iter().enumerate()
             .filter_map(|(i,s)| match s {
@@ -1233,8 +1234,6 @@ impl<'a> IlLiveness<'a> {
                 usages.srcs.iter().map(|s| *s).collect()
             }).collect();
 
-        
-
         let kill: Vec<BTreeSet<&IlVarId>> = f.body.iter()
             .map(|s| {
                 let usages = s.var_usages();
@@ -1250,21 +1249,22 @@ impl<'a> IlLiveness<'a> {
             gen,
             kill,
             interferes: f.vars.keys().map(|k| (k, BTreeSet::new())).collect(),
+            colors: BTreeMap::new(),
         };
 
         {
-            println!("i | succ[i] | gen[i] | kill[i]");
-            for i in 0..len {
-                println!("{} | {:?} | {:?} | {:?} ", i, &l.succ[i], &l.gen[i], &l.kill[i]);
-            }
+            // println!("i | succ[i] | gen[i] | kill[i]");
+            // for i in 0..len {
+            //     println!("{} | {:?} | {:?} | {:?} ", i, &l.succ[i], &l.gen[i], &l.kill[i]);
+            // }
 
             let mut run_more = true;
 
             while run_more {
-                println!("i | outs[i] | ins[i]");
-                for i in 0..len {
-                    println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
-                }
+                // println!("i | outs[i] | ins[i]");
+                // for i in 0..len {
+                //     println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
+                // }
 
                 run_more = false;
 
@@ -1307,6 +1307,21 @@ impl<'a> IlLiveness<'a> {
             }
         }
 
+        let mut next_color = 0;
+        for v in l.f.vars.keys() {
+            let neighbors = &l.interferes[v];
+            let neighbor_colors: BTreeSet<usize> = neighbors.iter().filter_map(|n| l.colors.get(n)).cloned().collect();
+            for i in 0..=next_color {
+                if !neighbor_colors.contains(&i) {
+                    l.colors.insert(v, i);
+                    if i == next_color {
+                        next_color += 1;
+                    }
+                    break;
+                }
+            }
+        }
+
         l
     }
 }
@@ -1328,7 +1343,7 @@ mod tests {
         let body_label = IlLabelId("body".to_owned());
 
         let mut vars = BTreeMap::new();
-        for v in [&n,&a,&b,&z,&t] {
+        for v in [&n,&a,&b,&z,&t,&one] {
             vars.insert(
                 v.clone(),
                 IlVarInfo {
