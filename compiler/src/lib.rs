@@ -182,25 +182,18 @@ fn emit(ctxt: &ProgramContext) -> Vec<AssemblyInputLine> {
         match var.storage {
             Storage::FixedAddress(..) => panic!(),
             Storage::Register(base_reg) => {
-                match var.var_type.byte_count(ctxt) {
-                    1 => {
-                        program.push(AssemblyInputLine::Instruction(Instruction {
-                            opcode: Opcode::Or8,
-                            source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
-                            args: vec![Value::Register(4*i), Value::Register(4*i), Value::Register(base_reg.0)],
-                            resolved: None
-                        }));
-                    }
-                    4 => {
-                        program.push(AssemblyInputLine::Instruction(Instruction {
-                            opcode: Opcode::Copy32,
-                            source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
-                            args: vec![Value::Register(4*i), Value::Register(base_reg.0)],
-                            resolved: None
-                        }));
-                    }
+                let opcode = match var.var_type.byte_count(ctxt) {
+                    1 => Opcode::Copy8,
+                    4 => Opcode::Copy32,
                     _ => panic!()
-                }
+                };
+
+                program.push(AssemblyInputLine::Instruction(Instruction {
+                    opcode,
+                    source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
+                    args: vec![Value::Register(4*i), Value::Register(base_reg.0)],
+                    resolved: None
+                }));
             }
             Storage::Stack(_) => {
                 todo!();
@@ -225,25 +218,17 @@ fn emit(ctxt: &ProgramContext) -> Vec<AssemblyInputLine> {
         match var.storage {
             Storage::FixedAddress(..) => panic!(),
             Storage::Register(base_reg) => {
-                match var.var_type.byte_count(ctxt) {
-                    1 => {
-                        program.push(AssemblyInputLine::Instruction(Instruction {
-                            opcode: Opcode::Or8,
-                            source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
-                            args: vec![Value::Register(4*i), Value::Register(4*i), Value::Register(base_reg.0)],
-                            resolved: None
-                        }));
-                    }
-                    4 => {
-                        program.push(AssemblyInputLine::Instruction(Instruction {
-                            opcode: Opcode::Copy32,
-                            source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
-                            args: vec![Value::Register(4*i), Value::Register(base_reg.0)],
-                            resolved: None
-                        }));
-                    }
+                let opcode = match var.var_type.byte_count(ctxt) {
+                    1 => Opcode::Copy8,
+                    4 => Opcode::Copy32,
                     _ => panic!()
-                }
+                };
+                program.push(AssemblyInputLine::Instruction(Instruction {
+                    opcode,
+                    source: format!("set arg {} to reg r{:02x} for main", i, base_reg.0),
+                    args: vec![Value::Register(4*i), Value::Register(base_reg.0)],
+                    resolved: None
+                }));
             }
             Storage::Stack(_) => { }
         }

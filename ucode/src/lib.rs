@@ -798,6 +798,20 @@ impl Ucode {
                     }
 
                 }
+                Some(Opcode::Copy8) => {
+                    self.start_of_ram();
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    // copy value into Z
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Z));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Mem(AddressBusOutputLevel::Addr));
+                }
                 Some(Opcode::AndImm8) => {
                     self.start_of_ram();
 
@@ -1056,7 +1070,7 @@ impl Ucode {
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::TtyOut));
                 }
-                Some(Opcode::Store32Part1) => {
+                Some(Opcode::Store32_1) => {
                     self.start_of_ram();
 
                     // store regA in Z
@@ -1098,7 +1112,7 @@ impl Ucode {
                         add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
                     }
                 }
-                Some(Opcode::Store32Part2) => {
+                Some(Opcode::Store32_2) => {
                     for i in 2..=3 {
                         self.start_of_ram();
                         add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
@@ -1172,7 +1186,7 @@ impl Ucode {
                         add!(self, Output::Direct(*reg), Load::Mem(AddressBusOutputLevel::Addr));
                     }
                 }
-                Some(Opcode::Mul8Part1) => {
+                Some(Opcode::Mul8_1) => {
                     self.start_of_ram();
                     pc_inc!(self);
                     // 16-bit "A" in WX
@@ -1192,7 +1206,7 @@ impl Ucode {
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
                 }
-                Some(Opcode::Mul8Part2) => {
+                Some(Opcode::Mul8_2) => {
                     self.inc_pc = false; // handle this manually
 
                     add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
@@ -1441,7 +1455,7 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Flags));
 
                 }
-                Some(Opcode::Add32Part1) => {
+                Some(Opcode::Add32_1) => {
                     self.start_of_ram();
 
                     for edge in &[DataBusLoadEdge::X, DataBusLoadEdge::Y, DataBusLoadEdge::Z] {
@@ -1467,7 +1481,7 @@ impl Ucode {
                         }
                     }
                 }
-                Some(Opcode::Add32Part2) => {
+                Some(Opcode::Add32_2) => {
                     add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::Addr0));
@@ -1477,6 +1491,35 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                     add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                },
+                Some(Opcode::ShiftRight32_1) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+
+                    // regA in W
+                    // regB in X
+                }
+                Some(Opcode::ShiftRight32_2) => {
+                    self.inc_pc = false; // handle this manually
+
+                    // subtract 8 from W
+                    add!(self, Output::Imm(8), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::Negate as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    if flags.contains(Flags::NEG) {
+                        //less than 8 to-go so 
+                        pc_inc!(self);
+                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
+                    } else {
+
+                    }
+                }
+                Some(Opcode::ShiftRight32_3) => {
+
                 }
                 None => {
                     self.add_op(halt, file!(), line!());

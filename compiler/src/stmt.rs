@@ -312,13 +312,13 @@ impl Statement {
                             }
                             4 => {
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Store32Part1,
+                                    opcode: Opcode::Store32_1,
                                     resolved: None,
                                     source: format!("{:?}", &self),
                                     args: vec![Value::Register(4), Value::Register(0)]
                                 });
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Store32Part2,
+                                    opcode: Opcode::Store32_2,
                                     resolved: None,
                                     source: format!("{:?}", &self),
                                     args: vec![]
@@ -385,13 +385,13 @@ impl Statement {
                                 });
                 
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Store32Part1,
+                                    opcode: Opcode::Store32_1,
                                     resolved: None,
                                     source: format!("{:?}", &self),
                                     args: vec![Value::Register(0), Value::Register(8)]
                                 });
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Store32Part2,
+                                    opcode: Opcode::Store32_2,
                                     resolved: None,
                                     source: format!("{:?}", &self),
                                     args: vec![]

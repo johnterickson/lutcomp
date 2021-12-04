@@ -33,8 +33,8 @@ pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {
                         else if i1.opcode == Opcode::Push8 && i2.opcode == Opcode::Pop8 {
                             let comment = format!("Optimized push/pop pair to a move: {:?} {:?}", i1, i2);
                             new_line1 = Some(AssemblyInputLine::Instruction(Instruction {
-                                opcode: Opcode::Or8,
-                                args: vec![Value::Register(*r1), Value::Register(*r1), Value::Register(*r2)],
+                                opcode: Opcode::Copy8,
+                                args: vec![Value::Register(*r1), Value::Register(*r2)],
                                 resolved: None,
                                 source: comment.clone(),
                             }));

@@ -867,10 +867,10 @@ mod tests {
         rom.push(0x12);
         rom.push(0x08);
         rom.push(0x00);
-        rom.push(Opcode::Store32Part1 as u8);
+        rom.push(Opcode::Store32_1 as u8);
         rom.push(0);
         rom.push(4);
-        rom.push(Opcode::Store32Part2 as u8);
+        rom.push(Opcode::Store32_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);
@@ -901,10 +901,10 @@ mod tests {
         rom.push(0x12);
         rom.push(0x08);
         rom.push(0x00);
-        rom.push(Opcode::Store32Part1 as u8);
+        rom.push(Opcode::Store32_1 as u8);
         rom.push(0);
         rom.push(4);
-        rom.push(Opcode::Store32Part2 as u8);
+        rom.push(Opcode::Store32_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);
@@ -1053,10 +1053,10 @@ mod tests {
         println!("testing {}*{}", a, b);
 
         let mut rom = Vec::new();
-        rom.push(Opcode::Mul8Part1 as u8);
+        rom.push(Opcode::Mul8_1 as u8);
         rom.push(0x4);
         rom.push(0x5);
-        rom.push(Opcode::Mul8Part2 as u8);
+        rom.push(Opcode::Mul8_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw_with_print(rom, false);
@@ -1085,11 +1085,11 @@ mod tests {
     #[test]
     fn add32() {
         let mut rom = Vec::new();
-        rom.push(Opcode::Add32Part1 as u8);
+        rom.push(Opcode::Add32_1 as u8);
         rom.push(0x4);
         rom.push(0x8);
         rom.push(0xc);
-        rom.push(Opcode::Add32Part2 as u8);
+        rom.push(Opcode::Add32_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);
@@ -1140,11 +1140,11 @@ mod tests {
         );
 
         let mut rom = Vec::new();
-        rom.push(Opcode::Add32Part1 as u8);
+        rom.push(Opcode::Add32_1 as u8);
         rom.push(0);
         rom.push(4);
         rom.push(8);
-        rom.push(Opcode::Add32Part2 as u8);
+        rom.push(Opcode::Add32_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);

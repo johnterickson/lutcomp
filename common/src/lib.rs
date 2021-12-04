@@ -140,10 +140,11 @@ pub enum Opcode {
     TtyIn = 0x12,  // TTY -> RegA
     TtyOut = 0x13, // RegA -> TTY
     Push8 = 0x14, // Reg_SP -= 1; RegA -> 8-bit MEM[Reg_SP]
-    Pop8 = 0x15, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1; 
+    Pop8 = 0x15, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
+    Copy8 = 0x16, // regA -> regB
 
-    Mul8Part1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
-    Mul8Part2 = 0x21,
+    Mul8_1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
+    Mul8_2 = 0x21,
     Add8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
     Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
     Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
@@ -169,19 +170,22 @@ pub enum Opcode {
     Copy32 = 0x81,    // regA -> regB
 
     Load32 = 0x90,       // 32-bit MEM[24-bit RegA] -> RegB
-    Store32Part1 = 0x92, // RegA -> 32-bit MEM[24-bit RegB]
-    Store32Part2 = 0x93, // [none] must follow Part1
+    Store32_1 = 0x92, // RegA -> 32-bit MEM[24-bit RegB]
+    Store32_2 = 0x93, // [none] must follow Part1
     StoreImm32,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
     Add32NoCarryIn = 0xA0, // regA + regB -> regC [carry out undefined]
-    Add32Part1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry
-    Add32Part2 = 0xA2,      // [none] must follow Part1
+    Add32_1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry
+    Add32_2 = 0xA2,      // [none] must follow Part1
     AddImm32IgnoreCarry = 0xA3, // RegA += [32-bit constant BCDE] [carry out unchanged]
 
     Or32 = 0xB0,  // regA | regB -> regC
     And32 = 0xB1, // regA & regB -> regC
     OrImm32 = 0xB2,  // regA |= [32-bit constant BCDE]
     AndImm32 = 0xB3, // regA &= [32-bit constant BCDE]
+    ShiftRight32_1 = 0xB4, // regA << regA -> regC
+    ShiftRight32_2 = 0xB5, // 
+    ShiftRight32_3 = 0xB6, // 
 
     HaltRAM = 0xCC,
     Halt = 0xFF,
@@ -218,8 +222,9 @@ impl Opcode {
             Opcode::TtyOut => todo!(),
             Opcode::Push8 => todo!(),
             Opcode::Pop8 => todo!(),
-            Opcode::Mul8Part1 => todo!(),
-            Opcode::Mul8Part2 => todo!(),
+            Opcode::Copy8 => todo!(),
+            Opcode::Mul8_1 => todo!(),
+            Opcode::Mul8_2 => todo!(),
             Opcode::Add8 => todo!(),
             Opcode::Add8NoCarry => todo!(),
             Opcode::Add8NoCarryIn => todo!(),
@@ -244,15 +249,15 @@ impl Opcode {
                 RegUsage { arg_index: 1, reg_count: 4, op: RegOperation::Read },
                 RegUsage { arg_index: 2, reg_count: 4, op: RegOperation::Write }
             ],
-            Opcode::Store32Part1 => &[
+            Opcode::Store32_1 => &[
                 RegUsage { arg_index: 1, reg_count: 4, op: RegOperation::Read },
                 RegUsage { arg_index: 2, reg_count: 4, op: RegOperation::Write }
             ],
-            Opcode::Store32Part2 => &[],
+            Opcode::Store32_2 => &[],
             Opcode::StoreImm32 => todo!(),
             Opcode::Add32NoCarryIn => todo!(),
-            Opcode::Add32Part1 => todo!(),
-            Opcode::Add32Part2 => todo!(),
+            Opcode::Add32_1 => todo!(),
+            Opcode::Add32_2 => todo!(),
             Opcode::AddImm32IgnoreCarry => todo!(),
             Opcode::Or32 => todo!(),
             Opcode::And32 => todo!(),
@@ -260,6 +265,9 @@ impl Opcode {
             Opcode::AndImm32 => todo!(),
             Opcode::HaltRAM => todo!(),
             Opcode::Halt => todo!(),
+            Opcode::ShiftRight32_1 => todo!(),
+            Opcode::ShiftRight32_2 => todo!(),
+            Opcode::ShiftRight32_3 => todo!(),
         }
     }
     pub fn expected_arg_sizes(&self) -> &[u32] {
@@ -273,8 +281,9 @@ impl Opcode {
             Opcode::TtyOut => &[1],
             Opcode::Push8 => &[1],
             Opcode::Pop8 => &[1],
-            Opcode::Mul8Part1 => &[1,1],
-            Opcode::Mul8Part2 => &[],
+            Opcode::Copy8 => &[1,1],
+            Opcode::Mul8_1 => &[1,1],
+            Opcode::Mul8_2 => &[],
             Opcode::Add8 => &[1,1,1],
             Opcode::Add8NoCarry => &[1,1,1],
             Opcode::Add8NoCarryIn => &[1,1,1],
@@ -296,12 +305,12 @@ impl Opcode {
             Opcode::LoadImm32 => &[1,4],
             Opcode::Copy32 => &[1,1],
             Opcode::Load32 => &[1,1],
-            Opcode::Store32Part1 => &[1,1],
-            Opcode::Store32Part2 => &[],
+            Opcode::Store32_1 => &[1,1],
+            Opcode::Store32_2 => &[],
             Opcode::StoreImm32 => &[1,4],
             Opcode::Add32NoCarryIn => &[1,1,1],
-            Opcode::Add32Part1 => &[1,1,1],
-            Opcode::Add32Part2 => &[],
+            Opcode::Add32_1 => &[1,1,1],
+            Opcode::Add32_2 => &[],
             Opcode::AddImm32IgnoreCarry => &[1,4],
             Opcode::Or32 => &[1,1,1],
             Opcode::And32 => &[1,1,1],
@@ -309,6 +318,9 @@ impl Opcode {
             Opcode::AndImm32 => &[1,4],
             Opcode::Halt => &[],
             Opcode::HaltRAM => &[],
+            Opcode::ShiftRight32_1 => &[1,1,1],
+            Opcode::ShiftRight32_2 => &[],
+            Opcode::ShiftRight32_3 => &[],
         }
     }
 }

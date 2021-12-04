@@ -806,6 +806,8 @@ pub enum IlBinaryOp {
     Multiply,
     BitwiseAnd,
     BitwiseOr,
+    LeftShift,
+    RightShift,
 }
 
 impl IlBinaryOp {
@@ -816,6 +818,8 @@ impl IlBinaryOp {
             ArithmeticOperator::Multiply => IlBinaryOp::Multiply,
             ArithmeticOperator::Or => IlBinaryOp::BitwiseOr,
             ArithmeticOperator::And => IlBinaryOp::BitwiseAnd,
+            ArithmeticOperator::LeftShift => IlBinaryOp::LeftShift,
+            ArithmeticOperator::RightShift => IlBinaryOp::RightShift,
         }
     }
 }

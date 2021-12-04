@@ -126,6 +126,8 @@ impl IlFunction {
                                 IlBinaryOp::Multiply => n1.wrapping_mul(n2),
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
+                                IlBinaryOp::LeftShift => n1.wrapping_shl(n2.into()),
+                                IlBinaryOp::RightShift => n1.wrapping_shr(n2.into()),
                             })
                         }
                         (IlNumber::U32(n1), IlNumber::U32(n2)) => {
@@ -135,6 +137,8 @@ impl IlFunction {
                                 IlBinaryOp::Multiply => n1.wrapping_mul(n2) & 0xFFFF,
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
+                                IlBinaryOp::LeftShift => n1.wrapping_shl(n2),
+                                IlBinaryOp::RightShift => n1.wrapping_shr(n2),
                             })
                         }
                         _ => panic!(),

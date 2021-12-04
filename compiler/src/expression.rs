@@ -12,6 +12,8 @@ pub enum ArithmeticOperator {
     Multiply,
     Or,
     And,
+    LeftShift,
+    RightShift,
 }
 
 impl ArithmeticOperator {
@@ -22,6 +24,8 @@ impl ArithmeticOperator {
             "*" => ArithmeticOperator::Multiply,
             "||" => ArithmeticOperator::Or,
             "&" => ArithmeticOperator::And,
+            "<<" => ArithmeticOperator::LeftShift,
+            ">>" => ArithmeticOperator::RightShift,
             op => panic!("Unknown op: {}", op),
         }
     }
@@ -99,11 +103,13 @@ impl Expression {
             Expression::Arithmetic(op, left, right) => {
                 if let (Some(left), Some(right)) = (left.try_get_const(), right.try_get_const()) {
                     Some(match op {
-                        ArithmeticOperator::Add => left + right,
-                        ArithmeticOperator::Subtract => left - right,
-                        ArithmeticOperator::Multiply => left * right,
-                        &ArithmeticOperator::Or => left | right,
+                        ArithmeticOperator::Add => left.wrapping_add(right),
+                        ArithmeticOperator::Subtract => left.wrapping_sub(right),
+                        ArithmeticOperator::Multiply => left.wrapping_mul(right),
+                        ArithmeticOperator::Or => left | right,
                         ArithmeticOperator::And => left & right,
+                        ArithmeticOperator::LeftShift => left.wrapping_shl(right),
+                        ArithmeticOperator::RightShift => left.wrapping_shr(right),
                     })
                 }
                 else
@@ -294,6 +300,29 @@ impl Expression {
         Expression::parse_inner(pair)
     }
 
+    pub fn parse_number(number: pest::iterators::Pair<Rule>) -> Expression {
+        match number.as_rule() {
+            Rule::decimal_number | Rule::hex_number => {
+                let is_hex = number.as_rule() == Rule::hex_number;
+                let (radix, skip) = if is_hex {(16,2)} else {(10,0)};
+                let number = number.as_str().trim();
+                let (_prefix, number)= number.split_at(skip);
+                let number = u32::from_str_radix(number, radix)
+                    .expect(&format!("Couldn't parse integer '{}'", number));
+                if number < 256 && !is_hex {
+                    Expression::Number(NumberType::U8, number)
+                } else {
+                    Expression::Number(NumberType::USIZE, number)
+                }
+            }
+            Rule::char_literal => {
+                let number = number.into_inner().next().unwrap();
+                Expression::Number(NumberType::U8, number.as_str().chars().next().unwrap() as u8 as u32)
+            }
+            r => panic!("unexpected {:?}", &r)
+        }
+    }
+
     pub fn parse_inner(pair: pest::iterators::Pair<Rule>) -> Expression {
         let rule = pair.as_rule();
         match rule {
@@ -326,26 +355,7 @@ impl Expression {
             Rule::number => {
                 let mut number = pair.into_inner();
                 let number = number.next().unwrap();
-                match number.as_rule() {
-                    Rule::decimal_number | Rule::hex_number => {
-                        let is_hex = number.as_rule() == Rule::hex_number;
-                        let (radix, skip) = if is_hex {(16,2)} else {(10,0)};
-                        let number = number.as_str().trim();
-                        let (_prefix, number)= number.split_at(skip);
-                        let number = u32::from_str_radix(number, radix)
-                            .expect(&format!("Couldn't parse integer '{}'", number));
-                        if number < 256 && !is_hex {
-                            Expression::Number(NumberType::U8, number)
-                        } else {
-                            Expression::Number(NumberType::USIZE, number)
-                        }
-                    }
-                    Rule::char_literal => {
-                        let number = number.into_inner().next().unwrap();
-                        Expression::Number(NumberType::U8, number.as_str().chars().next().unwrap() as u8 as u32)
-                    }
-                    r => panic!("unexpected {:?}", &r)
-                }
+                Expression::parse_number(number)
             },
             Rule::ident => {
                 Expression::Ident(pair.as_str().trim().to_owned())
@@ -388,12 +398,6 @@ impl Expression {
                 let value = Box::new(Expression::parse(pairs.next().unwrap()));
                 let new_type = Type::parse(pairs.next().unwrap(), false);
                 Expression::Cast{ old_type: None, new_type, value }
-            }
-            Rule::byte_shift_left_expression => {
-                todo!();
-            }
-            Rule::byte_shift_right_expression => {
-                todo!();
             }
             r => {
                 dbg!(r);
@@ -481,8 +485,8 @@ impl Expression {
                         if let Some(target_register) = target_register {
                             ctxt.add_inst(Instruction {
                                 source: format!("loading final value from reg {:?}", &self),
-                                opcode: Opcode::Or8,
-                                args: vec![reg.into(), reg.into(), target_register.into()],
+                                opcode: Opcode::Copy8,
+                                args: vec![reg.into(), target_register.into()],
                                 resolved: None,
                             });
                             Some(target_register)
@@ -631,8 +635,8 @@ impl Expression {
                             1 => {
                                 ctxt.add_inst(Instruction {
                                     source: format!("pushing result on stack {:?}", &self),
-                                    opcode: Opcode::Or8,
-                                    args: vec![Value::Register(0), Value::Register(0), r.into()],
+                                    opcode: Opcode::Copy8,
+                                    args: vec![Value::Register(0), r.into()],
                                     resolved: None,
                                 });
                             }
@@ -992,6 +996,7 @@ impl Expression {
                 let result_reg = target_register.unwrap_or(Register(0));
 
                 match op {
+                    ArithmeticOperator::LeftShift | ArithmeticOperator::RightShift => todo!(),
                     ArithmeticOperator::And => {
                         match op_math_type {
                             NumberType::U8 => {
@@ -1056,23 +1061,23 @@ impl Expression {
                         match op_math_type {
                             NumberType::U8 => {
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Mul8Part1,
+                                    opcode: Opcode::Mul8_1,
                                     resolved: None,
                                     source: format!("{:?}", &self),
                                     args: vec![Value::Register(left_reg), Value::Register(right_reg)]
                                 });
                                 ctxt.add_inst(Instruction {
-                                    opcode: Opcode::Mul8Part2,
+                                    opcode: Opcode::Mul8_2,
                                     resolved: None,
                                     source: format!("{:?}", &self),
                                     args: vec![]
                                 });
                                 if result_reg.0 != 0 {
                                     ctxt.add_inst(Instruction {
-                                        opcode: Opcode::Or8,
+                                        opcode: Opcode::Copy8,
                                         resolved: None,
                                         source: format!("{:?}", &self),
-                                        args: vec![Value::Register(0), Value::Register(0), result_reg.into()]
+                                        args: vec![Value::Register(0), result_reg.into()]
                                     });
                                 }
                             }
