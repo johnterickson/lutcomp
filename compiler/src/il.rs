@@ -1206,7 +1206,7 @@ impl<'a> IlLiveness<'a> {
     pub fn calculate(f: &'a IlFunction) -> IlLiveness<'a> {
         let len = f.body.len();
 
-        dbg!(&f.body);
+        // dbg!(&f.body);
         // dbg!(&f.vars);
 
         let labels: BTreeMap<&IlLabelId, usize> = f.body.iter().enumerate()

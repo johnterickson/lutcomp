@@ -93,7 +93,7 @@ impl<'a> BackendProgram<'a> {
                 if regs.len() != count as usize { continue; }
                 if regs[0] % align != 0 { continue; }
                 if liveness.colors[v] == color {
-                    println!("Reusing {}'s regs: {:?} for {} as they are both color {}.", v.0, regs, name.0, color);
+                    // println!("Reusing {}'s regs: {:?} for {} as they are both color {}.", v.0, regs, name.0, color);
                     reused = Some(regs.clone());
                     break;
                 }
@@ -261,7 +261,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         }
 
         for s in &f.body {
-            dbg!(s);
+            // dbg!(s);
             let source = format!("{:?}", &s);
             match s {
                 IlInstruction::Unreachable => {
@@ -573,24 +573,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let regs_to_save: Vec<_> = target_regs.intersection(&my_regs).cloned().collect();
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers to save: {:?}", regs_to_save)));
 
-                    // let u32_regs : Vec<_> = regs_to_save
-                    //     .windows(4)
-                    //     .filter(|w| are_regs_aligned_and_contiguous(w))
-                    //     .map(|w| (w[0], w))
-                    //     .collect();
-
-                    // let u8_regs = {
-                    //     let mut u8_regs: BTreeSet<u8> = regs_to_save.iter().cloned().collect();
-                    
-                    //     for (_,all) in u32_regs {
-                    //         for r in all {
-                    //             u8_regs.remove(r);
-                    //         }
-                    //     }
-
-                    //     u8_regs
-                    // };
-
                     for r in regs_to_save.iter().rev() {
                         assert!(*r >= 0x10);
                         ctxt.lines.push(AssemblyInputLine::Instruction(
@@ -603,6 +585,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     }
 
                     ctxt.lines.push(AssemblyInputLine::from_str(&format!("!call :{}", target.id.0)));
+
+
 
                     for r in &regs_to_save {
                         assert!(*r >= 0x10);
@@ -712,6 +696,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         }
     }
 
-    //optimize_assembly(&mut lines);
+    optimize_assembly(&mut lines);
+
     lines
 }

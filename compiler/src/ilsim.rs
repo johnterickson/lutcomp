@@ -842,9 +842,19 @@ mod tests {
 
     #[test]
     fn parse_hex_nibble() {
+        let mut cases = Vec::new();
+        for (i, c) in ('0'..='9').enumerate() {
+            cases.push((vec![TestVar::U8(c as u8)], TestVar::U8(i.try_into().unwrap())));
+        }
+        for (i, c) in ('a'..='f').enumerate() {
+            let i: u8 = i.try_into().unwrap();
+            cases.push((vec![TestVar::U8(c as u8)], TestVar::U8(10+i)));
+            cases.push((vec![TestVar::U8(char::to_ascii_uppercase(&c) as u8)], TestVar::U8(10+i)));
+        }
+
         test_var_inputs(
             "parseHexNibble",
-            include_str!("../../programs/bootram.j"),
+            include_str!("../../programs/print_hex.j"),
             &[
                 (vec![TestVar::U8('9' as u8)], TestVar::U8(0x9)),
                 (vec![TestVar::U8('a' as u8)], TestVar::U8(0xA)),
@@ -861,7 +871,7 @@ mod tests {
         }
         test_var_inputs(
             "parseHex",
-            include_str!("../../programs/bootram.j"),
+            include_str!("../../programs/print_hex.j"),
             &cases
         );
     }
