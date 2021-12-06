@@ -51,11 +51,11 @@ impl IlFunction {
         let mut vars: BTreeMap<&IlVarId, Option<IlNumber>> = BTreeMap::new();
 
         for (id, info) in self.vars.iter().rev() {
-            if let Location::FrameOffset(stack_size) = info.location {
+            if let IlLocation::FrameOffset(stack_size) = info.location {
                 ctxt.stack_pointer -= stack_size;
                 assert!(vars.insert(id, Some(IlNumber::U32(ctxt.stack_pointer))).is_none());
             }
-            if let Location::Static(addr) = info.location {
+            if let IlLocation::Static(addr) = info.location {
                 assert!(vars.insert(id, Some(IlNumber::U32(addr))).is_none());
             }
         }
@@ -75,7 +75,10 @@ impl IlFunction {
             match s {
                 IlInstruction::Unreachable => panic!(),
                 IlInstruction::Comment(_) | IlInstruction::Label(_) => {},
-                IlInstruction::AssignVar { dest, src , size} => {
+                IlInstruction::AssignVar { dest, src , size, dest_offset, src_offset} => {
+                    if *dest_offset != 0 || *src_offset != 0 {
+                        todo!();
+                    }
 
                     if let Some(Some(n)) = vars.get(dest) {
                         assert_eq!(&n.il_type(), size);
@@ -635,7 +638,7 @@ mod tests {
         assert_eq!(c.comp.mem_word(head_entry_addr+4), len); 
         assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
 
-        let max_static = ctxt.statics_cur_address;
+        let max_static = il.statics_addresses.end;
         assert_eq!(max_static, head_entry_addr + header_size + len);
     }
 
@@ -659,7 +662,7 @@ mod tests {
         const HEADER_SIZE : u32 = 0xc;
         
         let heap_addr = STATICS_START_ADDRESS;
-        let max_static = ctxt.statics_cur_address;
+        let max_static = il.statics_addresses.end;
         let head_entry_addr = heap_addr + 4;
         assert_eq!(c.comp.mem_word(heap_addr), head_entry_addr);
         let new_entry_addr = c.comp.mem_word(head_entry_addr);

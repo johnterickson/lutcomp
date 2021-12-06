@@ -24,11 +24,8 @@ use func::*;
 pub mod il;
 pub mod ilsim;
 mod optimize;
-mod resolved;
 mod stmt;
 use stmt::*;
-mod storage;
-use storage::*;
 mod parse;
 use parse::*;
 mod struct_def;
@@ -40,19 +37,6 @@ use assemble::{AssemblyInputLine, Instruction, Value};
 use common::*;
 use sim::*;
 
-#[derive(Clone, Copy, Debug)]
-enum Declaration {
-    Local,
-    Arg,
-    Result,
-    ReturnAddress,
-}
-#[derive(Debug)]
-pub struct Variable {
-    var_type: Type,
-    decl: Declaration,
-    storage: Storage,
-}
 
 pub fn print_state(c: &Computer) {
     let pc = u32::from_le_bytes(c.pc);
@@ -132,11 +116,8 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
     'reparse: loop {
         let mut ctxt = ProgramContext {
             entry: entry.to_owned(),
-            function_impls: BTreeMap::new(),
             function_defs: BTreeMap::new(),
             types: BTreeMap::new(),
-            registers_available: (0x10..=0xFF).map(|r| Register(r)).collect(),
-            statics_cur_address: STATICS_START_ADDRESS,
             statics_base_address: STATICS_START_ADDRESS,
             image_base_address: 0,
         };
@@ -215,13 +196,6 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                 Rule::EOI => {},
                 _ => panic!("Unexpected rule: {:?}", pair)
             }
-        }
-
-        let defs = ctxt.function_defs.clone();
-        for (name, def) in defs {
-            let def = def.clone();
-            let allocated = def.allocate(&mut ctxt);
-            ctxt.function_impls.insert(name.clone(), allocated);
         }
 
         break ctxt;

@@ -27,16 +27,6 @@ impl ArithmeticOperator {
             op => panic!("Unknown op: {}", op),
         }
     }
-
-    // fn is_symmetric(&self) -> bool {
-    //     match self {
-    //         ArithmeticOperator::Add => true,
-    //         ArithmeticOperator::Subtract => false,
-    //         ArithmeticOperator::Multiply => true,
-    //         ArithmeticOperator::Or => true,
-    //         ArithmeticOperator::And => true,
-    //     }
-    // }
 }
 
 #[derive(Debug, Clone)]

@@ -50,8 +50,8 @@ impl<'a> BackendProgram<'a> {
 
             for (name, var_info) in &f.vars {
                 if let Some(regs_needed) = match var_info.location {
-                    Location::U8 => Some(1),
-                    Location::U32 => Some(4),
+                    IlLocation::U8 => Some(1),
+                    IlLocation::U32 => Some(4),
                     _ => None,
                 } {
                     let regs = self.alloc_registers(name, &liveness, &mut info, regs_needed, regs_needed)
@@ -282,7 +282,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let dest_regs = ctxt.find_registers(dest);
                     ctxt.emit_num_to_reg(&dest_regs, src, &src.il_type(), source);
                 }
-                IlInstruction::AssignVar { dest, src, size} => {
+                IlInstruction::AssignVar { dest, src, size, src_offset, dest_offset} => {
+                    if *src_offset != 0 || *dest_offset != 0 {
+                        todo!();
+                    }
                     let dest_regs = ctxt.find_registers(dest);
                     ctxt.emit_var_to_reg(&dest_regs, src, size, source);
                 },
