@@ -3,7 +3,6 @@ use super::*;
 
 pub const RESULT : &'static str = "RESULT";
 pub const RETURN_ADDRESS : &'static str = "RETURN_ADDRESS";
-pub const EPILOGUE : &'static str = "EPILOGUE";
 
 #[derive(Clone,Debug)]
 pub struct FunctionDefinition {
@@ -334,89 +333,3 @@ pub struct AllocatedFunction {
     pub variables: BTreeMap<String,Variable>,
     pub callee_stack_size: u32,
 }
-
-impl AllocatedFunction {
-    pub fn emit<'a>(&'a self, program: &'a ProgramContext) -> FunctionContext<'a> {
-        let mut ctxt = FunctionContext {
-            program,
-            function: &self,
-            lines: Vec::new(),
-            additional_offset: 0,
-            block_counter: 0,
-        };
-        ctxt.lines.push(AssemblyInputLine::Comment(format!("# Function: {}", &self.def.name)));
-        ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &self.def.name)));
-
-        // let max_register_local_count = 0u32;
-        // let mut register_local_count = 0;
-        // while register_local_count < max_register_local_count {
-        //     register_local_count += 1;
-        //     unimplemented!();
-        // }
-
-        let mut vars: Vec<_> = self.variables.iter().collect();
-        vars.sort_by_key(|k| k.1.storage);
-
-        for (name, var) in vars {
-            match var.storage {
-                Storage::Register(r) => {
-                    ctxt.lines.push(AssemblyInputLine::Comment(format!("# r{:02x} -> {} {:?} {:?}", r.0, name, var.decl, var.var_type)));
-                }
-                Storage::Stack(offset) => {
-                    ctxt.lines.push(AssemblyInputLine::Comment(format!("# sp+0x{:02x} -> {} {:?} {:?}", offset.0, name, var.decl, var.var_type)));
-                }
-                Storage::FixedAddress(addr) => {
-                    ctxt.lines.push(AssemblyInputLine::Comment(format!("# static @ 0x{:08x} -> {} {:?} {:?}", addr, name, var.decl, var.var_type)));
-                }
-            }
-        }
-
-        if self.callee_stack_size > 0 {
-            ctxt.lines.push(AssemblyInputLine::Comment("create stack space".to_owned()));
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::LoadImm8,
-                resolved: None,
-                source: format!("filler for allocated stack space"),
-                args: vec![Value::Register(0), Value::Constant8(0xBB)]
-            });
-            for _ in 0..self.callee_stack_size {
-                ctxt.add_inst(Instruction {
-                    opcode: Opcode::Push8,
-                    resolved: None,
-                    source: format!("locals and padding"),
-                    args: vec![Value::Register(0)]
-                });
-            }
-        }
-
-        // let mut count = 0;
-        for stmt in self.def.body.iter() {
-            // let scope = format!("_function{}_", count);
-            stmt.emit(&mut ctxt);
-            // count += 1;
-        }
-
-        ctxt.lines.push(AssemblyInputLine::Label(format!(":{}__{}", &self.def.name, EPILOGUE)));
-        if self.callee_stack_size > 0 {
-            ctxt.add_inst(Instruction {
-                opcode: Opcode::AddImm32IgnoreCarry,
-                source: format!("get stack pointing to RA"),
-                args: vec![Value::Register(REG_SP), Value::Constant32(self.callee_stack_size)],
-                resolved: None,
-            });
-        }
-
-        // if register_local_count > 0 {
-        //     ctxt.lines.push(Line::Comment(format!("save regs: {:?}", ctxt.regs_used)));
-        //     let regs : Vec<Reg> = ctxt.regs_used.iter().cloned().rev().collect();
-        //     for r in regs {
-        //         ctxt.add_macro(format!("pop {}", r));
-        //     }
-        // }
-
-        ctxt.add_macro(format!("!return"));
-
-        ctxt
-    }
-}
-
