@@ -269,125 +269,11 @@ impl IlFunction {
 
 #[cfg(test)]
 mod tests {
-    use crate::{backend::emit_assembly, tests::{TestComputer, TestVar, check_args, test_programs_dir}};
+    use std::borrow::Cow;
+
+    use crate::{backend::emit_assembly};
 
     use super::*;
-
-    fn run_var_input<'a>(
-        ctxt: &'a ProgramContext,
-        il: &'a IlProgram,
-        rom: &'a Image,
-        ins: &Vec<TestVar>) -> (TestComputer<'a>, IlNumber)
-    {
-        let mut ptr = TestComputer::arg_base_addr();
-        let mut args = Vec::new();
-        let mut mem = BTreeMap::new();
-        for input in ins {
-            if let Some(bytes) = match input {
-                TestVar::Ascii(s) => Some(*s),
-                TestVar::String(s) => Some(s.as_bytes()),
-                TestVar::Ptr(s) => Some(s.as_slice()),
-                TestVar::U8(u8) => { args.push(IlNumber::U8(*u8)); None}
-                TestVar::Usize(u32) => { args.push(IlNumber::U32(*u32)); None}
-            } {
-                let arg = ptr;
-                for b in bytes {
-                    mem.insert(ptr, *b);
-                    ptr += 1;
-                }
-                args.push(IlNumber::U32(arg));
-
-                ptr = (ptr+3)/4*4; // round up
-                ptr += 4; // add buffer
-            }
-        }
-
-        let mut c = TestComputer::from_rom(&ctxt, &rom);
-        for (addr, b) in &mem {
-            *c.comp.mem_byte_mut(*addr) = *b;
-        }
-
-        // run in IL simulator
-        let mut sim = il.create_sim(&args);
-        sim.mem.append(&mut mem);
-        let il_result = sim.run();
-
-        // run in HW simulator
-        let hw_sim_args: Vec<_> = args.iter().map(|a| match a {
-            IlNumber::U8(n) => (*n).into(),
-            IlNumber::U32(n) => *n,
-        }).collect();
-        let hw_result = c.run(hw_sim_args.as_slice());
-        let hw_result = match il_result.il_type() {
-            IlType::U32 => IlNumber::U32(hw_result),
-            IlType::U8 => IlNumber::U8((hw_result & 0xFF) as u8)
-        };
-
-        assert_eq!(il_result, hw_result, "IL and HW have different results for {:?}", ins);
-        (c, il_result)
-    }
-    
-    fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
-        let (ctxt, il) = emit_il(entry, program, &test_programs_dir());
-        // dbg!(&il);
-
-        let (_, asm) = emit_assembly(&ctxt, &il);
-        let rom = assemble::assemble(asm);
-
-        for case in cases
-        {
-            check_args(&ctxt, case);
-            let (ins, expected) = case;
-
-            let (_, actual) = run_var_input(&ctxt, &il, &rom, ins);
-            
-            let expected= match expected {
-                TestVar::Ascii(_) => todo!(),
-                TestVar::Ptr(_) => todo!(),
-                TestVar::U8(n) => IlNumber::U8(*n),
-                TestVar::Usize(n) => IlNumber::U32(*n),
-                TestVar::String(_) => todo!(),
-            };
-            assert_eq!(expected, actual, "{:?}", &(ins, expected));
-        }
-    }
-
-    fn test_inputs<'a, T1,T2,T3>(entry: &str, program: &str, cases: &'a [(T1,T2,T3)])
-        where TestVar: From<&'a T1>, TestVar: From<&'a T2>, TestVar: From<&'a T3>
-    {
-        let cases: Vec<(Vec<TestVar>,TestVar)> = cases
-            .iter()
-            .map(|(in1,in2,out)| ([in1.into(), in2.into()].to_vec(), out.into()))
-            .collect();
-        test_var_inputs(entry, program, cases.as_slice());
-    }
-
-    fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
-        let (ctxt, il) = emit_il(entry,program, &test_programs_dir());
-        // dbg!(&il);
-
-        let (_, asm) = emit_assembly(&ctxt, &il);
-        let rom = assemble::assemble(asm);
-
-        for (ttyin, input1, input2, expected) in pairs {
-            let mut c = TestComputer::from_rom(&ctxt, &rom);
-            dbg!((ttyin, input1, input2, expected));
-            for ch in ttyin.chars() {
-                c.comp.tty_in.push_back(ch as u8);
-            }
-            assert_eq!(0, c.run(&[*input1, *input2]) & 0xFF);
-
-            let mut out = String::new();
-            for c in &c.comp.tty_out {
-                let c = *c as char;
-                out.push(c);
-            }
-
-            assert_eq!(out.as_str(), *expected,
-                "Failed for {:?},{:?},{:?}", input1, input2, expected);
-        }
-    }
-
 
     #[test]
     fn halt() {
@@ -403,6 +289,28 @@ mod tests {
             "main",
             include_str!("../../programs/halt_base_address.j"),
             &[(vec![],1u8.into())]);
+    }
+
+    #[test]
+    fn halt_base_ram() {
+        let (_ctxt, _il, ram_image) = assemble(
+            "main", 
+            include_str!("../../programs/halt_ram.j"));
+
+
+        let mut loader = Vec::new();
+        loader.push(Opcode::JmpImm as u8);
+        loader.extend(&ram_image.start_addr.to_le_bytes()[0..3]);
+        for _ in 0..10 {
+            loader.push(Opcode::Halt as u8);
+        }
+
+        let mut c = Computer::from_raw(loader);
+        c.mem_slice_mut(ram_image.start_addr, ram_image.bytes.len() as u32)
+            .copy_from_slice(&ram_image.bytes);
+
+        while c.step() {}
+        assert_eq!(1, c.reg_u8(0));
     }
 
     #[test]
@@ -703,21 +611,14 @@ mod tests {
         );
     }
 
-    fn assemble(entry: &str, program: &str) -> (ProgramContext, IlProgram, Image) {
-        let (ctxt, program) = emit_il(entry, program, &test_programs_dir());
-        let (_, assembly) = emit_assembly(&ctxt, &program);
-        let rom = assemble::assemble(assembly);
-        (ctxt, program, rom)
-    }
-
     #[test]
     fn heap_init() {
         let (ctxt, il, rom) = assemble("heap_init", include_str!("../../programs/heap.j"));
-        let (_, heap_start) = run_var_input(&ctxt, &il, &rom, &vec![]);
+        let (_, heap_start) = run_var_input(&ctxt, &il, &rom, &vec![], IlType::U32);
         assert_eq!(heap_start, IlNumber::U32(STATICS_START_ADDRESS));
 
         let (ctxt, il, rom) = assemble("test_get_heap_head", include_str!("../../programs/heap.j"));
-        let (c, heap_entry) = run_var_input(&ctxt, &il, &rom, &vec![]);
+        let (c, heap_entry) = run_var_input(&ctxt, &il, &rom, &vec![], IlType::U32);
         assert_eq!(heap_entry, IlNumber::U32(STATICS_START_ADDRESS+4));
 
         let heap_type = ctxt.types.get("heap").unwrap();
@@ -741,10 +642,10 @@ mod tests {
     #[test]
     fn heap_is_entry_bad() {
         let (ctxt, il, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/heap.j"));
-        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1u32.into()]);
+        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1u32.into()], IlType::U8);
         assert_eq!(is_bad.as_u32(), 0);
 
-        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1024u32.into()]);
+        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1024u32.into()], IlType::U8);
         assert_eq!(is_bad.as_u32(), 1);
     }
 
@@ -752,7 +653,7 @@ mod tests {
     fn heap_alloc() {
         let alloc_size = 4u32;
         let (ctxt, il, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
-        let (c, allocated_addr) = run_var_input(&ctxt, &il, &rom, &vec![alloc_size.into()]);
+        let (c, allocated_addr) = run_var_input(&ctxt, &il, &rom, &vec![alloc_size.into()], IlType::U32);
         let allocated_addr = allocated_addr.as_u32();
 
         const HEADER_SIZE : u32 = 0xc;
@@ -798,13 +699,13 @@ mod tests {
             "printHexTest",
             include_str!("../../programs/print_hex.j"),
             &[
-                // ("",0x0,0x0,"00\n"),
-                // ("",0x1,0x0,"01\n"),
-                // ("",0x9,0x0,"09\n"),
-                // ("",0xA,0x0,"0A\n"),
-                // ("",0xF,0x0,"0F\n"),
-                // ("",0x10,0x0,"10\n"),
-                // ("",0x1F,0x0,"1F\n"),
+                ("",0x0,0x0,"00\n"),
+                ("",0x1,0x0,"01\n"),
+                ("",0x9,0x0,"09\n"),
+                ("",0xA,0x0,"0A\n"),
+                ("",0xF,0x0,"0F\n"),
+                ("",0x10,0x0,"10\n"),
+                ("",0x1F,0x0,"1F\n"),
                 ("",0x20,0x0,"20\n"),
                 ("",0x90,0x0,"90\n"),
                 ("",0xA0,0x0,"A0\n"),
@@ -1024,5 +925,261 @@ mod tests {
         }
 
         assert_eq!(out.as_str(), "Hi_from_RAM!");
+    }
+
+    
+    pub fn test_programs_dir() -> PathBuf {
+        let mut dir = std::env::current_exe().unwrap();
+        dir.pop();
+        dir.pop();
+        dir.pop();
+        dir.pop();
+        dir.push("programs");
+        dir
+    }
+
+
+
+    pub struct TestComputer<'a> {
+        pub comp: Computer<'a>,
+    }
+
+    impl<'a> TestComputer<'a> {
+        pub fn arg_base_addr() -> u32 {
+            STATICS_START_ADDRESS+1000
+        }
+
+        pub fn arg_base_addr_var(offset: u32) -> TestVar {
+            TestVar::Usize(TestComputer::arg_base_addr() + offset)
+        }
+
+        pub fn from_rom(rom: &'a Image) -> TestComputer<'a> {
+            TestComputer{
+                comp: Computer::from_image(Cow::Borrowed(&rom), false),
+            }
+        }
+
+        pub fn run(&mut self, inputs: &[u32]) -> u32{
+            dbg!(inputs);
+            assert!(inputs.len() <= 3);
+            for (i,val) in inputs.iter().enumerate() {
+                let i = i as u8;
+                self.comp.reg_u32_set(4*i, *val);
+            }
+
+            let mut last_pc = None;
+            let mut step_count = 0;
+            while self.comp.step() {
+                if last_pc != Some(self.comp.pc) {
+                    print_state(&mut self.comp);
+                }
+                last_pc = Some(self.comp.pc);
+                step_count += 1;
+                assert!(step_count < 100000000);
+            }
+            self.comp.reg_u32(0)
+        }
+    }
+
+    
+    #[derive(Debug, PartialEq, Clone)]
+    pub enum TestVar {
+        Ascii(&'static [u8]),
+        String(String),
+        Ptr(Vec<u8>),
+        U8(u8),
+        Usize(u32),
+    }
+
+    impl TestVar {
+        fn byte_count(&self) -> u32 {
+            match self {
+                TestVar::String(_) | TestVar::Ascii(_) | TestVar::Ptr(_) | TestVar::Usize(_) => 4,
+                TestVar::U8(_) => 1
+            }
+        }
+    }
+
+    impl From<u8> for TestVar {
+        fn from(i: u8) -> Self {
+            TestVar::U8(i)
+        }
+    }
+
+    impl From<&u8> for TestVar {
+        fn from(i: &u8) -> Self {
+            TestVar::U8(*i)
+        }
+    }
+
+    impl From<u32> for TestVar {
+        fn from(i: u32) -> Self {
+            TestVar::Usize(i)
+        }
+    }
+
+    impl From<&u32> for TestVar {
+        fn from(i: &u32) -> Self {
+            TestVar::Usize(*i)
+        }
+    }
+
+    impl From<[u8;4]> for TestVar {
+        fn from(bytes: [u8;4]) -> Self {
+            TestVar::Ptr(bytes.iter().cloned().collect())
+        }
+    }
+
+    fn assemble(entry: &str, program: &str) -> (ProgramContext, IlProgram, Image) {
+        let (ctxt, program) = emit_il(entry, program, &test_programs_dir());
+        let (_, assembly) = emit_assembly(&ctxt, &program);
+        let rom = assemble::assemble(assembly);
+        (ctxt, program, rom)
+    }
+
+    fn check_args_by_il_type(ctxt: &ProgramContext, ins: &Vec<TestVar>, out_type: IlType) {
+        check_args_inner(ctxt, (ins, out_type.byte_count()));
+    }
+
+    fn check_args(ctxt: &ProgramContext, test_case: &(Vec<TestVar>, TestVar)) {
+        let (test_args, test_return) = test_case;
+        check_args_inner(ctxt, (test_args, test_return.byte_count()));
+    }
+
+    fn check_args_inner(ctxt: &ProgramContext, test_case: (&Vec<TestVar>, u32)) {
+        let entry = &ctxt.function_defs[&ctxt.entry];
+        let entry_args = &entry.args;
+        let (test_args, test_return_size) = test_case;
+        assert_eq!(entry_args.len(), test_args.len());
+        for (i, (entry_arg_name, entry_arg_type)) in entry_args.iter().enumerate() {
+            let entry_arg_size = entry_arg_type.byte_count(ctxt);
+            let test_arg_size = test_args[i].byte_count();
+            assert_eq!(entry_arg_size, test_args[i].byte_count(),
+                "Entry arg '{}' type '{:?}' expects size {} but test provided size {}.", 
+                entry_arg_name, entry_arg_type, entry_arg_size, test_arg_size);
+        }
+
+        let entry_return_size = entry.return_type.byte_count(ctxt);
+        assert_eq!(entry_return_size, test_return_size,
+            "Entry function returns type '{:?}' expects size {} but test provided size {}.", 
+            entry.return_type, entry_return_size, test_return_size);
+    }
+
+    fn run_var_input<'a>(
+        ctxt: &'a ProgramContext,
+        il: &'a IlProgram,
+        rom: &'a Image,
+        ins: &Vec<TestVar>,
+        out_type: IlType) -> (TestComputer<'a>, IlNumber)
+    {
+        check_args_by_il_type(ctxt, ins, out_type);
+        let mut ptr = TestComputer::arg_base_addr();
+        let mut args = Vec::new();
+        let mut mem = BTreeMap::new();
+        for input in ins {
+            if let Some(bytes) = match input {
+                TestVar::Ascii(s) => Some(*s),
+                TestVar::String(s) => Some(s.as_bytes()),
+                TestVar::Ptr(s) => Some(s.as_slice()),
+                TestVar::U8(u8) => { args.push(IlNumber::U8(*u8)); None}
+                TestVar::Usize(u32) => { args.push(IlNumber::U32(*u32)); None}
+            } {
+                let arg = ptr;
+                for b in bytes {
+                    mem.insert(ptr, *b);
+                    ptr += 1;
+                }
+                args.push(IlNumber::U32(arg));
+
+                ptr = (ptr+3)/4*4; // round up
+                ptr += 4; // add buffer
+            }
+        }
+
+        let mut c = TestComputer::from_rom(&rom);
+        for (addr, b) in &mem {
+            *c.comp.mem_byte_mut(*addr) = *b;
+        }
+
+        // run in IL simulator
+        let mut sim = il.create_sim(&args);
+        sim.mem.append(&mut mem);
+        let il_result = sim.run();
+
+        // run in HW simulator
+        let hw_sim_args: Vec<_> = args.iter().map(|a| match a {
+            IlNumber::U8(n) => (*n).into(),
+            IlNumber::U32(n) => *n,
+        }).collect();
+        let hw_result = c.run(hw_sim_args.as_slice());
+        let hw_result = match il_result.il_type() {
+            IlType::U32 => IlNumber::U32(hw_result),
+            IlType::U8 => IlNumber::U8((hw_result & 0xFF) as u8)
+        };
+
+        assert_eq!(il_result, hw_result, "IL and HW have different results for {:?}", ins);
+        (c, il_result)
+    }
+    
+    fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
+        let (ctxt, il) = emit_il(entry, program, &test_programs_dir());
+        // dbg!(&il);
+
+        let (_, asm) = emit_assembly(&ctxt, &il);
+        let rom = assemble::assemble(asm);
+
+        for case in cases
+        {
+            check_args(&ctxt, case);
+            let (ins, expected) = case;
+
+            let expected = match expected {
+                TestVar::Ascii(_) => todo!(),
+                TestVar::Ptr(_) => todo!(),
+                TestVar::U8(n) => IlNumber::U8(*n),
+                TestVar::Usize(n) => IlNumber::U32(*n),
+                TestVar::String(_) => todo!(),
+            };
+
+            let (_, actual) = run_var_input(&ctxt, &il, &rom, ins, expected.il_type());
+            
+            assert_eq!(expected, actual, "{:?}", &(ins, expected));
+        }
+    }
+
+    fn test_inputs<'a, T1,T2,T3>(entry: &str, program: &str, cases: &'a [(T1,T2,T3)])
+        where TestVar: From<&'a T1>, TestVar: From<&'a T2>, TestVar: From<&'a T3>
+    {
+        let cases: Vec<(Vec<TestVar>,TestVar)> = cases
+            .iter()
+            .map(|(in1,in2,out)| ([in1.into(), in2.into()].to_vec(), out.into()))
+            .collect();
+        test_var_inputs(entry, program, cases.as_slice());
+    }
+
+    fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
+        let (ctxt, il) = emit_il(entry,program, &test_programs_dir());
+        // dbg!(&il);
+
+        let (_, asm) = emit_assembly(&ctxt, &il);
+        let rom = assemble::assemble(asm);
+
+        for (ttyin, input1, input2, expected) in pairs {
+            let mut c = TestComputer::from_rom(&rom);
+            dbg!((ttyin, input1, input2, expected));
+            for ch in ttyin.chars() {
+                c.comp.tty_in.push_back(ch as u8);
+            }
+            assert_eq!(0, c.run(&[*input1, *input2]) & 0xFF);
+
+            let mut out = String::new();
+            for c in &c.comp.tty_out {
+                let c = *c as char;
+                out.push(c);
+            }
+
+            assert_eq!(out.as_str(), *expected,
+                "Failed for {:?},{:?},{:?}", input1, input2, expected);
+        }
     }
 }

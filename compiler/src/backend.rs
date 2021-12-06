@@ -1,5 +1,6 @@
 use crate::*;
 use crate::il::*;
+use crate::optimize::optimize_assembly;
 
 pub struct BackendProgram<'a> {
     pub frontend_context: &'a ProgramContext,
@@ -194,6 +195,12 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
     lines.push(AssemblyInputLine::ImageBaseAddress(ctxt.il.image_base_address));
     lines.push(AssemblyInputLine::Label(format!("entry")));
+    lines.push(AssemblyInputLine::Instruction(Instruction {
+        opcode: Opcode::Init,
+        args: vec![],
+        source: format!("Initialzing flags and internal regs."),
+        resolved: None,
+    }));
     lines.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::LoadImm32,
         args: vec![Value::Register(REG_SP), Value::Constant32(INITIAL_STACK)],
@@ -705,5 +712,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         }
     }
 
+    //optimize_assembly(&mut lines);
     lines
 }

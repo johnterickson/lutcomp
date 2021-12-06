@@ -11,8 +11,6 @@ pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {
         }
     }
 
-    // dbg!(&instruction_indices);
-
     for instruction_pairs in instruction_indices.windows(2) {
         let (slice1, slice2) = assembly.as_mut_slice()[instruction_pairs[0]..].split_at_mut(1);
         let line1 = &mut slice1[0];

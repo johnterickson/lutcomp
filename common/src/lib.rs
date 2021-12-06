@@ -16,6 +16,7 @@ bitflags! {
         const CARRY = 0b0001;
         const ZERO = 0b0010;
         const NEG = 0b0100;
+        const PHASE = 0b1000;
     }
 }
 
@@ -134,6 +135,7 @@ pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
     Invert8 = 3, // ~regA -> regA
     Negate8 = 4, // (~regA + 1) -> regA + FLAGS
+    Init = 0xF,
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
@@ -210,6 +212,7 @@ impl Opcode {
                 ],
             Opcode::Invert8 => todo!(),
             Opcode::Negate8 => todo!(),
+            Opcode::Init => &[],
             Opcode::Load8 => &[
                 RegUsage { arg_index: 1, reg_count: 4, op: RegOperation::Read },
                 RegUsage { arg_index: 2, reg_count: 1, op: RegOperation::Write }
@@ -275,6 +278,7 @@ impl Opcode {
             Opcode::LoadImm8 => &[1,1],
             Opcode::Invert8 => &[1],
             Opcode::Negate8 => &[1],
+            Opcode::Init => &[],
             Opcode::Load8 => &[1,1],
             Opcode::Store8 => &[1,1],
             Opcode::TtyIn => &[1],

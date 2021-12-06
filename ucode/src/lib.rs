@@ -26,7 +26,7 @@ pub enum DataBusLoadEdge {
     Alu = 3,
     Mem = 4,
     TtyIn = 5,
-    //PcR = 6,
+    None = 6,
     Flags = 7,
     W = 8,
     X = 9,
@@ -163,6 +163,20 @@ impl MicroOp {
         }
         assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
         assert_eq!(data_bus_out == DataBusOutputLevel::Imm, immediate.is_some());
+
+        if data_bus_out == DataBusOutputLevel::Next {
+            assert_eq!(None, address_bus_out);
+            assert_eq!(None, alu_opcode);
+            assert_eq!(DataBusLoadEdge::None, data_bus_load);
+            assert_eq!(None, immediate);
+        }
+
+        if data_bus_load == DataBusLoadEdge::None {
+            assert_eq!(DataBusOutputLevel::Next, data_bus_out);
+            assert_eq!(None, address_bus_out);
+            assert_eq!(None, alu_opcode);
+            assert_eq!(None, immediate);
+        }
 
         let default_addr_bus = if DataBusOutputLevel::Halt == data_bus_out {
             AddressBusOutputLevel::Addr
@@ -449,6 +463,17 @@ impl Ucode {
             add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::IR0));
 
             match opcode {
+                Some(Opcode::Init) => {
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Flags));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::X));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Y));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Z));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr1));
+                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr2));
+                }
                 Some(Opcode::JmpImm) => {
                     self.jmp_abs();
                 }
@@ -991,7 +1016,7 @@ impl Ucode {
                         pc_inc!(self); //self.start_of_ram();
                         pc_inc!(self);
                         pc_inc!(self); //pc_inc!(self);
-                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
+                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::None));
                         self.add_op(noop, file!(), line!());
 
                         self.add_op(noop, file!(), line!());
@@ -1214,7 +1239,7 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                     if flags.contains(Flags::ZERO) {
                         pc_inc!(self);
-                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
+                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::None));
                     } else {
                         self.add_op(noop, file!(), line!());
                         self.add_op(noop, file!(), line!());
@@ -1513,7 +1538,7 @@ impl Ucode {
                     if flags.contains(Flags::NEG) {
                         //less than 8 to-go so 
                         pc_inc!(self);
-                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
+                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::None));
                     } else {
 
                     }
@@ -1534,7 +1559,7 @@ impl Ucode {
             }
             add!(self, 
                 Output::Direct(DataBusOutputLevel::Next),
-                Load::Direct(DataBusLoadEdge::W) // doesn't matter
+                Load::Direct(DataBusLoadEdge::None)
             );
 
             let uop_count = self.uop_count;

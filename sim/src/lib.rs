@@ -307,6 +307,7 @@ impl<'a> Computer<'a> {
         }
 
         match urom_op.data_bus_load {
+            DataBusLoadEdge::None => {},
             DataBusLoadEdge::Addr0 => self.addr[0] = data_bus.unwrap(),
             DataBusLoadEdge::Addr1 => self.addr[1] = data_bus.unwrap(),
             DataBusLoadEdge::Addr2 => self.addr[2] = data_bus.unwrap(),
