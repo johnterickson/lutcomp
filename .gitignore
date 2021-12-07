@@ -1,3 +1,4 @@
 target/*
 **/*.hex
 !logisim/*.hex
+lcov.info

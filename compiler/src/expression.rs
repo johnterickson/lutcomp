@@ -47,37 +47,6 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn visit_inner_expressions<F: FnMut(&Expression) -> ()>(&self, f: &mut F) {
-        f(self);
-        match self {
-            Expression::Call(call) => {
-                for param in &call.parameters {
-                    param.visit_inner_expressions(f);
-                }
-            }
-            Expression::Arithmetic(_, left, right) => {
-                left.visit_inner_expressions(f);
-                right.visit_inner_expressions(f);
-            }
-            Expression::Comparison(c) => {
-                c.left.visit_inner_expressions(f);
-                c.right.visit_inner_expressions(f);
-            }
-            Expression::Deref(inner) |
-            Expression::AddressOf(inner) |
-            Expression::Index(_, inner) |
-            Expression::Cast{old_type:_, new_type:_, value: inner} |
-            Expression::Optimized{original:_, optimized: inner} => {
-                inner.visit_inner_expressions(f);
-            }
-            Expression::Ident(_) |
-            Expression::TtyIn() |
-            Expression::LocalFieldDeref(_,_) |
-            Expression::PtrFieldDeref(_,_) |
-            Expression::Number(_,_) => {}
-        }
-    }
-
     pub fn try_get_const(&self) -> Option<u32> {
         match self {
             Expression::Number(_, val) => Some(*val),

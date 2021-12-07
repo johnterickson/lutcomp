@@ -1257,21 +1257,17 @@ mod tests {
     fn run_u32_pairs<F: Fn(u32, u32) -> ()>(f : F) {
         use itertools::Itertools;
         let values = &[0x0, 0x1, 0xFF];
-        for (((a1, a2), a3), a4) in values
+        let byte_values: Vec<u32> = values
             .iter()
             .cartesian_product(values)
             .cartesian_product(values)
             .cartesian_product(values)
-        {
-            let a = u32::from_le_bytes([*a1, *a2, *a3, *a4]);
-            for (((b1, b2), b3), b4) in values
-                .iter()
-                .cartesian_product(values)
-                .cartesian_product(values)
-                .cartesian_product(values)
-            {
-                let b = u32::from_le_bytes([*b1, *b2, *b3, *b4]);
-                f(a,b);
+            .map(|(((a1, a2), a3), a4)| u32::from_le_bytes([*a1, *a2, *a3, *a4]))
+            .collect();
+
+        for a in &byte_values {
+            for b in &byte_values {
+                f(*a,*b);
             }
         }
     }
@@ -1281,7 +1277,6 @@ mod tests {
             let carry_in = *carry_in;
             run_u32_pairs(|in1, in2| {
                 if in1 >= in2 {
-
                     f(carry_in, in1, in2);
                 }
             });
