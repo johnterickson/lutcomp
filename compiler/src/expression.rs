@@ -129,6 +129,12 @@ impl Expression {
                     match t {
                         Type::Array(element_type, _) |
                         Type::Ptr(element_type) => Some(element_type.as_ref().clone()),
+                        Type::Number(nt) => {
+                            match nt {
+                                NumberType::U8 => panic!(),
+                                NumberType::USIZE => Some(Type::Number(NumberType::U8)),
+                            }
+                        }
                         _ => panic!(),
                     }
                 } else {

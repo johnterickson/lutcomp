@@ -1,6 +1,8 @@
 use crate::*;
 use crate::il::*;
 
+use std::collections::btree_map::Entry;
+
 struct SimulationContext<'a> {
     program: &'a IlProgram,
     entry_function: &'a IlFunctionId,
@@ -48,21 +50,21 @@ impl IlFunction {
     }
 
     fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> Option<IlNumber> {
-        let mut vars: BTreeMap<&IlVarId, Option<IlNumber>> = BTreeMap::new();
+        let mut vars: BTreeMap<&IlVarId, IlNumber> = BTreeMap::new();
 
         for (id, info) in self.vars.iter().rev() {
             if let IlLocation::FrameOffset(stack_size) = info.location {
                 ctxt.stack_pointer -= stack_size;
-                assert!(vars.insert(id, Some(IlNumber::U32(ctxt.stack_pointer))).is_none());
+                assert!(vars.insert(id, IlNumber::U32(ctxt.stack_pointer)).is_none());
             }
             if let IlLocation::Static(addr) = info.location {
-                assert!(vars.insert(id, Some(IlNumber::U32(addr))).is_none());
+                assert!(vars.insert(id, IlNumber::U32(addr)).is_none());
             }
         }
 
         assert_eq!(self.args.len(), args.len());
         for (arg_id, arg_value) in self.args.iter().zip(args) {
-            assert!(vars.insert(arg_id, Some(*arg_value)).is_none());
+            assert!(vars.insert(arg_id, *arg_value).is_none());
         }
 
         let mut s_index = 0;
@@ -70,34 +72,61 @@ impl IlFunction {
             let mut inc_pc = true;
 
             let s = &self.body[s_index];
-            dbg!(s);
+            eprintln!("{:?}; [{:?}]", s, vars);
 
             match s {
                 IlInstruction::Unreachable => panic!(),
                 IlInstruction::Comment(_) | IlInstruction::Label(_) => {},
-                IlInstruction::AssignVar { dest, src , size, dest_offset, src_offset} => {
-                    if *dest_offset != 0 || *src_offset != 0 {
-                        todo!();
-                    }
+                IlInstruction::AssignVar { dest, src , size, dest_range, src_range} => {
+                    let value = *vars.get(src).unwrap();
 
-                    if let Some(Some(n)) = vars.get(dest) {
-                        assert_eq!(&n.il_type(), size);
-                    }
+                    let value = if let Some(src_range) = src_range {
+                        match value {
+                            IlNumber::U32(n) => {
+                                assert_eq!(src_range.len(), 1);
+                                let b= n.to_le_bytes()[src_range.start as usize];
+                                IlNumber::U8(b.into())
+                            }
+                            IlNumber::U8(_) => panic!(),
+                        }
+                    } else {
+                        value
+                    };
 
-                    let value = vars.get(src).unwrap().unwrap();
-                    assert_eq!(&value.il_type(), size);
-                    vars.insert(dest, Some(value));
+                    let entry = vars.entry(dest);
+
+                    match (entry, dest_range) {
+                        (Entry::Vacant(_), Some(_)) => panic!("Cannot write to subrange of uninitialized value."),
+                        (Entry::Vacant(emtpy), None) => {
+                            emtpy.insert(value);
+                        },
+                        (Entry::Occupied(mut existing), None) => {
+                            assert_eq!(existing.get().il_type(), *size);
+                            existing.insert(value);
+                        },
+                        (Entry::Occupied(mut existing), Some(dest_range)) => {
+                            assert_eq!(dest_range.len(), 1);
+                            match (&value, existing.get_mut()) {
+                                (IlNumber::U8(value), &mut IlNumber::U32(ref mut n)) => {
+                                    let mut bytes = n.to_le_bytes();
+                                    bytes[dest_range.start as usize] = *value;
+                                    *n = u32::from_le_bytes(bytes);
+                                }
+                                other => panic!("{:?}", other),
+                            };
+                        }
+                    }
                 },
                 IlInstruction::AssignNumber { dest, src} => {
 
-                    if let Some(Some(n)) = vars.get(dest) {
+                    if let Some(n) = vars.get(dest) {
                         assert_eq!(n.il_type(), src.il_type());
                     }
 
-                    vars.insert(dest, Some(*src));
+                    vars.insert(dest, *src);
                 },
                 IlInstruction::AssignUnary { dest, op, src } => {
-                    let src = vars.get(src).unwrap().unwrap();
+                    let src = vars.get(src).unwrap();
                     let result = match src {
                         IlNumber::U32(n) => {
                             IlNumber::U32(match op {
@@ -112,15 +141,13 @@ impl IlFunction {
                             })
                         }
                     };
-                    vars.insert(dest, Some(result));
+                    vars.insert(dest, result);
                 },
                 IlInstruction::AssignBinary { dest, op, src1, src2 } => {
-                    let src1 = vars.get(src1)
-                        .expect(&format!("Could not find {:?}.", &src1))
-                        .expect(&format!("{:?} has no value.", &src1));
-                    let src2 = vars.get(src2)
-                        .expect(&format!("Could not find {:?}.", &src2))
-                        .expect(&format!("{:?} has no value.", &src2));                
+                    let src1 = *vars.get(src1)
+                        .expect(&format!("Could not find {:?}.", &src1));
+                    let src2 = *vars.get(src2)
+                        .expect(&format!("Could not find {:?}.", &src2));                
                     let result = match (src1, src2) {
                         (IlNumber::U8(n1), IlNumber::U8(n2)) => {
                             IlNumber::U8(match op {
@@ -137,7 +164,7 @@ impl IlFunction {
                             IlNumber::U32(match op {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => n1.wrapping_mul(n2) & 0xFFFF,
+                                IlBinaryOp::Multiply => (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF,
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
                                 IlBinaryOp::LeftShift => n1.wrapping_shl(n2),
@@ -147,14 +174,14 @@ impl IlFunction {
                         _ => panic!(),
                     };
                     
-                    vars.insert(dest, Some(result));
+                    vars.insert(dest, result);
                 }
                 IlInstruction::ReadMemory { dest, addr, size } => {
-                    let addr = vars.get(addr).unwrap().unwrap();
+                    let addr = *vars.get(addr).unwrap();
                     if let IlNumber::U32(addr) = addr {
                         match size {
                             IlType::U8 => {
-                                vars.insert(dest, Some(IlNumber::U8(ctxt.mem[&addr])));
+                                vars.insert(dest, IlNumber::U8(ctxt.mem[&addr]));
                             }
                             IlType::U32 => {
                                 assert_eq!(0, addr % 4);
@@ -164,7 +191,7 @@ impl IlFunction {
                                     ctxt.mem[&(addr+2)],
                                     ctxt.mem[&(addr+3)],
                                 ]);
-                                vars.insert(dest, Some(IlNumber::U32(r)));
+                                vars.insert(dest, IlNumber::U32(r));
                             }
                         }
                     } else {
@@ -172,8 +199,8 @@ impl IlFunction {
                     }
                 }
                 IlInstruction::WriteMemory { addr, src, size} => {
-                    let src = vars[src].unwrap();
-                    let addr = vars.get(&addr).unwrap().unwrap();
+                    let src = vars[src];
+                    let addr = vars[addr];
                     if let IlNumber::U32(addr) = addr {
                         match src {
                             IlNumber::U8(n) => {
@@ -199,8 +226,8 @@ impl IlFunction {
                     s_index = self.find_label(label).unwrap();
                 },
                 IlInstruction::IfThenElse { left, op, right, then_label, else_label } => {
-                    let left = vars[left].unwrap();
-                    let right = vars[right].unwrap();
+                    let left = vars[left];
+                    let right = vars[right];
                     let condition_true = match (left, right) {
                         (IlNumber::U8(left), IlNumber::U8(right)) => {
                             match op {
@@ -230,23 +257,23 @@ impl IlFunction {
                 },
                 IlInstruction::Call { ret, f, args } => {
                     let f = &ctxt.program.functions[f];
-                    let args: Vec<_> = args.iter().map(|a| vars[a].unwrap()).collect();
+                    let args: Vec<_> = args.iter().map(|a| vars[a]).collect();
                     let result = f.simulate(ctxt, &args);
                     match (result, ret) {
                         (Some(result), Some(ret)) => {
-                            vars.insert(ret, Some(result));
+                            vars.insert(ret, result);
                         }
                         (None, None) => {}
                         _ => panic!("Callee '{}' returned {:?}, but {:?} was expected.", f.id.0, result, f.ret),
                     }
                 },
                 IlInstruction::Return { val } => {
-                    return val.as_ref().map(|v| vars[v].unwrap());
+                    return val.as_ref().map(|v| vars[v]);
                 },
                 IlInstruction::TtyIn { .. } => todo!(),
                 IlInstruction::TtyOut { .. } => todo!(),
                 IlInstruction::Resize { dest, dest_size, src, src_size } => {
-                    let src = vars.get(src).unwrap().unwrap();
+                    let src = vars[src];
                     assert_eq!(&src.il_type(), src_size);
                     let n = match (dest_size, src) {
                         (IlType::U32, IlNumber::U8(n)) => IlNumber::U32(n as u32),
@@ -254,10 +281,10 @@ impl IlFunction {
                         _ => panic!(),
                     };
                     
-                    vars.insert(dest, Some(n));
+                    vars.insert(dest, n);
                 },
                 IlInstruction::GetFrameAddress { dest } => {
-                    vars.insert(dest, Some(IlNumber::U32(ctxt.stack_pointer)));
+                    vars.insert(dest, IlNumber::U32(ctxt.stack_pointer));
                 },
             }
 
@@ -265,7 +292,7 @@ impl IlFunction {
                 s_index += 1;
             }
 
-            println!("{:?}", &vars);
+            // println!("{:?}", &vars);
         }
     }
 }
@@ -351,6 +378,20 @@ mod tests {
                 (vec![0u8.into(), 128u8.into()],0u32.into()),
                 (vec![8u8.into(), 8u8.into()],64u32.into()),
                 (vec![51u8.into(), 5u8.into()],255u32.into()),
+            ]);
+    }
+
+    #[test]
+    fn mul16_32() {
+        test_var_inputs(
+            "mul16_32",
+            include_str!("../../programs/mul.j"),
+            &[
+                (vec![0u32.into(), 0u32.into()], 0u32.into()),
+                (vec![16u32.into(), 16u32.into()], 256u32.into()),
+                (vec![100u32.into(), 100u32.into()], 10000u32.into()),
+                (vec![1000u32.into(), 1000u32.into()], 1_000_000u32.into()),
+                (vec![0xABCDu32.into(), 0x1234u32.into()], 0xC37_4FA4u32.into()),
             ]);
     }
 

@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use crate::*;
 use crate::il::*;
 use crate::optimize::optimize_assembly;
@@ -132,11 +134,21 @@ impl<'a,'b> FunctionContext<'a,'b> {
         }));
     }
 
-    fn emit_var_to_reg(&mut self, dest_regs: &Vec<u8>, var: &IlVarId, size: &IlType, source: String) {
-        let byte_count = self.byte_count(var);
-        assert_eq!(byte_count, size.byte_count());
-        let src_regs = self.find_registers(var);
-        assert_eq!(src_regs.len(), byte_count as usize);
+    fn emit_var_to_reg(&mut self, dest_regs: &[u8], src: &IlVarId, src_range: &Option<Range<u32>>, size: &IlType, source: String) {
+        let byte_count: u8 = size.byte_count().try_into().unwrap();
+        assert_eq!(byte_count as usize, dest_regs.len());
+        
+        let src_regs = self.find_registers(src);
+
+        let src_regs = if let Some(src_range) = src_range {
+            let src_range = (src_range.start as usize)..(src_range.end as usize);
+            &src_regs[src_range]
+        } else {
+            &src_regs
+        };
+        
+        assert_eq!(byte_count as usize, src_regs.len());
+        
         let opcode = match byte_count {
             1 => Opcode::Copy8,
             4 => Opcode::Copy32,
@@ -282,12 +294,15 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let dest_regs = ctxt.find_registers(dest);
                     ctxt.emit_num_to_reg(&dest_regs, src, &src.il_type(), source);
                 }
-                IlInstruction::AssignVar { dest, src, size, src_offset, dest_offset} => {
-                    if *src_offset != 0 || *dest_offset != 0 {
-                        todo!();
-                    }
+                IlInstruction::AssignVar { dest, src, size, src_range, dest_range} => {
                     let dest_regs = ctxt.find_registers(dest);
-                    ctxt.emit_var_to_reg(&dest_regs, src, size, source);
+                    let dest_regs = if let Some(dest_range) = dest_range {
+                        let dest_range = (dest_range.start as usize)..(dest_range.end as usize);
+                        &dest_regs[dest_range]
+                    } else {
+                        &dest_regs
+                    };
+                    ctxt.emit_var_to_reg(dest_regs, src, src_range, size, source);
                 },
                 IlInstruction::AssignUnary { dest:_, op:_, src:_ } => todo!(),
                 IlInstruction::AssignBinary { dest, op, src1, src2 } => {
@@ -560,8 +575,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         assert_eq!(arg_size, byte_count);
                         let il_type: IlType = byte_count.try_into().unwrap();
                         let i: u8 = i.try_into().unwrap();
-                        let dest_regs: Vec<u8> = ((4u8*i)..(4*i+4)).collect();
-                        ctxt.emit_var_to_reg(&dest_regs, arg_value, &il_type, 
+                        let byte_count: u8 = byte_count.try_into().unwrap();
+                        let dest_regs: Vec<u8> = ((4u8*i)..(4u8*i+byte_count)).collect();
+                        ctxt.emit_var_to_reg(&dest_regs, arg_value, &None, &il_type, 
                             format!("Arg{}[{}]={} {}", i, arg_name.0, arg_value.0, source));
                     }
 
