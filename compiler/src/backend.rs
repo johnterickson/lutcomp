@@ -8,6 +8,7 @@ pub struct BackendProgram<'a> {
     pub frontend_context: &'a ProgramContext,
     pub il: &'a IlProgram,
     pub function_info: BTreeMap<IlFunctionId, FunctionInfo>,
+    next_round_robin_reg: u8,
 }
 
 #[derive(Debug)]
@@ -72,7 +73,26 @@ impl<'a> BackendProgram<'a> {
     fn alloc_registers(&mut self, name: &IlVarId, liveness: &IlLiveness, info: &mut FunctionInfo, count: u8, align: u8) -> Option<Vec<u8>> {
         let mut alloced = Vec::new();
 
-        let reg_array: Vec<_> = info.available_registers.iter().cloned().collect();
+        let color = liveness.colors[name];
+
+        // first try to reuse
+        for (v, regs) in &info.register_assignments {
+            if regs.len() != count as usize { continue; }
+            if regs[0] % align != 0 { continue; }
+            if liveness.colors[v] == color {
+                //println!("Reusing {}'s regs: {:?} for {} as they are both color {}.", v.0, regs, name.0, color);
+                return Some(regs.clone());
+            }
+        }
+
+        let available_reg_count = info.available_registers.len();
+        let reg_array: Vec<u8> = info.available_registers.iter()
+            .cycle()
+            .skip_while(|r| **r < self.next_round_robin_reg)
+            .take(available_reg_count)
+            .cloned()
+            .collect();
+
         for w in reg_array.as_slice().windows(count as usize) {
             if are_regs_aligned_and_contiguous(w) {
                 alloced.extend(w.iter().cloned());
@@ -83,24 +103,16 @@ impl<'a> BackendProgram<'a> {
         if alloced.len() != 0 {
             for r in &alloced {
                 info.available_registers.remove(&r);
+                self.next_round_robin_reg = r.wrapping_add(1);
+            }
+
+            if self.next_round_robin_reg < 0x10 {
+                self.next_round_robin_reg = 0x10;
             }
     
             Some(alloced)
         } else {
-            // use the regs of another var that doesn't interfere
-            let color = liveness.colors[name];
-
-            let mut reused = None;
-            for (v, regs) in &info.register_assignments {
-                if regs.len() != count as usize { continue; }
-                if regs[0] % align != 0 { continue; }
-                if liveness.colors[v] == color {
-                    // println!("Reusing {}'s regs: {:?} for {} as they are both color {}.", v.0, regs, name.0, color);
-                    reused = Some(regs.clone());
-                    break;
-                }
-            }
-            reused
+            None
         }
     }
 }
@@ -191,7 +203,7 @@ pub fn emit_assembly<'a>(ctxt: &'a ProgramContext, program: &'a IlProgram) -> (B
         frontend_context: ctxt,
         il: program,
         function_info: BTreeMap::new(),
-        // next_round_robin_reg: 0x10
+        next_round_robin_reg: 0x10,
     };
 
     ctxt.create_function_infos();

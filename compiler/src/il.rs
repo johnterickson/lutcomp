@@ -1401,6 +1401,15 @@ impl<'a> IlLiveness<'a> {
             }
         }
 
+        for v1 in &l.f.args {
+            for v2 in &l.f.args {
+                if v1 != v2 {
+                    l.interferes.get_mut(v1).unwrap().insert(v2);
+                    l.interferes.get_mut(v2).unwrap().insert(v1);
+                }
+            }
+        }
+
         for (i, inst) in l.f.body.iter().enumerate() {
             for x in &l.kill[i] {
                 for y in  &l.outs[i] {
