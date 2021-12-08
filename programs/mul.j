@@ -18,18 +18,31 @@ fn mul16_32(a:usize, b:usize) -> usize {
     c = (c + f);
 
     d: usize = (a * (b[1] AS usize));
+    e: usize = ((a[1] AS usize) * b);
+    d = (d + e);
     d[3] = d[2];
     d[2] = d[1];
     d[1] = d[0];
     d[0] = 0;
-    c = (c + d);
-    
-    e: usize = ((a[1] AS usize) * b);
-    e[3] = e[2];
-    e[2] = e[1];
-    e[1] = e[0];
-    e[0] = 0;
-    c = (c + e);
+    return (c + d);
+}
 
-    return (c); 
+fn mul32_32(a:usize, b:usize) -> usize {
+    c: usize = mul16_32(a, b);
+
+    a_hi: usize = 0x0;
+    a_hi[1] = a[3];
+    a_hi[0] = a[2];
+
+    b_hi: usize = 0x0;
+    b_hi[1] = b[3];
+    b_hi[0] = b[2];
+
+    d: usize = (mul16_32(a_hi, b) + mul16_32(a, b_hi));
+    d[3] = d[1];
+    d[2] = d[0];
+    d[1] = 0;
+    d[0] = 0;
+    return (c + d);
+
 }
