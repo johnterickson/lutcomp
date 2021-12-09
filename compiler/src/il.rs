@@ -566,7 +566,7 @@ impl IlFunction {
     }
 
     fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
-        println!("START {:?}", e);
+        // println!("START {:?}", e);
         match e {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);

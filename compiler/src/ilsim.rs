@@ -791,8 +791,23 @@ mod tests {
             "test_echoline",
             include_str!("../../programs/echoline.j"),
             &[
-                ("0\n",0x0,0x0,"0\n"),
-                ("01\n",0x0,0x0,"01\n"),
+                ("0\n",0x0,0x0,"0"),
+                ("01\n",0x0,0x0,"01"),
+                ]);
+    }
+
+    #[test]
+    fn print_dec() {
+        test_tty(
+            "print_dec_test",
+            include_str!("../../programs/rpn.j"),
+            &[
+                ("",0,0,"0"),
+                ("",9,0,"9"),
+                ("",10,0,"10"),
+                ("",99,0,"99"),
+                ("",100,0,"100"),
+                ("",255,0,"255"),
                 ]);
     }
 
@@ -802,7 +817,11 @@ mod tests {
             "main",
             include_str!("../../programs/rpn.j"),
             &[
+                ("0\nq\n",0x0,0x0,""),
                 ("0\n0\n+\nq\n",0x0,0x0,"0\n"),
+                ("1\n2\n+\nq\n",0x0,0x0,"3\n"),
+                ("5\n2\n-\nq\n",0x0,0x0,"3\n"),
+                ("3\n4\n*\nq\n",0x0,0x0,"12\n"),
                 ]);
     }
 

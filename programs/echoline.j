@@ -1,16 +1,19 @@
 
 fn readline(buf:&u8) {
     ch: u8 = 0;
-    while (ch != 10) {
+    while (0 == 0) {
         tty: u8 = 0;
         while ((tty & 128) == 0) {
             tty = ttyin;
         }
         ch = (tty & 127);
+        if (ch == 10) {
+            *buf = 0;
+            return;
+        }
         *buf = ch;
         buf = (buf + 0x1);
     }
-    *buf = 0;
 }
 
 fn println(buf: &u8) {
