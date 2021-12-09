@@ -35,12 +35,18 @@ fn main() -> u8 {
     stack_init(&s);
 
     a: u8 = 0;
+    have_num: u8 = 0;
 
     while (0 == 0) {
         
         ch: u8 = getchar();
 
         if (ch == '+') {
+            if (have_num != 0) {
+                stack_push(&s, a);
+                a = 0;
+                have_num = 0;
+            }
             add1 = stack_pop(&s);
             add2 = stack_pop(&s);
             sum: u8 = (add1+add2);
@@ -49,6 +55,11 @@ fn main() -> u8 {
             stack_push(&s, sum);
         }
         else if (ch == '-') {
+            if (have_num != 0) {
+                stack_push(&s, a);
+                a = 0;
+                have_num = 0;
+            }
             sub1 = stack_pop(&s);
             sub2 = stack_pop(&s);
             diff: u8 = (sub2-sub1);
@@ -57,6 +68,11 @@ fn main() -> u8 {
             stack_push(&s, diff);
         }
         else if (ch == '*') {
+            if (have_num != 0) {
+                stack_push(&s, a);
+                a = 0;
+                have_num = 0;
+            }
             mul1 = stack_pop(&s);
             mul2 = stack_pop(&s);
             product: u8 = (mul1*mul2);
@@ -68,11 +84,16 @@ fn main() -> u8 {
             return 0;
         }
         else if (ch == 10) {
-            stack_push(&s, a);
+            if (have_num != 0) {
+                stack_push(&s, a);
+                a = 0;
+                have_num = 0;
+            }
         }
         else if (ch <= '9')
         {
             if (ch >= '0') {
+                have_num = 1;
                 a = (a * 10);
                 a = (a + (ch - '0'));
             }
