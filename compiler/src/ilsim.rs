@@ -396,6 +396,22 @@ mod tests {
     }
 
     #[test]
+    fn mul32_32() {
+        test_var_inputs(
+            "mul32_32",
+            include_str!("../../programs/mul.j"),
+            &[
+                (vec![0u32.into(), 0u32.into()], 0u32.into()),
+                (vec![16u32.into(), 16u32.into()], 256u32.into()),
+                (vec![100u32.into(), 100u32.into()], 10000u32.into()),
+                (vec![1000u32.into(), 1000u32.into()], 1_000_000u32.into()),
+                (vec![0xABCDu32.into(), 0x1234u32.into()], 0xC37_4FA4u32.into()),
+                (vec![0xDEADBEEFu32.into(), 0x1u32.into()], 0xDEADBEEFu32.into()),
+                (vec![10_000u32.into(), 100_000u32.into()], 1_000_000_000u32.into()),
+            ]);
+    }
+
+    #[test]
     fn call_parameterless() {
         test_var_inputs(
             "main",
