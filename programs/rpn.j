@@ -80,6 +80,19 @@ fn main() -> u8 {
             ttyout(10);
             stack_push(&s, product);
         }
+        else if (ch == '/') {
+            if (have_num != 0) {
+                stack_push(&s, a);
+                a = 0;
+                have_num = 0;
+            }
+            div1 = stack_pop(&s);
+            div2 = stack_pop(&s);
+            quotient: u8 = divide(div2,div1);
+            print_dec(quotient);
+            ttyout(10);
+            stack_push(&s, quotient);
+        }
         else if (ch == 'q') {
             return 0;
         }
