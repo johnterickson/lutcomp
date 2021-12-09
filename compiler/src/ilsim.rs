@@ -997,6 +997,20 @@ mod tests {
         assert_eq!(out.as_str(), "Hi_from_RAM!");
     }
 
+    #[test]
+    fn else_if() {
+        test_var_inputs(
+            "else_if",
+            include_str!("../../programs/else_if.j"),
+            &[
+                (vec![0u8.into()], 0u8.into()),
+                (vec![1u8.into()], 1u8.into()),
+                (vec![2u8.into()], 2u8.into()),
+                (vec![3u8.into()], 2u8.into()),
+            ]
+        );
+    }
+
     
     pub fn test_programs_dir() -> PathBuf {
         let mut dir = std::env::current_exe().unwrap();

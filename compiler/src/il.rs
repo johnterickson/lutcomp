@@ -501,21 +501,29 @@ impl IlFunction {
             Statement::VoidExpression { expression } => {
                 let (_, _) = self.alloc_tmp_and_emit_value(ctxt, expression);
             },
-            Statement::IfElse { predicate, when_true, when_false } => {
-                let true_label= self.alloc_label("if true");
-                let false_label= self.alloc_label("if false");
+            Statement::IfElse { if_blocks, else_block } => {
+                assert!(if_blocks.len() >= 1);
+
                 let end_label= self.alloc_label("if end");
 
-                self.emit_comparison(ctxt, predicate, true_label.clone(), false_label.clone());
-
-                self.body.push(IlInstruction::Label(true_label.clone()));
-                for s in when_true {
-                    self.emit_statement(ctxt, s);
+                let mut prev_false = None;
+                for (i, (predicate, when_true)) in if_blocks.iter().enumerate() {
+                    if let Some(prev_false) = prev_false.take() {
+                        self.body.push(IlInstruction::Label(prev_false));
+                    }
+                    let true_label = self.alloc_label(&format!("if true {}", i));
+                    let false_label = self.alloc_label(&format!("if else {}", i));
+                    self.emit_comparison(ctxt, predicate, true_label.clone(), false_label.clone());
+                    self.body.push(IlInstruction::Label(true_label));
+                    for s in when_true {
+                        self.emit_statement(ctxt, s);
+                    }
+                    self.body.push(IlInstruction::Goto(end_label.clone()));
+                    prev_false = Some(false_label);
                 }
-                self.body.push(IlInstruction::Goto(end_label.clone()));
 
-                self.body.push(IlInstruction::Label(false_label.clone()));
-                for s in when_false {
+                self.body.push(IlInstruction::Label(prev_false.unwrap()));
+                for s in else_block {
                     self.emit_statement(ctxt, s);
                 }
 

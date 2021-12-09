@@ -40,9 +40,11 @@ impl FunctionDefinition {
             Statement::Declare {scope, name: local, var_type} => {
                 visitor(local, Some(scope), Some(var_type));
             }
-            Statement::IfElse{ predicate:_, when_true, when_false } => {
-                for s in when_true {
-                    FunctionDefinition::walk_decls(ctxt, s, visitor);
+            Statement::IfElse{ if_blocks, else_block: when_false } => {
+                for (_, when_true) in if_blocks {
+                    for s in when_true {
+                        FunctionDefinition::walk_decls(ctxt, s, visitor);
+                    }
                 }
                 for s in when_false {
                     FunctionDefinition::walk_decls(ctxt, s, visitor);

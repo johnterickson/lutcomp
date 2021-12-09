@@ -59,8 +59,10 @@ array_type = { number_type ~ "[" ~ expression ~ "]" }
 variable_type = {array_type | number_type | pointer_type | ident}
 variable_decl = {ident ~ ":" ~ variable_type}
 
+if_clause = {"if" ~ expression ~ "{"~ statement* ~ "}"}
+else_if_clause = {"else if" ~ expression ~ "{"~ statement* ~ "}"}
 else_clause = {"else" ~ "{"~ statement* ~ "}"}
-if_else_statement = { "if" ~ expression ~ "{" ~ statement* ~ "}" ~ else_clause? }
+if_else_statement = { if_clause ~ else_if_clause* ~ else_clause? }
 declare_statement = { variable_decl ~ ";"}
 static_statement = { "static" ~ variable_decl ~ ";"}
 while_loop = { "while" ~ expression ~ "{" ~ statement* ~ "}" }
