@@ -37,7 +37,7 @@ fn heap_is_entry_bad(head: &heap_entry, alloc: usize) -> u8 {
     if (head->free == 0) {
         return 1;
     }
-    if (cmp_usize(head->len,alloc) == 255) {
+    if (head->len < alloc) {
         return 1;
     }
     return 0;

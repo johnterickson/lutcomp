@@ -797,6 +797,16 @@ mod tests {
     }
 
     #[test]
+    fn rpn() {
+        test_tty(
+            "main",
+            include_str!("../../programs/rpn.j"),
+            &[
+                ("0\n0\n+\nq\n",0x0,0x0,"0\n"),
+                ]);
+    }
+
+    #[test]
     fn local_array() {
         let (_ctxt, il) = emit_il(
             "main",
