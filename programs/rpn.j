@@ -22,15 +22,23 @@ fn stack_push(s: &Stack, n: u8) {
     s->first_free = (s->first_free + 1);
 }
 
+fn getchar() -> u8 {
+    tty: u8 = 0;
+    while ((tty & 128) == 0) {
+        tty = ttyin;
+    }
+    return (tty & 127);
+}
+
 fn main() -> u8 {
     s: Stack;
     stack_init(&s);
 
-    line: u8[10];
+    a: u8 = 0;
+
     while (0 == 0) {
         
-        readline(&(line[0]));
-        ch: u8 = line[0];
+        ch: u8 = getchar();
 
         if (ch == '+') {
             add1 = stack_pop(&s);
@@ -59,18 +67,15 @@ fn main() -> u8 {
         else if (ch == 'q') {
             return 0;
         }
-        else
-        {
-            a = 0;
-            p_ch: &u8 = &(line[0]);
-            while (ch != 0) {
-                a = (a * 10);
-                b: u8 = (ch - '0');
-                a = (a + b);
-                p_ch = (p_ch + 0x1);
-                ch = *p_ch;
-            }
+        else if (ch == 10) {
             stack_push(&s, a);
+        }
+        else if (ch <= '9')
+        {
+            if (ch >= '0') {
+                a = (a * 10);
+                a = (a + (ch - '0'));
+            }
         }
     }
 }
