@@ -190,8 +190,19 @@ pub enum Opcode {
     ShiftRight32_2 = 0xB5, // 
     ShiftRight32_3 = 0xB6, // 
 
-    HaltRAM = 0xCC,
-    Halt = 0xFF,
+    HaltRAM = 0xCC, // imm32 halt code
+    Halt = 0xFF, // imm32 halt code
+}
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u32)]
+pub enum HaltCode {
+    Success = 0x0000_0000,
+    TestFail = 0x0000_0001,
+    CompilerUnreachable = 0x1000_0000,
+    BadInstructionRAM = 0xCCCC_CCCC,
+    BadInstructionROM = 0xFFFF_FFFF,
 }
 
 pub enum RegOperation {
@@ -248,8 +259,8 @@ impl Opcode {
             Opcode::And32 => &[1,1,1],
             Opcode::OrImm32 => &[1,4],
             Opcode::AndImm32 => &[1,4],
-            Opcode::Halt => &[],
-            Opcode::HaltRAM => &[],
+            Opcode::Halt => &[4],
+            Opcode::HaltRAM => &[4],
             Opcode::ShiftRight32_1 => &[1,1,1],
             Opcode::ShiftRight32_2 => &[],
             Opcode::ShiftRight32_3 => &[],

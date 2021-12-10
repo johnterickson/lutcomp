@@ -396,7 +396,7 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(7, u32::from_le_bytes(c.pc));
+        assert_eq!(7+4, u32::from_le_bytes(c.pc));
     }
 
     #[test]
@@ -422,7 +422,7 @@ mod tests {
         while c.step() {}
 
         assert_eq!(0xAA, c.reg_u8(0));
-        assert_eq!(0x10, u32::from_le_bytes(c.pc));
+        assert_eq!(0x14, u32::from_le_bytes(c.pc));
     }
 
     #[test]
@@ -438,7 +438,7 @@ mod tests {
         rom.push(Opcode::LoadImm8 as u8);
         rom.push(0x00);
         rom.push(0xBB);
-        let expected_pc = rom.len() as u32;
+        let expected_pc = rom.len() as u32 + 4;
         for _ in 0..100 {
             rom.push(Opcode::Halt as u8);
         }
@@ -467,7 +467,7 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(7, u32::from_le_bytes(c.pc));
+        assert_eq!(7+4, u32::from_le_bytes(c.pc));
     }
 
     #[test]
@@ -486,7 +486,7 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(7, u32::from_le_bytes(c.pc));
+        assert_eq!(7+4, u32::from_le_bytes(c.pc));
     }
 
     #[test]

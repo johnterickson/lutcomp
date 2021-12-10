@@ -184,10 +184,10 @@ fn make_test() -> Image {
     }
 
     text!(lines, "TESTS COMPLETE\n");
-    add!(lines, Opcode::Halt, vec![]);
+    add!(lines, Opcode::Halt, vec![Value::Constant32(HaltCode::Success as u32)]);
     lines.push(AssemblyInputLine::Label(fail_label.to_owned()));
     text!(lines, "FAIL\n");
-    add!(lines, Opcode::Halt, vec![]);
+    add!(lines, Opcode::Halt, vec![Value::Constant32(HaltCode::TestFail as u32)]);
 
     assemble::assemble(lines)
 }

@@ -244,7 +244,12 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
     // return is in r00
 
     lines.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.il.entry.0)));
-    lines.push(AssemblyInputLine::from_str("halt"));
+    lines.push(AssemblyInputLine::Instruction(Instruction {
+        opcode: Opcode::Halt,
+        args: vec![Value::Constant32(HaltCode::Success as u32)],
+        source: format!("Halting after return from entry function."),
+        resolved: None,
+    }));
 
 
     for f in ctxt.il.functions.values() {
@@ -299,7 +304,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 IlInstruction::Unreachable => {
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                         opcode: Opcode::Halt,
-                        args: vec![],
+                        args: vec![Value::Constant32(HaltCode::CompilerUnreachable as u32)],
                         source,
                         resolved: None,
                     }));
