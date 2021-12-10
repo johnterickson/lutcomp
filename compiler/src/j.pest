@@ -14,10 +14,11 @@ ttyin = { "ttyin" }
 char_literal_value = { ANY }
 char_literal = { "'" ~ char_literal_value ~ "'" }
 
-arithmetic = _{ add | subtract | multiply | or | and | left_shift | right_shift }
+arithmetic = _{ add | subtract | multiply | divide | or | and | left_shift | right_shift }
 add      = { "+" }
 subtract = { "-" }
 multiply = { "*" }
+divide = { "/" }
 or = { "|" }
 and = { "&" }
 left_shift = { "<<" }

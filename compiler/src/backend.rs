@@ -60,7 +60,9 @@ impl<'a> BackendProgram<'a> {
                     let regs = self.alloc_registers(name, &liveness, &mut info, regs_needed, regs_needed)
                         .expect(&format!("Could not allocate a register for {:#?}", &f.body));
                     for r in &regs {
-                        info.registers_used.insert(*r);
+                        if !(REG_SP..REG_SP+4).contains(r) {
+                            info.registers_used.insert(*r);
+                        }
                     }
                     assert!(info.register_assignments.insert(name.clone(), regs).is_none());
                 }
@@ -71,12 +73,18 @@ impl<'a> BackendProgram<'a> {
     }
 
     fn alloc_registers(&mut self, name: &IlVarId, liveness: &IlLiveness, info: &mut FunctionInfo, count: u8, align: u8) -> Option<Vec<u8>> {
+
+        if name.0 == IlVarId::frame_pointer() {
+            return Some((REG_SP..(REG_SP+4)).collect());
+        }
+
         let mut alloced = Vec::new();
 
         let color = liveness.colors[name];
 
         // first try to reuse
         for (v, regs) in &info.register_assignments {
+            if v.0 == IlVarId::frame_pointer() { continue; }
             if regs.len() != count as usize { continue; }
             if regs[0] % align != 0 { continue; }
             if liveness.colors[v] == color {
@@ -109,7 +117,7 @@ impl<'a> BackendProgram<'a> {
             if self.next_round_robin_reg < 0x10 {
                 self.next_round_robin_reg = 0x10;
             }
-    
+
             Some(alloced)
         } else {
             None
@@ -149,7 +157,7 @@ impl<'a,'b> FunctionContext<'a,'b> {
     fn emit_var_to_reg(&mut self, dest_regs: &[u8], src: &IlVarId, src_range: &Option<Range<u32>>, size: &IlType, source: String) {
         let byte_count: u8 = size.byte_count().try_into().unwrap();
         assert_eq!(byte_count as usize, dest_regs.len());
-        
+
         let src_regs = self.find_registers(src);
 
         let src_regs = if let Some(src_range) = src_range {
@@ -158,9 +166,9 @@ impl<'a,'b> FunctionContext<'a,'b> {
         } else {
             &src_regs
         };
-        
+
         assert_eq!(byte_count as usize, src_regs.len());
-        
+
         let opcode = match byte_count {
             1 => Opcode::Copy8,
             4 => Opcode::Copy32,
@@ -250,12 +258,12 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
         ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &f.id.0)));
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Ret {:?}", f.ret)));
-        for (i, arg_name) in f.args.iter().enumerate() { 
+        for (i, arg_name) in f.args.iter().enumerate() {
             ctxt.lines.push(AssemblyInputLine::Comment(format!("Arg{}={}", i, arg_name.0)));
         }
         for (var_name, var_info) in &f.vars {
             let reg_assignment = ctxt.f_info.register_assignments.get(var_name);
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("Var {} ({}) {:?} {:?}", 
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("Var {} ({}) {:?} {:?}",
                 var_name.0, var_info.description, var_info.location, reg_assignment)));
         }
 
@@ -269,7 +277,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 resolved: None,
             }));
         }
-        
+
         for (i, arg_name) in f.args.iter().enumerate() {
             let size = ctxt.byte_count(arg_name);
             let il_type = size.try_into().unwrap();
@@ -321,7 +329,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let src1_regs = ctxt.find_registers(src1);
                     let byte_count = ctxt.byte_count(src1);
                     let size = byte_count.try_into().unwrap();
-                    
+
                     assert_eq!(src1_regs.len(), byte_count as usize);
 
                     let dest_size = ctxt.byte_count(dest);
@@ -336,7 +344,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
                     match op {
                         IlBinaryOp::LeftShift | IlBinaryOp::RightShift => todo!(),
-                        IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr => {
+                        IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr | IlBinaryOp::Divide=> {
 
                             let opcode = match (op, size) {
                                 (IlBinaryOp::Add, IlType::U8) => Opcode::Add8NoCarryIn,
@@ -345,6 +353,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::And32,
                                 (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::Or8,
                                 (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::Or32,
+                                (IlBinaryOp::Divide, IlType::U8) => Opcode::Divide8,
                                 _ => panic!(),
                             };
 
@@ -589,7 +598,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         let i: u8 = i.try_into().unwrap();
                         let byte_count: u8 = byte_count.try_into().unwrap();
                         let dest_regs: Vec<u8> = ((4u8*i)..(4u8*i+byte_count)).collect();
-                        ctxt.emit_var_to_reg(&dest_regs, arg_value, &None, &il_type, 
+                        ctxt.emit_var_to_reg(&dest_regs, arg_value, &None, &il_type,
                             format!("Arg{}[{}]={} {}", i, arg_name.0, arg_value.0, source));
                     }
 
@@ -600,8 +609,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let target_regs = target_info.registers_used.clone();
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by callee: {:?}", target_regs)));
 
+                    // TODO: recurisively get a list of registers used and only save the intersection
 
-                    let regs_to_save: Vec<_> = target_regs.intersection(&my_regs).cloned().collect();
+                    let regs_to_save: Vec<_> = target_regs.iter().cloned().collect();
+                    // let regs_to_save: Vec<_> = target_regs.iter().cloned().collect();
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers to save: {:?}", regs_to_save)));
 
                     for r in regs_to_save.iter().rev() {
@@ -717,11 +728,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         args: vec![Value::Register(src_regs[0])],
                         resolved: None,
                     }));
-                },
-                IlInstruction::GetFrameAddress { dest } => {
-                    let src_regs = (REG_SP..(REG_SP+4)).collect();
-                    let size = IlType::U32;
-                    ctxt.emit_reg_to_var(dest, &src_regs, &size, source);
                 },
             }
         }

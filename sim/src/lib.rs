@@ -1074,6 +1074,22 @@ mod tests {
     }
 
     #[test]
+    fn div8() {
+        let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
+        for a in &values {
+            for b in &values {
+                if *b == 0 { continue; }
+                reg8(
+                    Opcode::Divide8,
+                    false, *a, *b,
+                    a.wrapping_div(*b),
+                    false,
+                );
+            }
+        }
+    }
+
+    #[test]
     fn mul8() {
         let values = [0u8, 1, 2, 3, 4, 27, 0x80, 0xFE, 0xFF];
         for a in &values {

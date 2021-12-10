@@ -1,6 +1,7 @@
 use crate::*;
 use crate::il::*;
 
+use std::collections::VecDeque;
 use std::collections::btree_map::Entry;
 
 struct SimulationContext<'a> {
@@ -9,6 +10,7 @@ struct SimulationContext<'a> {
     entry_args: &'a [IlNumber],
     stack_pointer: u32,
     mem: BTreeMap<u32, u8>,
+    tty_in: VecDeque<u8>,
 }
 
 impl<'a> SimulationContext<'a> {
@@ -26,6 +28,7 @@ impl IlProgram {
             entry_args: args,
             stack_pointer: u32::max_value()-4+1,
             mem: BTreeMap::new(),
+            tty_in: VecDeque::new(),
         }
     }
 
@@ -67,12 +70,16 @@ impl IlFunction {
             assert!(vars.insert(arg_id, *arg_value).is_none());
         }
 
+        let frame_pointer = IlVarId(IlVarId::frame_pointer().to_owned());
+
         let mut s_index = 0;
         loop {
+            vars.insert(&frame_pointer, IlNumber::U32(ctxt.stack_pointer));
+
             let mut inc_pc = true;
 
             let s = &self.body[s_index];
-            eprintln!("{:?}; [{:?}]", s, vars);
+            // println!("{:?}; [{:?}]", s, vars);
 
             match s {
                 IlInstruction::Unreachable => panic!(),
@@ -154,6 +161,10 @@ impl IlFunction {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
                                 IlBinaryOp::Multiply => n1.wrapping_mul(n2),
+                                IlBinaryOp::Divide => {
+                                    assert_ne!(0, n2);
+                                    n1.wrapping_div(n2)
+                                },
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
                                 IlBinaryOp::LeftShift => n1.wrapping_shl(n2.into()),
@@ -169,6 +180,7 @@ impl IlFunction {
                                 IlBinaryOp::BitwiseOr => n1 | n2,
                                 IlBinaryOp::LeftShift => n1.wrapping_shl(n2),
                                 IlBinaryOp::RightShift => n1.wrapping_shr(n2),
+                                &IlBinaryOp::Divide => todo!(),
                             })
                         }
                         _ => panic!(),
@@ -270,8 +282,25 @@ impl IlFunction {
                 IlInstruction::Return { val } => {
                     return val.as_ref().map(|v| vars[v]);
                 },
-                IlInstruction::TtyIn { .. } => todo!(),
-                IlInstruction::TtyOut { .. } => todo!(),
+                IlInstruction::TtyIn { dest } => {
+                    {
+                        let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
+                        if let Ok(line) = stdin_channel.try_recv() {
+                            for c in line.chars() {
+                                ctxt.tty_in.push_back(c as u8);
+                            }
+                        }
+                    }
+                    let peek = ctxt.tty_in.pop_front().map_or(0x00, |c| 0x80 | c);
+                    match vars.insert(dest, IlNumber::U8(peek)) {
+                        Some(existing) => assert_eq!(existing.il_type(), IlType::U8),
+                        None => {}
+                    }
+                }
+                IlInstruction::TtyOut { src } => {
+                    let c: u8 = vars[src].as_u32().try_into().unwrap();
+                    print!("{}", c as char);
+                },
                 IlInstruction::Resize { dest, dest_size, src, src_size } => {
                     let src = vars[src];
                     assert_eq!(&src.il_type(), src_size);
@@ -282,9 +311,6 @@ impl IlFunction {
                     };
                     
                     vars.insert(dest, n);
-                },
-                IlInstruction::GetFrameAddress { dest } => {
-                    vars.insert(dest, IlNumber::U32(ctxt.stack_pointer));
                 },
             }
 
@@ -737,22 +763,6 @@ mod tests {
         assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
     }
 
-
-    #[test]
-    fn divide() {
-        let (_ctxt, il) = emit_il(
-            "divide",
-            include_str!("../../programs/divide.j"),
-            &test_programs_dir());
-
-        assert_eq!(il.simulate(&[1u8.into(), 1u8.into()]), 1u8.into());
-        assert_eq!(il.simulate(&[2u8.into(), 1u8.into()]), 2u8.into());
-        assert_eq!(il.simulate(&[1u8.into(), 2u8.into()]), 0u8.into());
-        assert_eq!(il.simulate(&[100u8.into(), 10u8.into()]), 10u8.into());
-        assert_eq!(il.simulate(&[201u8.into(), 100u8.into()]), 2u8.into());
-    }
-
-    
     #[test]
     fn print_hex() {
         test_tty(
@@ -793,6 +803,7 @@ mod tests {
             &[
                 ("0\n",0x0,0x0,"0"),
                 ("01\n",0x0,0x0,"01"),
+                ("hello\n",0x0,0x0,"hello"),
                 ]);
     }
 
@@ -968,6 +979,55 @@ mod tests {
     }
 
     #[test]
+    fn bootram_sanity() {
+        let a = RAM_MIN + 1024;
+        let (_loader_ctxt, _loader_il, loader_image) = assemble(
+            "main",
+            include_str!("../../programs/bootram.j"));
+
+        let mut c = Computer::from_image(Cow::Owned(loader_image), false);
+
+        for ch in (format!("s{:08x}\n", a)).chars() {
+            c.tty_in.push_back(ch as u8);
+        }
+
+        c.tty_in.push_back('a' as u8);
+        c.tty_in.push_back('\n' as u8);
+
+        for b in &[0xEF,0xBE, 0xAD,0xDE] {
+            for ch in (format!("w{:02x}\n", b)).chars() {
+                c.tty_in.push_back(ch as u8);
+            }
+        }
+
+        c.tty_in.push_back('q' as u8);
+        c.tty_in.push_back('\n' as u8);
+
+        println!("{}", std::str::from_utf8(c.tty_in.as_slices().0).unwrap());
+        println!("{}", std::str::from_utf8(c.tty_in.as_slices().1).unwrap());
+
+        let mut last_pc = u32::from_le_bytes(c.pc);
+        let mut running: bool = true;
+        while running {
+            running = c.step();
+            let pc = u32::from_le_bytes(c.pc);
+            if pc != last_pc {
+                print_state(&c);
+                last_pc = pc;
+            }
+        }
+
+        let mut out = String::new();
+        for c in &c.tty_out {
+            out.push(*c as char);
+        }
+
+        assert_eq!(out.as_str(), &format!("{:08x}\n", RAM_MIN + 1024));
+
+        assert_eq!(0xDEADBEEF, c.mem_word(RAM_MIN + 1024));
+    }
+
+    #[test]
     fn bootram() {
         let (_ctxt, _ram_il, ram_image) = assemble(
             "main", 
@@ -983,12 +1043,13 @@ mod tests {
             c.tty_in.push_back(ch as u8);
         }
 
-        for b in ram_image.bytes {
+        for b in &ram_image.bytes {
             for ch in (format!("w{:02x}\n", b)).chars() {
                 c.tty_in.push_back(ch as u8);
             }
         }
 
+        // overwrite the return address
         for ch in (format!("s{:08x}\n", INITIAL_STACK-4)).chars() {
             c.tty_in.push_back(ch as u8);
         }
@@ -1052,8 +1113,6 @@ mod tests {
         dir.push("programs");
         dir
     }
-
-
 
     pub struct TestComputer<'a> {
         pub comp: Computer<'a>,

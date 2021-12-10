@@ -29,7 +29,7 @@ pub enum AluOpcode {
     AddHiNoCarry = 2,
     AddHiCarry = 3,
     Or = 4,
-    Reserved5 = 5,
+    Divide = 5,
     And = 6,
     Special = 7,
 }
@@ -95,7 +95,7 @@ pub enum SpecialMicroHelper {
     Negate = 5,
     Pow2Mask = 6,
     Invert = 7,
-    GetInfo = 0x39,
+    GetInfo = 0x3F,
     Max=0x40,
 }
 
@@ -152,6 +152,7 @@ pub enum Opcode {
     Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
     Cmp8 = 0x25, // 8bit regB - 8bit regA -> FLAGS
     Cmp8IfZero = 0x26, // if Flags & ZERO { 8bit regB - 8bit regA } else { Flags } -> Flags
+    Divide8 = 0x27, // carry + 8bit regA / 8bit regB -> 8 bit regC + ZERO
 
     AndImm8 = 0x30, // regA &= [8-bit constant B]
     OrImm8 = 0x31, // regA |= [8-bit constant B]
@@ -219,6 +220,7 @@ impl Opcode {
             Opcode::Add8NoCarryIn => &[1,1,1],
             Opcode::Cmp8 => &[1,1],
             Opcode::Cmp8IfZero => &[1,1],
+            Opcode::Divide8 => &[1,1,1],
             Opcode::AndImm8 => &[1,1],
             Opcode::OrImm8 => &[1,1],
             Opcode::XorImm8 => &[1,1],

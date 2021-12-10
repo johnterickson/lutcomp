@@ -1,18 +1,24 @@
 
+fn getchar() -> u8 {
+    tty: u8 = 0;
+    while ((tty & 128) == 0) {
+        tty = ttyin;
+    }
+    return (tty & 127);
+}
+
 fn readline(buf:&u8) {
-    ch: u8 = 0;
     while (0 == 0) {
-        tty: u8 = 0;
-        while ((tty & 128) == 0) {
-            tty = ttyin;
-        }
-        ch = (tty & 127);
-        if (ch == 10) {
+        ch: u8 = getchar();
+        if (ch == 13) {
+
+        } else if (ch == 10) {
             *buf = 0;
             return;
+        } else {
+            *buf = ch;
+            buf = &(buf[0x1]);
         }
-        *buf = ch;
-        buf = (buf + 0x1);
     }
 }
 

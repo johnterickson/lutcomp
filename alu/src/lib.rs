@@ -83,7 +83,13 @@ pub fn alu(print: bool) -> Vec<u8> {
                 flags.bits()
             }
             AluOpcode::Or => entry.in1 | entry.in2,
-            AluOpcode::Reserved5 => 0xFF,
+            AluOpcode::Divide => {
+                if entry.in2 == 0 {
+                    0xCC
+                } else {
+                    entry.in1 / entry.in2
+                }
+            }
             AluOpcode::And => entry.in1 & entry.in2,
             AluOpcode::Special => {
                 let special_mode = SpecialArgs::unpack(&[entry.in2]).unwrap();
@@ -118,7 +124,7 @@ pub fn alu(print: bool) -> Vec<u8> {
                                         match info {
                                             SpecialMicroHelperInfo::VersionHi => 0,
                                             SpecialMicroHelperInfo::VersionLo => 0,
-                                            SpecialMicroHelperInfo::VersionPatch => 1,
+                                            SpecialMicroHelperInfo::VersionPatch => 2,
                                         }
                                     } else {
                                         0xFF
@@ -312,8 +318,8 @@ mod tests {
         
         test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionHi as u8, 0x0);
         test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionLo as u8, 0x0);
-        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionPatch as u8, 0x1);
+        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionPatch as u8, 0x2);
 
-        assert_eq!(38748, hash); // if you have to change this, also change the version
+        assert_eq!(19534, hash); // if you have to change this, also change the version
     }
 }

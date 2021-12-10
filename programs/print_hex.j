@@ -1,5 +1,3 @@
-!include 'divide.j'
-
 fn printHexDigit(a:u8) {
     if (a < 10) {
         ttyout((a + '0'));
@@ -12,7 +10,7 @@ fn printHexDigit(a:u8) {
 
 fn printHex(a:u8) {
     if (a > 15) {
-        b = divide(a,16);
+        b: u8 = (a / 16);
         printHexDigit(b);
         a = (a - (b*16));
     } else {

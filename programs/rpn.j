@@ -1,4 +1,3 @@
-!include 'divide.j'
 !include 'echoline.j'
 
 struct Stack {
@@ -88,7 +87,7 @@ fn main() -> u8 {
             }
             div1 = stack_pop(&s);
             div2 = stack_pop(&s);
-            quotient: u8 = divide(div2,div1);
+            quotient: u8 = (div2 / div1);
             print_dec(quotient);
             ttyout(10);
             stack_push(&s, quotient);
@@ -126,15 +125,15 @@ fn print_digit(a:u8) {
 
 fn print_dec(a:u8) {
     if (a >= 100) {
-        b = divide(a, 100);
+        b: u8 = (a / 100);
         ttyout((b + '0'));
         a = (a - (b*100));
 
-        b = divide(a, 10);
+        b = (a / 10);
         ttyout((b + '0'));
         a = (a - (b*10));
     } else if (a >= 10) {
-        b = divide(a, 10);
+        b = (a / 10);
         ttyout((b + '0'));
         a = (a - (b*10));
     }

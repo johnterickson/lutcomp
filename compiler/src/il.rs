@@ -29,7 +29,6 @@ pub enum IlInstruction {
     Return { val: Option<IlVarId> },
     TtyIn { dest: IlVarId },
     TtyOut { src: IlVarId },
-    GetFrameAddress { dest: IlVarId },
     Unreachable,
 }
 
@@ -186,7 +185,6 @@ impl IlFunction {
                         let id = self.alloc_tmp_and_emit_static_address(ctxt, n, &info);
                         (id, size)
                     }
-                    IlLocation::FramePointer => panic!(),
                 }
             }
             Expression::Index(var, index) => {
@@ -246,7 +244,6 @@ impl IlFunction {
                             )
                         }
                     },
-                    IlLocation::FramePointer => panic!(),
                 };
 
                 let addr_expression = Expression::Arithmetic(
@@ -290,7 +287,6 @@ impl IlFunction {
                                 Box::new(Expression::Number(NumberType::USIZE, offset)))
                         }
                     },
-                    IlLocation::FramePointer => panic!(),
                 };
 
                 let addr_expression = if byte_offset == 0 {
@@ -338,7 +334,6 @@ impl IlFunction {
                         }
                     },
                     IlLocation::FrameOffset(_) => todo!(),
-                    IlLocation::FramePointer => panic!(),
                 };
 
                 let addr_expression = if byte_offset == 0 {
@@ -386,7 +381,6 @@ impl IlFunction {
                             mem_size: Some(size.unwrap())
                         }
                     },
-                    IlLocation::FramePointer => panic!(),
                 }
             },
             Expression::Deref(e) => {
@@ -585,9 +579,6 @@ impl IlFunction {
                             addr,
                             size: info.byte_size.try_into().unwrap(),
                         })
-                    },
-                    IlLocation::FramePointer => {
-                        self.body.push(IlInstruction::GetFrameAddress { dest });
                     },
                 }
             },
@@ -823,7 +814,7 @@ impl IlFunction {
                 IlVarId::frame_pointer().to_owned(),
                 IlVarInfo {
                     description: IlVarId::frame_pointer().to_owned(),
-                    location: IlLocation::FramePointer,
+                    location: IlLocation::U32,
                     var_type: Type::Number(NumberType::USIZE),
                     byte_size: 4,
                 });
@@ -925,6 +916,7 @@ pub enum IlBinaryOp {
     Add,
     Subtract,
     Multiply,
+    Divide,
     BitwiseAnd,
     BitwiseOr,
     LeftShift,
@@ -937,6 +929,7 @@ impl IlBinaryOp {
             ArithmeticOperator::Add => IlBinaryOp::Add,
             ArithmeticOperator::Subtract => IlBinaryOp::Subtract,
             ArithmeticOperator::Multiply => IlBinaryOp::Multiply,
+            ArithmeticOperator::Divide => IlBinaryOp::Divide,
             ArithmeticOperator::Or => IlBinaryOp::BitwiseOr,
             ArithmeticOperator::And => IlBinaryOp::BitwiseAnd,
             ArithmeticOperator::LeftShift => IlBinaryOp::LeftShift,
@@ -1044,7 +1037,6 @@ pub enum IlLocation {
     U32,
     FrameOffset(u32),
     Static(u32),
-    FramePointer,
 }
 
 impl TryFrom<u32> for IlLocation {
@@ -1097,7 +1089,6 @@ impl IlInstruction {
                 None),
             IlInstruction::TtyIn { dest } => (vec![], Some(dest)),
             IlInstruction::TtyOut { src } => (vec![src], None),
-            IlInstruction::GetFrameAddress { dest } => (vec![], Some(dest)),
             IlInstruction::Label(_) => (vec![], None),
         };
 
@@ -1131,7 +1122,6 @@ impl IlInstruction {
                 None),
             IlInstruction::TtyIn { dest } => (vec![], Some(dest)),
             IlInstruction::TtyOut { src } => (vec![src], None),
-            IlInstruction::GetFrameAddress { dest } => (vec![], Some(dest)),
             IlInstruction::Label(_) => (vec![], None),
         };
 
@@ -1177,7 +1167,6 @@ impl Debug for IlInstruction {
             IlInstruction::TtyOut { src } => write!(f, "ttyout <- {}", src.0),
             IlInstruction::Resize { dest, dest_size, src, src_size } => 
                 write!(f, "{} {:?} <- {} {:?}", dest.0, dest_size, src.0, src_size),
-            IlInstruction::GetFrameAddress { dest } => write!(f, "{} <- frame_pointer", dest.0),
         }
     }
 }
@@ -1355,8 +1344,17 @@ impl<'a> IlLiveness<'a> {
 
         let kill: Vec<BTreeSet<&IlVarId>> = f.body.iter()
             .map(|s| {
-                let usages = s.var_usages();
-                [usages.dest].iter().filter_map(|s| s.as_ref()).map(|s| *s).collect()
+                match s {
+                    IlInstruction::AssignVar {dest_range: Some(_), ..} => BTreeSet::new(),
+                    _ => {
+                        let usages = s.var_usages();
+                        [usages.dest].iter()
+                            .filter_map(|s| s.as_ref())
+                            .map(|s| *s)
+                            .collect()
+                    }
+                }
+                
             }).collect();
 
         let mut l = IlLiveness {
@@ -1372,18 +1370,18 @@ impl<'a> IlLiveness<'a> {
         };
 
         {
-            // println!("i | succ[i] | gen[i] | kill[i]");
-            // for i in 0..len {
-            //     println!("{} | {:?} | {:?} | {:?} ", i, &l.succ[i], &l.gen[i], &l.kill[i]);
-            // }
+            println!("i | succ[i] | gen[i] | kill[i] | inst");
+            for i in 0..len {
+                println!("{} | {:?} | {:?} | {:?} | {:?}", i, &l.succ[i], &l.gen[i], &l.kill[i], &f.body[i]);
+            }
 
             let mut run_more = true;
 
             while run_more {
-                // println!("i | outs[i] | ins[i]");
-                // for i in 0..len {
-                //     println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
-                // }
+                println!("i | outs[i] | ins[i]");
+                for i in 0..len {
+                    println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
+                }
 
                 run_more = false;
 
@@ -1436,6 +1434,7 @@ impl<'a> IlLiveness<'a> {
         }
 
         let mut next_color = 0;
+
         for v in l.f.vars.keys() {
             let neighbors = &l.interferes[v];
             let neighbor_colors: BTreeSet<usize> = neighbors.iter().filter_map(|n| l.colors.get(n)).cloned().collect();
