@@ -14,6 +14,28 @@ pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {
         }
     }
 
+    let mut label_refs = BTreeMap::new();
+    for (i, line) in assembly.as_mut_slice().iter_mut().enumerate() {
+        match line {
+            AssemblyInputLine::Instruction(inst) => {
+                match inst.opcode {
+                    Opcode::JcImm | Opcode::JmpImm | Opcode::JmpMem | Opcode::JmpReg | Opcode::JnImm | Opcode::JzImm => {
+                        match &inst.args[0] {
+                            Value::Label24(l) | Value::Label32(l) => {
+                                label_refs.entry(l.clone())
+                                    .or_insert_with(|| BTreeSet::new())
+                                    .insert(i);
+                            }
+                            _ => todo!(),
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
     for instruction_pairs in instruction_indices.windows(2) {
         let index1 = instruction_pairs[0];
         let index2 = instruction_pairs[1];
@@ -25,8 +47,21 @@ pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {
         let mut new_line2 = None;
 
         match (&line1, &line2) {
-            (AssemblyInputLine::Instruction(i1),
-             AssemblyInputLine::Instruction(i2)) => {
+            (AssemblyInputLine::Instruction(inst), AssemblyInputLine::Label(label)) => {
+                if inst.opcode == Opcode::JmpImm {
+                    if let Value::Label24(jmp_label) = &inst.args[0] {
+                        if jmp_label == label {
+                            if label_refs[label].len() == 1 {
+                                assert_eq!(&index1, label_refs[label].iter().next().unwrap());
+                                new_line1 = Some(AssemblyInputLine::Comment(
+                                    format!("Optimized away unconditional jump to the next instruction: {:?}", inst)
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+            (AssemblyInputLine::Instruction(i1), AssemblyInputLine::Instruction(i2)) => {
                  if (i1.opcode == Opcode::Push8) && (i2.opcode == Opcode::Pop8) || (i2.opcode == Opcode::Pop8 && i1.opcode == Opcode::Push8) {
                      if let (Value::Register(r1), Value::Register(r2)) = (&i1.args[0], &i2.args[0]) {
                         if r1 == r2 {

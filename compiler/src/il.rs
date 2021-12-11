@@ -498,15 +498,15 @@ impl IlFunction {
             Statement::IfElse { if_blocks, else_block } => {
                 assert!(if_blocks.len() >= 1);
 
-                let end_label= self.alloc_label("if end");
+                let end_label= self.alloc_label("if_end");
 
                 let mut prev_false = None;
                 for (i, (predicate, when_true)) in if_blocks.iter().enumerate() {
                     if let Some(prev_false) = prev_false.take() {
                         self.body.push(IlInstruction::Label(prev_false));
                     }
-                    let true_label = self.alloc_label(&format!("if true {}", i));
-                    let false_label = self.alloc_label(&format!("if else {}", i));
+                    let true_label = self.alloc_label(&format!("if_true_{}", i));
+                    let false_label = self.alloc_label(&format!("if_else_{}", i));
                     self.emit_comparison(ctxt, predicate, true_label.clone(), false_label.clone());
                     self.body.push(IlInstruction::Label(true_label));
                     for s in when_true {
@@ -524,9 +524,9 @@ impl IlFunction {
                 self.body.push(IlInstruction::Label(end_label.clone()));
             },
             Statement::While { predicate, while_true } => {
-                let pred_label = self.alloc_label("while predicate");
-                let body_label= self.alloc_label("while body");
-                let end_label= self.alloc_label("while end");
+                let pred_label = self.alloc_label("while_predicate");
+                let body_label= self.alloc_label("while_body");
+                let end_label= self.alloc_label("while_end");
 
                 self.body.push(IlInstruction::Label(pred_label.clone()));
 
