@@ -49,7 +49,7 @@ addimm32ignorecarry = { "addimm32ignorecarry" ~ register ~ "<-" ~ constant32 }
 or32 = {"or32" ~ register ~ register ~ "->" ~ register }
 and32 = {"and32" ~ register ~ register ~ "->" ~ register }
 
-halt = {"halt"}
+halt = {"halt" ~ constant32}
 
 op = _{ 
     loadimm8 | copy8 |

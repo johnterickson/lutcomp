@@ -183,9 +183,12 @@ v2.0 raw
 #      label: ':read'
 #  line: ':halt'
 #   label: ':halt'
-#  line: 'halt'
-#   instruction: 'halt'
-#    halt: 'halt'
+#  line: 'halt $00000000'
+#   instruction: 'halt $00000000'
+#    halt: 'halt $00000000'
+#     constant32: '$00000000'
+#      signed_hex_constant: '00000000'
+#       unsigned_hex_constant: '00000000'
 #  EOI: ''
 # 00000 Instruction { source: "loadimm8 r00 <- $01", opcode: LoadImm8, args: [Register(0x00), Constant8(0x01=1)], resolved: None }
 00 00 01 
@@ -244,5 +247,5 @@ v2.0 raw
 # 0004d Instruction { source: "jmpimm :read", opcode: JmpImm, args: [Label24(:read)], resolved: None }
 40 25 00 00 
 # :halt
-# 00051 Instruction { source: "halt", opcode: Halt, args: [], resolved: None }
-ff 
+# 00051 Instruction { source: "halt $00000000", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
+ff 00 00 00 00 

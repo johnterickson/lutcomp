@@ -28,4 +28,4 @@ xorimm8 r02 <- $0A
 jzimm :prompt
 jmpimm :read
 :halt
-halt
+halt $00000000
