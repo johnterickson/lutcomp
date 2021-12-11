@@ -11,11 +11,13 @@ pub struct BackendProgram<'a> {
     next_round_robin_reg: u8,
 }
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct FunctionInfo {
     pub register_assignments: BTreeMap<IlVarId, Vec<u8>>,
-    pub functions_called: BTreeSet<IlFunctionId>,
-    pub registers_used: BTreeSet<u8>,
+    pub functions_directly_called: BTreeSet<IlFunctionId>,
+    pub functions_transitively_called: BTreeSet<IlFunctionId>,
+    pub registers_directly_used: BTreeSet<u8>,
+    pub registers_transitively_used: BTreeSet<u8>,
     available_registers: BTreeSet<u8>,
 }
 
@@ -35,17 +37,20 @@ fn are_regs_aligned_and_contiguous(regs: &[u8]) -> bool {
 
 impl<'a> BackendProgram<'a> {
     fn create_function_infos(&mut self) {
+        let mut function_info = BTreeMap::new();
         for f in self.il.functions.values() {
             let mut info = FunctionInfo {
-                functions_called: BTreeSet::new(),
+                functions_directly_called: BTreeSet::new(),
+                functions_transitively_called: BTreeSet::new(),
                 register_assignments: BTreeMap::new(),
-                registers_used: BTreeSet::new(),
+                registers_directly_used: BTreeSet::new(),
+                registers_transitively_used: BTreeSet::new(),
                 available_registers: (0x10u8..=0xFF).collect(),
             };
 
             for s in &f.body {
                 if let IlInstruction::Call{f: callee, ..} = s {
-                    info.functions_called.insert(callee.clone());
+                    info.functions_directly_called.insert(callee.clone());
                 }
             }
 
@@ -61,15 +66,36 @@ impl<'a> BackendProgram<'a> {
                         .expect(&format!("Could not allocate a register for {:#?}", &f.body));
                     for r in &regs {
                         if !(REG_SP..REG_SP+4).contains(r) {
-                            info.registers_used.insert(*r);
+                            info.registers_directly_used.insert(*r);
                         }
                     }
                     assert!(info.register_assignments.insert(name.clone(), regs).is_none());
                 }
             }
 
-            self.function_info.insert(f.id.clone(), info);
+            info.functions_transitively_called = info.functions_directly_called.clone();
+            info.registers_transitively_used = info.registers_directly_used.clone();
+
+            function_info.insert(f.id.clone(), info);
         }
+
+        let mut more = true;
+        while more {
+            more = false;
+            for f in self.il.functions.keys() {
+                let callees = function_info[f].functions_transitively_called.clone();
+                for callee in callees {
+                    let callee_registers = function_info[&callee].registers_transitively_used.clone();
+                    let info = function_info.get_mut(f).unwrap();
+                    more |= info.functions_transitively_called.insert(callee);
+                    for r in callee_registers {
+                        more |= info.registers_transitively_used.insert(r);
+                    }
+                }
+            }
+        }
+
+        self.function_info = function_info;
     }
 
     fn alloc_registers(&mut self, name: &IlVarId, liveness: &IlLiveness, info: &mut FunctionInfo, count: u8, align: u8) -> Option<Vec<u8>> {
@@ -607,16 +633,16 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             format!("Arg{}[{}]={} {}", i, arg_name.0, arg_value.0, source));
                     }
 
-                    let my_regs = ctxt.f_info.registers_used.clone();
+                    let my_regs = ctxt.f_info.registers_directly_used.clone();
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by this function: {:?}", my_regs)));
 
                     let target_info = &ctxt.program.function_info[&target.id];
-                    let target_regs = target_info.registers_used.clone();
-                    ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by callee: {:?}", target_regs)));
+                    let target_regs = target_info.registers_transitively_used.clone();
+                    ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by callee tree: {:?}", target_regs)));
 
                     // TODO: recurisively get a list of registers used and only save the intersection
 
-                    let regs_to_save: Vec<_> = target_regs.iter().cloned().collect();
+                    let regs_to_save: Vec<_> = my_regs.intersection(&target_regs).cloned().collect();
                     // let regs_to_save: Vec<_> = target_regs.iter().cloned().collect();
                     ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers to save: {:?}", regs_to_save)));
 
