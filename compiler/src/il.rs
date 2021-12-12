@@ -1370,18 +1370,18 @@ impl<'a> IlLiveness<'a> {
         };
 
         {
-            println!("i | succ[i] | gen[i] | kill[i] | inst");
-            for i in 0..len {
-                println!("{} | {:?} | {:?} | {:?} | {:?}", i, &l.succ[i], &l.gen[i], &l.kill[i], &f.body[i]);
-            }
+            // println!("i | succ[i] | gen[i] | kill[i] | inst");
+            // for i in 0..len {
+            //     println!("{} | {:?} | {:?} | {:?} | {:?}", i, &l.succ[i], &l.gen[i], &l.kill[i], &f.body[i]);
+            // }
 
             let mut run_more = true;
 
             while run_more {
-                println!("i | outs[i] | ins[i]");
-                for i in 0..len {
-                    println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
-                }
+                // println!("i | outs[i] | ins[i]");
+                // for i in 0..len {
+                //     println!("{} | {:?} | {:?}", i, &l.outs[i], &l.ins[i]);
+                // }
 
                 run_more = false;
 

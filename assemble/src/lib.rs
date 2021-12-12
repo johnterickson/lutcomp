@@ -338,9 +338,10 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
             }
             AssemblyInputLine::ImageBaseAddress(base) => {
                 assert_eq!(base, start_pc);
+                lines.push((pc, line, AssemblyOutputLine::Comment(format!("ImageBaseAddress=0x{:08x}", base))));
             }
             AssemblyInputLine::Instruction(inst) => {
-                lines.push((pc,line,AssemblyOutputLine::Instruction(inst.clone())));
+                lines.push((pc,line, AssemblyOutputLine::Instruction(inst.clone())));
                 pc += inst.size();
             }
             AssemblyInputLine::Comment(comment) => {

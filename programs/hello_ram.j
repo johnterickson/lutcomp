@@ -12,5 +12,6 @@ fn main() -> usize {
     ttyout('A');
     ttyout('M');
     ttyout('!');
+    ttyout(10);
     return 0xAABBCCDD;
 }

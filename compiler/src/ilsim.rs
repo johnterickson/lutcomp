@@ -1022,7 +1022,7 @@ mod tests {
             out.push(*c as char);
         }
 
-        assert_eq!(out.as_str(), &format!("{:08x}\n", RAM_MIN + 1024));
+        assert_eq!(out.as_str(), &format!("READY\n{:08x}\n", RAM_MIN + 1024));
 
         assert_eq!(0xDEADBEEF, c.mem_word(RAM_MIN + 1024));
     }
@@ -1037,7 +1037,7 @@ mod tests {
             "main",
             include_str!("../../programs/bootram.j"));
 
-        let mut c = Computer::from_image(Cow::Owned(loader_image), true);
+        let mut c = Computer::from_image(Cow::Owned(loader_image), false);
 
         for ch in (format!("s{:08x}\n", ram_image.start_addr)).chars() {
             c.tty_in.push_back(ch as u8);
@@ -1086,7 +1086,7 @@ mod tests {
             out.push(*c as char);
         }
 
-        assert_eq!(out.as_str(), "Hi_from_RAM!");
+        assert_eq!(out.as_str(), "READY\nHi_from_RAM!");
     }
 
     #[test]

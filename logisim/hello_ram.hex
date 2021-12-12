@@ -1,0 +1,93 @@
+v2.0 raw
+# ImageBaseAddress=0x00080400
+# entry
+# 80400 Instruction { source: "Initialzing flags and internal regs.", opcode: Init, args: [], resolved: None }
+0f 
+# 80401 Instruction { source: "Initialzing stack register to 0x000ffffc.", opcode: LoadImm32, args: [Register(0x0c), Constant32(0x000ffffc=1048572)], resolved: None }
+80 0c fc ff 0f 00 
+# 80407 Instruction { source: "PseudoCall(Label24(:main))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+a3 0c fc ff ff ff 
+# 8040d Instruction { source: "PseudoCall(Label24(:main))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 17 04 08 00 
+# 80413 Instruction { source: "PseudoCall(Label24(:main))", opcode: JmpImm, args: [Label24(:main)], resolved: None }
+40 22 04 08 
+# 80417 Instruction { source: "PseudoCall(Label24(:main))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+a3 0c 04 00 00 00 
+# 8041d Instruction { source: "Halting after return from entry function.", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
+ff 00 00 00 00 
+# :main
+# Ret Some(U32)
+# Var t0 (t0 Number(U8, 72)) U8 Some([16])
+# Var t1 (t1 Number(U8, 105)) U8 Some([16])
+# Var t10 (t10 Number(U8, 77)) U8 Some([16])
+# Var t11 (t11 Number(U8, 33)) U8 Some([16])
+# Var t12 (t12 Number(U8, 10)) U8 Some([16])
+# Var t13 (t13 Number(USIZE, 2864434397)) U32 Some([20, 21, 22, 23])
+# Var t2 (t2 Number(U8, 95)) U8 Some([16])
+# Var t3 (t3 Number(U8, 102)) U8 Some([16])
+# Var t4 (t4 Number(U8, 114)) U8 Some([16])
+# Var t5 (t5 Number(U8, 111)) U8 Some([16])
+# Var t6 (t6 Number(U8, 109)) U8 Some([16])
+# Var t7 (t7 Number(U8, 95)) U8 Some([16])
+# Var t8 (t8 Number(U8, 82)) U8 Some([16])
+# Var t9 (t9 Number(U8, 65)) U8 Some([16])
+# 80422 Instruction { source: "t0 <- 0n72/0x48u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x48=72)], resolved: None }
+00 10 48 
+# 80425 Instruction { source: "ttyout <- t0", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80427 Instruction { source: "t1 <- 0n105/0x69u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x69=105)], resolved: None }
+00 10 69 
+# 8042a Instruction { source: "ttyout <- t1", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 8042c Instruction { source: "t2 <- 0n95/0x5fu8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
+00 10 5f 
+# 8042f Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80431 Instruction { source: "t3 <- 0n102/0x66u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x66=102)], resolved: None }
+00 10 66 
+# 80434 Instruction { source: "ttyout <- t3", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80436 Instruction { source: "t4 <- 0n114/0x72u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x72=114)], resolved: None }
+00 10 72 
+# 80439 Instruction { source: "ttyout <- t4", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 8043b Instruction { source: "t5 <- 0n111/0x6fu8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6f=111)], resolved: None }
+00 10 6f 
+# 8043e Instruction { source: "ttyout <- t5", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80440 Instruction { source: "t6 <- 0n109/0x6du8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6d=109)], resolved: None }
+00 10 6d 
+# 80443 Instruction { source: "ttyout <- t6", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80445 Instruction { source: "t7 <- 0n95/0x5fu8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
+00 10 5f 
+# 80448 Instruction { source: "ttyout <- t7", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 8044a Instruction { source: "t8 <- 0n82/0x52u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x52=82)], resolved: None }
+00 10 52 
+# 8044d Instruction { source: "ttyout <- t8", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 8044f Instruction { source: "t9 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x41=65)], resolved: None }
+00 10 41 
+# 80452 Instruction { source: "ttyout <- t9", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80454 Instruction { source: "t10 <- 0n77/0x4du8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x4d=77)], resolved: None }
+00 10 4d 
+# 80457 Instruction { source: "ttyout <- t10", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80459 Instruction { source: "t11 <- 0n33/0x21u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x21=33)], resolved: None }
+00 10 21 
+# 8045c Instruction { source: "ttyout <- t11", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 8045e Instruction { source: "t12 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x0a=10)], resolved: None }
+00 10 0a 
+# 80461 Instruction { source: "ttyout <- t12", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+13 10 
+# 80463 Instruction { source: "t13 <- 0xaabbccddu32 ", opcode: LoadImm32, args: [Register(0x14), Constant32(0xaabbccdd=2864434397)], resolved: None }
+80 14 dd cc bb aa 
+# 80469 Instruction { source: "return Some(t13)", opcode: Copy32, args: [Register(0x14), Register(0x00)], resolved: None }
+81 14 00 
+# 8046c Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+49 0c 
+# 8046e Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+ff 00 00 00 10 
