@@ -995,7 +995,7 @@ mod tests {
         c.tty_in.push_back('\n' as u8);
 
         for b in &[0xEF,0xBE, 0xAD,0xDE] {
-            for ch in (format!("w{:02x}\n", b)).chars() {
+            for ch in (format!("w{:02x}\nn\n", b)).chars() {
                 c.tty_in.push_back(ch as u8);
             }
         }
@@ -1044,7 +1044,7 @@ mod tests {
         }
 
         for b in &ram_image.bytes {
-            for ch in (format!("w{:02x}\n", b)).chars() {
+            for ch in (format!("w{:02x}\nn\n", b)).chars() {
                 c.tty_in.push_back(ch as u8);
             }
         }
@@ -1055,7 +1055,7 @@ mod tests {
         }
 
         for b in ram_image.start_addr.to_le_bytes() {
-            for ch in (format!("w{:02x}\n", b)).chars() {
+            for ch in (format!("w{:02x}\nn\n", b)).chars() {
                 c.tty_in.push_back(ch as u8);
             }
         }
@@ -1078,15 +1078,15 @@ mod tests {
             last_ir0 = Some(c.ir0);
         }
 
-        let r0 = c.reg_u32(0);
-        assert_eq!(r0, 0xAABBCCDD);
-
         let mut out = String::new();
         for c in &c.tty_out {
             out.push(*c as char);
         }
 
-        assert_eq!(out.as_str(), "READY\nHi_from_RAM!");
+        assert_eq!(out.as_str(), "READY\nHi_from_RAM!\n");
+
+        let r0 = c.reg_u32(0);
+        assert_eq!(r0, 0xAABBCCDD);
     }
 
     #[test]
