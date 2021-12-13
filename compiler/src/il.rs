@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::BTreeMap, convert::TryFrom, fmt::Debug, hash::Hash, ops::Range};
+use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::Debug, hash::Hash, ops::Range};
 
 use crate::*;
 
@@ -312,7 +312,9 @@ impl IlFunction {
             Expression::PtrFieldDeref(n, field) => {
                 let info = ctxt.find_arg_or_var(&self, n);
                 let ptr_type = info.var_type;
-                let element_type = ptr_type.get_element_type().unwrap();
+                let element_type = ptr_type.get_element_type().expect(
+                    &format!("Could not find element type for '{:?}' for {}->{}", ptr_type, n, field)
+                );
                 let struct_type = match element_type { 
                     Type::Struct(struct_type) => {
                         &ctxt.program.types[struct_type]
@@ -534,13 +536,28 @@ impl IlFunction {
 
                 self.body.push(IlInstruction::Label(body_label.clone()));
 
+                let loop_ctxt = LoopContext { 
+                    break_label: end_label.clone(),
+                    continue_label: pred_label.clone()
+                };
+
+                ctxt.loops.push_back(loop_ctxt.clone());
                 for s in while_true {
                     self.emit_statement(ctxt, s);
                 }
+                assert_eq!(Some(loop_ctxt), ctxt.loops.pop_back());
 
                 self.body.push(IlInstruction::Goto(pred_label.clone()));
 
                 self.body.push(IlInstruction::Label(end_label.clone()));
+            },
+            Statement::Continue => {
+                let closest_loop = ctxt.loops.iter().last().expect("Continue must be in loop");
+                self.body.push(IlInstruction::Goto(closest_loop.continue_label.clone()));
+            },
+            Statement::Break => {
+                let closest_loop = ctxt.loops.iter().last().expect("Break must be in loop");
+                self.body.push(IlInstruction::Goto(closest_loop.break_label.clone()));
             },
             Statement::Return { value } => {
                 let val = if let Some(value) = value {
@@ -1254,6 +1271,7 @@ impl IlProgram {
                 program: ctxt,
                 il: &mut il,
                 func_def: def,
+                loops: VecDeque::new(),
             };
             let f = IlFunction::emit_from(&mut il_ctxt);
             next_static_addr = il_ctxt.next_static_addr;
@@ -1266,11 +1284,18 @@ impl IlProgram {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct LoopContext {
+    break_label: IlLabelId,
+    continue_label: IlLabelId,
+}
+
 struct IlContext<'a> {
     next_static_addr: u32,
     program: &'a ProgramContext,
     il: &'a mut IlProgram,
     func_def: &'a FunctionDefinition,
+    loops: VecDeque<LoopContext>,
 }
 
 impl<'a> IlContext<'a> {

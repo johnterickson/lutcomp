@@ -9,12 +9,15 @@ pub enum Statement {
     While {predicate: Comparison, while_true: Vec<Statement>},
     Return { value: Option<Expression>},
     TtyOut {value: Expression},
+    Continue,
+    Break,
 }
 
 impl Statement {
     pub fn optimize(&mut self, ctxt: &ProgramContext) -> bool{
         let mut optimized = false;
         match self {
+            Statement::Continue | Statement::Break => {},
             Statement::Assign { target, var_type:_, value} => {
                 while target.optimize(ctxt) { optimized = true; }
                 while value.optimize(ctxt) { optimized = true; }
@@ -203,6 +206,12 @@ impl Statement {
                 let mut pairs = pair.into_inner();
                 let expression = Expression::parse(pairs.next().unwrap());
                 Statement::VoidExpression { expression }
+            }
+            Rule::continue_statement => {
+                Statement::Continue
+            }
+            Rule::break_statement => {
+                Statement::Break
             }
             _ => panic!("Unexpected {:?}", pair)
         }

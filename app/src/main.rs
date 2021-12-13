@@ -98,7 +98,19 @@ fn main() {
             let entry = get_param("entry").unwrap_or("main");
             let root = file_path.parent().unwrap();
             let (ctxt, il) = emit_il(entry, &input, root);
-            let (_, assembly) = emit_assembly(&ctxt, &il);
+            let (_, mut assembly) = emit_assembly(&ctxt, &il);
+            if let Some(image_base_address) = get_param("image_base_address") {
+                let image_base_address = u32::from_str_radix(image_base_address, 16).unwrap();
+
+                if let Some(existing_base) = assembly.iter_mut().filter_map(|line| match line {
+                    AssemblyInputLine::ImageBaseAddress(existing_base) => Some(existing_base),
+                    _ => None
+                }).next() {
+                    *existing_base = image_base_address;
+                } else {
+                    assembly.insert(0, AssemblyInputLine::ImageBaseAddress(image_base_address));
+                }
+            }
             let rom = assemble::assemble(assembly);
 
             if let Some("true") = get_param("sim") {

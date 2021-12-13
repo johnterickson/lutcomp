@@ -27,6 +27,7 @@ impl FunctionDefinition {
         where F : FnMut(&String, Option<&Scope>, Option<&Type>),
     {
         match s {
+            Statement::Continue | Statement::Break => {},
             Statement::Assign{target, var_type, value} => {
                 let value_type = value.try_emit_type(ctxt, None);
                 let var_type = var_type.as_ref().or(value_type.as_ref());

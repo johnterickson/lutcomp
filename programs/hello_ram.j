@@ -1,4 +1,4 @@
-!image_base_address=((RAM_MIN+1024))
+!image_base_address=((RAM_MIN+4096))
 fn main() -> usize {
     ttyout('H');
     ttyout('i');

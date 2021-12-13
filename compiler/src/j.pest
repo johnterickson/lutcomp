@@ -65,6 +65,8 @@ else_if_clause = {"else if" ~ expression ~ "{"~ statement* ~ "}"}
 else_clause = {"else" ~ "{"~ statement* ~ "}"}
 if_else_statement = { if_clause ~ else_if_clause* ~ else_clause? }
 declare_statement = { variable_decl ~ ";"}
+continue_statement = { "continue;" }
+break_statement = { "break;" }
 static_statement = { "static" ~ variable_decl ~ ";"}
 while_loop = { "while" ~ expression ~ "{" ~ statement* ~ "}" }
 assign_declare = { variable_decl | ident }
@@ -76,7 +78,11 @@ return_statement = { "return" ~ expression? ~ ";" }
 call_return_value = {ident ~ (":" ~ variable_type)? ~ "="}
 void_expression_statement = { expression ~ ";" }
 
-statement = { if_else_statement | ttyout | return_statement | while_loop | assign | static_statement | declare_statement | void_expression_statement}
+statement = { 
+    if_else_statement | ttyout | continue_statement | return_statement | 
+    while_loop | assign | static_statement | declare_statement | break_statement |
+    void_expression_statement
+    }
 body = { (statement)+ }
 paramters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}
