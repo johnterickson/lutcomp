@@ -117,7 +117,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
         let mut ctxt = ProgramContext {
             entry: entry.to_owned(),
             function_defs: BTreeMap::new(),
-            types: BTreeMap::new(),
+            struct_types: BTreeMap::new(),
             statics_base_address: STATICS_START_ADDRESS,
             image_base_address: 0,
         };
@@ -180,7 +180,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                         fields.push((field_name, field_type));
                     }
 
-                    ctxt.types.insert(name, StructDefinition{fields});
+                    ctxt.struct_types.insert(name, StructDefinition{fields});
                 },
                 Rule::function => {
                     let f = FunctionDefinition::parse(&ctxt, pair);

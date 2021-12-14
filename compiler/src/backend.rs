@@ -100,7 +100,7 @@ impl<'a> BackendProgram<'a> {
 
     fn alloc_registers(&mut self, name: &IlVarId, liveness: &IlLiveness, info: &mut FunctionInfo, count: u8, align: u8) -> Option<Vec<u8>> {
 
-        if name.0 == IlVarId::frame_pointer() {
+        if name.0 == IlVarId::frame_pointer_str() {
             return Some((REG_SP..(REG_SP+4)).collect());
         }
 
@@ -110,7 +110,7 @@ impl<'a> BackendProgram<'a> {
 
         // first try to reuse
         for (v, regs) in &info.register_assignments {
-            if v.0 == IlVarId::frame_pointer() { continue; }
+            if v.0 == IlVarId::frame_pointer_str() { continue; }
             if regs.len() != count as usize { continue; }
             if regs[0] % align != 0 { continue; }
             if liveness.colors[v] == color {

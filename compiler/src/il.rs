@@ -38,8 +38,12 @@ pub enum IlInstruction {
 pub struct IlVarId(pub String);
 
 impl IlVarId {
-    pub fn frame_pointer() -> &'static str {
+    pub fn frame_pointer_str() -> &'static str {
         "__frame_pointer"
+    }
+
+    pub fn frame_pointer() -> IlVarId {
+        IlVarId(Self::frame_pointer_str().to_owned())
     }
 }
 
@@ -165,16 +169,18 @@ impl IlFunction {
         addr_var
     }
 
-    fn emit_address(&mut self, ctxt: &IlContext, value: &Expression) -> (IlVarId, Option<IlType>) {
+    fn emit_address(&mut self, ctxt: &IlContext, value: &Expression) -> (IlVarId, Option<u32>) {
         match value {
             Expression::Ident(n) => {
                 let info = ctxt.find_arg_or_var(&self, n);
                 match info.location {
-                    IlLocation::U8 | IlLocation::U32 => panic!(),
+                    IlLocation::U8 | IlLocation::U32 => 
+                        panic!("Cannot emit address of '{}' because it is in a register.", n)
+                    ,
                     IlLocation::FrameOffset(offset) => {
                         let addr = Expression::Arithmetic(
                             ArithmeticOperator::Add,
-                            Box::new(Expression::Ident(IlVarId::frame_pointer().to_owned())),
+                            Box::new(Expression::Ident(IlVarId::frame_pointer_str().to_owned())),
                             Box::new(Expression::Number(NumberType::USIZE, offset))
                         );
                         let (id, _) = self.alloc_tmp_and_emit_value(ctxt, &addr);
@@ -233,7 +239,7 @@ impl IlFunction {
                         }
                     },
                     IlLocation::FrameOffset(offset) => {
-                        let frame = Expression::Ident(IlVarId::frame_pointer().to_owned());
+                        let frame = Expression::Ident(IlVarId::frame_pointer_str().to_owned());
                         if offset == 0 {
                             frame
                         } else {
@@ -266,18 +272,18 @@ impl IlFunction {
                 let info = ctxt.find_arg_or_var(&self, n);
                 let struct_type = match &info.var_type { 
                     Type::Struct(struct_type) => {
-                        &ctxt.program.types[struct_type]
+                        &ctxt.program.struct_types[struct_type]
                     }
                     _ => panic!()
                 };
-                let (byte_offset, field_type) = struct_type.get_field(field);
+                let (byte_offset, field_type) = struct_type.get_field(ctxt.program, field);
                 let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();
 
                 let base_expression = match info.location {
                     IlLocation::Static(addr) => Expression::Number(NumberType::USIZE, addr),
                     IlLocation::U8 | IlLocation::U32 => todo!(),
                     IlLocation::FrameOffset(offset) => {
-                        let frame = Expression::Ident(IlVarId::frame_pointer().to_owned());
+                        let frame = Expression::frame_pointer();
                         if offset == 0 {
                             frame
                         } else {
@@ -317,11 +323,11 @@ impl IlFunction {
                 );
                 let struct_type = match element_type { 
                     Type::Struct(struct_type) => {
-                        &ctxt.program.types[struct_type]
+                        &ctxt.program.struct_types[struct_type]
                     }
                     _ => panic!()
                 };
-                let (byte_offset, field_type) = struct_type.get_field(field);
+                let (byte_offset, field_type) = struct_type.get_field(ctxt.program, field);
                 let field_bytes = field_type.byte_count(ctxt.program).try_into().ok();
 
                 let base_expression = match info.location {
@@ -380,7 +386,7 @@ impl IlFunction {
                         TargetLocation {
                             target: address,
                             target_subrange: None,
-                            mem_size: Some(size.unwrap())
+                            mem_size: Some(size.unwrap().try_into().unwrap())
                         }
                     },
                 }
@@ -404,7 +410,7 @@ impl IlFunction {
                 TargetLocation {
                     target: address,
                     target_subrange: None,
-                    mem_size: Some(size.unwrap())
+                    mem_size: Some(size.unwrap().try_into().unwrap())
                 }
             }
             Expression::Index(n, index) => {
@@ -429,7 +435,7 @@ impl IlFunction {
                         TargetLocation {
                             target: address,
                             target_subrange: None,
-                            mem_size: Some(size.unwrap()),
+                            mem_size: Some(size.unwrap().try_into().unwrap()),
                         }
                     }
                     other => panic!("Don't know how to index into {:?}", other)
@@ -457,7 +463,7 @@ impl IlFunction {
     }
     
     fn emit_statement(&mut self, ctxt: &mut IlContext, s: &Statement) {
-        //dbg!(s);
+        println!("{:?}", s);
         match s {
             Statement::Declare { .. } => {},
             Statement::Assign { target, var_type, value } => {
@@ -566,6 +572,25 @@ impl IlFunction {
                 } else {
                     None
                 };
+
+                if self.vars_stack_size > 0 {
+                    let stack_size = self.alloc_tmp(IlVarInfo {
+                        byte_size: 4,
+                        description: "Stack size".to_owned(),
+                        location: IlLocation::U32,
+                        var_type: Type::Number(NumberType::USIZE),
+                    });
+                    self.body.push(IlInstruction::AssignNumber {
+                        dest: stack_size.clone(),
+                        src: IlNumber::U32(self.vars_stack_size),
+                    });
+                    self.body.push(IlInstruction::AssignBinary {
+                        dest: IlVarId::frame_pointer(),
+                        op: IlBinaryOp::Add,
+                        src1: IlVarId::frame_pointer(),
+                        src2: stack_size,
+                    });
+                }
                 
                 self.body.push(IlInstruction::Return{val})
             },
@@ -661,7 +686,7 @@ impl IlFunction {
                 self.body.push(IlInstruction::ReadMemory {
                     dest,
                     addr,
-                    size: size.unwrap(),
+                    size: size.unwrap().try_into().unwrap(),
                 })
             },
             Expression::AddressOf(n) => {
@@ -697,7 +722,7 @@ impl IlFunction {
                         self.body.push(IlInstruction::ReadMemory {
                             dest,
                             addr,
-                            size: size.unwrap(),
+                            size: size.unwrap().try_into().unwrap(),
                         });
                     }
                     other => panic!("Don't know how to index into {:?}", other)
@@ -828,13 +853,30 @@ impl IlFunction {
 
         if func.vars_stack_size > 0 {
             func.alloc_named(
-                IlVarId::frame_pointer().to_owned(),
+                IlVarId::frame_pointer_str().to_owned(),
                 IlVarInfo {
-                    description: IlVarId::frame_pointer().to_owned(),
+                    description: IlVarId::frame_pointer_str().to_owned(),
                     location: IlLocation::U32,
                     var_type: Type::Number(NumberType::USIZE),
                     byte_size: 4,
                 });
+
+            let stack_size = func.alloc_tmp(IlVarInfo {
+                byte_size: 4,
+                description: "Stack size negated".to_owned(),
+                location: IlLocation::U32,
+                var_type: Type::Number(NumberType::USIZE),
+            });
+            func.body.push(IlInstruction::AssignNumber {
+                dest: stack_size.clone(),
+                src: IlNumber::U32(func.vars_stack_size.wrapping_neg()),
+            });
+            func.body.push(IlInstruction::AssignBinary {
+                dest: IlVarId::frame_pointer(),
+                op: IlBinaryOp::Add,
+                src1: IlVarId::frame_pointer(),
+                src2: stack_size,
+            });
         }
 
         for s in &ctxt.func_def.body {
@@ -847,7 +889,7 @@ impl IlFunction {
 
         func.body.push(IlInstruction::Unreachable);
 
-        func.optimize();
+        //func.optimize();
         
         func
     }

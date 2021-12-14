@@ -56,10 +56,6 @@ impl IlFunction {
         let mut vars: BTreeMap<&IlVarId, IlNumber> = BTreeMap::new();
 
         for (id, info) in self.vars.iter().rev() {
-            if let IlLocation::FrameOffset(stack_size) = info.location {
-                ctxt.stack_pointer -= stack_size;
-                assert!(vars.insert(id, IlNumber::U32(ctxt.stack_pointer)).is_none());
-            }
             if let IlLocation::Static(addr) = info.location {
                 assert!(vars.insert(id, IlNumber::U32(addr)).is_none());
             }
@@ -70,16 +66,19 @@ impl IlFunction {
             assert!(vars.insert(arg_id, *arg_value).is_none());
         }
 
-        let frame_pointer = IlVarId(IlVarId::frame_pointer().to_owned());
+        let frame_pointer = IlVarId::frame_pointer();
 
         let mut s_index = 0;
         loop {
+            if let Some(fp) = vars.get(&frame_pointer) {
+                ctxt.stack_pointer = fp.as_u32();
+            }
             vars.insert(&frame_pointer, IlNumber::U32(ctxt.stack_pointer));
 
             let mut inc_pc = true;
 
             let s = &self.body[s_index];
-            // println!("{:?}; [{:?}]", s, vars);
+            // println!("{} {:?}; [{:?}]", self.id.0, s, vars);
 
             match s {
                 IlInstruction::Unreachable => panic!(),
@@ -665,6 +664,23 @@ mod tests {
     }
 
     #[test]
+    fn struct_array() {
+        test_inputs(
+            "test_add2",
+            include_str!("../../programs/struct.j"),
+            &[
+                (0x0u32,0x0u32,0x0u32),
+                (0x0,0x1,0x1),
+                (0x1,0x0,0x1),
+                (0x1,0x1,0x2),
+                (0xAABBCCDD, 0x11111111, 0xBBCCDDEE),
+                (0x1,0xFF,0x100),
+                (0xAABBCCDD, 0x0, 0xAABBCCDD),
+                (0xFFFFFFFF, 0x1, 0x0),
+                ]);
+    }
+
+    #[test]
     fn struct_return_by_ref() {
         test_inputs(
             "test_ret_static",
@@ -707,9 +723,9 @@ mod tests {
         let (c, heap_entry) = run_var_input(&ctxt, &il, &rom, &vec![], IlType::U32);
         assert_eq!(heap_entry, IlNumber::U32(STATICS_START_ADDRESS+4));
 
-        let heap_type = ctxt.types.get("heap").unwrap();
-        let (head_offset, _) = heap_type.get_field("head");
-        let heap_entry_type = ctxt.types.get("heap_entry").unwrap();
+        let heap_type = ctxt.struct_types.get("heap").unwrap();
+        let (head_offset, _) = heap_type.get_field(&ctxt, "head");
+        let heap_entry_type = ctxt.struct_types.get("heap_entry").unwrap();
 
         let header_size = heap_entry_type.byte_count(&ctxt);
 

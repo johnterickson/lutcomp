@@ -7,12 +7,15 @@ pub enum NumberType {
 }
 
 impl NumberType {
-    fn parse(s: &str) -> NumberType {
+    pub fn try_parse(s: &str) -> Option<NumberType> {
         match  s {
-            "u8" | "char" => NumberType::U8,
-            "usize" => NumberType::USIZE,
-            other => panic!("unknown type {}", other),
+            "u8" | "char" => Some(NumberType::U8),
+            "usize" => Some(NumberType::USIZE),
+            _ => None
         }
+    }
+    fn parse(s: &str) -> NumberType {
+        Self::try_parse(s).expect(&format!("Not a number type: {}", s))
     }
 }
 
@@ -82,14 +85,19 @@ impl Type {
             Rule::array_type => {
                 assert!(is_decl);
                 let mut tokens = variable.into_inner();
-                let val_type = NumberType::parse(tokens.next().unwrap().as_str().trim());
+                let val_type = tokens.next().unwrap().as_str().trim();
+                let val_type = if let Some(nt) = NumberType::try_parse(val_type) {
+                    Type::Number(nt)
+                } else {
+                    Type::Struct(val_type.to_owned())
+                };
                 let count_exp = Expression::parse(tokens.next().unwrap());
                 let count = count_exp.try_get_const()
                     .expect(&format!("Could not evaluate array size as a constant value: {:?}", count_exp));
                 let count = count.try_into()
                     .expect(&format!("Could not fit array size into 32-bit integer {}", count));
                 assert!(tokens.next().is_none());
-                Type::Array(Box::new(Type::Number(val_type)), count)
+                Type::Array(Box::new(val_type), count)
             }
             _ => panic!("unexpected {:?}", variable)
         }
@@ -110,7 +118,7 @@ impl ByteSize for Type {
             Type::Void => 0,
             Type::Number(nt) => nt.byte_count(ctxt),
             Type::Ptr(_) => 4,
-            Type::Struct(struct_name) => ctxt.types.get(struct_name)
+            Type::Struct(struct_name) => ctxt.struct_types.get(struct_name)
                 .expect(&format!("Could not find struct definition for '{}'.", struct_name))
                 .byte_count(ctxt),
             Type::Array(nt, count) => nt.byte_count(ctxt) * count

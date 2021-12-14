@@ -52,7 +52,6 @@ const int DATA_PINS[] = {
 
 #endif
 
-#undef ENABLE_WIFI
 
 #if defined(ENABLE_WIFI)
 #include <EEPROM.h>
@@ -108,8 +107,6 @@ void setDataPinsOutput() {
     initOutput(DATA_PINS[i], (b >> i) & 0x1);
   }
 }
-
-
 
 byte readDataPins() {
   byte b = 0;
@@ -205,26 +202,32 @@ void checkSerial() {
   }
 
 #if defined(ENABLE_WIFI)
-  WiFiClient client = server.available();
+  if (!client) {
+    client = server.available();
+  }
+  
+  if (client) {
+    while (client.available() > 0) {
+      b = client.read();
+      cli();
+      outputQueue.push(&b);
+      sei();
+    }
+  }
 #endif
 
   cli();
   if (inputQueue.pop(&b)) {
     sei();
-
-    /* 
-    static char last_char = 0;
-  
-    if (last_char == '\n') {
-      Serial.print("#Arduino->PC @");
-      Serial.print(millis());
-      Serial.print(": ");
-      Serial.println(b, HEX);
-    }
-    */
     if (b > 0) {
       Serial.print((char)b);
-      //last_char = (char)b;
+#if defined(ENABLE_WIFI)
+      if (client) {
+        if (client.connected()) {
+          client.write(b);
+        }
+      }
+#endif
     }
     cli();
   }

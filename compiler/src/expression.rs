@@ -49,6 +49,10 @@ pub enum Expression {
 }
 
 impl Expression {
+    pub fn frame_pointer() -> Expression {
+        Expression::Ident(IlVarId::frame_pointer_str().to_owned())
+    }
+
     pub fn try_get_const(&self) -> Option<u32> {
         match self {
             Expression::Number(_, val) => Some(*val),
@@ -84,7 +88,7 @@ impl Expression {
     pub fn try_emit_type(&self, ctxt: &ProgramContext, f: Option<&FunctionDefinition>) -> Option<Type> {
         match self {
             Expression::Ident(n) => {
-                if n == IlVarId::frame_pointer() {
+                if n == IlVarId::frame_pointer_str() {
                     Some(Type::Number(NumberType::USIZE))
                 } else if let Some(f) = f {
                     let (_,t) = f.find_arg_or_var(n)
@@ -157,11 +161,11 @@ impl Expression {
                         .expect(&format!("Cannot find {} in {:?}", n, f));
                     let struct_type = match struct_type { 
                         Type::Struct(struct_type) => {
-                            &ctxt.types[struct_type]
+                            &ctxt.struct_types[struct_type]
                         }
-                        _ => panic!()
+                        _ => panic!("Not a struct: {:?}", struct_type)
                     };
-                    let (_, field_type) = struct_type.get_field(field);
+                    let (_, field_type) = struct_type.get_field(ctxt, field);
                     Some(field_type.clone())
                 } else {
                     None
@@ -174,11 +178,11 @@ impl Expression {
                     let element_type = ptr_type.get_element_type().unwrap();
                     let struct_type = match element_type { 
                         Type::Struct(struct_type) => {
-                            &ctxt.types[struct_type]
+                            &ctxt.struct_types[struct_type]
                         }
                         _ => panic!()
                     };
-                    let (_, field_type) = struct_type.get_field(field);
+                    let (_, field_type) = struct_type.get_field(ctxt, field);
                     Some(field_type.clone())
                 } else {
                     None
