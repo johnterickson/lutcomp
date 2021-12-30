@@ -64,6 +64,18 @@ fn div32(a:usize, b:usize) -> usize {
         return 0x0;
     }
 
+    if (a < 0x100) {
+        if (b < 0x100) {
+            return ((a[0] / b[0]) AS usize);
+        }
+    }
+
+    if (a < 0x10000) {
+        if (b < 0x10000) {
+            return div16(a,b);
+        }
+    }
+
     lo: usize = 0x0;
     hi: usize = 0xFFFFFFFF;
 
