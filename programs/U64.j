@@ -4,9 +4,10 @@ struct U64 {
 }
 
 fn add_U64(a: &U64, b: &U64, c: &U64) {
+    lo: usize = a->lo;
     c->hi = (a->hi + b->hi);
     c->lo = (a->lo + b->lo);
-    if (c->lo < a->lo) {
+    if (c->lo < lo) {
         c->hi = (c->hi + 0x1);
     }
 }

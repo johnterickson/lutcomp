@@ -457,6 +457,25 @@ mod tests {
     }
 
     #[test]
+    fn mul32_64() {
+        test_var_inputs(
+            "test_mul32_64",
+            include_str!("../../programs/mul.j"),
+            &[
+                (vec![0u32.into(), 0u32.into()], 0u64.into()),
+                (vec![16u32.into(), 16u32.into()], 256u64.into()),
+                (vec![100u32.into(), 100u32.into()], 10000u64.into()),
+                (vec![1000u32.into(), 1000u32.into()], 1_000_000u64.into()),
+                (vec![0xABCDu32.into(), 0x1234u32.into()], 0xC37_4FA4u64.into()),
+                (vec![0xDEADBEEFu32.into(), 0x1u32.into()], 0xDEADBEEFu64.into()),
+                (vec![10_000u32.into(), 100_000u32.into()], 1_000_000_000u64.into()),
+                (vec![0xDEADBEEFu32.into(), 0xDEADBEEFu32.into()], 0xC1B1CD12216DA321u64.into()),
+                (vec![0xDEADBEEFu32.into(), 0xBEEFDEADu32.into()], 0xA615999BCA1E4983u64.into()),
+                (vec![0xBEEFDEADu32.into(), 0xDEADBEEFu32.into()], 0xA615999BCA1E4983u64.into()),
+            ]);
+    }
+
+    #[test]
     fn add_u64() {
         test_var_inputs(
             "test_add_U64",
