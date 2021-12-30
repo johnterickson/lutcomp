@@ -169,7 +169,7 @@ impl IlFunction {
                     let src1 = *vars.get(src1)
                         .expect(&format!("Could not find {:?}.", &src1));
                     let src2 = *vars.get(src2)
-                        .expect(&format!("Could not find {:?}.", &src2));                
+                        .expect(&format!("Could not find {:?}.", &src2));
                     let result = match (src1, src2) {
                         (IlNumber::U8(n1), IlNumber::U8(n2)) => {
                             IlNumber::U8(match op {
@@ -204,7 +204,7 @@ impl IlFunction {
                         }
                         _ => panic!(),
                     };
-                    
+
                     vars.insert(dest, result);
                 }
                 IlInstruction::ReadMemory { dest, addr, size } => {
@@ -328,7 +328,7 @@ impl IlFunction {
                         (IlType::U8, IlNumber::U32(n)) => IlNumber::U8((n & 0xFF) as u8),
                         _ => panic!(),
                     };
-                    
+
                     vars.insert(dest, n);
                 },
             }
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn halt_base_ram() {
         let (_ctxt, _il, ram_image) = assemble(
-            "main", 
+            "main",
             include_str!("../../programs/halt_ram.j"));
 
 
@@ -522,6 +522,7 @@ mod tests {
             "div32",
             include_str!("../../programs/div.j"),
             &[
+                (vec![13u32.into(), 4u32.into()], 3u32.into()),
                 (vec![0xFFFFu32.into(), 0xFFu32.into()], (0xFFFFu32/0xFF).into()),
                 (vec![0xFFFFu32.into(), 0x1u32.into()], 0xFFFFu32.into()),
                 (vec![0xFFFFu32.into(), 0xFFFFu32.into()], 0x1u32.into()),
@@ -689,7 +690,7 @@ mod tests {
                 (vec![2u8.into()],4u8.into()),
                 ]);
     }
-    
+
     #[test]
     fn add_uptr() {
         test_inputs(
@@ -796,7 +797,7 @@ mod tests {
         );
     }
 
-    
+
     #[test]
     fn heap_nofree_alloc() {
         test_var_inputs(
@@ -823,16 +824,16 @@ mod tests {
         let heap_entry_type = ctxt.struct_types.get("heap_entry").unwrap();
 
         let header_size = heap_entry_type.byte_count(&ctxt);
-        assert_eq!(header_size, 12); 
+        assert_eq!(header_size, 12);
 
 
         let heap_start = heap_start.as_u32();
         let head_entry_addr = heap_start + 4;
         assert_eq!(c.comp.mem_word(heap_start + head_offset), head_entry_addr);
-        assert_eq!(c.comp.mem_word(head_entry_addr), 0); 
+        assert_eq!(c.comp.mem_word(head_entry_addr), 0);
         let len = 1024-header_size;
-        assert_eq!(c.comp.mem_word(head_entry_addr+4), len); 
-        assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
+        assert_eq!(c.comp.mem_word(head_entry_addr+4), len);
+        assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1);
 
         let max_static = il.statics_addresses.end;
         assert_eq!(max_static, head_entry_addr + header_size + len);
@@ -856,16 +857,16 @@ mod tests {
         let allocated_addr = allocated_addr.as_u32();
 
         const HEADER_SIZE : u32 = 0xc;
-        
+
         let heap_addr = STATICS_START_ADDRESS;
         let max_static = il.statics_addresses.end;
         let head_entry_addr = heap_addr + 4;
         assert_eq!(c.comp.mem_word(heap_addr), head_entry_addr);
         let new_entry_addr = c.comp.mem_word(head_entry_addr);
-        assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-alloc_size); 
+        assert_eq!(new_entry_addr, head_entry_addr+1024-HEADER_SIZE-alloc_size);
         let head_entry_len = 1024-HEADER_SIZE-HEADER_SIZE-alloc_size;
-        assert_eq!(c.comp.mem_word(head_entry_addr+4), head_entry_len); 
-        assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1); 
+        assert_eq!(c.comp.mem_word(head_entry_addr+4), head_entry_len);
+        assert_eq!(c.comp.mem_byte(head_entry_addr+8), 1);
 
         assert_eq!(new_entry_addr+HEADER_SIZE, allocated_addr);
 
@@ -921,9 +922,24 @@ mod tests {
     }
 
     #[test]
-    fn print_dec() {
+    fn print_dec8() {
         test_tty(
-            "print_dec_test",
+            "print_dec8_test",
+            include_str!("../../programs/rpn.j"),
+            &[
+                ("",0,0,"0"),
+                ("",9,0,"9"),
+                ("",10,0,"10"),
+                ("",99,0,"99"),
+                ("",100,0,"100"),
+                ("",255,0,"255"),
+                ]);
+    }
+
+    #[test]
+    fn print_dec32() {
+        test_tty(
+            "print_dec32_test",
             include_str!("../../programs/rpn.j"),
             &[
                 ("",0,0,"0"),
@@ -948,7 +964,8 @@ mod tests {
                 ("3\n4*q",0x0,0x0,"12\n"),
                 ("13\n4/q",0x0,0x0,"3\n"),
                 ("3\n4+5*q",0x0,0x0,"7\n35\n"),
-                ]);
+                ("1000 1000* 50000/q",0x0,0x0,"1000000\n20\n"),
+            ]);
     }
 
     #[test]
@@ -1143,9 +1160,9 @@ mod tests {
     #[test]
     fn bootram() {
         let (_ctxt, _ram_il, ram_image) = assemble(
-            "main", 
+            "main",
             include_str!("../../programs/hello_ram.j"));
-        
+
         let (_loader_ctxt, _loader_il, loader_image) = assemble(
             "main",
             include_str!("../../programs/bootram.j"));
@@ -1216,7 +1233,7 @@ mod tests {
         );
     }
 
-    
+
     pub fn test_programs_dir() -> PathBuf {
         let mut dir = std::env::current_exe().unwrap();
         dir.pop();
@@ -1254,21 +1271,21 @@ mod tests {
                 self.comp.reg_u32_set(4*i, *val);
             }
 
-            let mut last_pc = None;
-            let mut step_count = 0;
+            // let mut last_pc = None;
+            let mut step_count = 0u64;
             while self.comp.step() {
-                if last_pc != Some(self.comp.pc) {
-                    print_state(&mut self.comp);
-                }
-                last_pc = Some(self.comp.pc);
+                // if last_pc != Some(self.comp.pc) {
+                //     print_state(&mut self.comp);
+                // }
+                // last_pc = Some(self.comp.pc);
                 step_count += 1;
-                assert!(step_count < 100000000);
+                assert!(step_count < 1_0000_0000);
             }
             self.comp.reg_u32(0)
         }
     }
 
-    
+
     #[derive(Debug, PartialEq, Clone)]
     pub enum TestVar {
         Ascii(&'static [u8]),
@@ -1349,13 +1366,13 @@ mod tests {
             let entry_arg_size = entry_arg_type.byte_count(ctxt);
             let test_arg_size = test_args[i].byte_count();
             assert_eq!(entry_arg_size, test_args[i].byte_count(),
-                "Entry arg '{}' type '{:?}' expects size {} but test provided size {}.", 
+                "Entry arg '{}' type '{:?}' expects size {} but test provided size {}.",
                 entry_arg_name, entry_arg_type, entry_arg_size, test_arg_size);
         }
 
         let entry_return_size = entry.return_type.byte_count(ctxt);
         assert_eq!(entry_return_size, test_return_size,
-            "Entry function returns type '{:?}' expects size {} but test provided size {}.", 
+            "Entry function returns type '{:?}' expects size {} but test provided size {}.",
             entry.return_type, entry_return_size, test_return_size);
     }
 
@@ -1414,7 +1431,7 @@ mod tests {
         assert_eq!(il_result, hw_result, "IL and HW have different results for {:?}", ins);
         (c, il_result)
     }
-    
+
     fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
         let (ctxt, il) = emit_il(entry, program, &test_programs_dir());
         // dbg!(&il);
@@ -1433,7 +1450,7 @@ mod tests {
             };
 
             let (tc, actual) = run_var_input(&ctxt, &il, &rom, ins, expected_type);
-            
+
             match expected {
                 TestVar::Ascii(expected) => {
                     let actual = tc.comp.mem_slice(actual.as_u32(), expected.len().try_into().unwrap());
@@ -1503,7 +1520,7 @@ mod tests {
             }
 
             assert_eq!(out.as_str(), *expected,
-                "Failed for {:?},{:?},{:?}", input1, input2, expected);
+                "Failed for `{}`,{:?},{:?} -> `{}`", ttyin, input1, input2, expected);
         }
     }
 }

@@ -1,30 +1,7 @@
 !include 'echoline.j'
-
-struct Stack {
-    values: u8[0x10];
-    first_free: usize;
-}
-
-fn stack_init(s: &Stack) {
-    s->first_free = 0x0;
-}
-
-fn stack_pop(s: &Stack) -> u8{
-    s->first_free = (s->first_free - 1);
-    values: &u8 = &(s->values);
-    return (values[s->first_free]);
-}
-
-fn stack_push(s: &Stack, n: u8) {
-    values: &u8 = &(s->values);
-    values[s->first_free] = n;
-    s->first_free = (s->first_free + 1);
-}
-
-fn stack_get(s: &Stack, n: usize) -> u8 {
-    values: &u8 = &(s->values);
-    return (values[n]);
-}
+!include 'Stack.j'
+!include 'mul.j'
+!include 'div.j'
 
 fn getchar() -> u8 {
     tty: u8 = 0;
@@ -36,20 +13,20 @@ fn getchar() -> u8 {
 
 struct RpnCalc {
     stack: Stack;
-    num: u8;
+    num: usize;
     have_num: u8;
 }
 
 fn RpnCalc_init(c: &RpnCalc) {
     s: &Stack = &(c->stack);
     stack_init(s);
-    c->num = 0;
+    c->num = 0x0;
 }
 
 fn RpnCalc_push_pending(c: &RpnCalc) {
     if (c->have_num != 0) {
         stack_push(&(c->stack), c->num);
-        c->num = 0;
+        c->num = 0x0;
         c->have_num = 0;
     }
 }
@@ -57,8 +34,8 @@ fn RpnCalc_push_pending(c: &RpnCalc) {
 fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
     stack: &Stack = &(c->stack);
 
-    a: u8 = 0;
-    b: u8 = 0;
+    a: usize = 0;
+    b: usize = 0;
 
     stack_needed: u8;
     if (ch == '+') {
@@ -98,23 +75,23 @@ fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
     }
     
     if (ch == '+') {         
-        sum: u8 = (b+a);
-        print_dec(sum);
+        sum: usize = (b+a);
+        print_dec32(sum);
         ttyout(10);
         stack_push(stack, sum);
     } else if (ch == '-') {
-        diff: u8 = (b-a);
-        print_dec(diff);
+        diff: usize = (b-a);
+        print_dec32(diff);
         ttyout(10);
         stack_push(stack, diff);
     } else if (ch == '*') {
-        product: u8 = (b*a);
-        print_dec(product);
+        product: usize = mul32_32(b,a);
+        print_dec32(product);
         ttyout(10);
         stack_push(stack, product);
     } else if (ch == '/') {
-        quotient: u8 = (b / a);
-        print_dec(quotient);
+        quotient: usize = div32(b,a);
+        print_dec32(quotient);
         ttyout(10);
         stack_push(stack, quotient);
     } else if (ch == 's') {
@@ -132,17 +109,17 @@ fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
     } else if (ch == 'd') {
         i: u8 = 0;
         while (i < stack_count) {
-            print_dec(i);
+            print_dec8(i);
             ttyout(':');
-            print_dec(stack_get(stack, ((i) AS usize)));
+            print_dec32(stack_get(stack, ((i) AS usize)));
             ttyout(10);
             i = (i + 1);
         }
     } else if (ch <= '9') {
         if (ch >= '0') {
             c->have_num = 1;
-            c->num = (c->num * 10);
-            c->num = (c->num + (ch - '0'));
+            c->num = mul32_32(c->num, 0xA);
+            c->num = (c->num + ((ch - '0') AS usize));
         }
     }
 
@@ -174,25 +151,32 @@ fn print_digit(a:u8) {
     }
 }
 
-fn print_dec(a:u8) {
-    if (a >= 100) {
-        b: u8 = (a / 100);
-        ttyout((b + '0'));
-        a = (a - (b*100));
+fn print_dec32(a:usize) {
+    if (a >= 0xA) {
+        b: usize = div32(a,0xA);
+        print_dec32(b);
+        a = (a - mul32_32(b,0xA));
+    }
 
-        b = (a / 10);
-        ttyout((b + '0'));
-        a = (a - (b*10));
-    } else if (a >= 10) {
-        b = (a / 10);
-        ttyout((b + '0'));
-        a = (a - (b*10));
+    ttyout((a[0] + '0'));
+}
+
+fn print_dec8(a:u8) {
+    if (a >= 10) {
+        b: u8 = (a / 10);
+        print_dec8(b);
+        a = (a - (b * 10));
     }
 
     ttyout((a + '0'));
 }
 
-fn print_dec_test(a:u8, b:u8) -> u8 {
-    print_dec(a);
+fn print_dec8_test(a:u8, b:u8) -> u8 {
+    print_dec8(a);
+    return 0;
+}
+
+fn print_dec32_test(a:usize, b:usize) -> u8 {
+    print_dec32(a);
     return 0;
 }

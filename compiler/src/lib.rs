@@ -128,6 +128,40 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
 
         let mut includes = BTreeSet::new();
 
+        // handle includes
+        {
+            let mut program = ProgramParser::parse(Rule::program, &to_parse)
+                .expect(&format!("Could not parse `{}`.", &to_parse));
+            let pairs = program.next().unwrap().into_inner();
+            for pair in pairs {
+                // dbg!(&pair);
+                let rule = pair.as_rule();
+                match rule {
+                    Rule::include => {
+                        let original_stmt = pair.as_str().to_owned();
+                        let original_byte_offset = input.find(&original_stmt).unwrap();
+                        let original_byte_count = original_stmt.len(); //Returns the length of this String, in bytes
+                        let mut pairs = pair.into_inner();
+                        let relative_include_path = pairs.next().unwrap().as_str();
+                        let mut path : PathBuf = root.into();
+                        path.push(relative_include_path);
+                        let path = path.canonicalize().unwrap();
+                        if includes.insert(path.to_owned()) {
+                            let mut file = File::open(&path).expect(&format!("Could not open '{:?}'", &path));
+                            let mut contents = String::new();
+                            contents += &format!("\n/* BEGIN INCLUDE '{:?}' */\n", &path);
+                            file.read_to_string(&mut contents).unwrap();
+                            contents += &format!("\n/* END   INCLUDE '{:?}' */\n", &path);
+                            println!("replacing {}+0x{:02x}=`{}` with {:?}", original_byte_offset, original_byte_count, &original_stmt, path);
+                            input.replace_range(original_byte_offset..original_byte_offset+original_byte_count, &contents);
+                            // println!("{}",&input);
+                            continue 'reparse;
+                        }
+                    }
+                    _ => {},
+                }
+            }
+        }
         let mut program = ProgramParser::parse(Rule::program, &to_parse)
             .expect(&format!("Could not parse `{}`.", &to_parse));
         let pairs = program.next().unwrap().into_inner();
@@ -148,26 +182,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                         _ => panic!()
                     }
                 }
-                Rule::include => {
-                    let original_stmt = pair.as_str().to_owned();
-                    let original_byte_offset = input.find(&original_stmt).unwrap();
-                    let original_byte_count = original_stmt.len(); //Returns the length of this String, in bytes
-                    let mut pairs = pair.into_inner();
-                    let relative_include_path = pairs.next().unwrap().as_str();
-                    let mut path : PathBuf = root.into();
-                    path.push(relative_include_path);
-                    let path = path.canonicalize().unwrap();
-                    if includes.insert(path.to_owned()) {
-                        let mut file = File::open(&path).expect(&format!("Could not open '{:?}'", &path));
-                        let mut contents = String::new();
-                        contents += &format!("\n/* BEGIN {} */\n", &original_stmt);
-                        file.read_to_string(&mut contents).unwrap();
-                        contents += &format!("\n/* END   {} */\n", &original_stmt);
-                        input.replace_range(original_byte_offset..original_byte_offset+original_byte_count, &contents);
-                        // println!("{}",&input);
-                        continue 'reparse;
-                    }
-                }
+                Rule::include => {},
                 Rule::struct_decl => {
                     let mut pairs = pair.into_inner();
 
