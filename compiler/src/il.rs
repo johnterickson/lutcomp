@@ -276,7 +276,7 @@ impl IlFunction {
                     Type::Struct(struct_type) => {
                         &ctxt.program.struct_types[struct_type]
                     }
-                    _ => panic!()
+                    t => panic!("Expected Struct but found {:?}", t)
                 };
                 let (byte_offset, field_type) = struct_type.get_field(ctxt.program, field);
                 let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();

@@ -45,3 +45,5 @@ fn mul32_32(a:usize, b:usize) -> usize {
     d[0] = 0;
     return (c + d);
 }
+
+!include 'U64.j'

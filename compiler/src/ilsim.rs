@@ -457,6 +457,18 @@ mod tests {
     }
 
     #[test]
+    fn add_u64() {
+        test_var_inputs(
+            "test_add_U64",
+            include_str!("../../programs/U64.j"),
+            &[
+                (vec![0u64.into(), 0u64.into()], 0u64.into()),
+                (vec![0xFFFF_FFFFu64.into(), 0x1u64.into()], 0x1_0000_0000u64.into()),
+                (vec![0x1u64.into(), 0xFFFF_FFFFu64.into()], 0x1_0000_0000u64.into()),
+            ]);
+    }
+
+    #[test]
     fn shiftright1() {
         test_var_inputs(
             "shiftright1",
@@ -1236,7 +1248,7 @@ mod tests {
         fn byte_count(&self) -> u32 {
             match self {
                 TestVar::String(_) | TestVar::Ascii(_) | TestVar::Ptr(_) | TestVar::Usize(_) => 4,
-                TestVar::U8(_) => 1
+                TestVar::U8(_) => 1,
             }
         }
     }
@@ -1267,6 +1279,13 @@ mod tests {
 
     impl From<[u8;4]> for TestVar {
         fn from(bytes: [u8;4]) -> Self {
+            TestVar::Ptr(bytes.iter().cloned().collect())
+        }
+    }
+
+    impl From<u64> for TestVar {
+        fn from(n: u64) -> Self {
+            let bytes = n.to_le_bytes();
             TestVar::Ptr(bytes.iter().cloned().collect())
         }
     }
@@ -1374,17 +1393,47 @@ mod tests {
             check_args(&ctxt, case);
             let (ins, expected) = case;
 
-            let expected = match expected {
-                TestVar::Ascii(_) => todo!(),
-                TestVar::Ptr(_) => todo!(),
-                TestVar::U8(n) => IlNumber::U8(*n),
-                TestVar::Usize(n) => IlNumber::U32(*n),
-                TestVar::String(_) => todo!(),
+            let expected_type = match expected {
+                TestVar::U8(_) => IlType::U8,
+                _ => IlType::U32,
             };
 
-            let (_, actual) = run_var_input(&ctxt, &il, &rom, ins, expected.il_type());
+            let (tc, actual) = run_var_input(&ctxt, &il, &rom, ins, expected_type);
             
-            assert_eq!(expected, actual, "{:?}", &(ins, expected));
+            match expected {
+                TestVar::Ascii(expected) => {
+                    let actual = tc.comp.mem_slice(actual.as_u32(), expected.len().try_into().unwrap());
+                    let actual = std::str::from_utf8(actual).unwrap();
+                    let expected = std::str::from_utf8(expected).unwrap();
+                    assert_eq!(expected, actual, "{:?}", &ins);
+                },
+                TestVar::Ptr(expected) => {
+                    let actual = tc.comp.mem_slice(actual.as_u32(), expected.len().try_into().unwrap());
+                    assert_eq!(expected.as_slice(), actual, "{:?}", &ins);
+                },
+                TestVar::String(expected) => {
+                    let actual = tc.comp.mem_slice(actual.as_u32(), expected.len().try_into().unwrap());
+                    let actual = std::str::from_utf8(actual).unwrap();
+                    assert_eq!(expected, actual, "{:?}", &ins);
+                },
+                TestVar::U8(expected) => {
+                    match actual {
+                        IlNumber::U8(actual) => {
+                            assert_eq!(*expected, actual, "{:?}", &(ins, expected));
+                        },
+                        IlNumber::U32(_) => panic!(),
+                    }
+                },
+                TestVar::Usize(expected) => {
+                    match actual {
+                        IlNumber::U32(actual) => {
+                            assert_eq!(*expected, actual, "{:?}", &(ins, expected));
+                        },
+                        IlNumber::U8(_) => panic!(),
+                    }
+                },
+            };
+
         }
     }
 
