@@ -58,3 +58,44 @@ fn div16(a:usize, b:usize) -> usize {
 
     return lo;
 }
+
+fn div32(a:usize, b:usize) -> usize {
+    if (a < b) {
+        return 0x0;
+    }
+
+    lo: usize = 0x0;
+    hi: usize = 0xFFFFFFFF;
+
+    while (lo < hi) {
+        mid: usize = (shiftright1(lo) + shiftright1(hi));
+
+        x64: U64;
+        mul32_64(mid, b, &x64);
+
+        if (x64.hi > 0x0) {
+            hi = (mid - 1);
+            continue;
+        }
+
+        x: usize = x64.lo;
+        
+        if (x > a) {
+            hi = (mid - 1);
+            continue;
+        }
+        
+        if (x == a) {
+            return mid;
+        }
+
+        r: usize = (a - x);
+        if (r < b) {
+            return mid;
+        }
+
+        lo = (mid + 1);
+    }
+
+    return lo;
+}

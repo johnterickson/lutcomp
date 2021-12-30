@@ -517,6 +517,21 @@ mod tests {
     }
 
     #[test]
+    fn div32() {
+        test_var_inputs(
+            "div32",
+            include_str!("../../programs/div.j"),
+            &[
+                (vec![0xFFFFu32.into(), 0xFFu32.into()], (0xFFFFu32/0xFF).into()),
+                (vec![0xFFFFu32.into(), 0x1u32.into()], 0xFFFFu32.into()),
+                (vec![0xFFFFu32.into(), 0xFFFFu32.into()], 0x1u32.into()),
+                (vec![0x100u32.into(), 0x100u32.into()], 1u32.into()),
+                (vec![1u32.into(), 1u32.into()], 1u32.into()),
+                (vec![0xDEADBEEFu32.into(), 0xDEADu32.into()], 0x1_0000u32.into()),
+            ]);
+    }
+
+    #[test]
     fn call_parameterless() {
         test_var_inputs(
             "main",
