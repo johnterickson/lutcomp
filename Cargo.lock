@@ -106,6 +106,7 @@ version = "0.1.0"
 dependencies = [
  "assemble",
  "common",
+ "packed_struct",
  "pest",
  "pest_derive",
  "sim",

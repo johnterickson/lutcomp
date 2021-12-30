@@ -4,7 +4,7 @@ struct heap_entry {
     next: &heap_entry;
     len: usize;
     free: u8;
-    junk: u8[3];
+    /* junk: u8[3]; */
     data: u8[0];
 }
 

@@ -6,6 +6,8 @@ use pest::Parser;
 extern crate strum;
 use strum::IntoEnumIterator;
 
+extern crate packed_struct;
+
 use std::path::{Path, PathBuf};
 use std::{collections::BTreeSet, fs::File, unimplemented};
 use std::{collections::BTreeMap, convert::TryInto, io::Read};

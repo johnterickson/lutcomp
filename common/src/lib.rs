@@ -127,6 +127,24 @@ pub struct SpecialArgs {
     pub op: SpecialOpcode,
 }
 
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+pub enum ShiftDirection {
+    Left = 0,
+    Right = 1,
+}
+
+#[derive(Debug, PackedStruct)]
+#[packed_struct(size_bytes = "1", endian = "lsb", bit_numbering = "lsb0")]
+pub struct ShiftCommand {
+    #[packed_field(bits = "0..=1", ty = "enum")]
+    pub mode: ShiftMode,
+    #[packed_field(bits = "2..=2", ty = "enum")]
+    pub dir: ShiftDirection,
+}
+
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
@@ -160,7 +178,7 @@ pub enum Opcode {
     And8 = 0x33, // regA & regB -> regC + FLAGS
     Or8 = 0x34, // regA | regB -> regC + FLAGS
     Xor8 = 0x35, // regA ^ regB -> regC + FLAGS
-    ShiftImm8 = 0x36,  // shift((ShiftMode)regA, (left_amount)regB, regC)
+    Shift8 = 0x36,  // shift((ShiftCommand)regA, (amount)regA, (value) regB, (dest) regC)
 
     JmpImm = 0x40, // pc <- [24-bit constant ABC]
     JcImm = 0x41,  // if Flags & CARRY { pc <- [24-bit constant ABC] }
@@ -175,7 +193,7 @@ pub enum Opcode {
     Load32 = 0x90,       // 32-bit MEM[24-bit RegA] -> RegB
     Store32_1 = 0x92, // RegA -> 32-bit MEM[24-bit RegB]
     Store32_2 = 0x93, // [none] must follow Part1
-    StoreImm32,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
+    StoreImm32 = 0x94,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
     Add32NoCarryIn = 0xA0, // regA + regB -> regC [carry out undefined]
     Add32_1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry
@@ -186,9 +204,9 @@ pub enum Opcode {
     And32 = 0xB1, // regA & regB -> regC
     OrImm32 = 0xB2,  // regA |= [32-bit constant BCDE]
     AndImm32 = 0xB3, // regA &= [32-bit constant BCDE]
-    ShiftRight32_1 = 0xB4, // regA << regA -> regC
-    ShiftRight32_2 = 0xB5, // 
-    ShiftRight32_3 = 0xB6, // 
+    // ShiftRight32_1 = 0xB4, // regA << regA -> regC
+    // ShiftRight32_2 = 0xB5, // 
+    // ShiftRight32_3 = 0xB6, // 
 
     HaltRAM = 0xCC, // imm32 halt code
     Halt = 0xFF, // imm32 halt code
@@ -238,7 +256,7 @@ impl Opcode {
             Opcode::And8 => &[1,1,1],
             Opcode::Or8 => &[1,1,1],
             Opcode::Xor8 => &[1,1,1],
-            Opcode::ShiftImm8 => &[1,1,1],
+            Opcode::Shift8 => &[1,1,1,1],
             Opcode::JmpImm => &[3],
             Opcode::JcImm => &[3],
             Opcode::JzImm => &[3],
@@ -261,9 +279,9 @@ impl Opcode {
             Opcode::AndImm32 => &[1,4],
             Opcode::Halt => &[4],
             Opcode::HaltRAM => &[4],
-            Opcode::ShiftRight32_1 => &[1,1,1],
-            Opcode::ShiftRight32_2 => &[],
-            Opcode::ShiftRight32_3 => &[],
+            // Opcode::ShiftRight32_1 => &[1,1,1],
+            // Opcode::ShiftRight32_2 => &[],
+            // Opcode::ShiftRight32_3 => &[],
         }
     }
 }

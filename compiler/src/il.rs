@@ -73,6 +73,7 @@ pub struct IlFunction {
     pub args: Vec<IlVarId>,
     pub body: Vec<IlInstruction>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
+    pub consts: BTreeMap<IlVarId, IlNumber>,
     pub ret: Option<IlType>,
     labels: BTreeSet<IlLabelId>,
     next_temp_num: usize,
@@ -95,6 +96,7 @@ impl IlFunction {
             vars: BTreeMap::new(),
             body: Vec::new(),
             labels: BTreeSet::new(),
+            consts: BTreeMap::new(),
             next_temp_num: 0,
             next_label_num: 0,
             vars_stack_size: 0,
@@ -890,6 +892,32 @@ impl IlFunction {
         func.body.push(IlInstruction::Unreachable);
 
         //func.optimize();
+
+        {
+            let refs = func.find_refs();
+            let mut found = true;
+            while found {
+                found = false;
+
+                for (id, refs) in &refs {
+                    if refs.writes.len() != 1 {
+                        continue;
+                    }
+
+                    let write = &func.body[*refs.writes.iter().next().unwrap()];
+                    let const_val = match write {
+                        IlInstruction::AssignNumber { dest, src } => {
+                            assert_eq!(id, dest);
+                            Some(src.clone())
+                        }
+                        _ => None
+                    };
+                    if let Some(const_val) = const_val {
+                        found |= func.consts.insert(id.clone(), const_val).is_none();
+                    }
+                }
+            }
+        }
         
         func
     }
@@ -978,8 +1006,10 @@ pub enum IlBinaryOp {
     Divide,
     BitwiseAnd,
     BitwiseOr,
-    LeftShift,
-    RightShift,
+    ShiftLeft,
+    ShiftRight,
+    RotateLeft,
+    RotateRight,
 }
 
 impl IlBinaryOp {
@@ -991,8 +1021,10 @@ impl IlBinaryOp {
             ArithmeticOperator::Divide => IlBinaryOp::Divide,
             ArithmeticOperator::Or => IlBinaryOp::BitwiseOr,
             ArithmeticOperator::And => IlBinaryOp::BitwiseAnd,
-            ArithmeticOperator::LeftShift => IlBinaryOp::LeftShift,
-            ArithmeticOperator::RightShift => IlBinaryOp::RightShift,
+            ArithmeticOperator::ShiftLeft => IlBinaryOp::ShiftLeft,
+            ArithmeticOperator::ShiftRight => IlBinaryOp::ShiftRight,
+            ArithmeticOperator::RotateLeft => IlBinaryOp::RotateLeft,
+            ArithmeticOperator::RotateRight => IlBinaryOp::RotateRight,
         }
     }
 }
@@ -1111,8 +1143,8 @@ impl TryFrom<u32> for IlLocation {
 }
 
 pub struct IlUsages<'a> {
-    srcs: Vec<&'a IlVarId>,
-    dest: Option<&'a IlVarId>,
+    pub srcs: Vec<&'a IlVarId>,
+    pub dest: Option<&'a IlVarId>,
 }
 
 pub struct IlUsagesMut<'a> {
@@ -1121,7 +1153,7 @@ pub struct IlUsagesMut<'a> {
 }
 
 impl IlInstruction {
-    fn var_usages(&self) -> IlUsages {
+    pub fn var_usages(&self) -> IlUsages {
         let (srcs, dest) = match self {
             IlInstruction::Unreachable | IlInstruction::Comment(_) => (vec![], None),
             IlInstruction::AssignNumber { dest, src:_} => 
@@ -1556,6 +1588,7 @@ mod tests {
             next_temp_num: 0,
             vars_stack_size: 0, 
             ret: Some(IlType::U8),
+            consts: BTreeMap::new(),
             vars,
             labels: ([&loop_label, &body_label, &end_label]).iter().map(|l| (**l).clone()).collect(),
             body : vec![

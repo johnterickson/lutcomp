@@ -612,20 +612,58 @@ mod tests {
         }
     }
 
-    #[test]
-    fn shiftimm8() {
+    fn shift8_case(mode: ShiftMode, dir: ShiftDirection, amount: u8, value: u8) {
+        // println!("{:?} {:?} {:02x} {:02x}", mode, dir, amount, value);
         let mut rom = Vec::new();
-        rom.push(Opcode::ShiftImm8 as u8);
-        rom.push(ShiftMode::Arithmetic as u8);
-        rom.push((-1i8) as u8);
+        rom.push(Opcode::Shift8 as u8);
+        rom.push(ShiftCommand { mode, dir }.pack().unwrap()[0]);
+        rom.push(0);
         rom.push(4);
+        rom.push(8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw_with_print(rom, false);
-        *c.reg_u8_mut(4) = 0x84;
+        *c.reg_u8_mut(0) = amount;
+        *c.reg_u8_mut(4) = value;
         while c.step() {}
 
-        assert_eq!(0xC2, c.reg_u8(4));
+        let expected = match mode {
+            ShiftMode::Rotate => {
+                match dir {
+                    ShiftDirection::Left => value.rotate_left(amount.into()),
+                    ShiftDirection::Right => value.rotate_right(amount.into()),
+                }
+            },
+            ShiftMode::Logical => {
+                match dir {
+                    ShiftDirection::Left => value << amount,
+                    ShiftDirection::Right => value >> amount,
+                }
+            },
+            ShiftMode::Arithmetic => {
+                let value = value as i8;
+                (match dir {
+                    ShiftDirection::Left => value << amount,
+                    ShiftDirection::Right => value >> amount,
+                }) as u8
+            },
+            ShiftMode::Reserved3 => todo!(),
+        };
+
+        assert_eq!(expected, c.reg_u8(8), "{:?} {:?} {:02x} {:02x}", mode, dir, amount, value);
+    }
+
+    #[test]
+    fn shift8() {
+        for mode in [ShiftMode::Arithmetic, ShiftMode::Logical, ShiftMode::Rotate] {
+            for dir in [ShiftDirection::Left, ShiftDirection::Right] {
+                for amount in 0..8 {
+                    for value in [0x00,0x01,0x08, 0x09, 0x0F, 0x10, 0x80, 0x90, 0xF0, 0xFF] {
+                        shift8_case(mode, dir, amount, value)
+                    }
+                }
+            }
+        }
     }
 
     #[test]

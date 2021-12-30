@@ -11,8 +11,10 @@ pub enum ArithmeticOperator {
     Divide,
     Or,
     And,
-    LeftShift,
-    RightShift,
+    ShiftLeft,
+    ShiftRight,
+    RotateLeft,
+    RotateRight,
 }
 
 impl ArithmeticOperator {
@@ -22,10 +24,12 @@ impl ArithmeticOperator {
             "-" => ArithmeticOperator::Subtract,
             "*" => ArithmeticOperator::Multiply,
             "/" => ArithmeticOperator::Divide,
-            "||" => ArithmeticOperator::Or,
+            "|" => ArithmeticOperator::Or,
             "&" => ArithmeticOperator::And,
-            "<<" => ArithmeticOperator::LeftShift,
-            ">>" => ArithmeticOperator::RightShift,
+            "<<" => ArithmeticOperator::ShiftLeft,
+            ">>" => ArithmeticOperator::ShiftRight,
+            "<ROR<" => ArithmeticOperator::RotateLeft,
+            ">ROR>" => ArithmeticOperator::RotateRight,
             op => panic!("Unknown op: {}", op),
         }
     }
@@ -72,8 +76,10 @@ impl Expression {
                         ArithmeticOperator::Divide => left.wrapping_div(right),
                         ArithmeticOperator::Or => left | right,
                         ArithmeticOperator::And => left & right,
-                        ArithmeticOperator::LeftShift => left.wrapping_shl(right),
-                        ArithmeticOperator::RightShift => left.wrapping_shr(right),
+                        ArithmeticOperator::ShiftLeft => left.wrapping_shl(right),
+                        ArithmeticOperator::ShiftRight => left.wrapping_shr(right),
+                        ArithmeticOperator::RotateLeft => left.rotate_left(right),
+                        ArithmeticOperator::RotateRight => left.rotate_right(right),
                     })
                 }
                 else

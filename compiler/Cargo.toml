@@ -13,3 +13,4 @@ sim = { path = "../sim" }
 pest = "*"
 pest_derive = "*"
 strum = "0.18.0"
+packed_struct = "0.10.0"

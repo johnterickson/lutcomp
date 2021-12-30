@@ -374,7 +374,35 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     assert_eq!(dest_size, src2_size);
 
                     match op {
-                        IlBinaryOp::LeftShift | IlBinaryOp::RightShift => todo!(),
+                        IlBinaryOp::ShiftLeft | IlBinaryOp::ShiftRight | IlBinaryOp::RotateLeft | IlBinaryOp::RotateRight => {
+                            match size {
+                                IlType::U8 => {
+                                    let mode = match op {
+                                        IlBinaryOp::RotateLeft | &IlBinaryOp::RotateRight => ShiftMode::Rotate,
+                                        IlBinaryOp::ShiftLeft | &IlBinaryOp::ShiftRight => ShiftMode::Logical,
+                                        _ => panic!(),
+                                    };
+                                    let dir = match op {
+                                        IlBinaryOp::RotateLeft | &IlBinaryOp::ShiftLeft => ShiftDirection::Left,
+                                        IlBinaryOp::RotateRight | &IlBinaryOp::ShiftRight => ShiftDirection::Right,
+                                        _ => panic!(),
+                                    };
+                                    let command = ShiftCommand { mode, dir };
+                                    use packed_struct::prelude::*;
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Shift8,
+                                        args: vec![
+                                            Value::Constant8(command.pack().unwrap()[0]),
+                                            Value::Register(src2_regs[0]),
+                                            Value::Register(src1_regs[0]),
+                                            Value::Register(dest_regs[0])],
+                                        resolved: None,
+                                        source
+                                    }));
+                                },
+                                IlType::U32 => todo!(),
+                            }
+                        },
                         IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr | IlBinaryOp::Divide=> {
 
                             let opcode = match (op, size) {

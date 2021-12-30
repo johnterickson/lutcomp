@@ -44,5 +44,4 @@ fn mul32_32(a:usize, b:usize) -> usize {
     d[1] = 0;
     d[0] = 0;
     return (c + d);
-
 }

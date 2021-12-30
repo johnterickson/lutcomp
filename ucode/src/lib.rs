@@ -932,33 +932,70 @@ impl Ucode {
 
                     self.flags_from(Output::Direct(DataBusOutputLevel::Alu));
                 }
-                Some(Opcode::ShiftImm8) => { // shift((ShiftMode)regA, (left_amount)regB, regC)
-                    pc_inc!(self);
+                Some(Opcode::Shift8) => {  // shift(ShiftCommand, (amount)regA, (value) regB, (dest) regC)
+                    pc_inc!(self); // now pointing to ShiftCommand
                     self.start_of_ram();
-                    
-                    // create internal shift cmd in Z
 
-                    // grab shiftmode and put it in the upper nibble
+                    // create ALU ShiftArgs cmd in Z
+                    // first the upper nibble
+                    // 4..=5 mode
+                    // 6..=7 SpecialOpcode::Shift
+
+                    // pc holds ShiftCommand
+                    // 0..=1 mode
+                    // 2..=2 dir
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0x3), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Imm((SpecialOpcode::Shift as u8) << 2), Load::Alu(AluOpcode::Or));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+                    // Z now has upper nibble of ShiftArgs
 
-                    // or in (left_amount & 0xF)
-                    pc_inc!(self);
+                    // copy dir flag to  ZERO flag
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(0xF), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Imm(0x4), Load::Alu(AluOpcode::And));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0x0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    self.some_flags_from_preceding_addhi(flags, Flags::ZERO);
+
+                    pc_inc!(self); // now pointing to reg # containing amount
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+
+                    if flags.contains(Flags::ZERO) {
+                        // shift left so noop
+                        self.add_op(noop, file!(), line!());
+                        self.add_op(noop, file!(), line!());
+                    } else {
+                        // shift right so negate amount
+                        add!(self, Output::Imm(SpecialMicroHelper::Negate as u8), Load::Alu(AluOpcode::Special));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    }
+
+                    // get 4 LSB of amount to make final ShiftArgs in Z
+                    add!(self, Output::Imm(0x0F), Load::Alu(AluOpcode::And));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Or));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
-                    // apply shift command to register
-                    pc_inc!(self);
+
+                    pc_inc!(self); // now pointing to reg # containing value to be shifted
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+
+                    // compute shift
                     add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
+
+                    pc_inc!(self); // now pointing to reg # for result
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    // update flags
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0x0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                 }
                 Some(Opcode::Add8) => {
                     self.start_of_ram();
@@ -1548,35 +1585,35 @@ impl Ucode {
                     add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
                 },
-                Some(Opcode::ShiftRight32_1) => {
-                    self.start_of_ram();
-                    pc_inc!(self);
-                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
+                // Some(Opcode::ShiftRight32_1) => {
+                //     self.start_of_ram();
+                //     pc_inc!(self);
+                //     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                //     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
 
-                    // regA in W
-                    // regB in X
-                }
-                Some(Opcode::ShiftRight32_2) => {
-                    self.inc_pc = false; // handle this manually
+                //     // regA in W
+                //     // regB in X
+                // }
+                // Some(Opcode::ShiftRight32_2) => {
+                //     self.inc_pc = false; // handle this manually
 
-                    // subtract 8 from W
-                    add!(self, Output::Imm(8), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(SpecialMicroHelper::Negate as u8), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddHiNoCarry));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-                    if flags.contains(Flags::NEG) {
-                        //less than 8 to-go so 
-                        pc_inc!(self);
-                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::None));
-                    } else {
+                //     // subtract 8 from W
+                //     add!(self, Output::Imm(8), Load::Direct(DataBusLoadEdge::In1));
+                //     add!(self, Output::Imm(SpecialMicroHelper::Negate as u8), Load::Alu(AluOpcode::Special));
+                //     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                //     add!(self, Output::Direct(DataBusOutputLevel::W), Load::Alu(AluOpcode::AddHiNoCarry));
+                //     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                //     if flags.contains(Flags::NEG) {
+                //         //less than 8 to-go so 
+                //         pc_inc!(self);
+                //         add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::None));
+                //     } else {
 
-                    }
-                }
-                Some(Opcode::ShiftRight32_3) => {
+                //     }
+                // }
+                // Some(Opcode::ShiftRight32_3) => {
 
-                }
+                // }
                 None => {
                     self.add_op(halt, file!(), line!());
                 }

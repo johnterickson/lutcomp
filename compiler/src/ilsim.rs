@@ -78,6 +78,22 @@ impl IlFunction {
             let mut inc_pc = true;
 
             let s = &self.body[s_index];
+            // println!("{} {:?};", self.id.0, s);
+            // {
+            //     let usages = s.var_usages();
+            //     if usages.dest.is_some() || usages.srcs.len() > 0 {
+            //         print!(" ");
+            //         if let Some(dest) = usages.dest {
+            //             print!("{}[{:?}] <- ", dest.0, vars.get(&dest));
+            //         }
+
+            //         for src in usages.srcs {
+            //             print!(" {}[{:?}]", src.0, vars.get(&src));
+            //         }
+
+            //         println!();
+            //     }
+            // }
             // println!("{} {:?}; [{:?}]", self.id.0, s, vars);
 
             match s {
@@ -166,8 +182,10 @@ impl IlFunction {
                                 },
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
-                                IlBinaryOp::LeftShift => n1.wrapping_shl(n2.into()),
-                                IlBinaryOp::RightShift => n1.wrapping_shr(n2.into()),
+                                IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
+                                IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
+                                IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
+                                IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
                             })
                         }
                         (IlNumber::U32(n1), IlNumber::U32(n2)) => {
@@ -177,8 +195,10 @@ impl IlFunction {
                                 IlBinaryOp::Multiply => (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF,
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
-                                IlBinaryOp::LeftShift => n1.wrapping_shl(n2),
-                                IlBinaryOp::RightShift => n1.wrapping_shr(n2),
+                                IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2),
+                                IlBinaryOp::ShiftRight => n1.wrapping_shr(n2),
+                                IlBinaryOp::RotateLeft => n1.rotate_left(n2),
+                                IlBinaryOp::RotateRight => n1.rotate_right(n2),
                                 &IlBinaryOp::Divide => todo!(),
                             })
                         }
@@ -433,6 +453,35 @@ mod tests {
                 (vec![0xABCDu32.into(), 0x1234u32.into()], 0xC37_4FA4u32.into()),
                 (vec![0xDEADBEEFu32.into(), 0x1u32.into()], 0xDEADBEEFu32.into()),
                 (vec![10_000u32.into(), 100_000u32.into()], 1_000_000_000u32.into()),
+            ]);
+    }
+
+    #[test]
+    fn shiftright1() {
+        test_var_inputs(
+            "shiftright1",
+            include_str!("../../programs/div.j"),
+            &[
+                (vec![1u32.into()],0u32.into()),
+                (vec![0x100u32.into()],0x80u32.into()),
+                (vec![0x1_0000u32.into()],0x8000u32.into()),
+                (vec![0x100_0000u32.into()],0x80_0000u32.into()),
+                (vec![0x2222_2222u32.into()],0x1111_1111u32.into()),
+                (vec![0x1111_1111u32.into()],0x0888_8888u32.into()),
+            ]);
+    }
+
+    #[test]
+    fn div16() {
+        test_var_inputs(
+            "div16",
+            include_str!("../../programs/div.j"),
+            &[
+                (vec![0xFFFFu32.into(), 0xFFu32.into()], (0xFFFFu32/0xFF).into()),
+                (vec![0xFFFFu32.into(), 0x1u32.into()], 0xFFFFu32.into()),
+                (vec![0xFFFFu32.into(), 0xFFFFu32.into()], 0x1u32.into()),
+                (vec![0x100u32.into(), 0x100u32.into()], 1u32.into()),
+                (vec![1u32.into(), 1u32.into()], 1u32.into()),
             ]);
     }
 
@@ -728,6 +777,8 @@ mod tests {
         let heap_entry_type = ctxt.struct_types.get("heap_entry").unwrap();
 
         let header_size = heap_entry_type.byte_count(&ctxt);
+        assert_eq!(header_size, 12); 
+
 
         let heap_start = heap_start.as_u32();
         let head_entry_addr = heap_start + 4;
