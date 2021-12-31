@@ -95,7 +95,7 @@ pub enum SpecialMicroHelper {
     Negate = 5,
     Pow2Mask = 6,
     Invert = 7,
-    GetInfo = 0x3F,
+    GetInfo = 0x0F,
     Max=0x40,
 }
 
@@ -103,9 +103,13 @@ pub enum SpecialMicroHelper {
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum SpecialMicroHelperInfo {
-    VersionHi = 1,
-    VersionLo = 2,
-    VersionPatch = 3,
+    Hash0 = 0,
+    Hash1 = 1,
+    Hash2 = 2,
+    Hash3 = 3,
+    VersionMajor = 4,
+    VersionMinor = 5,
+    VersionPatch = 6,
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -186,11 +190,10 @@ pub enum Opcode {
     And32 = 0xB1, // regA & regB -> regC
     OrImm32 = 0xB2,  // regA |= [32-bit constant BCDE]
     AndImm32 = 0xB3, // regA &= [32-bit constant BCDE]
-    ShiftRight32_1 = 0xB4, // regA << regA -> regC
-    ShiftRight32_2 = 0xB5, // 
-    ShiftRight32_3 = 0xB6, // 
 
     HaltRAM = 0xCC, // imm32 halt code
+    GetUcodeInfo = 0xFD, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
+    GetAluInfo = 0xFE, // SpecialMicroHelperInfo(regA), 8-bit value regB
     Halt = 0xFF, // imm32 halt code
 }
 
@@ -259,11 +262,10 @@ impl Opcode {
             Opcode::And32 => &[1,1,1],
             Opcode::OrImm32 => &[1,4],
             Opcode::AndImm32 => &[1,4],
+            Opcode::GetUcodeInfo => &[1,1,1,4],
+            Opcode::GetAluInfo => &[1,1,1,4],
             Opcode::Halt => &[4],
             Opcode::HaltRAM => &[4],
-            Opcode::ShiftRight32_1 => &[1,1,1],
-            Opcode::ShiftRight32_2 => &[],
-            Opcode::ShiftRight32_3 => &[],
         }
     }
 }

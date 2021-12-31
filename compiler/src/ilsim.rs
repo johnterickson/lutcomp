@@ -1119,7 +1119,6 @@ mod tests {
         );
     }
 
-    
     pub fn test_programs_dir() -> PathBuf {
         let mut dir = std::env::current_exe().unwrap();
         dir.pop();

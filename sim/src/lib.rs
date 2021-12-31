@@ -1324,4 +1324,51 @@ mod tests {
             addimm32nocarry_tester(carry_in, in2, in1);
         });
     }
+
+    #[test]
+    fn alu_info() {
+        let get_info = |info: SpecialMicroHelperInfo| {
+            let mut rom = Vec::new();
+            rom.push(Opcode::GetAluInfo as u8);
+            rom.push(0x1);
+            rom.push(0x2);
+            rom.push(Opcode::Halt as u8);
+
+            let mut c = Computer::from_raw(rom);
+            *c.reg_u8_mut(1) = info as u8;
+
+            while c.step() {}
+            c.reg_u8(2)
+        };
+
+        assert_eq!(alu::MAJOR_VERSION, get_info(SpecialMicroHelperInfo::VersionMajor));
+        assert_eq!(alu::MINOR_VERSION, get_info(SpecialMicroHelperInfo::VersionMinor));
+        assert_eq!(alu::PATCH_VERSION, get_info(SpecialMicroHelperInfo::VersionPatch));
+
+        let hash = alu::ALU_HASH.to_le_bytes();
+        assert_eq!(hash[0], get_info(SpecialMicroHelperInfo::Hash0));
+        assert_eq!(hash[1], get_info(SpecialMicroHelperInfo::Hash1));
+        assert_eq!(hash[2], get_info(SpecialMicroHelperInfo::Hash2));
+        assert_eq!(hash[3], get_info(SpecialMicroHelperInfo::Hash3));
+    }
+
+    #[test]
+    fn ucode_info() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::GetUcodeInfo as u8);
+        rom.push(0x1);
+        rom.push(0x2);
+        rom.push(0x3);
+        rom.push(0x4);
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::from_raw(rom);
+        while c.step() {}
+
+        assert_eq!(ucode::MAJOR_VERSION, c.reg_u8(1));
+        assert_eq!(ucode::MINOR_VERSION, c.reg_u8(2));
+        assert_eq!(ucode::PATCH_VERSION, c.reg_u8(3));
+
+        assert_eq!(*ucode::UCODE_HASH, c.reg_u32(4));
+    }
 }

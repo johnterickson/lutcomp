@@ -1,4 +1,6 @@
 extern crate strum;
+use std::{collections::hash_map::DefaultHasher, hash::Hasher, convert::TryInto};
+
 use strum::IntoEnumIterator;
 
 extern crate packed_struct;
@@ -9,8 +11,14 @@ use common::*;
 
 use lazy_static::lazy_static;
 lazy_static! {
-    pub static ref ALU: Vec<u8> = alu(false);
+    static ref ALU_AND_HASH: (Vec<u8>, u32) = alu(false);
+    pub static ref ALU: Vec<u8> = ALU_AND_HASH.0.clone();
+    pub static ref ALU_HASH: u32 = ALU_AND_HASH.1;
 }
+
+pub const MAJOR_VERSION: u8 = 1;
+pub const MINOR_VERSION: u8 = 0;
+pub const PATCH_VERSION: u8 = 0;
 
 #[derive(Debug, PackedStruct)]
 #[packed_struct(size_bytes = "3", endian = "lsb", bit_numbering = "lsb0")]
@@ -48,11 +56,13 @@ impl LutEntry {
     }
 }
 
-pub fn alu(print: bool) -> Vec<u8> {
+pub fn alu(print: bool) -> (Vec<u8>,u32) {
     if print {
         println!("v2.0 raw");
     }
     let mut out_bytes = Vec::new();
+
+    let mut hash_indices = Vec::new();
 
     for encoded_entry in 0u32..=0x7FFFF {
         let bytes = encoded_entry.to_le_bytes();
@@ -122,9 +132,29 @@ pub fn alu(print: bool) -> Vec<u8> {
                                     let info = SpecialMicroHelperInfo::iter().filter(|o| *o as u8 == entry.in1).next();
                                     if let Some(info) = info {
                                         match info {
-                                            SpecialMicroHelperInfo::VersionHi => 0,
-                                            SpecialMicroHelperInfo::VersionLo => 0,
-                                            SpecialMicroHelperInfo::VersionPatch => 2,
+                                            SpecialMicroHelperInfo::Hash0 => {
+                                                assert_eq!(0, hash_indices.len());
+                                                hash_indices.push(out_bytes.len());
+                                                0x00
+                                            }
+                                            SpecialMicroHelperInfo::Hash1 => {
+                                                assert_eq!(1, hash_indices.len());
+                                                hash_indices.push(out_bytes.len());
+                                                0x01
+                                            }
+                                            SpecialMicroHelperInfo::Hash2 => {
+                                                assert_eq!(2, hash_indices.len());
+                                                hash_indices.push(out_bytes.len());
+                                                0x02
+                                            }
+                                            SpecialMicroHelperInfo::Hash3 => {
+                                                assert_eq!(3, hash_indices.len());
+                                                hash_indices.push(out_bytes.len());
+                                                0x03
+                                            }
+                                            SpecialMicroHelperInfo::VersionMajor => MAJOR_VERSION,
+                                            SpecialMicroHelperInfo::VersionMinor => MINOR_VERSION,
+                                            SpecialMicroHelperInfo::VersionPatch => PATCH_VERSION,
                                         }
                                     } else {
                                         0xFF
@@ -185,13 +215,29 @@ pub fn alu(print: bool) -> Vec<u8> {
         out_bytes.push(out);
     }
 
-    out_bytes
+    assert_eq!(4, hash_indices.len());
+
+    let hash = {
+        let mut hasher = DefaultHasher::new();
+        hasher.write(&out_bytes);
+        let hash = hasher.finish();
+        let hash: u32 = (hash % 0x1_0000_0000).try_into().unwrap();
+        hash
+    };
+
+    {
+        let hash = hash.to_le_bytes();
+        for (hash_byte_index, alu_byte_index) in hash_indices.iter().enumerate() {
+            assert_eq!(out_bytes[*alu_byte_index], hash_byte_index.try_into().unwrap());
+            out_bytes[*alu_byte_index] = hash[hash_byte_index];
+        }
+    }
+
+    (out_bytes, hash)
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::hash_map::DefaultHasher, hash::Hasher};
-
     use super::*;
 
     #[test]
@@ -205,7 +251,7 @@ mod tests {
         assert_eq!([240, 15, AluOpcode::Or as u8], lut_entry.pack_lsb());
     }
 
-    fn test_special_micro(op: SpecialMicroHelper, in1: u8, expected: u8) {
+    fn eval_special_micro(op: SpecialMicroHelper, in1: u8) -> u8 {
         let lut_entry = LutEntry {
             in1,
             in2: (SpecialArgs {
@@ -216,7 +262,12 @@ mod tests {
             op: AluOpcode::Special,
         };
 
-        assert_eq!(expected, ALU[lut_entry.to_index() as usize]);
+        ALU[lut_entry.to_index() as usize]
+    }
+
+    fn test_special_micro(op: SpecialMicroHelper, in1: u8, expected: u8) {
+        let actual = eval_special_micro(op, in1);
+        assert_eq!(expected, actual, "{:?} 0x{:02x}",op,in1);
     }
 
     #[test]
@@ -311,15 +362,27 @@ mod tests {
 
     #[test]
     fn version_bump() {
+
+        let version = [
+            eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionMajor as u8),
+            eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionMinor as u8),
+            eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionPatch as u8),
+        ];
+        assert_eq!([MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION], version);
+
+        // if you have to change this, also change the version above
+        let hash = u32::from_le_bytes([
+            eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::Hash0 as u8),
+            eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::Hash1 as u8),
+            eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::Hash2 as u8),
+            eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::Hash3 as u8),
+        ]);
+
+        assert_eq!(1198411863, hash); // if you have to change this, also change the version
+
         let mut hasher = DefaultHasher::new();
         hasher.write(&ALU);
-        let hash = hasher.finish();
-        let hash = hash % 0x10000;
-        
-        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionHi as u8, 0x0);
-        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionLo as u8, 0x0);
-        test_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::VersionPatch as u8, 0x2);
-
-        assert_eq!(19534, hash); // if you have to change this, also change the version
+        let whole_hash = hasher.finish();
+        assert_eq!(1034588938491616518, whole_hash); // if you have to change this, but not the above then something is screwy
     }
 }
