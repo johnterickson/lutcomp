@@ -2,6 +2,8 @@ extern crate strum;
 #[macro_use]
 extern crate strum_macros;
 
+use std::{collections::hash_map::DefaultHasher, hash::Hasher, convert::TryInto};
+
 use strum::IntoEnumIterator;
 
 extern crate packed_struct;
@@ -12,8 +14,14 @@ use common::*;
 
 use lazy_static::lazy_static;
 lazy_static! {
-    pub static ref UCODE: Vec<(u8, &'static str, u32)> = ucode(false);
+    static ref UCODE_AND_HASH: (Vec<(u8, &'static str, u32)>, u32) = ucode(false);
+    pub static ref UCODE_HASH: u32 = UCODE_AND_HASH.1;
+    pub static ref UCODE: Vec<(u8, &'static str, u32)> = UCODE_AND_HASH.0.clone();
 }
+
+pub const MAJOR_VERSION: u8 = 1;
+pub const MINOR_VERSION: u8 = 0;
+pub const PATCH_VERSION: u8 = 0;
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
@@ -255,7 +263,7 @@ impl MicroEntry {
 //     };
 // }
 
-struct Ucode {
+pub struct Ucode {
     vec_out: Vec<(u8,&'static str, u32)>,
     print: bool,
 
@@ -305,8 +313,9 @@ impl Ucode {
                 self.base_address + self.uop_count * 2, &u, file, line);
             u.print();
         }
-        self.vec_out.push((u.emit().0, file, line));
-        self.vec_out.push((u.emit().1, file, line));
+        let bytes = u.emit();
+        self.vec_out.push((bytes.0, file, line));
+        self.vec_out.push((bytes.1, file, line));
         self.uop_count += 1;
     }
 
@@ -424,10 +433,12 @@ impl Ucode {
         }
     }
 
-    fn build(&mut self) -> Vec<(u8, &'static str, u32)> {
+    fn build(&mut self) -> (Vec<(u8, &'static str, u32)>,u32) {
         if self.print {
             println!("v2.0 raw");
         }
+
+        let mut hash_nibble_indices = Vec::new();
 
         let halt = MicroOp::new(
             None,
@@ -1614,6 +1625,92 @@ impl Ucode {
                 // Some(Opcode::ShiftRight32_3) => {
 
                 // }
+                Some(Opcode::GetAluInfo) => {
+                    self.start_of_ram();
+                    
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::GetInfo as u8), Load::Alu(AluOpcode::Special));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                }
+                Some(Opcode::GetUcodeInfo) => {
+                    self.start_of_ram();
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(MAJOR_VERSION >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(MAJOR_VERSION & 0xF), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(MINOR_VERSION >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(MINOR_VERSION & 0xF), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(PATCH_VERSION >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(PATCH_VERSION & 0xF), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    let nib1 = self.vec_out.len();
+                    add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    hash_nibble_indices.push(self.vec_out.len());
+                    hash_nibble_indices.push(nib1);
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLoNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                    let nib3 = self.vec_out.len();
+                    add!(self, Output::Imm(3), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    hash_nibble_indices.push(self.vec_out.len());
+                    hash_nibble_indices.push(nib3);
+                    add!(self, Output::Imm(2), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(2), Load::Alu(AluOpcode::AddLoNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                    let nib5 = self.vec_out.len();
+                    add!(self, Output::Imm(5), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    hash_nibble_indices.push(self.vec_out.len());
+                    hash_nibble_indices.push(nib5);
+                    add!(self, Output::Imm(4), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(3), Load::Alu(AluOpcode::AddLoNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                    let nib7 = self.vec_out.len();
+                    add!(self, Output::Imm(7), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    hash_nibble_indices.push(self.vec_out.len());
+                    hash_nibble_indices.push(nib7);
+                    add!(self, Output::Imm(6), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                }
                 None => {
                     self.add_op(halt, file!(), line!());
                 }
@@ -1648,11 +1745,35 @@ impl Ucode {
             }
         }
 
-        self.vec_out.clone()
+        assert_eq!(0, hash_nibble_indices.len() % 8);
+
+        let hash = {
+            let mut hasher = DefaultHasher::new();
+            let bytes: Vec<u8> = self.vec_out.iter().map(|(b,_,_)| *b).collect();
+            hasher.write(&bytes);
+            hasher.finish()
+        };
+
+        let hash: u32 = (hash % 0x1_0000_0000).try_into().unwrap();
+        {
+            let hash = hash.to_le_bytes();
+            for (nib_index, byte_index) in hash_nibble_indices.iter().enumerate() {
+                let nib_index = nib_index % 8;
+                let nibble = hash[nib_index/2];
+                let nibble = if nib_index % 2 == 0 { nibble & 0xF } else { nibble >> 4 };
+                assert_eq!(nibble & 0xF0, 0);
+                let b = self.vec_out.get_mut(*byte_index).unwrap();
+                assert_eq!(b.0 >> 4, nib_index.try_into().unwrap(), "{:02x}", b.0);
+                b.0 &= 0x0F;
+                b.0 |= nibble << 4;
+            }
+        }
+
+        (self.vec_out.clone(), hash)
     }
 }
 
-pub fn ucode(print: bool) -> Vec<(u8, &'static str, u32)> {
+pub fn ucode(print: bool) -> (Vec<(u8, &'static str, u32)>, u32) {
     let mut ucode = Ucode::new(print);
     ucode.build()
 }
@@ -1666,5 +1787,19 @@ mod tests {
         let entry = MicroEntry { flags: 0xF.into(), instruction: 0xCC };
 
         assert_eq!([0xCC, 0xF], entry.pack_lsb());
+    }
+
+    #[test]
+    fn version_bump() {
+        let mut hasher = DefaultHasher::new();
+        let bytes: Vec<u8> = self::UCODE.iter().map(|(b,_,_)| *b).collect();
+        hasher.write(&bytes);
+        let hash = hasher.finish();
+        let hash = hash % 0x1_0000_0000;
+        
+        assert_eq!(4085447722, hash); // if you have to change this, also change the version
+        assert_eq!(MAJOR_VERSION, 1);
+        assert_eq!(MINOR_VERSION, 0);
+        assert_eq!(PATCH_VERSION, 0);
     }
 }
