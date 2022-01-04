@@ -2,7 +2,7 @@ extern crate strum;
 #[macro_use]
 extern crate strum_macros;
 
-use std::{collections::hash_map::DefaultHasher, hash::Hasher, convert::TryInto};
+use std::{collections::hash_map::DefaultHasher, hash::Hasher, convert::TryInto, borrow::Cow};
 
 use strum::IntoEnumIterator;
 
@@ -245,24 +245,6 @@ impl MicroEntry {
     }
 }
 
-// macro_rules! add {
-//     ($u:expr) => {
-//         if print {
-//             println!(
-//                 "#  addr:{:05x} uop:{:?} {}:{}",
-//                 base_address + *uop_count.borrow() * 2,
-//                 &$u,
-//                 file!(), line!()
-//             );
-//             $u.print();
-//         }
-//         let mut out = out.borrow_mut();
-//         out.push($u.emit().0);
-//         out.push($u.emit().1);
-//         *uop_count.borrow_mut() += 1;
-//     };
-// }
-
 pub struct Ucode {
     vec_out: Vec<(u8,&'static str, u32)>,
     print: bool,
@@ -309,6 +291,10 @@ impl Ucode {
 
     fn add_op(&mut self, u: MicroOp, file: &'static str, line: u32) {
         if self.print {
+            let mut file = Cow::Borrowed(file);
+            if file.contains('\\') {
+                file = Cow::Owned(file.chars().map(|c| if c == '\\' {'/'} else {c}).collect());
+            }
             println!("#  addr:{:05x} uop:{:?} source:{}:{}", 
                 self.base_address + self.uop_count * 2, &u, file, line);
             u.print();
