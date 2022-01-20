@@ -465,7 +465,7 @@ impl IlFunction {
     }
     
     fn emit_statement(&mut self, ctxt: &mut IlContext, s: &Statement) {
-        println!("{:?}", s);
+        // println!("{:?}", s);
         match s {
             Statement::Declare { .. } => {},
             Statement::Assign { target, var_type, value } => {

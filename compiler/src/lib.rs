@@ -152,7 +152,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                             contents += &format!("\n/* BEGIN INCLUDE '{:?}' */\n", &path);
                             file.read_to_string(&mut contents).unwrap();
                             contents += &format!("\n/* END   INCLUDE '{:?}' */\n", &path);
-                            println!("replacing {}+0x{:02x}=`{}` with {:?}", original_byte_offset, original_byte_count, &original_stmt, path);
+                            // println!("replacing {}+0x{:02x}=`{}` with {:?}", original_byte_offset, original_byte_count, &original_stmt, path);
                             input.replace_range(original_byte_offset..original_byte_offset+original_byte_count, &contents);
                             // println!("{}",&input);
                             continue 'reparse;

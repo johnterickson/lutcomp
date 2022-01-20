@@ -298,34 +298,34 @@ void setup() {
     WiFiConnection existing;
     EEPROM.get(0, existing);
     if (0 == memcmp(&wifiConnection, &existing, sizeof(wifiConnection))) {
-      Serial.println("WiFi config already matches.");
+      Serial.println("# WiFi config already matches.");
     } else {
       EEPROM.put(0, wifiConnection);
-      Serial.println("Updating WiFi config.");
+      Serial.println("# Updating WiFi config.");
     }
   } else {
     EEPROM.get(0, wifiConnection);
-    Serial.println("Using existing WiFi config.");
+    Serial.println("# Using existing WiFi config.");
   }
-  Serial.println(wifiConnection.ssid);
-  //Serial.println(wifiConnection.password);
 
-  
+  Serial.print("# ");
+  Serial.println(wifiConnection.ssid);
+    
   Serial3.begin(115200);
   WiFi.init(Serial3);
 
   // Connect to WiFi
   while (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Connecting to WiFi...");
+    Serial.println("# Connecting to WiFi...");
     WiFi.begin(&wifiConnection.ssid[0], &wifiConnection.password[0]);
   }
-  Serial.println("Connected to WiFi");
+  Serial.println("# Connected to WiFi");
 
   server.begin();
   
   // Print your WiFi shield's IP address
   IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
+  Serial.print("# IP Address: ");
   Serial.println(ip);
 #endif
 

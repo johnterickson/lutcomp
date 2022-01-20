@@ -10,7 +10,7 @@ a3 0c fc ff ff ff
 # 0000d Instruction { source: "PseudoCall(Label24(:main))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
 94 0c 17 00 00 00 
 # 00013 Instruction { source: "PseudoCall(Label24(:main))", opcode: JmpImm, args: [Label24(:main)], resolved: None }
-40 51 00 00 
+40 57 00 00 
 # 00017 Instruction { source: "PseudoCall(Label24(:main))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
 # 0001d Instruction { source: "Halting after return from entry function.", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
@@ -18,41 +18,47 @@ ff 00 00 00 00
 # :getchar
 # Ret Some(U8)
 # Var t0 (t0 Arithmetic(And, Ident("tty"), Number(U8, 128))) U8 Some([16])
-# Var t2 (t2 Number(U8, 128)) U8 Some([16])
+# Var t1 (t1 Ident("tty")) U8 Some([16])
+# Var t2 (t2 Number(U8, 128)) U8 Some([17])
 # Var t3 (t3 Number(U8, 0)) U8 Some([17])
 # Var t4 (t4 Arithmetic(And, Ident("tty"), Number(U8, 127))) U8 Some([16])
-# Var t6 (t6 Number(U8, 127)) U8 Some([16])
+# Var t5 (t5 Ident("tty")) U8 Some([16])
+# Var t6 (t6 Number(U8, 127)) U8 Some([17])
 # Var tty (Local tty Number(U8) U8) U8 Some([18])
 # 00022 Instruction { source: "tty <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x12), Constant8(0x00=0)], resolved: None }
 00 12 00 
 # getchar_while_predicate_0
-# 00025 Instruction { source: "t2 <- 0n128/0x80u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x80=128)], resolved: None }
-00 10 80 
-# 00028 Instruction { source: "t0 <- tty BitwiseAnd t2", opcode: And8, args: [Register(0x12), Register(0x10), Register(0x10)], resolved: None }
-33 12 10 10 
-# 0002c Instruction { source: "t3 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x11), Constant8(0x00=0)], resolved: None }
+# 00025 Instruction { source: "t1 <- tty U8", opcode: Copy8, args: [Register(0x12), Register(0x10)], resolved: None }
+16 12 10 
+# 00028 Instruction { source: "t2 <- 0n128/0x80u8 ", opcode: LoadImm8, args: [Register(0x11), Constant8(0x80=128)], resolved: None }
+00 11 80 
+# 0002b Instruction { source: "t0 <- t1 BitwiseAnd t2", opcode: And8, args: [Register(0x10), Register(0x11), Register(0x10)], resolved: None }
+33 10 11 10 
+# 0002f Instruction { source: "t3 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x11), Constant8(0x00=0)], resolved: None }
 00 11 00 
-# 0002f Instruction { source: "if t0 == t3 then 'getchar_while_body_1' else 'getchar_while_end_2'", opcode: Cmp8, args: [Register(0x10), Register(0x11)], resolved: None }
+# 00032 Instruction { source: "if t0 == t3 then 'getchar_while_body_1' else 'getchar_while_end_2'", opcode: Cmp8, args: [Register(0x10), Register(0x11)], resolved: None }
 25 10 11 
-# 00032 Instruction { source: "if t0 == t3 then 'getchar_while_body_1' else 'getchar_while_end_2'", opcode: JzImm, args: [Label24(getchar_while_body_1)], resolved: None }
-42 3a 00 00 
-# 00036 Instruction { source: "if t0 == t3 then 'getchar_while_body_1' else 'getchar_while_end_2'", opcode: JmpImm, args: [Label24(getchar_while_end_2)], resolved: None }
-40 40 00 00 
+# 00035 Instruction { source: "if t0 == t3 then 'getchar_while_body_1' else 'getchar_while_end_2'", opcode: JzImm, args: [Label24(getchar_while_body_1)], resolved: None }
+42 3d 00 00 
+# 00039 Instruction { source: "if t0 == t3 then 'getchar_while_body_1' else 'getchar_while_end_2'", opcode: JmpImm, args: [Label24(getchar_while_end_2)], resolved: None }
+40 43 00 00 
 # getchar_while_body_1
-# 0003a Instruction { source: "tty <- ttyin", opcode: TtyIn, args: [Register(0x12)], resolved: None }
+# 0003d Instruction { source: "tty <- ttyin", opcode: TtyIn, args: [Register(0x12)], resolved: None }
 12 12 
-# 0003c Instruction { source: "goto getchar_while_predicate_0", opcode: JmpImm, args: [Label24(getchar_while_predicate_0)], resolved: None }
+# 0003f Instruction { source: "goto getchar_while_predicate_0", opcode: JmpImm, args: [Label24(getchar_while_predicate_0)], resolved: None }
 40 25 00 00 
 # getchar_while_end_2
-# 00040 Instruction { source: "t6 <- 0n127/0x7fu8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x7f=127)], resolved: None }
-00 10 7f 
-# 00043 Instruction { source: "t4 <- tty BitwiseAnd t6", opcode: And8, args: [Register(0x12), Register(0x10), Register(0x10)], resolved: None }
-33 12 10 10 
-# 00047 Instruction { source: "return Some(t4)", opcode: Copy8, args: [Register(0x10), Register(0x00)], resolved: None }
+# 00043 Instruction { source: "t5 <- tty U8", opcode: Copy8, args: [Register(0x12), Register(0x10)], resolved: None }
+16 12 10 
+# 00046 Instruction { source: "t6 <- 0n127/0x7fu8 ", opcode: LoadImm8, args: [Register(0x11), Constant8(0x7f=127)], resolved: None }
+00 11 7f 
+# 00049 Instruction { source: "t4 <- t5 BitwiseAnd t6", opcode: And8, args: [Register(0x10), Register(0x11), Register(0x10)], resolved: None }
+33 10 11 10 
+# 0004d Instruction { source: "return Some(t4)", opcode: Copy8, args: [Register(0x10), Register(0x00)], resolved: None }
 16 10 00 
-# 0004a Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 00050 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 0004c Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 00052 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
 # :main
 # Ret Some(U8)
@@ -62,974 +68,1176 @@ ff 00 00 00 10
 # Var ch (Local ch Number(U8) U8) U8 Some([24])
 # Var i (Local i Number(USIZE) U32) U32 Some([28, 29, 30, 31])
 # Var p_byte (Local p_byte Ptr(Number(U8)) U32) U32 Some([28, 29, 30, 31])
-# Var t0 (t0 Number(U8, 82)) U8 Some([24])
-# Var t1 (t1 Number(U8, 69)) U8 Some([24])
-# Var t10 (t10 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) }) U32 Some([28, 29, 30, 31])
-# Var t12 (t12 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) U32 Some([28, 29, 30, 31])
-# Var t13 (t13 Number(U8, 0)) U8 Some([24])
-# Var t14 (t14 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Number(USIZE, 0)) }) U32 Some([28, 29, 30, 31])
-# Var t16 (t16 Number(USIZE, 0)) U32 Some([28, 29, 30, 31])
-# Var t18 (t18 Number(U8, 114)) U8 Some([32])
-# Var t19 (t19 Call(Call { function: "printHex", parameters: [Deref(Ident("p_byte"))] })) U8 Some([33])
-# Var t2 (t2 Number(U8, 65)) U8 Some([24])
-# Var t20 (t20 Deref(Ident("p_byte"))) U8 Some([24])
-# Var t22 (t22 Number(U8, 10)) U8 Some([24])
-# Var t24 (t24 Number(U8, 119)) U8 Some([32])
-# Var t26 (t26 Call(Call { function: "parseHex", parameters: [AddressOf(Index("buf", Number(USIZE, 1)))] })) U8 Some([32])
-# Var t28 (t28 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Number(USIZE, 1)) }) U32 Some([36, 37, 38, 39])
-# Var t3 (t3 Number(U8, 68)) U8 Some([24])
-# Var t30 (t30 Number(USIZE, 1)) U32 Some([36, 37, 38, 39])
-# Var t32 (t32 Number(U8, 110)) U8 Some([32])
-# Var t34 (t34 Number(USIZE, 1)) U32 Some([28, 29, 30, 31])
-# Var t36 (t36 Number(U8, 97)) U8 Some([32])
-# Var t37 (t37 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 3))] })) U8 Some([33])
-# Var t38 (t38 Index("addr", Number(USIZE, 3))) U8 Some([40])
-# Var t39 (t39 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 2))] })) U8 Some([33])
-# Var t4 (t4 Number(U8, 89)) U8 Some([24])
-# Var t40 (t40 Index("addr", Number(USIZE, 2))) U8 Some([40])
-# Var t41 (t41 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 1))] })) U8 Some([33])
-# Var t42 (t42 Index("addr", Number(USIZE, 1))) U8 Some([40])
-# Var t43 (t43 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 0))] })) U8 Some([33])
-# Var t44 (t44 Index("addr", Number(USIZE, 0))) U8 Some([40])
-# Var t45 (t45 Number(U8, 10)) U8 Some([24])
-# Var t47 (t47 Number(U8, 115)) U8 Some([32])
-# Var t48 (t48 Index("buf", Ident("i"))) U8 Some([32])
-# Var t49 (t49 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Ident("i")) }) U32 Some([36, 37, 38, 39])
-# Var t5 (t5 Number(U8, 10)) U8 Some([24])
-# Var t52 (t52 Number(U8, 0)) U8 Some([41])
-# Var t53 (t53 Index("addr", Number(USIZE, 2))) U8 Some([40])
-# Var t54 (t54 Index("addr", Number(USIZE, 1))) U8 Some([40])
-# Var t55 (t55 Index("addr", Number(USIZE, 0))) U8 Some([40])
-# Var t56 (t56 Call(Call { function: "parseHex", parameters: [AddressOf(Index("buf", Ident("i")))] })) U8 Some([32])
-# Var t58 (t58 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Ident("i")) }) U32 Some([36, 37, 38, 39])
-# Var t6 (t6 Number(U8, 0)) U8 Some([24])
-# Var t62 (t62 Number(USIZE, 2)) U32 Some([36, 37, 38, 39])
-# Var t64 (t64 Number(U8, 113)) U8 Some([32])
-# Var t65 (t65 Number(U8, 0)) U8 Some([33])
-# Var t67 (t67 Number(U8, 105)) U8 Some([32])
-# Var t68 (t68 Number(U8, 66)) U8 Some([24])
-# Var t69 (t69 Number(U8, 111)) U8 Some([24])
-# Var t7 (t7 Number(U8, 0)) U8 Some([32])
-# Var t70 (t70 Number(U8, 111)) U8 Some([24])
-# Var t71 (t71 Number(U8, 116)) U8 Some([24])
-# Var t72 (t72 Number(U8, 114)) U8 Some([24])
-# Var t73 (t73 Number(U8, 97)) U8 Some([24])
-# Var t74 (t74 Number(U8, 109)) U8 Some([24])
-# Var t75 (t75 Number(U8, 10)) U8 Some([24])
-# Var t76 (t76 Number(U8, 72)) U8 Some([32])
-# Var t77 (t77 Number(U8, 117)) U8 Some([32])
-# Var t78 (t78 Number(U8, 104)) U8 Some([32])
-# Var t79 (t79 Number(U8, 63)) U8 Some([32])
-# Var t8 (t8 Call(Call { function: "readline", parameters: [AddressOf(Index("buf", Number(U8, 0)))] })) U8 Some([33])
-# Var t81 (t81 Number(U8, 10)) U8 Some([24])
-# Var t82 (t82 Number(U8, 0)) U8 Some([33])
-# 00051 Instruction { source: "reserve 20 bytes of stack space for locals", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xffffffec=4294967276)], resolved: None }
+# Var t0 (Stack size negated) U32 Some([20, 21, 22, 23])
+# Var t1 (t1 Number(U8, 82)) U8 Some([24])
+# Var t10 (t10 AddressOf(Index("buf", Number(U8, 0)))) U32 Some([28, 29, 30, 31])
+# Var t11 (t11 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) }) U32 Some([28, 29, 30, 31])
+# Var t12 (t12 Ident("__frame_pointer")) U32 Some([32, 33, 34, 35])
+# Var t13 (t13 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) U32 Some([28, 29, 30, 31])
+# Var t14 (t14 Number(U8, 0)) U8 Some([24])
+# Var t15 (t15 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Number(USIZE, 0)) }) U32 Some([28, 29, 30, 31])
+# Var t16 (t16 Ident("__frame_pointer")) U32 Some([32, 33, 34, 35])
+# Var t17 (t17 Number(USIZE, 0)) U32 Some([28, 29, 30, 31])
+# Var t18 (t18 Ident("ch")) U8 Some([24])
+# Var t19 (t19 Number(U8, 114)) U8 Some([36])
+# Var t2 (t2 Number(U8, 69)) U8 Some([24])
+# Var t20 (t20 Call(Call { function: "printHex", parameters: [Deref(Ident("p_byte"))] })) U8 Some([37])
+# Var t21 (t21 Deref(Ident("p_byte"))) U8 Some([24])
+# Var t22 (t22 Ident("p_byte")) U32 Some([28, 29, 30, 31])
+# Var t23 (t23 Number(U8, 10)) U8 Some([24])
+# Var t24 (t24 Ident("ch")) U8 Some([24])
+# Var t25 (t25 Number(U8, 119)) U8 Some([36])
+# Var t26 (t26 Ident("p_byte")) U32 Some([28, 29, 30, 31])
+# Var t27 (t27 Call(Call { function: "parseHex", parameters: [AddressOf(Index("buf", Number(USIZE, 1)))] })) U8 Some([36])
+# Var t28 (t28 AddressOf(Index("buf", Number(USIZE, 1)))) U32 Some([40, 41, 42, 43])
+# Var t29 (t29 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Number(USIZE, 1)) }) U32 Some([40, 41, 42, 43])
+# Var t3 (t3 Number(U8, 65)) U8 Some([24])
+# Var t30 (t30 Ident("__frame_pointer")) U32 Some([32, 33, 34, 35])
+# Var t31 (t31 Number(USIZE, 1)) U32 Some([40, 41, 42, 43])
+# Var t32 (t32 Ident("ch")) U8 Some([24])
+# Var t33 (t33 Number(U8, 110)) U8 Some([36])
+# Var t34 (t34 Ident("addr")) U32 Some([20, 21, 22, 23])
+# Var t35 (t35 Number(USIZE, 1)) U32 Some([28, 29, 30, 31])
+# Var t36 (t36 Ident("ch")) U8 Some([24])
+# Var t37 (t37 Number(U8, 97)) U8 Some([36])
+# Var t38 (t38 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 3))] })) U8 Some([37])
+# Var t39 (t39 Index("addr", Number(USIZE, 3))) U8 Some([44])
+# Var t4 (t4 Number(U8, 68)) U8 Some([24])
+# Var t40 (t40 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 2))] })) U8 Some([37])
+# Var t41 (t41 Index("addr", Number(USIZE, 2))) U8 Some([44])
+# Var t42 (t42 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 1))] })) U8 Some([37])
+# Var t43 (t43 Index("addr", Number(USIZE, 1))) U8 Some([44])
+# Var t44 (t44 Call(Call { function: "printHex", parameters: [Index("addr", Number(USIZE, 0))] })) U8 Some([37])
+# Var t45 (t45 Index("addr", Number(USIZE, 0))) U8 Some([44])
+# Var t46 (t46 Number(U8, 10)) U8 Some([24])
+# Var t47 (t47 Ident("ch")) U8 Some([24])
+# Var t48 (t48 Number(U8, 115)) U8 Some([36])
+# Var t49 (t49 Index("buf", Ident("i"))) U8 Some([36])
+# Var t5 (t5 Number(U8, 89)) U8 Some([24])
+# Var t50 (t50 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Ident("i")) }) U32 Some([40, 41, 42, 43])
+# Var t51 (t51 Ident("__frame_pointer")) U32 Some([32, 33, 34, 35])
+# Var t52 (t52 Ident("i")) U32 Some([28, 29, 30, 31])
+# Var t53 (t53 Number(U8, 0)) U8 Some([45])
+# Var t54 (t54 Index("addr", Number(USIZE, 2))) U8 Some([44])
+# Var t55 (t55 Index("addr", Number(USIZE, 1))) U8 Some([44])
+# Var t56 (t56 Index("addr", Number(USIZE, 0))) U8 Some([44])
+# Var t57 (t57 Call(Call { function: "parseHex", parameters: [AddressOf(Index("buf", Ident("i")))] })) U8 Some([36])
+# Var t58 (t58 AddressOf(Index("buf", Ident("i")))) U32 Some([40, 41, 42, 43])
+# Var t59 (t59 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Ident("i")) }) U32 Some([40, 41, 42, 43])
+# Var t6 (t6 Number(U8, 10)) U8 Some([24])
+# Var t60 (t60 Ident("__frame_pointer")) U32 Some([32, 33, 34, 35])
+# Var t61 (t61 Ident("i")) U32 Some([28, 29, 30, 31])
+# Var t62 (t62 Ident("i")) U32 Some([28, 29, 30, 31])
+# Var t63 (t63 Number(USIZE, 2)) U32 Some([40, 41, 42, 43])
+# Var t64 (t64 Ident("ch")) U8 Some([24])
+# Var t65 (t65 Number(U8, 113)) U8 Some([36])
+# Var t66 (t66 Number(U8, 0)) U8 Some([44])
+# Var t67 (Stack size) U32 Some([28, 29, 30, 31])
+# Var t68 (t68 Ident("ch")) U8 Some([24])
+# Var t69 (t69 Number(U8, 105)) U8 Some([36])
+# Var t7 (t7 Number(U8, 0)) U8 Some([24])
+# Var t70 (t70 Number(U8, 66)) U8 Some([24])
+# Var t71 (t71 Number(U8, 111)) U8 Some([24])
+# Var t72 (t72 Number(U8, 111)) U8 Some([24])
+# Var t73 (t73 Number(U8, 116)) U8 Some([24])
+# Var t74 (t74 Number(U8, 114)) U8 Some([24])
+# Var t75 (t75 Number(U8, 97)) U8 Some([24])
+# Var t76 (t76 Number(U8, 109)) U8 Some([24])
+# Var t77 (t77 Number(U8, 10)) U8 Some([24])
+# Var t78 (t78 Number(U8, 72)) U8 Some([36])
+# Var t79 (t79 Number(U8, 117)) U8 Some([36])
+# Var t8 (t8 Number(U8, 0)) U8 Some([36])
+# Var t80 (t80 Number(U8, 104)) U8 Some([36])
+# Var t81 (t81 Number(U8, 63)) U8 Some([36])
+# Var t82 (t82 Ident("ch")) U8 Some([24])
+# Var t83 (t83 Number(U8, 10)) U8 Some([24])
+# Var t84 (t84 Number(U8, 0)) U8 Some([44])
+# Var t85 (Stack size) U32 Some([28, 29, 30, 31])
+# Var t9 (t9 Call(Call { function: "readline", parameters: [AddressOf(Index("buf", Number(U8, 0)))] })) U8 Some([37])
+# 00057 Instruction { source: "reserve 20 bytes of stack space for locals", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xffffffec=4294967276)], resolved: None }
 a3 0c ec ff ff ff 
-# 00057 Instruction { source: "addr <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x14), Constant32(0x00000000=0)], resolved: None }
+# 0005d Instruction { source: "t0 <- 0xffffffecu32 ", opcode: LoadImm32, args: [Register(0x14), Constant32(0xffffffec=4294967276)], resolved: None }
+80 14 ec ff ff ff 
+# 00063 Instruction { source: "__frame_pointer <- __frame_pointer Add t0", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x14), Register(0x0c)], resolved: None }
+a0 0c 14 0c 
+# 00067 Instruction { source: "addr <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x14), Constant32(0x00000000=0)], resolved: None }
 80 14 00 00 00 00 
-# 0005d Instruction { source: "i <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
+# 0006d Instruction { source: "i <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
 80 1c 00 00 00 00 
-# 00063 Instruction { source: "ch <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x00=0)], resolved: None }
+# 00073 Instruction { source: "ch <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x00=0)], resolved: None }
 00 18 00 
-# 00066 Instruction { source: "t0 <- 0n82/0x52u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x52=82)], resolved: None }
+# 00076 Instruction { source: "t1 <- 0n82/0x52u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x52=82)], resolved: None }
 00 18 52 
-# 00069 Instruction { source: "ttyout <- t0", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00079 Instruction { source: "ttyout <- t1", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 0006b Instruction { source: "t1 <- 0n69/0x45u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x45=69)], resolved: None }
+# 0007b Instruction { source: "t2 <- 0n69/0x45u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x45=69)], resolved: None }
 00 18 45 
-# 0006e Instruction { source: "ttyout <- t1", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 0007e Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 00070 Instruction { source: "t2 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x41=65)], resolved: None }
+# 00080 Instruction { source: "t3 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x41=65)], resolved: None }
 00 18 41 
-# 00073 Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00083 Instruction { source: "ttyout <- t3", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 00075 Instruction { source: "t3 <- 0n68/0x44u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x44=68)], resolved: None }
+# 00085 Instruction { source: "t4 <- 0n68/0x44u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x44=68)], resolved: None }
 00 18 44 
-# 00078 Instruction { source: "ttyout <- t3", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00088 Instruction { source: "ttyout <- t4", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 0007a Instruction { source: "t4 <- 0n89/0x59u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x59=89)], resolved: None }
+# 0008a Instruction { source: "t5 <- 0n89/0x59u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x59=89)], resolved: None }
 00 18 59 
-# 0007d Instruction { source: "ttyout <- t4", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 0008d Instruction { source: "ttyout <- t5", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 0007f Instruction { source: "t5 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
+# 0008f Instruction { source: "t6 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
 00 18 0a 
-# 00082 Instruction { source: "ttyout <- t5", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00092 Instruction { source: "ttyout <- t6", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 00084 Instruction { source: "p_byte <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
+# 00094 Instruction { source: "p_byte <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
 80 1c 00 00 00 00 
 # main_while_predicate_0
-# 0008a Instruction { source: "t6 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x00=0)], resolved: None }
+# 0009a Instruction { source: "t7 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x00=0)], resolved: None }
 00 18 00 
-# 0008d Instruction { source: "t7 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x00=0)], resolved: None }
-00 20 00 
-# 00090 Instruction { source: "if t6 == t7 then 'main_while_body_1' else 'main_while_end_2'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 00093 Instruction { source: "if t6 == t7 then 'main_while_body_1' else 'main_while_end_2'", opcode: JzImm, args: [Label24(main_while_body_1)], resolved: None }
-42 9b 00 00 
-# 00097 Instruction { source: "if t6 == t7 then 'main_while_body_1' else 'main_while_end_2'", opcode: JmpImm, args: [Label24(main_while_end_2)], resolved: None }
-40 d3 02 00 
+# 0009d Instruction { source: "t8 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x00=0)], resolved: None }
+00 24 00 
+# 000a0 Instruction { source: "if t7 == t8 then 'main_while_body_1' else 'main_while_end_2'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 000a3 Instruction { source: "if t7 == t8 then 'main_while_body_1' else 'main_while_end_2'", opcode: JzImm, args: [Label24(main_while_body_1)], resolved: None }
+42 ab 00 00 
+# 000a7 Instruction { source: "if t7 == t8 then 'main_while_body_1' else 'main_while_end_2'", opcode: JmpImm, args: [Label24(main_while_end_2)], resolved: None }
+40 2f 03 00 
 # main_while_body_1
-# 0009b Instruction { source: "t13 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x00=0)], resolved: None }
+# 000ab Instruction { source: "t12 <- __frame_pointer U32", opcode: Copy32, args: [Register(0x0c), Register(0x20)], resolved: None }
+81 0c 20 
+# 000ae Instruction { source: "t14 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x00=0)], resolved: None }
 00 18 00 
-# 0009e Instruction { source: "Zero-pad for t12 U32 <- t13 U8", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
+# 000b1 Instruction { source: "Zero-pad for t13 U32 <- t14 U8", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
 80 1c 00 00 00 00 
-# 000a4 Instruction { source: "t12 U32 <- t13 U8", opcode: Copy8, args: [Register(0x18), Register(0x1c)], resolved: None }
+# 000b7 Instruction { source: "t13 U32 <- t14 U8", opcode: Copy8, args: [Register(0x18), Register(0x1c)], resolved: None }
 16 18 1c 
-# 000a7 Instruction { source: "t10 <- __frame_pointer Add t12", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x1c), Register(0x1c)], resolved: None }
-a0 0c 1c 1c 
-# 000ab Instruction { source: "Arg0[buf]=t10 None <= call readline(t10,)", opcode: Copy32, args: [Register(0x1c), Register(0x00)], resolved: None }
+# 000ba Instruction { source: "t11 <- t12 Add t13", opcode: Add32NoCarryIn, args: [Register(0x20), Register(0x1c), Register(0x1c)], resolved: None }
+a0 20 1c 1c 
+# 000be Instruction { source: "t10 <- t11 U32", opcode: Copy32, args: [Register(0x1c), Register(0x1c)], resolved: None }
+81 1c 1c 
+# 000c1 Instruction { source: "Arg0[buf]=t10 None <= call readline(t10,)", opcode: Copy32, args: [Register(0x1c), Register(0x00)], resolved: None }
 81 1c 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {16, 17, 18, 80, 81, 82, 83, 84, 85, 88, 89, 90, 91}
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {16, 17, 18, 84, 85, 86, 87, 88, 89, 92, 93, 94, 95}
 # Registers to save: []
-# 000ae Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 000c4 Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 000b4 Instruction { source: "PseudoCall(Label24(:readline))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c be 00 00 00 
-# 000ba Instruction { source: "PseudoCall(Label24(:readline))", opcode: JmpImm, args: [Label24(:readline)], resolved: None }
-40 b3 04 00 
-# 000be Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 000ca Instruction { source: "PseudoCall(Label24(:readline))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c d4 00 00 00 
+# 000d0 Instruction { source: "PseudoCall(Label24(:readline))", opcode: JmpImm, args: [Label24(:readline)], resolved: None }
+40 6a 05 00 
+# 000d4 Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 000c4 Instruction { source: "t16 <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
+# 000da Instruction { source: "t16 <- __frame_pointer U32", opcode: Copy32, args: [Register(0x0c), Register(0x20)], resolved: None }
+81 0c 20 
+# 000dd Instruction { source: "t17 <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000000=0)], resolved: None }
 80 1c 00 00 00 00 
-# 000ca Instruction { source: "t14 <- __frame_pointer Add t16", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x1c), Register(0x1c)], resolved: None }
-a0 0c 1c 1c 
-# 000ce Instruction { source: "ch <- mem[t14] U8", opcode: Load8, args: [Register(0x1c), Register(0x18)], resolved: None }
+# 000e3 Instruction { source: "t15 <- t16 Add t17", opcode: Add32NoCarryIn, args: [Register(0x20), Register(0x1c), Register(0x1c)], resolved: None }
+a0 20 1c 1c 
+# 000e7 Instruction { source: "ch <- mem[t15] U8", opcode: Load8, args: [Register(0x1c), Register(0x18)], resolved: None }
 10 1c 18 
-# 000d1 Instruction { source: "t18 <- 0n114/0x72u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x72=114)], resolved: None }
-00 20 72 
-# 000d4 Instruction { source: "if ch == t18 then 'main_if_true_0_4' else 'main_if_else_0_5'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 000d7 Instruction { source: "if ch == t18 then 'main_if_true_0_4' else 'main_if_else_0_5'", opcode: JzImm, args: [Label24(main_if_true_0_4)], resolved: None }
-42 df 00 00 
-# 000db Instruction { source: "if ch == t18 then 'main_if_true_0_4' else 'main_if_else_0_5'", opcode: JmpImm, args: [Label24(main_if_else_0_5)], resolved: None }
-40 07 01 00 
+# 000ea Instruction { source: "t18 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 000ed Instruction { source: "t19 <- 0n114/0x72u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x72=114)], resolved: None }
+00 24 72 
+# 000f0 Instruction { source: "if t18 == t19 then 'main_if_true_0_4' else 'main_if_else_0_5'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 000f3 Instruction { source: "if t18 == t19 then 'main_if_true_0_4' else 'main_if_else_0_5'", opcode: JzImm, args: [Label24(main_if_true_0_4)], resolved: None }
+42 fb 00 00 
+# 000f7 Instruction { source: "if t18 == t19 then 'main_if_true_0_4' else 'main_if_else_0_5'", opcode: JmpImm, args: [Label24(main_if_else_0_5)], resolved: None }
+40 26 01 00 
 # main_if_true_0_4
-# 000df Instruction { source: "p_byte <- addr U32", opcode: Copy32, args: [Register(0x14), Register(0x1c)], resolved: None }
+# 000fb Instruction { source: "p_byte <- addr U32", opcode: Copy32, args: [Register(0x14), Register(0x1c)], resolved: None }
 81 14 1c 
-# 000e2 Instruction { source: "t20 <- mem[p_byte] U8", opcode: Load8, args: [Register(0x1c), Register(0x18)], resolved: None }
+# 000fe Instruction { source: "t22 <- p_byte U32", opcode: Copy32, args: [Register(0x1c), Register(0x1c)], resolved: None }
+81 1c 1c 
+# 00101 Instruction { source: "t21 <- mem[t22] U8", opcode: Load8, args: [Register(0x1c), Register(0x18)], resolved: None }
 10 1c 18 
-# 000e5 Instruction { source: "Arg0[a]=t20 None <= call printHex(t20,)", opcode: Copy8, args: [Register(0x18), Register(0x00)], resolved: None }
+# 00104 Instruction { source: "Arg0[a]=t21 None <= call printHex(t21,)", opcode: Copy8, args: [Register(0x18), Register(0x00)], resolved: None }
 16 18 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {59, 60, 61, 62, 63}
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {62, 63, 64, 65, 66}
 # Registers to save: []
-# 000e8 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 00107 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 000ee Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c f8 00 00 00 
-# 000f4 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
-40 b9 03 00 
-# 000f8 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 0010d Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 17 01 00 00 
+# 00113 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
+40 3d 04 00 
+# 00117 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 000fe Instruction { source: "t22 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
+# 0011d Instruction { source: "t23 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
 00 18 0a 
-# 00101 Instruction { source: "ttyout <- t22", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00120 Instruction { source: "ttyout <- t23", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 00103 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
-40 cf 02 00 
+# 00122 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
+40 2b 03 00 
 # main_if_else_0_5
-# 00107 Instruction { source: "t24 <- 0n119/0x77u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x77=119)], resolved: None }
-00 20 77 
-# 0010a Instruction { source: "if ch == t24 then 'main_if_true_1_6' else 'main_if_else_1_7'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 0010d Instruction { source: "if ch == t24 then 'main_if_true_1_6' else 'main_if_else_1_7'", opcode: JzImm, args: [Label24(main_if_true_1_6)], resolved: None }
-42 15 01 00 
-# 00111 Instruction { source: "if ch == t24 then 'main_if_true_1_6' else 'main_if_else_1_7'", opcode: JmpImm, args: [Label24(main_if_else_1_7)], resolved: None }
-40 45 01 00 
+# 00126 Instruction { source: "t24 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 00129 Instruction { source: "t25 <- 0n119/0x77u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x77=119)], resolved: None }
+00 24 77 
+# 0012c Instruction { source: "if t24 == t25 then 'main_if_true_1_6' else 'main_if_else_1_7'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 0012f Instruction { source: "if t24 == t25 then 'main_if_true_1_6' else 'main_if_else_1_7'", opcode: JzImm, args: [Label24(main_if_true_1_6)], resolved: None }
+42 37 01 00 
+# 00133 Instruction { source: "if t24 == t25 then 'main_if_true_1_6' else 'main_if_else_1_7'", opcode: JmpImm, args: [Label24(main_if_else_1_7)], resolved: None }
+40 70 01 00 
 # main_if_true_1_6
-# 00115 Instruction { source: "p_byte <- addr U32", opcode: Copy32, args: [Register(0x14), Register(0x1c)], resolved: None }
+# 00137 Instruction { source: "p_byte <- addr U32", opcode: Copy32, args: [Register(0x14), Register(0x1c)], resolved: None }
 81 14 1c 
-# 00118 Instruction { source: "t30 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x24), Constant32(0x00000001=1)], resolved: None }
-80 24 01 00 00 00 
-# 0011e Instruction { source: "t28 <- __frame_pointer Add t30", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x24), Register(0x24)], resolved: None }
-a0 0c 24 24 
-# 00122 Instruction { source: "Arg0[c]=t28 Some(t26) <= call parseHex(t28,)", opcode: Copy32, args: [Register(0x24), Register(0x00)], resolved: None }
-81 24 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {44, 45, 46, 47, 48, 49, 52, 53, 54, 55, 56, 57, 58}
+# 0013a Instruction { source: "t26 <- p_byte U32", opcode: Copy32, args: [Register(0x1c), Register(0x1c)], resolved: None }
+81 1c 1c 
+# 0013d Instruction { source: "t30 <- __frame_pointer U32", opcode: Copy32, args: [Register(0x0c), Register(0x20)], resolved: None }
+81 0c 20 
+# 00140 Instruction { source: "t31 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x28), Constant32(0x00000001=1)], resolved: None }
+80 28 01 00 00 00 
+# 00146 Instruction { source: "t29 <- t30 Add t31", opcode: Add32NoCarryIn, args: [Register(0x20), Register(0x28), Register(0x28)], resolved: None }
+a0 20 28 28 
+# 0014a Instruction { source: "t28 <- t29 U32", opcode: Copy32, args: [Register(0x28), Register(0x28)], resolved: None }
+81 28 28 
+# 0014d Instruction { source: "Arg0[c]=t28 Some(t27) <= call parseHex(t28,)", opcode: Copy32, args: [Register(0x28), Register(0x00)], resolved: None }
+81 28 00 
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {48, 49, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60, 61}
 # Registers to save: []
-# 00125 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 00150 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 0012b Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 35 01 00 00 
-# 00131 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: JmpImm, args: [Label24(:parseHex)], resolved: None }
-40 e6 02 00 
-# 00135 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 00156 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 60 01 00 00 
+# 0015c Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: JmpImm, args: [Label24(:parseHex)], resolved: None }
+40 4c 03 00 
+# 00160 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 0013b Instruction { source: "Some(t26) <= call parseHex(t28,)", opcode: Copy8, args: [Register(0x00), Register(0x20)], resolved: None }
-16 00 20 
-# 0013e Instruction { source: "mem[p_byte] <- t26 U8", opcode: Store8, args: [Register(0x20), Register(0x1c)], resolved: None }
-11 20 1c 
-# 00141 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
-40 cf 02 00 
+# 00166 Instruction { source: "Some(t27) <= call parseHex(t28,)", opcode: Copy8, args: [Register(0x00), Register(0x24)], resolved: None }
+16 00 24 
+# 00169 Instruction { source: "mem[t26] <- t27 U8", opcode: Store8, args: [Register(0x24), Register(0x1c)], resolved: None }
+11 24 1c 
+# 0016c Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
+40 2b 03 00 
 # main_if_else_1_7
-# 00145 Instruction { source: "t32 <- 0n110/0x6eu8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x6e=110)], resolved: None }
-00 20 6e 
-# 00148 Instruction { source: "if ch == t32 then 'main_if_true_2_8' else 'main_if_else_2_9'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 0014b Instruction { source: "if ch == t32 then 'main_if_true_2_8' else 'main_if_else_2_9'", opcode: JzImm, args: [Label24(main_if_true_2_8)], resolved: None }
-42 53 01 00 
-# 0014f Instruction { source: "if ch == t32 then 'main_if_true_2_8' else 'main_if_else_2_9'", opcode: JmpImm, args: [Label24(main_if_else_2_9)], resolved: None }
-40 61 01 00 
+# 00170 Instruction { source: "t32 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 00173 Instruction { source: "t33 <- 0n110/0x6eu8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x6e=110)], resolved: None }
+00 24 6e 
+# 00176 Instruction { source: "if t32 == t33 then 'main_if_true_2_8' else 'main_if_else_2_9'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 00179 Instruction { source: "if t32 == t33 then 'main_if_true_2_8' else 'main_if_else_2_9'", opcode: JzImm, args: [Label24(main_if_true_2_8)], resolved: None }
+42 81 01 00 
+# 0017d Instruction { source: "if t32 == t33 then 'main_if_true_2_8' else 'main_if_else_2_9'", opcode: JmpImm, args: [Label24(main_if_else_2_9)], resolved: None }
+40 92 01 00 
 # main_if_true_2_8
-# 00153 Instruction { source: "t34 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000001=1)], resolved: None }
+# 00181 Instruction { source: "t34 <- addr U32", opcode: Copy32, args: [Register(0x14), Register(0x14)], resolved: None }
+81 14 14 
+# 00184 Instruction { source: "t35 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000001=1)], resolved: None }
 80 1c 01 00 00 00 
-# 00159 Instruction { source: "addr <- addr Add t34", opcode: Add32NoCarryIn, args: [Register(0x14), Register(0x1c), Register(0x14)], resolved: None }
+# 0018a Instruction { source: "addr <- t34 Add t35", opcode: Add32NoCarryIn, args: [Register(0x14), Register(0x1c), Register(0x14)], resolved: None }
 a0 14 1c 14 
-# 0015d Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
-40 cf 02 00 
+# 0018e Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
+40 2b 03 00 
 # main_if_else_2_9
-# 00161 Instruction { source: "t36 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x61=97)], resolved: None }
-00 20 61 
-# 00164 Instruction { source: "if ch == t36 then 'main_if_true_3_10' else 'main_if_else_3_11'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 00167 Instruction { source: "if ch == t36 then 'main_if_true_3_10' else 'main_if_else_3_11'", opcode: JzImm, args: [Label24(main_if_true_3_10)], resolved: None }
-42 6f 01 00 
-# 0016b Instruction { source: "if ch == t36 then 'main_if_true_3_10' else 'main_if_else_3_11'", opcode: JmpImm, args: [Label24(main_if_else_3_11)], resolved: None }
-40 e8 01 00 
+# 00192 Instruction { source: "t36 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 00195 Instruction { source: "t37 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x61=97)], resolved: None }
+00 24 61 
+# 00198 Instruction { source: "if t36 == t37 then 'main_if_true_3_10' else 'main_if_else_3_11'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 0019b Instruction { source: "if t36 == t37 then 'main_if_true_3_10' else 'main_if_else_3_11'", opcode: JzImm, args: [Label24(main_if_true_3_10)], resolved: None }
+42 a3 01 00 
+# 0019f Instruction { source: "if t36 == t37 then 'main_if_true_3_10' else 'main_if_else_3_11'", opcode: JmpImm, args: [Label24(main_if_else_3_11)], resolved: None }
+40 1c 02 00 
 # main_if_true_3_10
-# 0016f Instruction { source: "t38 <- addr[0x03..0x04] U8", opcode: Copy8, args: [Register(0x17), Register(0x28)], resolved: None }
-16 17 28 
-# 00172 Instruction { source: "Arg0[a]=t38 None <= call printHex(t38,)", opcode: Copy8, args: [Register(0x28), Register(0x00)], resolved: None }
-16 28 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {59, 60, 61, 62, 63}
+# 001a3 Instruction { source: "t39 <- addr[0x03..0x04] U8", opcode: Copy8, args: [Register(0x17), Register(0x2c)], resolved: None }
+16 17 2c 
+# 001a6 Instruction { source: "Arg0[a]=t39 None <= call printHex(t39,)", opcode: Copy8, args: [Register(0x2c), Register(0x00)], resolved: None }
+16 2c 00 
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {62, 63, 64, 65, 66}
 # Registers to save: []
-# 00175 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 001a9 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 0017b Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 85 01 00 00 
-# 00181 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
-40 b9 03 00 
-# 00185 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 001af Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c b9 01 00 00 
+# 001b5 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
+40 3d 04 00 
+# 001b9 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 0018b Instruction { source: "t40 <- addr[0x02..0x03] U8", opcode: Copy8, args: [Register(0x16), Register(0x28)], resolved: None }
-16 16 28 
-# 0018e Instruction { source: "Arg0[a]=t40 None <= call printHex(t40,)", opcode: Copy8, args: [Register(0x28), Register(0x00)], resolved: None }
-16 28 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {59, 60, 61, 62, 63}
+# 001bf Instruction { source: "t41 <- addr[0x02..0x03] U8", opcode: Copy8, args: [Register(0x16), Register(0x2c)], resolved: None }
+16 16 2c 
+# 001c2 Instruction { source: "Arg0[a]=t41 None <= call printHex(t41,)", opcode: Copy8, args: [Register(0x2c), Register(0x00)], resolved: None }
+16 2c 00 
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {62, 63, 64, 65, 66}
 # Registers to save: []
-# 00191 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 001c5 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 00197 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c a1 01 00 00 
-# 0019d Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
-40 b9 03 00 
-# 001a1 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 001cb Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c d5 01 00 00 
+# 001d1 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
+40 3d 04 00 
+# 001d5 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 001a7 Instruction { source: "t42 <- addr[0x01..0x02] U8", opcode: Copy8, args: [Register(0x15), Register(0x28)], resolved: None }
-16 15 28 
-# 001aa Instruction { source: "Arg0[a]=t42 None <= call printHex(t42,)", opcode: Copy8, args: [Register(0x28), Register(0x00)], resolved: None }
-16 28 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {59, 60, 61, 62, 63}
+# 001db Instruction { source: "t43 <- addr[0x01..0x02] U8", opcode: Copy8, args: [Register(0x15), Register(0x2c)], resolved: None }
+16 15 2c 
+# 001de Instruction { source: "Arg0[a]=t43 None <= call printHex(t43,)", opcode: Copy8, args: [Register(0x2c), Register(0x00)], resolved: None }
+16 2c 00 
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {62, 63, 64, 65, 66}
 # Registers to save: []
-# 001ad Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 001e1 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 001b3 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c bd 01 00 00 
-# 001b9 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
-40 b9 03 00 
-# 001bd Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 001e7 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c f1 01 00 00 
+# 001ed Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
+40 3d 04 00 
+# 001f1 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 001c3 Instruction { source: "t44 <- addr[0x00..0x01] U8", opcode: Copy8, args: [Register(0x14), Register(0x28)], resolved: None }
-16 14 28 
-# 001c6 Instruction { source: "Arg0[a]=t44 None <= call printHex(t44,)", opcode: Copy8, args: [Register(0x28), Register(0x00)], resolved: None }
-16 28 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {59, 60, 61, 62, 63}
+# 001f7 Instruction { source: "t45 <- addr[0x00..0x01] U8", opcode: Copy8, args: [Register(0x14), Register(0x2c)], resolved: None }
+16 14 2c 
+# 001fa Instruction { source: "Arg0[a]=t45 None <= call printHex(t45,)", opcode: Copy8, args: [Register(0x2c), Register(0x00)], resolved: None }
+16 2c 00 
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {62, 63, 64, 65, 66}
 # Registers to save: []
-# 001c9 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 001fd Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 001cf Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c d9 01 00 00 
-# 001d5 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
-40 b9 03 00 
-# 001d9 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 00203 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 0d 02 00 00 
+# 00209 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
+40 3d 04 00 
+# 0020d Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 001df Instruction { source: "t45 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
+# 00213 Instruction { source: "t46 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
 00 18 0a 
-# 001e2 Instruction { source: "ttyout <- t45", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00216 Instruction { source: "ttyout <- t46", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 001e4 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
-40 cf 02 00 
+# 00218 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
+40 2b 03 00 
 # main_if_else_3_11
-# 001e8 Instruction { source: "t47 <- 0n115/0x73u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x73=115)], resolved: None }
-00 20 73 
-# 001eb Instruction { source: "if ch == t47 then 'main_if_true_4_12' else 'main_if_else_4_13'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 001ee Instruction { source: "if ch == t47 then 'main_if_true_4_12' else 'main_if_else_4_13'", opcode: JzImm, args: [Label24(main_if_true_4_12)], resolved: None }
-42 f6 01 00 
-# 001f2 Instruction { source: "if ch == t47 then 'main_if_true_4_12' else 'main_if_else_4_13'", opcode: JmpImm, args: [Label24(main_if_else_4_13)], resolved: None }
-40 5a 02 00 
+# 0021c Instruction { source: "t47 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 0021f Instruction { source: "t48 <- 0n115/0x73u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x73=115)], resolved: None }
+00 24 73 
+# 00222 Instruction { source: "if t47 == t48 then 'main_if_true_4_12' else 'main_if_else_4_13'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 00225 Instruction { source: "if t47 == t48 then 'main_if_true_4_12' else 'main_if_else_4_13'", opcode: JzImm, args: [Label24(main_if_true_4_12)], resolved: None }
+42 2d 02 00 
+# 00229 Instruction { source: "if t47 == t48 then 'main_if_true_4_12' else 'main_if_else_4_13'", opcode: JmpImm, args: [Label24(main_if_else_4_13)], resolved: None }
+40 a3 02 00 
 # main_if_true_4_12
-# 001f6 Instruction { source: "i <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000001=1)], resolved: None }
+# 0022d Instruction { source: "i <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000001=1)], resolved: None }
 80 1c 01 00 00 00 
-# 001fc Instruction { source: "addr <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x14), Constant32(0x00000000=0)], resolved: None }
+# 00233 Instruction { source: "addr <- 0n0/0x00000000u32 ", opcode: LoadImm32, args: [Register(0x14), Constant32(0x00000000=0)], resolved: None }
 80 14 00 00 00 00 
 # main_while_predicate_14
-# 00202 Instruction { source: "t49 <- __frame_pointer Add i", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x1c), Register(0x24)], resolved: None }
-a0 0c 1c 24 
-# 00206 Instruction { source: "t48 <- mem[t49] U8", opcode: Load8, args: [Register(0x24), Register(0x20)], resolved: None }
-10 24 20 
-# 00209 Instruction { source: "t52 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x29), Constant8(0x00=0)], resolved: None }
-00 29 00 
-# 0020c Instruction { source: "if t48 != t52 then 'main_while_body_15' else 'main_while_end_16'", opcode: Cmp8, args: [Register(0x20), Register(0x29)], resolved: None }
-25 20 29 
-# 0020f Instruction { source: "if t48 != t52 then 'main_while_body_15' else 'main_while_end_16'", opcode: JzImm, args: [Label24(main_while_end_16)], resolved: None }
-42 56 02 00 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if t48 != t52 then 'main_while_body_15' else 'main_while_end_16'", opcode: JmpImm, args: [Label24(main_while_body_15)], resolved: None }
+# 00239 Instruction { source: "t51 <- __frame_pointer U32", opcode: Copy32, args: [Register(0x0c), Register(0x20)], resolved: None }
+81 0c 20 
+# 0023c Instruction { source: "t52 <- i U32", opcode: Copy32, args: [Register(0x1c), Register(0x1c)], resolved: None }
+81 1c 1c 
+# 0023f Instruction { source: "t50 <- t51 Add t52", opcode: Add32NoCarryIn, args: [Register(0x20), Register(0x1c), Register(0x28)], resolved: None }
+a0 20 1c 28 
+# 00243 Instruction { source: "t49 <- mem[t50] U8", opcode: Load8, args: [Register(0x28), Register(0x24)], resolved: None }
+10 28 24 
+# 00246 Instruction { source: "t53 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x2d), Constant8(0x00=0)], resolved: None }
+00 2d 00 
+# 00249 Instruction { source: "if t49 != t53 then 'main_while_body_15' else 'main_while_end_16'", opcode: Cmp8, args: [Register(0x24), Register(0x2d)], resolved: None }
+25 24 2d 
+# 0024c Instruction { source: "if t49 != t53 then 'main_while_body_15' else 'main_while_end_16'", opcode: JzImm, args: [Label24(main_while_end_16)], resolved: None }
+42 9f 02 00 
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if t49 != t53 then 'main_while_body_15' else 'main_while_end_16'", opcode: JmpImm, args: [Label24(main_while_body_15)], resolved: None }
 # main_while_body_15
-# 00213 Instruction { source: "t53 <- addr[0x02..0x03] U8", opcode: Copy8, args: [Register(0x16), Register(0x28)], resolved: None }
-16 16 28 
-# 00216 Instruction { source: "addr[0x03..0x04] <- t53 U8", opcode: Copy8, args: [Register(0x28), Register(0x17)], resolved: None }
-16 28 17 
-# 00219 Instruction { source: "t54 <- addr[0x01..0x02] U8", opcode: Copy8, args: [Register(0x15), Register(0x28)], resolved: None }
-16 15 28 
-# 0021c Instruction { source: "addr[0x02..0x03] <- t54 U8", opcode: Copy8, args: [Register(0x28), Register(0x16)], resolved: None }
-16 28 16 
-# 0021f Instruction { source: "t55 <- addr[0x00..0x01] U8", opcode: Copy8, args: [Register(0x14), Register(0x28)], resolved: None }
-16 14 28 
-# 00222 Instruction { source: "addr[0x01..0x02] <- t55 U8", opcode: Copy8, args: [Register(0x28), Register(0x15)], resolved: None }
-16 28 15 
-# 00225 Instruction { source: "t58 <- __frame_pointer Add i", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x1c), Register(0x24)], resolved: None }
-a0 0c 1c 24 
-# 00229 Instruction { source: "Arg0[c]=t58 Some(t56) <= call parseHex(t58,)", opcode: Copy32, args: [Register(0x24), Register(0x00)], resolved: None }
-81 24 00 
-# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41}
-# Registers used by callee tree: {44, 45, 46, 47, 48, 49, 52, 53, 54, 55, 56, 57, 58}
+# 00250 Instruction { source: "t54 <- addr[0x02..0x03] U8", opcode: Copy8, args: [Register(0x16), Register(0x2c)], resolved: None }
+16 16 2c 
+# 00253 Instruction { source: "addr[0x03..0x04] <- t54 U8", opcode: Copy8, args: [Register(0x2c), Register(0x17)], resolved: None }
+16 2c 17 
+# 00256 Instruction { source: "t55 <- addr[0x01..0x02] U8", opcode: Copy8, args: [Register(0x15), Register(0x2c)], resolved: None }
+16 15 2c 
+# 00259 Instruction { source: "addr[0x02..0x03] <- t55 U8", opcode: Copy8, args: [Register(0x2c), Register(0x16)], resolved: None }
+16 2c 16 
+# 0025c Instruction { source: "t56 <- addr[0x00..0x01] U8", opcode: Copy8, args: [Register(0x14), Register(0x2c)], resolved: None }
+16 14 2c 
+# 0025f Instruction { source: "addr[0x01..0x02] <- t56 U8", opcode: Copy8, args: [Register(0x2c), Register(0x15)], resolved: None }
+16 2c 15 
+# 00262 Instruction { source: "t60 <- __frame_pointer U32", opcode: Copy32, args: [Register(0x0c), Register(0x20)], resolved: None }
+81 0c 20 
+# 00265 Instruction { source: "t61 <- i U32", opcode: Copy32, args: [Register(0x1c), Register(0x1c)], resolved: None }
+81 1c 1c 
+# 00268 Instruction { source: "t59 <- t60 Add t61", opcode: Add32NoCarryIn, args: [Register(0x20), Register(0x1c), Register(0x28)], resolved: None }
+a0 20 1c 28 
+# 0026c Instruction { source: "t58 <- t59 U32", opcode: Copy32, args: [Register(0x28), Register(0x28)], resolved: None }
+81 28 28 
+# 0026f Instruction { source: "Arg0[c]=t58 Some(t57) <= call parseHex(t58,)", opcode: Copy32, args: [Register(0x28), Register(0x00)], resolved: None }
+81 28 00 
+# Registers used by this function: {20, 21, 22, 23, 24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45}
+# Registers used by callee tree: {48, 49, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60, 61}
 # Registers to save: []
-# 0022c Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 00272 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 00232 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 3c 02 00 00 
-# 00238 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: JmpImm, args: [Label24(:parseHex)], resolved: None }
-40 e6 02 00 
-# 0023c Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 00278 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 82 02 00 00 
+# 0027e Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: JmpImm, args: [Label24(:parseHex)], resolved: None }
+40 4c 03 00 
+# 00282 Instruction { source: "PseudoCall(Label24(:parseHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 00242 Instruction { source: "Some(t56) <= call parseHex(t58,)", opcode: Copy8, args: [Register(0x00), Register(0x20)], resolved: None }
-16 00 20 
-# 00245 Instruction { source: "addr[0x00..0x01] <- t56 U8", opcode: Copy8, args: [Register(0x20), Register(0x14)], resolved: None }
-16 20 14 
-# 00248 Instruction { source: "t62 <- 0n2/0x00000002u32 ", opcode: LoadImm32, args: [Register(0x24), Constant32(0x00000002=2)], resolved: None }
-80 24 02 00 00 00 
-# 0024e Instruction { source: "i <- i Add t62", opcode: Add32NoCarryIn, args: [Register(0x1c), Register(0x24), Register(0x1c)], resolved: None }
-a0 1c 24 1c 
-# 00252 Instruction { source: "goto main_while_predicate_14", opcode: JmpImm, args: [Label24(main_while_predicate_14)], resolved: None }
-40 02 02 00 
+# 00288 Instruction { source: "Some(t57) <= call parseHex(t58,)", opcode: Copy8, args: [Register(0x00), Register(0x24)], resolved: None }
+16 00 24 
+# 0028b Instruction { source: "addr[0x00..0x01] <- t57 U8", opcode: Copy8, args: [Register(0x24), Register(0x14)], resolved: None }
+16 24 14 
+# 0028e Instruction { source: "t62 <- i U32", opcode: Copy32, args: [Register(0x1c), Register(0x1c)], resolved: None }
+81 1c 1c 
+# 00291 Instruction { source: "t63 <- 0n2/0x00000002u32 ", opcode: LoadImm32, args: [Register(0x28), Constant32(0x00000002=2)], resolved: None }
+80 28 02 00 00 00 
+# 00297 Instruction { source: "i <- t62 Add t63", opcode: Add32NoCarryIn, args: [Register(0x1c), Register(0x28), Register(0x1c)], resolved: None }
+a0 1c 28 1c 
+# 0029b Instruction { source: "goto main_while_predicate_14", opcode: JmpImm, args: [Label24(main_while_predicate_14)], resolved: None }
+40 39 02 00 
 # main_while_end_16
-# 00256 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
-40 cf 02 00 
+# 0029f Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
+40 2b 03 00 
 # main_if_else_4_13
-# 0025a Instruction { source: "t64 <- 0n113/0x71u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x71=113)], resolved: None }
-00 20 71 
-# 0025d Instruction { source: "if ch == t64 then 'main_if_true_5_17' else 'main_if_else_5_18'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 00260 Instruction { source: "if ch == t64 then 'main_if_true_5_17' else 'main_if_else_5_18'", opcode: JzImm, args: [Label24(main_if_true_5_17)], resolved: None }
-42 68 02 00 
-# 00264 Instruction { source: "if ch == t64 then 'main_if_true_5_17' else 'main_if_else_5_18'", opcode: JmpImm, args: [Label24(main_if_else_5_18)], resolved: None }
-40 7a 02 00 
+# 002a3 Instruction { source: "t64 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 002a6 Instruction { source: "t65 <- 0n113/0x71u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x71=113)], resolved: None }
+00 24 71 
+# 002a9 Instruction { source: "if t64 == t65 then 'main_if_true_5_17' else 'main_if_else_5_18'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 002ac Instruction { source: "if t64 == t65 then 'main_if_true_5_17' else 'main_if_else_5_18'", opcode: JzImm, args: [Label24(main_if_true_5_17)], resolved: None }
+42 b4 02 00 
+# 002b0 Instruction { source: "if t64 == t65 then 'main_if_true_5_17' else 'main_if_else_5_18'", opcode: JmpImm, args: [Label24(main_if_else_5_18)], resolved: None }
+40 d0 02 00 
 # main_if_true_5_17
-# 00268 Instruction { source: "t65 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x21), Constant8(0x00=0)], resolved: None }
-00 21 00 
-# 0026b Instruction { source: "return Some(t65)", opcode: Copy8, args: [Register(0x21), Register(0x00)], resolved: None }
-16 21 00 
-# 0026e Instruction { source: "Dealloc 20 bytes from stack", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000014=20)], resolved: None }
+# 002b4 Instruction { source: "t66 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x2c), Constant8(0x00=0)], resolved: None }
+00 2c 00 
+# 002b7 Instruction { source: "t67 <- 0n20/0x00000014u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000014=20)], resolved: None }
+80 1c 14 00 00 00 
+# 002bd Instruction { source: "__frame_pointer <- __frame_pointer Add t67", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x1c), Register(0x0c)], resolved: None }
+a0 0c 1c 0c 
+# 002c1 Instruction { source: "return Some(t66)", opcode: Copy8, args: [Register(0x2c), Register(0x00)], resolved: None }
+16 2c 00 
+# 002c4 Instruction { source: "Dealloc 20 bytes from stack", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000014=20)], resolved: None }
 a3 0c 14 00 00 00 
-# 00274 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 002ca Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 00276 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
-40 cf 02 00 
+# 002cc Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
+40 2b 03 00 
 # main_if_else_5_18
-# 0027a Instruction { source: "t67 <- 0n105/0x69u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x69=105)], resolved: None }
-00 20 69 
-# 0027d Instruction { source: "if ch == t67 then 'main_if_true_6_19' else 'main_if_else_6_20'", opcode: Cmp8, args: [Register(0x18), Register(0x20)], resolved: None }
-25 18 20 
-# 00280 Instruction { source: "if ch == t67 then 'main_if_true_6_19' else 'main_if_else_6_20'", opcode: JzImm, args: [Label24(main_if_true_6_19)], resolved: None }
-42 88 02 00 
-# 00284 Instruction { source: "if ch == t67 then 'main_if_true_6_19' else 'main_if_else_6_20'", opcode: JmpImm, args: [Label24(main_if_else_6_20)], resolved: None }
-40 b4 02 00 
+# 002d0 Instruction { source: "t68 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 002d3 Instruction { source: "t69 <- 0n105/0x69u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x69=105)], resolved: None }
+00 24 69 
+# 002d6 Instruction { source: "if t68 == t69 then 'main_if_true_6_19' else 'main_if_else_6_20'", opcode: Cmp8, args: [Register(0x18), Register(0x24)], resolved: None }
+25 18 24 
+# 002d9 Instruction { source: "if t68 == t69 then 'main_if_true_6_19' else 'main_if_else_6_20'", opcode: JzImm, args: [Label24(main_if_true_6_19)], resolved: None }
+42 e1 02 00 
+# 002dd Instruction { source: "if t68 == t69 then 'main_if_true_6_19' else 'main_if_else_6_20'", opcode: JmpImm, args: [Label24(main_if_else_6_20)], resolved: None }
+40 0d 03 00 
 # main_if_true_6_19
-# 00288 Instruction { source: "t68 <- 0n66/0x42u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x42=66)], resolved: None }
+# 002e1 Instruction { source: "t70 <- 0n66/0x42u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x42=66)], resolved: None }
 00 18 42 
-# 0028b Instruction { source: "ttyout <- t68", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 002e4 Instruction { source: "ttyout <- t70", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 0028d Instruction { source: "t69 <- 0n111/0x6fu8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x6f=111)], resolved: None }
+# 002e6 Instruction { source: "t71 <- 0n111/0x6fu8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x6f=111)], resolved: None }
 00 18 6f 
-# 00290 Instruction { source: "ttyout <- t69", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 002e9 Instruction { source: "ttyout <- t71", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 00292 Instruction { source: "t70 <- 0n111/0x6fu8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x6f=111)], resolved: None }
+# 002eb Instruction { source: "t72 <- 0n111/0x6fu8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x6f=111)], resolved: None }
 00 18 6f 
-# 00295 Instruction { source: "ttyout <- t70", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 002ee Instruction { source: "ttyout <- t72", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 00297 Instruction { source: "t71 <- 0n116/0x74u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x74=116)], resolved: None }
+# 002f0 Instruction { source: "t73 <- 0n116/0x74u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x74=116)], resolved: None }
 00 18 74 
-# 0029a Instruction { source: "ttyout <- t71", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 002f3 Instruction { source: "ttyout <- t73", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 0029c Instruction { source: "t72 <- 0n114/0x72u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x72=114)], resolved: None }
+# 002f5 Instruction { source: "t74 <- 0n114/0x72u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x72=114)], resolved: None }
 00 18 72 
-# 0029f Instruction { source: "ttyout <- t72", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 002f8 Instruction { source: "ttyout <- t74", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 002a1 Instruction { source: "t73 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x61=97)], resolved: None }
+# 002fa Instruction { source: "t75 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x61=97)], resolved: None }
 00 18 61 
-# 002a4 Instruction { source: "ttyout <- t73", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 002fd Instruction { source: "ttyout <- t75", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 002a6 Instruction { source: "t74 <- 0n109/0x6du8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x6d=109)], resolved: None }
+# 002ff Instruction { source: "t76 <- 0n109/0x6du8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x6d=109)], resolved: None }
 00 18 6d 
-# 002a9 Instruction { source: "ttyout <- t74", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00302 Instruction { source: "ttyout <- t76", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 002ab Instruction { source: "t75 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
+# 00304 Instruction { source: "t77 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
 00 18 0a 
-# 002ae Instruction { source: "ttyout <- t75", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00307 Instruction { source: "ttyout <- t77", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 002b0 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
-40 cf 02 00 
+# 00309 Instruction { source: "goto main_if_end_3", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
+40 2b 03 00 
 # main_if_else_6_20
-# 002b4 Instruction { source: "t76 <- 0n72/0x48u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x48=72)], resolved: None }
-00 20 48 
-# 002b7 Instruction { source: "ttyout <- t76", opcode: TtyOut, args: [Register(0x20)], resolved: None }
-13 20 
-# 002b9 Instruction { source: "t77 <- 0n117/0x75u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x75=117)], resolved: None }
-00 20 75 
-# 002bc Instruction { source: "ttyout <- t77", opcode: TtyOut, args: [Register(0x20)], resolved: None }
-13 20 
-# 002be Instruction { source: "t78 <- 0n104/0x68u8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x68=104)], resolved: None }
-00 20 68 
-# 002c1 Instruction { source: "ttyout <- t78", opcode: TtyOut, args: [Register(0x20)], resolved: None }
-13 20 
-# 002c3 Instruction { source: "t79 <- 0n63/0x3fu8 ", opcode: LoadImm8, args: [Register(0x20), Constant8(0x3f=63)], resolved: None }
-00 20 3f 
-# 002c6 Instruction { source: "ttyout <- t79", opcode: TtyOut, args: [Register(0x20)], resolved: None }
-13 20 
-# 002c8 Instruction { source: "ttyout <- ch", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 0030d Instruction { source: "t78 <- 0n72/0x48u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x48=72)], resolved: None }
+00 24 48 
+# 00310 Instruction { source: "ttyout <- t78", opcode: TtyOut, args: [Register(0x24)], resolved: None }
+13 24 
+# 00312 Instruction { source: "t79 <- 0n117/0x75u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x75=117)], resolved: None }
+00 24 75 
+# 00315 Instruction { source: "ttyout <- t79", opcode: TtyOut, args: [Register(0x24)], resolved: None }
+13 24 
+# 00317 Instruction { source: "t80 <- 0n104/0x68u8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x68=104)], resolved: None }
+00 24 68 
+# 0031a Instruction { source: "ttyout <- t80", opcode: TtyOut, args: [Register(0x24)], resolved: None }
+13 24 
+# 0031c Instruction { source: "t81 <- 0n63/0x3fu8 ", opcode: LoadImm8, args: [Register(0x24), Constant8(0x3f=63)], resolved: None }
+00 24 3f 
+# 0031f Instruction { source: "ttyout <- t81", opcode: TtyOut, args: [Register(0x24)], resolved: None }
+13 24 
+# 00321 Instruction { source: "t82 <- ch U8", opcode: Copy8, args: [Register(0x18), Register(0x18)], resolved: None }
+16 18 18 
+# 00324 Instruction { source: "ttyout <- t82", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
-# 002ca Instruction { source: "t81 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
+# 00326 Instruction { source: "t83 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x18), Constant8(0x0a=10)], resolved: None }
 00 18 0a 
-# 002cd Instruction { source: "ttyout <- t81", opcode: TtyOut, args: [Register(0x18)], resolved: None }
+# 00329 Instruction { source: "ttyout <- t83", opcode: TtyOut, args: [Register(0x18)], resolved: None }
 13 18 
 # main_if_end_3
-# 002cf Instruction { source: "goto main_while_predicate_0", opcode: JmpImm, args: [Label24(main_while_predicate_0)], resolved: None }
-40 8a 00 00 
+# 0032b Instruction { source: "goto main_while_predicate_0", opcode: JmpImm, args: [Label24(main_while_predicate_0)], resolved: None }
+40 9a 00 00 
 # main_while_end_2
-# 002d3 Instruction { source: "t82 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x21), Constant8(0x00=0)], resolved: None }
-00 21 00 
-# 002d6 Instruction { source: "return Some(t82)", opcode: Copy8, args: [Register(0x21), Register(0x00)], resolved: None }
-16 21 00 
-# 002d9 Instruction { source: "Dealloc 20 bytes from stack", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000014=20)], resolved: None }
+# 0032f Instruction { source: "t84 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x2c), Constant8(0x00=0)], resolved: None }
+00 2c 00 
+# 00332 Instruction { source: "t85 <- 0n20/0x00000014u32 ", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00000014=20)], resolved: None }
+80 1c 14 00 00 00 
+# 00338 Instruction { source: "__frame_pointer <- __frame_pointer Add t85", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x1c), Register(0x0c)], resolved: None }
+a0 0c 1c 0c 
+# 0033c Instruction { source: "return Some(t84)", opcode: Copy8, args: [Register(0x2c), Register(0x00)], resolved: None }
+16 2c 00 
+# 0033f Instruction { source: "Dealloc 20 bytes from stack", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000014=20)], resolved: None }
 a3 0c 14 00 00 00 
-# 002df Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
-49 0c 
-# 002e1 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
-ff 00 00 00 10 
-# :parseHex
-# Ret Some(U8)
-# Arg0=c
-# Var c (Arg0 c Ptr(Number(U8))) U32 Some([44, 45, 46, 47])
-# Var h (Local h Number(U8) U8) U8 Some([48])
-# Var t0 (t0 Number(U8, 16)) U8 Some([48])
-# Var t1 (t1 Call(Call { function: "parseHexNibble", parameters: [Deref(Ident("c"))] })) U8 Some([49])
-# Var t2 (t2 Deref(Ident("c"))) U8 Some([49])
-# Var t4 (t4 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 1)) }) U32 Some([44, 45, 46, 47])
-# Var t6 (t6 Number(USIZE, 1)) U32 Some([52, 53, 54, 55])
-# Var t8 (t8 Call(Call { function: "parseHexNibble", parameters: [Deref(Ident("c"))] })) U8 Some([56])
-# Var t9 (t9 Deref(Ident("c"))) U8 Some([56])
-# 002e6 Instruction { source: "Save function parameter 'c' registers [0, 1, 2, 3] to locals [44, 45, 46, 47].", opcode: Copy32, args: [Register(0x00), Register(0x2c)], resolved: None }
-81 00 2c 
-# 002e9 Instruction { source: "t0 <- 0n16/0x10u8 ", opcode: LoadImm8, args: [Register(0x30), Constant8(0x10=16)], resolved: None }
-00 30 10 
-# 002ec Instruction { source: "t2 <- mem[c] U8", opcode: Load8, args: [Register(0x2c), Register(0x31)], resolved: None }
-10 2c 31 
-# 002ef Instruction { source: "Arg0[ch]=t2 Some(t1) <= call parseHexNibble(t2,)", opcode: Copy8, args: [Register(0x31), Register(0x00)], resolved: None }
-16 31 00 
-# Registers used by this function: {44, 45, 46, 47, 48, 49, 52, 53, 54, 55, 56}
-# Registers used by callee tree: {57, 58}
-# Registers to save: []
-# 002f2 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
-a3 0c fc ff ff ff 
-# 002f8 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 02 03 00 00 
-# 002fe Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: JmpImm, args: [Label24(:parseHexNibble)], resolved: None }
-40 4c 03 00 
-# 00302 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
-a3 0c 04 00 00 00 
-# 00308 Instruction { source: "Some(t1) <= call parseHexNibble(t2,)", opcode: Copy8, args: [Register(0x00), Register(0x31)], resolved: None }
-16 00 31 
-# 0030b Instruction { source: "h <- t0 Multiply t1", opcode: Mul8_1, args: [Register(0x30), Register(0x31)], resolved: None }
-20 30 31 
-# 0030e Instruction { source: "h <- t0 Multiply t1", opcode: Mul8_2, args: [], resolved: None }
-21 
-# 0030f Instruction { source: "h <- t0 Multiply t1", opcode: Copy8, args: [Register(0x00), Register(0x30)], resolved: None }
-16 00 30 
-# 00312 Instruction { source: "t6 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x34), Constant32(0x00000001=1)], resolved: None }
-80 34 01 00 00 00 
-# 00318 Instruction { source: "t4 <- c Add t6", opcode: Add32NoCarryIn, args: [Register(0x2c), Register(0x34), Register(0x2c)], resolved: None }
-a0 2c 34 2c 
-# 0031c Instruction { source: "c <- t4 U32", opcode: Copy32, args: [Register(0x2c), Register(0x2c)], resolved: None }
-81 2c 2c 
-# 0031f Instruction { source: "t9 <- mem[c] U8", opcode: Load8, args: [Register(0x2c), Register(0x38)], resolved: None }
-10 2c 38 
-# 00322 Instruction { source: "Arg0[ch]=t9 Some(t8) <= call parseHexNibble(t9,)", opcode: Copy8, args: [Register(0x38), Register(0x00)], resolved: None }
-16 38 00 
-# Registers used by this function: {44, 45, 46, 47, 48, 49, 52, 53, 54, 55, 56}
-# Registers used by callee tree: {57, 58}
-# Registers to save: []
-# 00325 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
-a3 0c fc ff ff ff 
-# 0032b Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 35 03 00 00 
-# 00331 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: JmpImm, args: [Label24(:parseHexNibble)], resolved: None }
-40 4c 03 00 
-# 00335 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
-a3 0c 04 00 00 00 
-# 0033b Instruction { source: "Some(t8) <= call parseHexNibble(t9,)", opcode: Copy8, args: [Register(0x00), Register(0x38)], resolved: None }
-16 00 38 
-# 0033e Instruction { source: "h <- h Add t8", opcode: Add8NoCarryIn, args: [Register(0x30), Register(0x38), Register(0x30)], resolved: None }
-24 30 38 30 
-# 00342 Instruction { source: "return Some(h)", opcode: Copy8, args: [Register(0x30), Register(0x00)], resolved: None }
-16 30 00 
 # 00345 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
 # 00347 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
+# :parseHex
+# Ret Some(U8)
+# Arg0=c
+# Var c (Arg0 c Ptr(Number(U8))) U32 Some([48, 49, 50, 51])
+# Var h (Local h Number(U8) U8) U8 Some([52])
+# Var t0 (t0 Number(U8, 16)) U8 Some([52])
+# Var t1 (t1 Call(Call { function: "parseHexNibble", parameters: [Deref(Ident("c"))] })) U8 Some([53])
+# Var t10 (t10 Ident("c")) U32 Some([48, 49, 50, 51])
+# Var t11 (t11 Ident("h")) U8 Some([54])
+# Var t2 (t2 Deref(Ident("c"))) U8 Some([53])
+# Var t3 (t3 Ident("c")) U32 Some([48, 49, 50, 51])
+# Var t4 (t4 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 1)) }) U32 Some([48, 49, 50, 51])
+# Var t5 (t5 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("c") }) U32 Some([48, 49, 50, 51])
+# Var t6 (t6 Number(USIZE, 1)) U32 Some([56, 57, 58, 59])
+# Var t7 (t7 Ident("h")) U8 Some([52])
+# Var t8 (t8 Call(Call { function: "parseHexNibble", parameters: [Deref(Ident("c"))] })) U8 Some([54])
+# Var t9 (t9 Deref(Ident("c"))) U8 Some([54])
+# 0034c Instruction { source: "Save function parameter 'c' registers [0, 1, 2, 3] to locals [48, 49, 50, 51].", opcode: Copy32, args: [Register(0x00), Register(0x30)], resolved: None }
+81 00 30 
+# 0034f Instruction { source: "t0 <- 0n16/0x10u8 ", opcode: LoadImm8, args: [Register(0x34), Constant8(0x10=16)], resolved: None }
+00 34 10 
+# 00352 Instruction { source: "t3 <- c U32", opcode: Copy32, args: [Register(0x30), Register(0x30)], resolved: None }
+81 30 30 
+# 00355 Instruction { source: "t2 <- mem[t3] U8", opcode: Load8, args: [Register(0x30), Register(0x35)], resolved: None }
+10 30 35 
+# 00358 Instruction { source: "Arg0[ch]=t2 Some(t1) <= call parseHexNibble(t2,)", opcode: Copy8, args: [Register(0x35), Register(0x00)], resolved: None }
+16 35 00 
+# Registers used by this function: {48, 49, 50, 51, 52, 53, 54, 56, 57, 58, 59}
+# Registers used by callee tree: {60, 61}
+# Registers to save: []
+# 0035b Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+a3 0c fc ff ff ff 
+# 00361 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 6b 03 00 00 
+# 00367 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: JmpImm, args: [Label24(:parseHexNibble)], resolved: None }
+40 c1 03 00 
+# 0036b Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+a3 0c 04 00 00 00 
+# 00371 Instruction { source: "Some(t1) <= call parseHexNibble(t2,)", opcode: Copy8, args: [Register(0x00), Register(0x35)], resolved: None }
+16 00 35 
+# 00374 Instruction { source: "h <- t0 Multiply t1", opcode: Mul8_1, args: [Register(0x34), Register(0x35)], resolved: None }
+20 34 35 
+# 00377 Instruction { source: "h <- t0 Multiply t1", opcode: Mul8_2, args: [], resolved: None }
+21 
+# 00378 Instruction { source: "h <- t0 Multiply t1", opcode: Copy8, args: [Register(0x00), Register(0x34)], resolved: None }
+16 00 34 
+# 0037b Instruction { source: "t5 <- c U32", opcode: Copy32, args: [Register(0x30), Register(0x30)], resolved: None }
+81 30 30 
+# 0037e Instruction { source: "t6 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x38), Constant32(0x00000001=1)], resolved: None }
+80 38 01 00 00 00 
+# 00384 Instruction { source: "t4 <- t5 Add t6", opcode: Add32NoCarryIn, args: [Register(0x30), Register(0x38), Register(0x30)], resolved: None }
+a0 30 38 30 
+# 00388 Instruction { source: "c <- t4 U32", opcode: Copy32, args: [Register(0x30), Register(0x30)], resolved: None }
+81 30 30 
+# 0038b Instruction { source: "t7 <- h U8", opcode: Copy8, args: [Register(0x34), Register(0x34)], resolved: None }
+16 34 34 
+# 0038e Instruction { source: "t10 <- c U32", opcode: Copy32, args: [Register(0x30), Register(0x30)], resolved: None }
+81 30 30 
+# 00391 Instruction { source: "t9 <- mem[t10] U8", opcode: Load8, args: [Register(0x30), Register(0x36)], resolved: None }
+10 30 36 
+# 00394 Instruction { source: "Arg0[ch]=t9 Some(t8) <= call parseHexNibble(t9,)", opcode: Copy8, args: [Register(0x36), Register(0x00)], resolved: None }
+16 36 00 
+# Registers used by this function: {48, 49, 50, 51, 52, 53, 54, 56, 57, 58, 59}
+# Registers used by callee tree: {60, 61}
+# Registers to save: []
+# 00397 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+a3 0c fc ff ff ff 
+# 0039d Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c a7 03 00 00 
+# 003a3 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: JmpImm, args: [Label24(:parseHexNibble)], resolved: None }
+40 c1 03 00 
+# 003a7 Instruction { source: "PseudoCall(Label24(:parseHexNibble))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+a3 0c 04 00 00 00 
+# 003ad Instruction { source: "Some(t8) <= call parseHexNibble(t9,)", opcode: Copy8, args: [Register(0x00), Register(0x36)], resolved: None }
+16 00 36 
+# 003b0 Instruction { source: "h <- t7 Add t8", opcode: Add8NoCarryIn, args: [Register(0x34), Register(0x36), Register(0x34)], resolved: None }
+24 34 36 34 
+# 003b4 Instruction { source: "t11 <- h U8", opcode: Copy8, args: [Register(0x34), Register(0x36)], resolved: None }
+16 34 36 
+# 003b7 Instruction { source: "return Some(t11)", opcode: Copy8, args: [Register(0x36), Register(0x00)], resolved: None }
+16 36 00 
+# 003ba Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+49 0c 
+# 003bc Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+ff 00 00 00 10 
 # :parseHexNibble
 # Ret Some(U8)
 # Arg0=ch
-# Var ch (Arg0 ch Number(U8)) U8 Some([57])
-# Var t1 (t1 Number(U8, 97)) U8 Some([58])
-# Var t11 (t11 Number(U8, 48)) U8 Some([58])
-# Var t12 (t12 Arithmetic(Add, Arithmetic(Subtract, Ident("ch"), Number(U8, 65)), Number(U8, 10))) U8 Some([57])
-# Var t13 (t13 Arithmetic(Subtract, Ident("ch"), Number(U8, 65))) U8 Some([57])
-# Var t15 (t15 Number(U8, 65)) U8 Some([58])
-# Var t16 (t16 Number(U8, 10)) U8 Some([58])
-# Var t2 (t2 Arithmetic(Add, Arithmetic(Subtract, Ident("ch"), Number(U8, 97)), Number(U8, 10))) U8 Some([57])
-# Var t3 (t3 Arithmetic(Subtract, Ident("ch"), Number(U8, 97))) U8 Some([57])
-# Var t5 (t5 Number(U8, 97)) U8 Some([58])
-# Var t6 (t6 Number(U8, 10)) U8 Some([58])
-# Var t8 (t8 Number(U8, 57)) U8 Some([58])
-# Var t9 (t9 Arithmetic(Subtract, Ident("ch"), Number(U8, 48))) U8 Some([57])
-# 0034c Instruction { source: "Save function parameter 'ch' registers [0] to locals [57].", opcode: Copy8, args: [Register(0x00), Register(0x39)], resolved: None }
-16 00 39 
-# 0034f Instruction { source: "t1 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x3a), Constant8(0x61=97)], resolved: None }
-00 3a 61 
-# 00352 Instruction { source: "if ch >= t1 then 'parseHexNibble_if_true_0_1' else 'parseHexNibble_if_else_0_2'", opcode: Cmp8, args: [Register(0x3a), Register(0x39)], resolved: None }
-25 3a 39 
-# 00355 Instruction { source: "if ch >= t1 then 'parseHexNibble_if_true_0_1' else 'parseHexNibble_if_else_0_2'", opcode: JcImm, args: [Label24(parseHexNibble_if_true_0_1)], resolved: None }
-41 5d 03 00 
-# 00359 Instruction { source: "if ch >= t1 then 'parseHexNibble_if_true_0_1' else 'parseHexNibble_if_else_0_2'", opcode: JmpImm, args: [Label24(parseHexNibble_if_else_0_2)], resolved: None }
-40 79 03 00 
+# Var ch (Arg0 ch Number(U8)) U8 Some([60])
+# Var t0 (t0 Ident("ch")) U8 Some([60])
+# Var t1 (t1 Number(U8, 97)) U8 Some([61])
+# Var t10 (t10 Ident("ch")) U8 Some([60])
+# Var t11 (t11 Number(U8, 48)) U8 Some([61])
+# Var t12 (t12 Arithmetic(Add, Arithmetic(Subtract, Ident("ch"), Number(U8, 65)), Number(U8, 10))) U8 Some([60])
+# Var t13 (t13 Arithmetic(Subtract, Ident("ch"), Number(U8, 65))) U8 Some([60])
+# Var t14 (t14 Ident("ch")) U8 Some([60])
+# Var t15 (t15 Number(U8, 65)) U8 Some([61])
+# Var t16 (t16 Number(U8, 10)) U8 Some([61])
+# Var t2 (t2 Arithmetic(Add, Arithmetic(Subtract, Ident("ch"), Number(U8, 97)), Number(U8, 10))) U8 Some([60])
+# Var t3 (t3 Arithmetic(Subtract, Ident("ch"), Number(U8, 97))) U8 Some([60])
+# Var t4 (t4 Ident("ch")) U8 Some([60])
+# Var t5 (t5 Number(U8, 97)) U8 Some([61])
+# Var t6 (t6 Number(U8, 10)) U8 Some([61])
+# Var t7 (t7 Ident("ch")) U8 Some([60])
+# Var t8 (t8 Number(U8, 57)) U8 Some([61])
+# Var t9 (t9 Arithmetic(Subtract, Ident("ch"), Number(U8, 48))) U8 Some([60])
+# 003c1 Instruction { source: "Save function parameter 'ch' registers [0] to locals [60].", opcode: Copy8, args: [Register(0x00), Register(0x3c)], resolved: None }
+16 00 3c 
+# 003c4 Instruction { source: "t0 <- ch U8", opcode: Copy8, args: [Register(0x3c), Register(0x3c)], resolved: None }
+16 3c 3c 
+# 003c7 Instruction { source: "t1 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x61=97)], resolved: None }
+00 3d 61 
+# 003ca Instruction { source: "if t0 >= t1 then 'parseHexNibble_if_true_0_1' else 'parseHexNibble_if_else_0_2'", opcode: Cmp8, args: [Register(0x3d), Register(0x3c)], resolved: None }
+25 3d 3c 
+# 003cd Instruction { source: "if t0 >= t1 then 'parseHexNibble_if_true_0_1' else 'parseHexNibble_if_else_0_2'", opcode: JcImm, args: [Label24(parseHexNibble_if_true_0_1)], resolved: None }
+41 d5 03 00 
+# 003d1 Instruction { source: "if t0 >= t1 then 'parseHexNibble_if_true_0_1' else 'parseHexNibble_if_else_0_2'", opcode: JmpImm, args: [Label24(parseHexNibble_if_else_0_2)], resolved: None }
+40 f4 03 00 
 # parseHexNibble_if_true_0_1
-# 0035d Instruction { source: "t5 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x3a), Constant8(0x61=97)], resolved: None }
-00 3a 61 
-# 00360 Instruction { source: "t3 <- ch Subtract t5", opcode: Copy8, args: [Register(0x3a), Register(0x00)], resolved: None }
-16 3a 00 
-# 00363 Instruction { source: "t3 <- ch Subtract t5", opcode: Negate8, args: [Register(0x00)], resolved: None }
+# 003d5 Instruction { source: "t4 <- ch U8", opcode: Copy8, args: [Register(0x3c), Register(0x3c)], resolved: None }
+16 3c 3c 
+# 003d8 Instruction { source: "t5 <- 0n97/0x61u8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x61=97)], resolved: None }
+00 3d 61 
+# 003db Instruction { source: "t3 <- t4 Subtract t5", opcode: Copy8, args: [Register(0x3d), Register(0x00)], resolved: None }
+16 3d 00 
+# 003de Instruction { source: "t3 <- t4 Subtract t5", opcode: Negate8, args: [Register(0x00)], resolved: None }
 04 00 
-# 00365 Instruction { source: "t3 <- ch Subtract t5", opcode: Add8NoCarryIn, args: [Register(0x39), Register(0x00), Register(0x39)], resolved: None }
-24 39 00 39 
-# 00369 Instruction { source: "t6 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x3a), Constant8(0x0a=10)], resolved: None }
-00 3a 0a 
-# 0036c Instruction { source: "t2 <- t3 Add t6", opcode: Add8NoCarryIn, args: [Register(0x39), Register(0x3a), Register(0x39)], resolved: None }
-24 39 3a 39 
-# 00370 Instruction { source: "return Some(t2)", opcode: Copy8, args: [Register(0x39), Register(0x00)], resolved: None }
-16 39 00 
-# 00373 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 003e0 Instruction { source: "t3 <- t4 Subtract t5", opcode: Add8NoCarryIn, args: [Register(0x3c), Register(0x00), Register(0x3c)], resolved: None }
+24 3c 00 3c 
+# 003e4 Instruction { source: "t6 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x0a=10)], resolved: None }
+00 3d 0a 
+# 003e7 Instruction { source: "t2 <- t3 Add t6", opcode: Add8NoCarryIn, args: [Register(0x3c), Register(0x3d), Register(0x3c)], resolved: None }
+24 3c 3d 3c 
+# 003eb Instruction { source: "return Some(t2)", opcode: Copy8, args: [Register(0x3c), Register(0x00)], resolved: None }
+16 3c 00 
+# 003ee Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 00375 Instruction { source: "goto parseHexNibble_if_end_0", opcode: JmpImm, args: [Label24(parseHexNibble_if_end_0)], resolved: None }
-40 79 03 00 
+# 003f0 Instruction { source: "goto parseHexNibble_if_end_0", opcode: JmpImm, args: [Label24(parseHexNibble_if_end_0)], resolved: None }
+40 f4 03 00 
 # parseHexNibble_if_else_0_2
 # parseHexNibble_if_end_0
-# 00379 Instruction { source: "t8 <- 0n57/0x39u8 ", opcode: LoadImm8, args: [Register(0x3a), Constant8(0x39=57)], resolved: None }
-00 3a 39 
-# 0037c Instruction { source: "if ch <= t8 then 'parseHexNibble_if_true_0_4' else 'parseHexNibble_if_else_0_5'", opcode: Cmp8, args: [Register(0x39), Register(0x3a)], resolved: None }
-25 39 3a 
-# 0037f Instruction { source: "if ch <= t8 then 'parseHexNibble_if_true_0_4' else 'parseHexNibble_if_else_0_5'", opcode: JcImm, args: [Label24(parseHexNibble_if_true_0_4)], resolved: None }
-41 87 03 00 
-# 00383 Instruction { source: "if ch <= t8 then 'parseHexNibble_if_true_0_4' else 'parseHexNibble_if_else_0_5'", opcode: JmpImm, args: [Label24(parseHexNibble_if_else_0_5)], resolved: None }
-40 9c 03 00 
+# 003f4 Instruction { source: "t7 <- ch U8", opcode: Copy8, args: [Register(0x3c), Register(0x3c)], resolved: None }
+16 3c 3c 
+# 003f7 Instruction { source: "t8 <- 0n57/0x39u8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x39=57)], resolved: None }
+00 3d 39 
+# 003fa Instruction { source: "if t7 <= t8 then 'parseHexNibble_if_true_0_4' else 'parseHexNibble_if_else_0_5'", opcode: Cmp8, args: [Register(0x3c), Register(0x3d)], resolved: None }
+25 3c 3d 
+# 003fd Instruction { source: "if t7 <= t8 then 'parseHexNibble_if_true_0_4' else 'parseHexNibble_if_else_0_5'", opcode: JcImm, args: [Label24(parseHexNibble_if_true_0_4)], resolved: None }
+41 05 04 00 
+# 00401 Instruction { source: "if t7 <= t8 then 'parseHexNibble_if_true_0_4' else 'parseHexNibble_if_else_0_5'", opcode: JmpImm, args: [Label24(parseHexNibble_if_else_0_5)], resolved: None }
+40 1d 04 00 
 # parseHexNibble_if_true_0_4
-# 00387 Instruction { source: "t11 <- 0n48/0x30u8 ", opcode: LoadImm8, args: [Register(0x3a), Constant8(0x30=48)], resolved: None }
-00 3a 30 
-# 0038a Instruction { source: "t9 <- ch Subtract t11", opcode: Copy8, args: [Register(0x3a), Register(0x00)], resolved: None }
-16 3a 00 
-# 0038d Instruction { source: "t9 <- ch Subtract t11", opcode: Negate8, args: [Register(0x00)], resolved: None }
+# 00405 Instruction { source: "t10 <- ch U8", opcode: Copy8, args: [Register(0x3c), Register(0x3c)], resolved: None }
+16 3c 3c 
+# 00408 Instruction { source: "t11 <- 0n48/0x30u8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x30=48)], resolved: None }
+00 3d 30 
+# 0040b Instruction { source: "t9 <- t10 Subtract t11", opcode: Copy8, args: [Register(0x3d), Register(0x00)], resolved: None }
+16 3d 00 
+# 0040e Instruction { source: "t9 <- t10 Subtract t11", opcode: Negate8, args: [Register(0x00)], resolved: None }
 04 00 
-# 0038f Instruction { source: "t9 <- ch Subtract t11", opcode: Add8NoCarryIn, args: [Register(0x39), Register(0x00), Register(0x39)], resolved: None }
-24 39 00 39 
-# 00393 Instruction { source: "return Some(t9)", opcode: Copy8, args: [Register(0x39), Register(0x00)], resolved: None }
-16 39 00 
-# 00396 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 00410 Instruction { source: "t9 <- t10 Subtract t11", opcode: Add8NoCarryIn, args: [Register(0x3c), Register(0x00), Register(0x3c)], resolved: None }
+24 3c 00 3c 
+# 00414 Instruction { source: "return Some(t9)", opcode: Copy8, args: [Register(0x3c), Register(0x00)], resolved: None }
+16 3c 00 
+# 00417 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 00398 Instruction { source: "goto parseHexNibble_if_end_3", opcode: JmpImm, args: [Label24(parseHexNibble_if_end_3)], resolved: None }
-40 9c 03 00 
+# 00419 Instruction { source: "goto parseHexNibble_if_end_3", opcode: JmpImm, args: [Label24(parseHexNibble_if_end_3)], resolved: None }
+40 1d 04 00 
 # parseHexNibble_if_else_0_5
 # parseHexNibble_if_end_3
-# 0039c Instruction { source: "t15 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x3a), Constant8(0x41=65)], resolved: None }
-00 3a 41 
-# 0039f Instruction { source: "t13 <- ch Subtract t15", opcode: Copy8, args: [Register(0x3a), Register(0x00)], resolved: None }
-16 3a 00 
-# 003a2 Instruction { source: "t13 <- ch Subtract t15", opcode: Negate8, args: [Register(0x00)], resolved: None }
+# 0041d Instruction { source: "t14 <- ch U8", opcode: Copy8, args: [Register(0x3c), Register(0x3c)], resolved: None }
+16 3c 3c 
+# 00420 Instruction { source: "t15 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x41=65)], resolved: None }
+00 3d 41 
+# 00423 Instruction { source: "t13 <- t14 Subtract t15", opcode: Copy8, args: [Register(0x3d), Register(0x00)], resolved: None }
+16 3d 00 
+# 00426 Instruction { source: "t13 <- t14 Subtract t15", opcode: Negate8, args: [Register(0x00)], resolved: None }
 04 00 
-# 003a4 Instruction { source: "t13 <- ch Subtract t15", opcode: Add8NoCarryIn, args: [Register(0x39), Register(0x00), Register(0x39)], resolved: None }
-24 39 00 39 
-# 003a8 Instruction { source: "t16 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x3a), Constant8(0x0a=10)], resolved: None }
-00 3a 0a 
-# 003ab Instruction { source: "t12 <- t13 Add t16", opcode: Add8NoCarryIn, args: [Register(0x39), Register(0x3a), Register(0x39)], resolved: None }
-24 39 3a 39 
-# 003af Instruction { source: "return Some(t12)", opcode: Copy8, args: [Register(0x39), Register(0x00)], resolved: None }
-16 39 00 
-# 003b2 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 00428 Instruction { source: "t13 <- t14 Subtract t15", opcode: Add8NoCarryIn, args: [Register(0x3c), Register(0x00), Register(0x3c)], resolved: None }
+24 3c 00 3c 
+# 0042c Instruction { source: "t16 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x0a=10)], resolved: None }
+00 3d 0a 
+# 0042f Instruction { source: "t12 <- t13 Add t16", opcode: Add8NoCarryIn, args: [Register(0x3c), Register(0x3d), Register(0x3c)], resolved: None }
+24 3c 3d 3c 
+# 00433 Instruction { source: "return Some(t12)", opcode: Copy8, args: [Register(0x3c), Register(0x00)], resolved: None }
+16 3c 00 
+# 00436 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 003b4 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 00438 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
 # :printHex
 # Ret None
 # Arg0=a
-# Var a (Arg0 a Number(U8)) U8 Some([59])
-# Var b (Local b Number(U8) U8) U8 Some([60])
-# Var t1 (t1 Number(U8, 15)) U8 Some([60])
-# Var t10 (t10 Number(U8, 48)) U8 Some([60])
-# Var t11 (t11 Call(Call { function: "printHexDigit", parameters: [Ident("a")] })) U8 Some([59])
-# Var t3 (t3 Number(U8, 16)) U8 Some([60])
-# Var t4 (t4 Call(Call { function: "printHexDigit", parameters: [Ident("b")] })) U8 Some([59])
-# Var t7 (t7 Arithmetic(Multiply, Ident("b"), Number(U8, 16))) U8 Some([60])
-# Var t9 (t9 Number(U8, 16)) U8 Some([61])
-# 003b9 Instruction { source: "Save function parameter 'a' registers [0] to locals [59].", opcode: Copy8, args: [Register(0x00), Register(0x3b)], resolved: None }
-16 00 3b 
-# 003bc Instruction { source: "t1 <- 0n15/0x0fu8 ", opcode: LoadImm8, args: [Register(0x3c), Constant8(0x0f=15)], resolved: None }
-00 3c 0f 
-# 003bf Instruction { source: "if a > t1 then 'printHex_if_true_0_1' else 'printHex_if_else_0_2'", opcode: Cmp8, args: [Register(0x3b), Register(0x3c)], resolved: None }
-25 3b 3c 
-# 003c2 Instruction { source: "if a > t1 then 'printHex_if_true_0_1' else 'printHex_if_else_0_2'", opcode: JcImm, args: [Label24(printHex_if_else_0_2)], resolved: None }
-41 fd 03 00 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if a > t1 then 'printHex_if_true_0_1' else 'printHex_if_else_0_2'", opcode: JmpImm, args: [Label24(printHex_if_true_0_1)], resolved: None }
+# Var a (Arg0 a Number(U8)) U8 Some([62])
+# Var b (Local b Number(U8) U8) U8 Some([63])
+# Var t0 (t0 Ident("a")) U8 Some([62])
+# Var t1 (t1 Number(U8, 15)) U8 Some([63])
+# Var t10 (t10 Number(U8, 48)) U8 Some([63])
+# Var t11 (t11 Call(Call { function: "printHexDigit", parameters: [Ident("a")] })) U8 Some([62])
+# Var t12 (t12 Ident("a")) U8 Some([62])
+# Var t2 (t2 Ident("a")) U8 Some([62])
+# Var t3 (t3 Number(U8, 16)) U8 Some([63])
+# Var t4 (t4 Call(Call { function: "printHexDigit", parameters: [Ident("b")] })) U8 Some([62])
+# Var t5 (t5 Ident("b")) U8 Some([63])
+# Var t6 (t6 Ident("a")) U8 Some([62])
+# Var t7 (t7 Arithmetic(Multiply, Ident("b"), Number(U8, 16))) U8 Some([63])
+# Var t8 (t8 Ident("b")) U8 Some([63])
+# Var t9 (t9 Number(U8, 16)) U8 Some([64])
+# 0043d Instruction { source: "Save function parameter 'a' registers [0] to locals [62].", opcode: Copy8, args: [Register(0x00), Register(0x3e)], resolved: None }
+16 00 3e 
+# 00440 Instruction { source: "t0 <- a U8", opcode: Copy8, args: [Register(0x3e), Register(0x3e)], resolved: None }
+16 3e 3e 
+# 00443 Instruction { source: "t1 <- 0n15/0x0fu8 ", opcode: LoadImm8, args: [Register(0x3f), Constant8(0x0f=15)], resolved: None }
+00 3f 0f 
+# 00446 Instruction { source: "if t0 > t1 then 'printHex_if_true_0_1' else 'printHex_if_else_0_2'", opcode: Cmp8, args: [Register(0x3e), Register(0x3f)], resolved: None }
+25 3e 3f 
+# 00449 Instruction { source: "if t0 > t1 then 'printHex_if_true_0_1' else 'printHex_if_else_0_2'", opcode: JcImm, args: [Label24(printHex_if_else_0_2)], resolved: None }
+41 90 04 00 
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if t0 > t1 then 'printHex_if_true_0_1' else 'printHex_if_else_0_2'", opcode: JmpImm, args: [Label24(printHex_if_true_0_1)], resolved: None }
 # printHex_if_true_0_1
-# 003c6 Instruction { source: "t3 <- 0n16/0x10u8 ", opcode: LoadImm8, args: [Register(0x3c), Constant8(0x10=16)], resolved: None }
-00 3c 10 
-# 003c9 Instruction { source: "b <- a Divide t3", opcode: Divide8, args: [Register(0x3b), Register(0x3c), Register(0x3c)], resolved: None }
-27 3b 3c 3c 
-# 003cd Instruction { source: "Arg0[a]=b None <= call printHexDigit(b,)", opcode: Copy8, args: [Register(0x3c), Register(0x00)], resolved: None }
-16 3c 00 
-# Registers used by this function: {59, 60, 61}
-# Registers used by callee tree: {62, 63}
+# 0044d Instruction { source: "t2 <- a U8", opcode: Copy8, args: [Register(0x3e), Register(0x3e)], resolved: None }
+16 3e 3e 
+# 00450 Instruction { source: "t3 <- 0n16/0x10u8 ", opcode: LoadImm8, args: [Register(0x3f), Constant8(0x10=16)], resolved: None }
+00 3f 10 
+# 00453 Instruction { source: "b <- t2 Divide t3", opcode: Divide8, args: [Register(0x3e), Register(0x3f), Register(0x3f)], resolved: None }
+27 3e 3f 3f 
+# 00457 Instruction { source: "t5 <- b U8", opcode: Copy8, args: [Register(0x3f), Register(0x3f)], resolved: None }
+16 3f 3f 
+# 0045a Instruction { source: "Arg0[a]=t5 None <= call printHexDigit(t5,)", opcode: Copy8, args: [Register(0x3f), Register(0x00)], resolved: None }
+16 3f 00 
+# Registers used by this function: {62, 63, 64}
+# Registers used by callee tree: {65, 66}
 # Registers to save: []
-# 003d0 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 0045d Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 003d6 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c e0 03 00 00 
-# 003dc Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: JmpImm, args: [Label24(:printHexDigit)], resolved: None }
-40 22 04 00 
-# 003e0 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 00463 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 6d 04 00 00 
+# 00469 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: JmpImm, args: [Label24(:printHexDigit)], resolved: None }
+40 b8 04 00 
+# 0046d Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 003e6 Instruction { source: "t9 <- 0n16/0x10u8 ", opcode: LoadImm8, args: [Register(0x3d), Constant8(0x10=16)], resolved: None }
-00 3d 10 
-# 003e9 Instruction { source: "t7 <- b Multiply t9", opcode: Mul8_1, args: [Register(0x3c), Register(0x3d)], resolved: None }
-20 3c 3d 
-# 003ec Instruction { source: "t7 <- b Multiply t9", opcode: Mul8_2, args: [], resolved: None }
+# 00473 Instruction { source: "t6 <- a U8", opcode: Copy8, args: [Register(0x3e), Register(0x3e)], resolved: None }
+16 3e 3e 
+# 00476 Instruction { source: "t8 <- b U8", opcode: Copy8, args: [Register(0x3f), Register(0x3f)], resolved: None }
+16 3f 3f 
+# 00479 Instruction { source: "t9 <- 0n16/0x10u8 ", opcode: LoadImm8, args: [Register(0x40), Constant8(0x10=16)], resolved: None }
+00 40 10 
+# 0047c Instruction { source: "t7 <- t8 Multiply t9", opcode: Mul8_1, args: [Register(0x3f), Register(0x40)], resolved: None }
+20 3f 40 
+# 0047f Instruction { source: "t7 <- t8 Multiply t9", opcode: Mul8_2, args: [], resolved: None }
 21 
-# 003ed Instruction { source: "t7 <- b Multiply t9", opcode: Copy8, args: [Register(0x00), Register(0x3c)], resolved: None }
-16 00 3c 
-# 003f0 Instruction { source: "a <- a Subtract t7", opcode: Copy8, args: [Register(0x3c), Register(0x00)], resolved: None }
-16 3c 00 
-# 003f3 Instruction { source: "a <- a Subtract t7", opcode: Negate8, args: [Register(0x00)], resolved: None }
+# 00480 Instruction { source: "t7 <- t8 Multiply t9", opcode: Copy8, args: [Register(0x00), Register(0x3f)], resolved: None }
+16 00 3f 
+# 00483 Instruction { source: "a <- t6 Subtract t7", opcode: Copy8, args: [Register(0x3f), Register(0x00)], resolved: None }
+16 3f 00 
+# 00486 Instruction { source: "a <- t6 Subtract t7", opcode: Negate8, args: [Register(0x00)], resolved: None }
 04 00 
-# 003f5 Instruction { source: "a <- a Subtract t7", opcode: Add8NoCarryIn, args: [Register(0x3b), Register(0x00), Register(0x3b)], resolved: None }
-24 3b 00 3b 
-# 003f9 Instruction { source: "goto printHex_if_end_0", opcode: JmpImm, args: [Label24(printHex_if_end_0)], resolved: None }
-40 02 04 00 
+# 00488 Instruction { source: "a <- t6 Subtract t7", opcode: Add8NoCarryIn, args: [Register(0x3e), Register(0x00), Register(0x3e)], resolved: None }
+24 3e 00 3e 
+# 0048c Instruction { source: "goto printHex_if_end_0", opcode: JmpImm, args: [Label24(printHex_if_end_0)], resolved: None }
+40 95 04 00 
 # printHex_if_else_0_2
-# 003fd Instruction { source: "t10 <- 0n48/0x30u8 ", opcode: LoadImm8, args: [Register(0x3c), Constant8(0x30=48)], resolved: None }
-00 3c 30 
-# 00400 Instruction { source: "ttyout <- t10", opcode: TtyOut, args: [Register(0x3c)], resolved: None }
-13 3c 
+# 00490 Instruction { source: "t10 <- 0n48/0x30u8 ", opcode: LoadImm8, args: [Register(0x3f), Constant8(0x30=48)], resolved: None }
+00 3f 30 
+# 00493 Instruction { source: "ttyout <- t10", opcode: TtyOut, args: [Register(0x3f)], resolved: None }
+13 3f 
 # printHex_if_end_0
-# 00402 Instruction { source: "Arg0[a]=a None <= call printHexDigit(a,)", opcode: Copy8, args: [Register(0x3b), Register(0x00)], resolved: None }
-16 3b 00 
-# Registers used by this function: {59, 60, 61}
-# Registers used by callee tree: {62, 63}
+# 00495 Instruction { source: "t12 <- a U8", opcode: Copy8, args: [Register(0x3e), Register(0x3e)], resolved: None }
+16 3e 3e 
+# 00498 Instruction { source: "Arg0[a]=t12 None <= call printHexDigit(t12,)", opcode: Copy8, args: [Register(0x3e), Register(0x00)], resolved: None }
+16 3e 00 
+# Registers used by this function: {62, 63, 64}
+# Registers used by callee tree: {65, 66}
 # Registers to save: []
-# 00405 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 0049b Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 0040b Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 15 04 00 00 
-# 00411 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: JmpImm, args: [Label24(:printHexDigit)], resolved: None }
-40 22 04 00 
-# 00415 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 004a1 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c ab 04 00 00 
+# 004a7 Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: JmpImm, args: [Label24(:printHexDigit)], resolved: None }
+40 b8 04 00 
+# 004ab Instruction { source: "PseudoCall(Label24(:printHexDigit))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 0041b Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 004b1 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 0041d Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 004b3 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
 # :printHexDigit
 # Ret None
 # Arg0=a
-# Var a (Arg0 a Number(U8)) U8 Some([62])
-# Var t1 (t1 Number(U8, 10)) U8 Some([63])
-# Var t2 (t2 Arithmetic(Add, Ident("a"), Number(U8, 48))) U8 Some([62])
-# Var t4 (t4 Number(U8, 48)) U8 Some([63])
-# Var t6 (t6 Number(U8, 10)) U8 Some([63])
-# Var t8 (t8 Number(U8, 65)) U8 Some([63])
-# 00422 Instruction { source: "Save function parameter 'a' registers [0] to locals [62].", opcode: Copy8, args: [Register(0x00), Register(0x3e)], resolved: None }
-16 00 3e 
-# 00425 Instruction { source: "t1 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x3f), Constant8(0x0a=10)], resolved: None }
-00 3f 0a 
-# 00428 Instruction { source: "if a < t1 then 'printHexDigit_if_true_0_1' else 'printHexDigit_if_else_0_2'", opcode: Cmp8, args: [Register(0x3f), Register(0x3e)], resolved: None }
-25 3f 3e 
-# 0042b Instruction { source: "if a < t1 then 'printHexDigit_if_true_0_1' else 'printHexDigit_if_else_0_2'", opcode: JcImm, args: [Label24(printHexDigit_if_else_0_2)], resolved: None }
-41 3c 04 00 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if a < t1 then 'printHexDigit_if_true_0_1' else 'printHexDigit_if_else_0_2'", opcode: JmpImm, args: [Label24(printHexDigit_if_true_0_1)], resolved: None }
+# Var a (Arg0 a Number(U8)) U8 Some([65])
+# Var t0 (t0 Ident("a")) U8 Some([65])
+# Var t1 (t1 Number(U8, 10)) U8 Some([66])
+# Var t2 (t2 Arithmetic(Add, Ident("a"), Number(U8, 48))) U8 Some([65])
+# Var t3 (t3 Ident("a")) U8 Some([65])
+# Var t4 (t4 Number(U8, 48)) U8 Some([66])
+# Var t5 (t5 Ident("a")) U8 Some([65])
+# Var t6 (t6 Number(U8, 10)) U8 Some([66])
+# Var t7 (t7 Ident("a")) U8 Some([65])
+# Var t8 (t8 Number(U8, 65)) U8 Some([66])
+# Var t9 (t9 Ident("a")) U8 Some([65])
+# 004b8 Instruction { source: "Save function parameter 'a' registers [0] to locals [65].", opcode: Copy8, args: [Register(0x00), Register(0x41)], resolved: None }
+16 00 41 
+# 004bb Instruction { source: "t0 <- a U8", opcode: Copy8, args: [Register(0x41), Register(0x41)], resolved: None }
+16 41 41 
+# 004be Instruction { source: "t1 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x42), Constant8(0x0a=10)], resolved: None }
+00 42 0a 
+# 004c1 Instruction { source: "if t0 < t1 then 'printHexDigit_if_true_0_1' else 'printHexDigit_if_else_0_2'", opcode: Cmp8, args: [Register(0x42), Register(0x41)], resolved: None }
+25 42 41 
+# 004c4 Instruction { source: "if t0 < t1 then 'printHexDigit_if_true_0_1' else 'printHexDigit_if_else_0_2'", opcode: JcImm, args: [Label24(printHexDigit_if_else_0_2)], resolved: None }
+41 d8 04 00 
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if t0 < t1 then 'printHexDigit_if_true_0_1' else 'printHexDigit_if_else_0_2'", opcode: JmpImm, args: [Label24(printHexDigit_if_true_0_1)], resolved: None }
 # printHexDigit_if_true_0_1
-# 0042f Instruction { source: "t4 <- 0n48/0x30u8 ", opcode: LoadImm8, args: [Register(0x3f), Constant8(0x30=48)], resolved: None }
-00 3f 30 
-# 00432 Instruction { source: "t2 <- a Add t4", opcode: Add8NoCarryIn, args: [Register(0x3e), Register(0x3f), Register(0x3e)], resolved: None }
-24 3e 3f 3e 
-# 00436 Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x3e)], resolved: None }
-13 3e 
-# 00438 Instruction { source: "goto printHexDigit_if_end_0", opcode: JmpImm, args: [Label24(printHexDigit_if_end_0)], resolved: None }
-40 51 04 00 
+# 004c8 Instruction { source: "t3 <- a U8", opcode: Copy8, args: [Register(0x41), Register(0x41)], resolved: None }
+16 41 41 
+# 004cb Instruction { source: "t4 <- 0n48/0x30u8 ", opcode: LoadImm8, args: [Register(0x42), Constant8(0x30=48)], resolved: None }
+00 42 30 
+# 004ce Instruction { source: "t2 <- t3 Add t4", opcode: Add8NoCarryIn, args: [Register(0x41), Register(0x42), Register(0x41)], resolved: None }
+24 41 42 41 
+# 004d2 Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x41)], resolved: None }
+13 41 
+# 004d4 Instruction { source: "goto printHexDigit_if_end_0", opcode: JmpImm, args: [Label24(printHexDigit_if_end_0)], resolved: None }
+40 f6 04 00 
 # printHexDigit_if_else_0_2
-# 0043c Instruction { source: "t6 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x3f), Constant8(0x0a=10)], resolved: None }
-00 3f 0a 
-# 0043f Instruction { source: "a <- a Subtract t6", opcode: Copy8, args: [Register(0x3f), Register(0x00)], resolved: None }
-16 3f 00 
-# 00442 Instruction { source: "a <- a Subtract t6", opcode: Negate8, args: [Register(0x00)], resolved: None }
+# 004d8 Instruction { source: "t5 <- a U8", opcode: Copy8, args: [Register(0x41), Register(0x41)], resolved: None }
+16 41 41 
+# 004db Instruction { source: "t6 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x42), Constant8(0x0a=10)], resolved: None }
+00 42 0a 
+# 004de Instruction { source: "a <- t5 Subtract t6", opcode: Copy8, args: [Register(0x42), Register(0x00)], resolved: None }
+16 42 00 
+# 004e1 Instruction { source: "a <- t5 Subtract t6", opcode: Negate8, args: [Register(0x00)], resolved: None }
 04 00 
-# 00444 Instruction { source: "a <- a Subtract t6", opcode: Add8NoCarryIn, args: [Register(0x3e), Register(0x00), Register(0x3e)], resolved: None }
-24 3e 00 3e 
-# 00448 Instruction { source: "t8 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x3f), Constant8(0x41=65)], resolved: None }
-00 3f 41 
-# 0044b Instruction { source: "a <- a Add t8", opcode: Add8NoCarryIn, args: [Register(0x3e), Register(0x3f), Register(0x3e)], resolved: None }
-24 3e 3f 3e 
-# 0044f Instruction { source: "ttyout <- a", opcode: TtyOut, args: [Register(0x3e)], resolved: None }
-13 3e 
+# 004e3 Instruction { source: "a <- t5 Subtract t6", opcode: Add8NoCarryIn, args: [Register(0x41), Register(0x00), Register(0x41)], resolved: None }
+24 41 00 41 
+# 004e7 Instruction { source: "t7 <- a U8", opcode: Copy8, args: [Register(0x41), Register(0x41)], resolved: None }
+16 41 41 
+# 004ea Instruction { source: "t8 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x42), Constant8(0x41=65)], resolved: None }
+00 42 41 
+# 004ed Instruction { source: "a <- t7 Add t8", opcode: Add8NoCarryIn, args: [Register(0x41), Register(0x42), Register(0x41)], resolved: None }
+24 41 42 41 
+# 004f1 Instruction { source: "t9 <- a U8", opcode: Copy8, args: [Register(0x41), Register(0x41)], resolved: None }
+16 41 41 
+# 004f4 Instruction { source: "ttyout <- t9", opcode: TtyOut, args: [Register(0x41)], resolved: None }
+13 41 
 # printHexDigit_if_end_0
-# 00451 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 004f6 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 00453 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 004f8 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
 # :printHexTest
 # Ret Some(U8)
 # Arg0=a
 # Arg1=b
-# Var a (Arg0 a Number(U8)) U8 Some([64])
-# Var b (Arg1 b Number(U8)) U8 Some([65])
-# Var t0 (t0 Call(Call { function: "printHex", parameters: [Ident("a")] })) U8 Some([64])
-# Var t2 (t2 Number(U8, 10)) U8 Some([64])
-# Var t3 (t3 Number(U8, 0)) U8 Some([64])
-# 00458 Instruction { source: "Save function parameter 'a' registers [0] to locals [64].", opcode: Copy8, args: [Register(0x00), Register(0x40)], resolved: None }
-16 00 40 
-# 0045b Instruction { source: "Save function parameter 'b' registers [4] to locals [65].", opcode: Copy8, args: [Register(0x04), Register(0x41)], resolved: None }
-16 04 41 
-# 0045e Instruction { source: "Arg0[a]=a None <= call printHex(a,)", opcode: Copy8, args: [Register(0x40), Register(0x00)], resolved: None }
-16 40 00 
-# Registers used by this function: {64, 65}
-# Registers used by callee tree: {59, 60, 61, 62, 63}
+# Var a (Arg0 a Number(U8)) U8 Some([67])
+# Var b (Arg1 b Number(U8)) U8 Some([68])
+# Var t0 (t0 Call(Call { function: "printHex", parameters: [Ident("a")] })) U8 Some([67])
+# Var t1 (t1 Ident("a")) U8 Some([67])
+# Var t2 (t2 Number(U8, 10)) U8 Some([67])
+# Var t3 (t3 Number(U8, 0)) U8 Some([67])
+# 004fd Instruction { source: "Save function parameter 'a' registers [0] to locals [67].", opcode: Copy8, args: [Register(0x00), Register(0x43)], resolved: None }
+16 00 43 
+# 00500 Instruction { source: "Save function parameter 'b' registers [4] to locals [68].", opcode: Copy8, args: [Register(0x04), Register(0x44)], resolved: None }
+16 04 44 
+# 00503 Instruction { source: "t1 <- a U8", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
+16 43 43 
+# 00506 Instruction { source: "Arg0[a]=t1 None <= call printHex(t1,)", opcode: Copy8, args: [Register(0x43), Register(0x00)], resolved: None }
+16 43 00 
+# Registers used by this function: {67, 68}
+# Registers used by callee tree: {62, 63, 64, 65, 66}
 # Registers to save: []
-# 00461 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 00509 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 00467 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 71 04 00 00 
-# 0046d Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
-40 b9 03 00 
-# 00471 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 0050f Instruction { source: "PseudoCall(Label24(:printHex))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 19 05 00 00 
+# 00515 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: JmpImm, args: [Label24(:printHex)], resolved: None }
+40 3d 04 00 
+# 00519 Instruction { source: "PseudoCall(Label24(:printHex))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 00477 Instruction { source: "t2 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x40), Constant8(0x0a=10)], resolved: None }
-00 40 0a 
-# 0047a Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x40)], resolved: None }
-13 40 
-# 0047c Instruction { source: "t3 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x40), Constant8(0x00=0)], resolved: None }
-00 40 00 
-# 0047f Instruction { source: "return Some(t3)", opcode: Copy8, args: [Register(0x40), Register(0x00)], resolved: None }
-16 40 00 
-# 00482 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 0051f Instruction { source: "t2 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x43), Constant8(0x0a=10)], resolved: None }
+00 43 0a 
+# 00522 Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x43)], resolved: None }
+13 43 
+# 00524 Instruction { source: "t3 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x43), Constant8(0x00=0)], resolved: None }
+00 43 00 
+# 00527 Instruction { source: "return Some(t3)", opcode: Copy8, args: [Register(0x43), Register(0x00)], resolved: None }
+16 43 00 
+# 0052a Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 00484 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 0052c Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
 # :println
 # Ret None
 # Arg0=buf
-# Var buf (Arg0 buf Ptr(Number(U8))) U32 Some([68, 69, 70, 71])
-# Var ch (Local ch Number(U8) U8) U8 Some([72])
-# Var t2 (t2 Number(U8, 0)) U8 Some([73])
-# Var t5 (t5 Number(USIZE, 1)) U32 Some([76, 77, 78, 79])
-# 00489 Instruction { source: "Save function parameter 'buf' registers [0, 1, 2, 3] to locals [68, 69, 70, 71].", opcode: Copy32, args: [Register(0x00), Register(0x44)], resolved: None }
-81 00 44 
-# 0048c Instruction { source: "ch <- mem[buf] U8", opcode: Load8, args: [Register(0x44), Register(0x48)], resolved: None }
-10 44 48 
+# Var buf (Arg0 buf Ptr(Number(U8))) U32 Some([72, 73, 74, 75])
+# Var ch (Local ch Number(U8) U8) U8 Some([76])
+# Var t0 (t0 Ident("buf")) U32 Some([72, 73, 74, 75])
+# Var t1 (t1 Ident("ch")) U8 Some([76])
+# Var t2 (t2 Number(U8, 0)) U8 Some([77])
+# Var t3 (t3 Ident("ch")) U8 Some([76])
+# Var t4 (t4 Ident("buf")) U32 Some([72, 73, 74, 75])
+# Var t5 (t5 Number(USIZE, 1)) U32 Some([80, 81, 82, 83])
+# Var t6 (t6 Ident("buf")) U32 Some([72, 73, 74, 75])
+# 00531 Instruction { source: "Save function parameter 'buf' registers [0, 1, 2, 3] to locals [72, 73, 74, 75].", opcode: Copy32, args: [Register(0x00), Register(0x48)], resolved: None }
+81 00 48 
+# 00534 Instruction { source: "t0 <- buf U32", opcode: Copy32, args: [Register(0x48), Register(0x48)], resolved: None }
+81 48 48 
+# 00537 Instruction { source: "ch <- mem[t0] U8", opcode: Load8, args: [Register(0x48), Register(0x4c)], resolved: None }
+10 48 4c 
 # println_while_predicate_0
-# 0048f Instruction { source: "t2 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x49), Constant8(0x00=0)], resolved: None }
-00 49 00 
-# 00492 Instruction { source: "if ch != t2 then 'println_while_body_1' else 'println_while_end_2'", opcode: Cmp8, args: [Register(0x48), Register(0x49)], resolved: None }
-25 48 49 
-# 00495 Instruction { source: "if ch != t2 then 'println_while_body_1' else 'println_while_end_2'", opcode: JzImm, args: [Label24(println_while_end_2)], resolved: None }
-42 ac 04 00 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if ch != t2 then 'println_while_body_1' else 'println_while_end_2'", opcode: JmpImm, args: [Label24(println_while_body_1)], resolved: None }
+# 0053a Instruction { source: "t1 <- ch U8", opcode: Copy8, args: [Register(0x4c), Register(0x4c)], resolved: None }
+16 4c 4c 
+# 0053d Instruction { source: "t2 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x4d), Constant8(0x00=0)], resolved: None }
+00 4d 00 
+# 00540 Instruction { source: "if t1 != t2 then 'println_while_body_1' else 'println_while_end_2'", opcode: Cmp8, args: [Register(0x4c), Register(0x4d)], resolved: None }
+25 4c 4d 
+# 00543 Instruction { source: "if t1 != t2 then 'println_while_body_1' else 'println_while_end_2'", opcode: JzImm, args: [Label24(println_while_end_2)], resolved: None }
+42 63 05 00 
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if t1 != t2 then 'println_while_body_1' else 'println_while_end_2'", opcode: JmpImm, args: [Label24(println_while_body_1)], resolved: None }
 # println_while_body_1
-# 00499 Instruction { source: "ttyout <- ch", opcode: TtyOut, args: [Register(0x48)], resolved: None }
-13 48 
-# 0049b Instruction { source: "t5 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x4c), Constant32(0x00000001=1)], resolved: None }
-80 4c 01 00 00 00 
-# 004a1 Instruction { source: "buf <- buf Add t5", opcode: Add32NoCarryIn, args: [Register(0x44), Register(0x4c), Register(0x44)], resolved: None }
-a0 44 4c 44 
-# 004a5 Instruction { source: "ch <- mem[buf] U8", opcode: Load8, args: [Register(0x44), Register(0x48)], resolved: None }
-10 44 48 
-# 004a8 Instruction { source: "goto println_while_predicate_0", opcode: JmpImm, args: [Label24(println_while_predicate_0)], resolved: None }
-40 8f 04 00 
+# 00547 Instruction { source: "t3 <- ch U8", opcode: Copy8, args: [Register(0x4c), Register(0x4c)], resolved: None }
+16 4c 4c 
+# 0054a Instruction { source: "ttyout <- t3", opcode: TtyOut, args: [Register(0x4c)], resolved: None }
+13 4c 
+# 0054c Instruction { source: "t4 <- buf U32", opcode: Copy32, args: [Register(0x48), Register(0x48)], resolved: None }
+81 48 48 
+# 0054f Instruction { source: "t5 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x50), Constant32(0x00000001=1)], resolved: None }
+80 50 01 00 00 00 
+# 00555 Instruction { source: "buf <- t4 Add t5", opcode: Add32NoCarryIn, args: [Register(0x48), Register(0x50), Register(0x48)], resolved: None }
+a0 48 50 48 
+# 00559 Instruction { source: "t6 <- buf U32", opcode: Copy32, args: [Register(0x48), Register(0x48)], resolved: None }
+81 48 48 
+# 0055c Instruction { source: "ch <- mem[t6] U8", opcode: Load8, args: [Register(0x48), Register(0x4c)], resolved: None }
+10 48 4c 
+# 0055f Instruction { source: "goto println_while_predicate_0", opcode: JmpImm, args: [Label24(println_while_predicate_0)], resolved: None }
+40 3a 05 00 
 # println_while_end_2
-# 004ac Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 00563 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 004ae Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 00565 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
 # :readline
 # Ret None
 # Arg0=buf
-# Var buf (Arg0 buf Ptr(Number(U8))) U32 Some([80, 81, 82, 83])
-# Var ch (Local ch Number(U8) U8) U8 Some([84])
-# Var t0 (t0 Number(U8, 0)) U8 Some([84])
-# Var t1 (t1 Number(U8, 0)) U8 Some([85])
-# Var t10 (t10 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("buf") }, Number(USIZE, 1)) }) U32 Some([80, 81, 82, 83])
-# Var t12 (t12 Number(USIZE, 1)) U32 Some([88, 89, 90, 91])
-# Var t3 (t3 Number(U8, 13)) U8 Some([85])
-# Var t5 (t5 Number(U8, 10)) U8 Some([85])
-# Var t7 (t7 Number(U8, 0)) U8 Some([84])
-# 004b3 Instruction { source: "Save function parameter 'buf' registers [0, 1, 2, 3] to locals [80, 81, 82, 83].", opcode: Copy32, args: [Register(0x00), Register(0x50)], resolved: None }
-81 00 50 
+# Var buf (Arg0 buf Ptr(Number(U8))) U32 Some([84, 85, 86, 87])
+# Var ch (Local ch Number(U8) U8) U8 Some([88])
+# Var t0 (t0 Number(U8, 0)) U8 Some([88])
+# Var t1 (t1 Number(U8, 0)) U8 Some([89])
+# Var t10 (t10 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("buf") }, Number(USIZE, 1)) }) U32 Some([84, 85, 86, 87])
+# Var t11 (t11 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("buf") }) U32 Some([84, 85, 86, 87])
+# Var t12 (t12 Number(USIZE, 1)) U32 Some([92, 93, 94, 95])
+# Var t2 (t2 Ident("ch")) U8 Some([88])
+# Var t3 (t3 Number(U8, 13)) U8 Some([89])
+# Var t4 (t4 Ident("ch")) U8 Some([88])
+# Var t5 (t5 Number(U8, 10)) U8 Some([89])
+# Var t6 (t6 Ident("buf")) U32 Some([84, 85, 86, 87])
+# Var t7 (t7 Number(U8, 0)) U8 Some([88])
+# Var t8 (t8 Ident("buf")) U32 Some([84, 85, 86, 87])
+# Var t9 (t9 Ident("ch")) U8 Some([88])
+# 0056a Instruction { source: "Save function parameter 'buf' registers [0, 1, 2, 3] to locals [84, 85, 86, 87].", opcode: Copy32, args: [Register(0x00), Register(0x54)], resolved: None }
+81 00 54 
 # readline_while_predicate_0
-# 004b6 Instruction { source: "t0 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x54), Constant8(0x00=0)], resolved: None }
-00 54 00 
-# 004b9 Instruction { source: "t1 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x55), Constant8(0x00=0)], resolved: None }
-00 55 00 
-# 004bc Instruction { source: "if t0 == t1 then 'readline_while_body_1' else 'readline_while_end_2'", opcode: Cmp8, args: [Register(0x54), Register(0x55)], resolved: None }
-25 54 55 
-# 004bf Instruction { source: "if t0 == t1 then 'readline_while_body_1' else 'readline_while_end_2'", opcode: JzImm, args: [Label24(readline_while_body_1)], resolved: None }
-42 c7 04 00 
-# 004c3 Instruction { source: "if t0 == t1 then 'readline_while_body_1' else 'readline_while_end_2'", opcode: JmpImm, args: [Label24(readline_while_end_2)], resolved: None }
-40 20 05 00 
+# 0056d Instruction { source: "t0 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x58), Constant8(0x00=0)], resolved: None }
+00 58 00 
+# 00570 Instruction { source: "t1 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x59), Constant8(0x00=0)], resolved: None }
+00 59 00 
+# 00573 Instruction { source: "if t0 == t1 then 'readline_while_body_1' else 'readline_while_end_2'", opcode: Cmp8, args: [Register(0x58), Register(0x59)], resolved: None }
+25 58 59 
+# 00576 Instruction { source: "if t0 == t1 then 'readline_while_body_1' else 'readline_while_end_2'", opcode: JzImm, args: [Label24(readline_while_body_1)], resolved: None }
+42 7e 05 00 
+# 0057a Instruction { source: "if t0 == t1 then 'readline_while_body_1' else 'readline_while_end_2'", opcode: JmpImm, args: [Label24(readline_while_end_2)], resolved: None }
+40 e9 05 00 
 # readline_while_body_1
-# Registers used by this function: {80, 81, 82, 83, 84, 85, 88, 89, 90, 91}
+# Registers used by this function: {84, 85, 86, 87, 88, 89, 92, 93, 94, 95}
 # Registers used by callee tree: {16, 17, 18}
 # Registers to save: []
-# 004c7 Instruction { source: "PseudoCall(Label24(:getchar))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 0057e Instruction { source: "PseudoCall(Label24(:getchar))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 004cd Instruction { source: "PseudoCall(Label24(:getchar))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c d7 04 00 00 
-# 004d3 Instruction { source: "PseudoCall(Label24(:getchar))", opcode: JmpImm, args: [Label24(:getchar)], resolved: None }
+# 00584 Instruction { source: "PseudoCall(Label24(:getchar))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 8e 05 00 00 
+# 0058a Instruction { source: "PseudoCall(Label24(:getchar))", opcode: JmpImm, args: [Label24(:getchar)], resolved: None }
 40 22 00 00 
-# 004d7 Instruction { source: "PseudoCall(Label24(:getchar))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 0058e Instruction { source: "PseudoCall(Label24(:getchar))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 004dd Instruction { source: "Some(ch) <= call getchar()", opcode: Copy8, args: [Register(0x00), Register(0x54)], resolved: None }
-16 00 54 
-# 004e0 Instruction { source: "t3 <- 0n13/0x0du8 ", opcode: LoadImm8, args: [Register(0x55), Constant8(0x0d=13)], resolved: None }
-00 55 0d 
-# 004e3 Instruction { source: "if ch == t3 then 'readline_if_true_0_4' else 'readline_if_else_0_5'", opcode: Cmp8, args: [Register(0x54), Register(0x55)], resolved: None }
-25 54 55 
-# 004e6 Instruction { source: "if ch == t3 then 'readline_if_true_0_4' else 'readline_if_else_0_5'", opcode: JzImm, args: [Label24(readline_if_true_0_4)], resolved: None }
-42 ee 04 00 
-# 004ea Instruction { source: "if ch == t3 then 'readline_if_true_0_4' else 'readline_if_else_0_5'", opcode: JmpImm, args: [Label24(readline_if_else_0_5)], resolved: None }
-40 f2 04 00 
+# 00594 Instruction { source: "Some(ch) <= call getchar()", opcode: Copy8, args: [Register(0x00), Register(0x58)], resolved: None }
+16 00 58 
+# 00597 Instruction { source: "t2 <- ch U8", opcode: Copy8, args: [Register(0x58), Register(0x58)], resolved: None }
+16 58 58 
+# 0059a Instruction { source: "t3 <- 0n13/0x0du8 ", opcode: LoadImm8, args: [Register(0x59), Constant8(0x0d=13)], resolved: None }
+00 59 0d 
+# 0059d Instruction { source: "if t2 == t3 then 'readline_if_true_0_4' else 'readline_if_else_0_5'", opcode: Cmp8, args: [Register(0x58), Register(0x59)], resolved: None }
+25 58 59 
+# 005a0 Instruction { source: "if t2 == t3 then 'readline_if_true_0_4' else 'readline_if_else_0_5'", opcode: JzImm, args: [Label24(readline_if_true_0_4)], resolved: None }
+42 a8 05 00 
+# 005a4 Instruction { source: "if t2 == t3 then 'readline_if_true_0_4' else 'readline_if_else_0_5'", opcode: JmpImm, args: [Label24(readline_if_else_0_5)], resolved: None }
+40 ac 05 00 
 # readline_if_true_0_4
-# 004ee Instruction { source: "goto readline_if_end_3", opcode: JmpImm, args: [Label24(readline_if_end_3)], resolved: None }
-40 1c 05 00 
+# 005a8 Instruction { source: "goto readline_if_end_3", opcode: JmpImm, args: [Label24(readline_if_end_3)], resolved: None }
+40 e5 05 00 
 # readline_if_else_0_5
-# 004f2 Instruction { source: "t5 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x55), Constant8(0x0a=10)], resolved: None }
-00 55 0a 
-# 004f5 Instruction { source: "if ch == t5 then 'readline_if_true_1_6' else 'readline_if_else_1_7'", opcode: Cmp8, args: [Register(0x54), Register(0x55)], resolved: None }
-25 54 55 
-# 004f8 Instruction { source: "if ch == t5 then 'readline_if_true_1_6' else 'readline_if_else_1_7'", opcode: JzImm, args: [Label24(readline_if_true_1_6)], resolved: None }
-42 00 05 00 
-# 004fc Instruction { source: "if ch == t5 then 'readline_if_true_1_6' else 'readline_if_else_1_7'", opcode: JmpImm, args: [Label24(readline_if_else_1_7)], resolved: None }
-40 0c 05 00 
+# 005ac Instruction { source: "t4 <- ch U8", opcode: Copy8, args: [Register(0x58), Register(0x58)], resolved: None }
+16 58 58 
+# 005af Instruction { source: "t5 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x59), Constant8(0x0a=10)], resolved: None }
+00 59 0a 
+# 005b2 Instruction { source: "if t4 == t5 then 'readline_if_true_1_6' else 'readline_if_else_1_7'", opcode: Cmp8, args: [Register(0x58), Register(0x59)], resolved: None }
+25 58 59 
+# 005b5 Instruction { source: "if t4 == t5 then 'readline_if_true_1_6' else 'readline_if_else_1_7'", opcode: JzImm, args: [Label24(readline_if_true_1_6)], resolved: None }
+42 bd 05 00 
+# 005b9 Instruction { source: "if t4 == t5 then 'readline_if_true_1_6' else 'readline_if_else_1_7'", opcode: JmpImm, args: [Label24(readline_if_else_1_7)], resolved: None }
+40 cc 05 00 
 # readline_if_true_1_6
-# 00500 Instruction { source: "t7 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x54), Constant8(0x00=0)], resolved: None }
-00 54 00 
-# 00503 Instruction { source: "mem[buf] <- t7 U8", opcode: Store8, args: [Register(0x54), Register(0x50)], resolved: None }
-11 54 50 
-# 00506 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 005bd Instruction { source: "t6 <- buf U32", opcode: Copy32, args: [Register(0x54), Register(0x54)], resolved: None }
+81 54 54 
+# 005c0 Instruction { source: "t7 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x58), Constant8(0x00=0)], resolved: None }
+00 58 00 
+# 005c3 Instruction { source: "mem[t6] <- t7 U8", opcode: Store8, args: [Register(0x58), Register(0x54)], resolved: None }
+11 58 54 
+# 005c6 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 00508 Instruction { source: "goto readline_if_end_3", opcode: JmpImm, args: [Label24(readline_if_end_3)], resolved: None }
-40 1c 05 00 
+# 005c8 Instruction { source: "goto readline_if_end_3", opcode: JmpImm, args: [Label24(readline_if_end_3)], resolved: None }
+40 e5 05 00 
 # readline_if_else_1_7
-# 0050c Instruction { source: "mem[buf] <- ch U8", opcode: Store8, args: [Register(0x54), Register(0x50)], resolved: None }
-11 54 50 
-# 0050f Instruction { source: "t12 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x58), Constant32(0x00000001=1)], resolved: None }
-80 58 01 00 00 00 
-# 00515 Instruction { source: "t10 <- buf Add t12", opcode: Add32NoCarryIn, args: [Register(0x50), Register(0x58), Register(0x50)], resolved: None }
-a0 50 58 50 
-# 00519 Instruction { source: "buf <- t10 U32", opcode: Copy32, args: [Register(0x50), Register(0x50)], resolved: None }
-81 50 50 
+# 005cc Instruction { source: "t8 <- buf U32", opcode: Copy32, args: [Register(0x54), Register(0x54)], resolved: None }
+81 54 54 
+# 005cf Instruction { source: "t9 <- ch U8", opcode: Copy8, args: [Register(0x58), Register(0x58)], resolved: None }
+16 58 58 
+# 005d2 Instruction { source: "mem[t8] <- t9 U8", opcode: Store8, args: [Register(0x58), Register(0x54)], resolved: None }
+11 58 54 
+# 005d5 Instruction { source: "t11 <- buf U32", opcode: Copy32, args: [Register(0x54), Register(0x54)], resolved: None }
+81 54 54 
+# 005d8 Instruction { source: "t12 <- 0n1/0x00000001u32 ", opcode: LoadImm32, args: [Register(0x5c), Constant32(0x00000001=1)], resolved: None }
+80 5c 01 00 00 00 
+# 005de Instruction { source: "t10 <- t11 Add t12", opcode: Add32NoCarryIn, args: [Register(0x54), Register(0x5c), Register(0x54)], resolved: None }
+a0 54 5c 54 
+# 005e2 Instruction { source: "buf <- t10 U32", opcode: Copy32, args: [Register(0x54), Register(0x54)], resolved: None }
+81 54 54 
 # readline_if_end_3
-# 0051c Instruction { source: "goto readline_while_predicate_0", opcode: JmpImm, args: [Label24(readline_while_predicate_0)], resolved: None }
-40 b6 04 00 
+# 005e5 Instruction { source: "goto readline_while_predicate_0", opcode: JmpImm, args: [Label24(readline_while_predicate_0)], resolved: None }
+40 6d 05 00 
 # readline_while_end_2
-# 00520 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 005e9 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 00522 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 005eb Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
 # :test_echoline
 # Ret Some(U8)
 # Var __frame_pointer (__frame_pointer) U32 Some([12, 13, 14, 15])
 # Var buf (Local buf Array(Number(U8), 20) FrameOffset(0)) FrameOffset(0) None
-# Var t0 (t0 Call(Call { function: "readline", parameters: [AddressOf(Index("buf", Number(U8, 0)))] })) U8 Some([92])
-# Var t10 (t10 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) U32 Some([96, 97, 98, 99])
-# Var t11 (t11 Number(U8, 0)) U8 Some([100])
-# Var t12 (t12 Number(U8, 0)) U8 Some([92])
-# Var t2 (t2 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) }) U32 Some([96, 97, 98, 99])
-# Var t4 (t4 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) U32 Some([96, 97, 98, 99])
-# Var t5 (t5 Number(U8, 0)) U8 Some([100])
-# Var t6 (t6 Call(Call { function: "println", parameters: [AddressOf(Index("buf", Number(U8, 0)))] })) U8 Some([92])
-# Var t8 (t8 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) }) U32 Some([104, 105, 106, 107])
-# 00527 Instruction { source: "reserve 20 bytes of stack space for locals", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xffffffec=4294967276)], resolved: None }
+# Var t0 (Stack size negated) U32 Some([96, 97, 98, 99])
+# Var t1 (t1 Call(Call { function: "readline", parameters: [AddressOf(Index("buf", Number(U8, 0)))] })) U8 Some([100])
+# Var t10 (t10 Ident("__frame_pointer")) U32 Some([104, 105, 106, 107])
+# Var t11 (t11 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) U32 Some([96, 97, 98, 99])
+# Var t12 (t12 Number(U8, 0)) U8 Some([108])
+# Var t13 (t13 Number(U8, 0)) U8 Some([108])
+# Var t14 (Stack size) U32 Some([112, 113, 114, 115])
+# Var t2 (t2 AddressOf(Index("buf", Number(U8, 0)))) U32 Some([96, 97, 98, 99])
+# Var t3 (t3 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) }) U32 Some([96, 97, 98, 99])
+# Var t4 (t4 Ident("__frame_pointer")) U32 Some([104, 105, 106, 107])
+# Var t5 (t5 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) U32 Some([96, 97, 98, 99])
+# Var t6 (t6 Number(U8, 0)) U8 Some([108])
+# Var t7 (t7 Call(Call { function: "println", parameters: [AddressOf(Index("buf", Number(U8, 0)))] })) U8 Some([100])
+# Var t8 (t8 AddressOf(Index("buf", Number(U8, 0)))) U32 Some([96, 97, 98, 99])
+# Var t9 (t9 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Ident("__frame_pointer"), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Number(U8, 0) }) }) U32 Some([96, 97, 98, 99])
+# 005f0 Instruction { source: "reserve 20 bytes of stack space for locals", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xffffffec=4294967276)], resolved: None }
 a3 0c ec ff ff ff 
-# 0052d Instruction { source: "t5 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x64), Constant8(0x00=0)], resolved: None }
-00 64 00 
-# 00530 Instruction { source: "Zero-pad for t4 U32 <- t5 U8", opcode: LoadImm32, args: [Register(0x60), Constant32(0x00000000=0)], resolved: None }
+# 005f6 Instruction { source: "t0 <- 0xffffffecu32 ", opcode: LoadImm32, args: [Register(0x60), Constant32(0xffffffec=4294967276)], resolved: None }
+80 60 ec ff ff ff 
+# 005fc Instruction { source: "__frame_pointer <- __frame_pointer Add t0", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x60), Register(0x0c)], resolved: None }
+a0 0c 60 0c 
+# 00600 Instruction { source: "t4 <- __frame_pointer U32", opcode: Copy32, args: [Register(0x0c), Register(0x68)], resolved: None }
+81 0c 68 
+# 00603 Instruction { source: "t6 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x6c), Constant8(0x00=0)], resolved: None }
+00 6c 00 
+# 00606 Instruction { source: "Zero-pad for t5 U32 <- t6 U8", opcode: LoadImm32, args: [Register(0x60), Constant32(0x00000000=0)], resolved: None }
 80 60 00 00 00 00 
-# 00536 Instruction { source: "t4 U32 <- t5 U8", opcode: Copy8, args: [Register(0x64), Register(0x60)], resolved: None }
-16 64 60 
-# 00539 Instruction { source: "t2 <- __frame_pointer Add t4", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x60), Register(0x60)], resolved: None }
-a0 0c 60 60 
-# 0053d Instruction { source: "Arg0[buf]=t2 None <= call readline(t2,)", opcode: Copy32, args: [Register(0x60), Register(0x00)], resolved: None }
+# 0060c Instruction { source: "t5 U32 <- t6 U8", opcode: Copy8, args: [Register(0x6c), Register(0x60)], resolved: None }
+16 6c 60 
+# 0060f Instruction { source: "t3 <- t4 Add t5", opcode: Add32NoCarryIn, args: [Register(0x68), Register(0x60), Register(0x60)], resolved: None }
+a0 68 60 60 
+# 00613 Instruction { source: "t2 <- t3 U32", opcode: Copy32, args: [Register(0x60), Register(0x60)], resolved: None }
+81 60 60 
+# 00616 Instruction { source: "Arg0[buf]=t2 None <= call readline(t2,)", opcode: Copy32, args: [Register(0x60), Register(0x00)], resolved: None }
 81 60 00 
-# Registers used by this function: {92, 96, 97, 98, 99, 100, 104, 105, 106, 107}
-# Registers used by callee tree: {16, 17, 18, 80, 81, 82, 83, 84, 85, 88, 89, 90, 91}
+# Registers used by this function: {96, 97, 98, 99, 100, 104, 105, 106, 107, 108, 112, 113, 114, 115}
+# Registers used by callee tree: {16, 17, 18, 84, 85, 86, 87, 88, 89, 92, 93, 94, 95}
 # Registers to save: []
-# 00540 Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 00619 Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 00546 Instruction { source: "PseudoCall(Label24(:readline))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 50 05 00 00 
-# 0054c Instruction { source: "PseudoCall(Label24(:readline))", opcode: JmpImm, args: [Label24(:readline)], resolved: None }
-40 b3 04 00 
-# 00550 Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 0061f Instruction { source: "PseudoCall(Label24(:readline))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 29 06 00 00 
+# 00625 Instruction { source: "PseudoCall(Label24(:readline))", opcode: JmpImm, args: [Label24(:readline)], resolved: None }
+40 6a 05 00 
+# 00629 Instruction { source: "PseudoCall(Label24(:readline))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 00556 Instruction { source: "t11 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x64), Constant8(0x00=0)], resolved: None }
-00 64 00 
-# 00559 Instruction { source: "Zero-pad for t10 U32 <- t11 U8", opcode: LoadImm32, args: [Register(0x60), Constant32(0x00000000=0)], resolved: None }
+# 0062f Instruction { source: "t10 <- __frame_pointer U32", opcode: Copy32, args: [Register(0x0c), Register(0x68)], resolved: None }
+81 0c 68 
+# 00632 Instruction { source: "t12 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x6c), Constant8(0x00=0)], resolved: None }
+00 6c 00 
+# 00635 Instruction { source: "Zero-pad for t11 U32 <- t12 U8", opcode: LoadImm32, args: [Register(0x60), Constant32(0x00000000=0)], resolved: None }
 80 60 00 00 00 00 
-# 0055f Instruction { source: "t10 U32 <- t11 U8", opcode: Copy8, args: [Register(0x64), Register(0x60)], resolved: None }
-16 64 60 
-# 00562 Instruction { source: "t8 <- __frame_pointer Add t10", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x60), Register(0x68)], resolved: None }
-a0 0c 60 68 
-# 00566 Instruction { source: "Arg0[buf]=t8 None <= call println(t8,)", opcode: Copy32, args: [Register(0x68), Register(0x00)], resolved: None }
-81 68 00 
-# Registers used by this function: {92, 96, 97, 98, 99, 100, 104, 105, 106, 107}
-# Registers used by callee tree: {68, 69, 70, 71, 72, 73, 76, 77, 78, 79}
+# 0063b Instruction { source: "t11 U32 <- t12 U8", opcode: Copy8, args: [Register(0x6c), Register(0x60)], resolved: None }
+16 6c 60 
+# 0063e Instruction { source: "t9 <- t10 Add t11", opcode: Add32NoCarryIn, args: [Register(0x68), Register(0x60), Register(0x60)], resolved: None }
+a0 68 60 60 
+# 00642 Instruction { source: "t8 <- t9 U32", opcode: Copy32, args: [Register(0x60), Register(0x60)], resolved: None }
+81 60 60 
+# 00645 Instruction { source: "Arg0[buf]=t8 None <= call println(t8,)", opcode: Copy32, args: [Register(0x60), Register(0x00)], resolved: None }
+81 60 00 
+# Registers used by this function: {96, 97, 98, 99, 100, 104, 105, 106, 107, 108, 112, 113, 114, 115}
+# Registers used by callee tree: {72, 73, 74, 75, 76, 77, 80, 81, 82, 83}
 # Registers to save: []
-# 00569 Instruction { source: "PseudoCall(Label24(:println))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
+# 00648 Instruction { source: "PseudoCall(Label24(:println))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
 a3 0c fc ff ff ff 
-# 0056f Instruction { source: "PseudoCall(Label24(:println))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 79 05 00 00 
-# 00575 Instruction { source: "PseudoCall(Label24(:println))", opcode: JmpImm, args: [Label24(:println)], resolved: None }
-40 89 04 00 
-# 00579 Instruction { source: "PseudoCall(Label24(:println))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
+# 0064e Instruction { source: "PseudoCall(Label24(:println))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
+94 0c 58 06 00 00 
+# 00654 Instruction { source: "PseudoCall(Label24(:println))", opcode: JmpImm, args: [Label24(:println)], resolved: None }
+40 31 05 00 
+# 00658 Instruction { source: "PseudoCall(Label24(:println))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
 a3 0c 04 00 00 00 
-# 0057f Instruction { source: "t12 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x5c), Constant8(0x00=0)], resolved: None }
-00 5c 00 
-# 00582 Instruction { source: "return Some(t12)", opcode: Copy8, args: [Register(0x5c), Register(0x00)], resolved: None }
-16 5c 00 
-# 00585 Instruction { source: "Dealloc 20 bytes from stack", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000014=20)], resolved: None }
+# 0065e Instruction { source: "t13 <- 0n0/0x00u8 ", opcode: LoadImm8, args: [Register(0x6c), Constant8(0x00=0)], resolved: None }
+00 6c 00 
+# 00661 Instruction { source: "t14 <- 0n20/0x00000014u32 ", opcode: LoadImm32, args: [Register(0x70), Constant32(0x00000014=20)], resolved: None }
+80 70 14 00 00 00 
+# 00667 Instruction { source: "__frame_pointer <- __frame_pointer Add t14", opcode: Add32NoCarryIn, args: [Register(0x0c), Register(0x70), Register(0x0c)], resolved: None }
+a0 0c 70 0c 
+# 0066b Instruction { source: "return Some(t13)", opcode: Copy8, args: [Register(0x6c), Register(0x00)], resolved: None }
+16 6c 00 
+# 0066e Instruction { source: "Dealloc 20 bytes from stack", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000014=20)], resolved: None }
 a3 0c 14 00 00 00 
-# 0058b Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
+# 00674 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 0058d Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# 00676 Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 
