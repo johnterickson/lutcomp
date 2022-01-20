@@ -22,6 +22,10 @@ fn div16(a:usize, b:usize) -> usize {
         return 0x0;
     }
 
+    if (a < 0x100) {
+        return ((a[0] / b[0]) AS usize);
+    }
+
     lo: usize = 0x0;
     hi: usize = 0xFFFF;
 
@@ -64,16 +68,8 @@ fn div32(a:usize, b:usize) -> usize {
         return 0x0;
     }
 
-    if (a < 0x100) {
-        if (b < 0x100) {
-            return ((a[0] / b[0]) AS usize);
-        }
-    }
-
     if (a < 0x10000) {
-        if (b < 0x10000) {
-            return div16(a,b);
-        }
+        return div16(a,b);
     }
 
     lo: usize = 0x0;
@@ -110,4 +106,27 @@ fn div32(a:usize, b:usize) -> usize {
     }
 
     return lo;
+}
+
+fn shiftright3(a:usize) -> usize {
+    a[0] = (a[0] >ROR> 3);
+    a[1] = (a[1] >ROR> 3);
+    a[2] = (a[2] >ROR> 3);
+    a[3] = (a[3] >ROR> 3);
+    
+    a[0] = (a[0] & 31);
+    a[0] = (a[0] | (a[1] & 224));
+    a[1] = (a[1] & 31);
+    a[1] = (a[1] | (a[2] & 224));
+    a[2] = (a[2] & 31);
+    a[2] = (a[2] | (a[3] & 224));
+    a[3] = (a[3] & 31);
+    return a;
+}
+
+fn div32_by10(a:usize) -> usize {
+    static prod: U64;
+    /* https://godbolt.org/z/jT8YajqGv */
+    mul32_64(a, 0xCCCCCCCD, &prod);
+    return shiftright3(prod.hi);
 }
