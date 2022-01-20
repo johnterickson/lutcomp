@@ -153,7 +153,7 @@ fn print_digit(a:u8) {
 
 fn print_dec32(a:usize) {
     if (a >= 0xA) {
-        b: usize = div32(a,0xA);
+        b: usize = div32_by10(a);
         print_dec32(b);
         a = (a - mul32_32(b,0xA));
     }

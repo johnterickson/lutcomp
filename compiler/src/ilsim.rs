@@ -503,6 +503,19 @@ mod tests {
     }
 
     #[test]
+    fn shiftright3() {
+
+        let cases: Vec<_> = [1u32,0x100u32,0x1_0000u32,0x100_0000u32,0x2222_2222u32].iter()
+            .map(|i| (vec![i.into()], (i >>3).into()))
+            .collect();
+
+        test_var_inputs(
+            "shiftright3",
+            include_str!("../../programs/div.j"),
+            &cases);
+    }
+
+    #[test]
     fn div16() {
         test_var_inputs(
             "div16",
@@ -530,6 +543,17 @@ mod tests {
                 (vec![1u32.into(), 1u32.into()], 1u32.into()),
                 (vec![0xDEADBEEFu32.into(), 0xDEADu32.into()], 0x1_0000u32.into()),
             ]);
+    }
+
+    #[test]
+    fn div32_by10() {
+        let cases: Vec<_> = [13u32,0xFFFFu32,0x100u32,1u32,0xDEADBEEFu32].iter()
+            .map(|i| (vec![i.into()], (i/10).into()))
+            .collect();
+        test_var_inputs(
+            "div32_by10",
+            include_str!("../../programs/div.j"),
+            cases.as_slice());
     }
 
     #[test]
