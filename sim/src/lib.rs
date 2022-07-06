@@ -44,6 +44,7 @@ pub struct Computer<'a> {
     pub stdin_out: bool,
     trap_addrs: BTreeSet<u32>,
     pub tick_count: u64,
+    pub pc_hit_count: Option<BTreeMap<u32, usize>>,
 }
 
 impl<'a> Debug for Computer<'a> {
@@ -97,6 +98,7 @@ impl<'a> Computer<'a> {
             print,
             stdin_out: false,
             trap_addrs: BTreeSet::new(),
+            pc_hit_count: None,
             tick_count: 0,
         };
 
@@ -332,7 +334,11 @@ impl<'a> Computer<'a> {
             }
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
             DataBusLoadEdge::IR0 => {
-                self.ir0_pc = Some(addr_bus);
+                let pc = addr_bus;
+                self.ir0_pc = Some(pc);
+                if let Some(pc_hit_count) = &mut self.pc_hit_count {
+                    *pc_hit_count.entry(pc).or_insert(0) += 1;
+                }
                 self.ir0 = data_bus.unwrap();
             },
             DataBusLoadEdge::Mem => {

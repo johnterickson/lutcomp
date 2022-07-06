@@ -97,8 +97,11 @@ fn main() {
             };
             let entry = get_param("entry").unwrap_or("main");
             let root = file_path.parent().unwrap();
+
             let (ctxt, il) = emit_il(entry, &input, root);
-            let (_, mut assembly) = emit_assembly(&ctxt, &il);
+
+            let (_backend, mut assembly) = emit_assembly(&ctxt, &il);
+
             if let Some(image_base_address) = get_param("image_base_address") {
                 let image_base_address = u32::from_str_radix(image_base_address, 16).unwrap();
 
@@ -113,12 +116,22 @@ fn main() {
             }
             let rom = assemble::assemble(assembly);
 
+            let profile = if let Some("true") = get_param("profile") {
+                true
+            } else {
+                false
+            };
+
             if let Some("true") = get_param("sim") {
                 if sim_args.len() != 0 {
                     todo!();
                 }
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
+                if profile {
+                    c.pc_hit_count = Some(BTreeMap::new());
+                }
                 c.stdin_out = true;
+
                 let mut last_ir0 = None;
                 while c.step() { 
                     if last_ir0 != Some(c.ir0) {
@@ -127,6 +140,20 @@ fn main() {
                     last_ir0 = Some(c.ir0);
                 }
                 // print_state(&c);
+
+                if let Some(pc_hit_count) = c.pc_hit_count {
+                    let mut hits : Vec<_> = pc_hit_count.iter().collect();
+                    hits.sort_by(|a,b| a.1.cmp(b.1).reverse().then_with(|| a.0.cmp(b.0)));
+                    hits.truncate(20);
+                    for h in &hits {
+                        println!("pc:{:08x} hits:{}", h.0, h.1);
+                        if let Some(sym) = rom.symbols.get(h.0) {
+                            for line in &sym.notes {
+                                println!(" {}", line);
+                            }
+                        }
+                    }
+                }
             }
         }
         Some("make_test") => {

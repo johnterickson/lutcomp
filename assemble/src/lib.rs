@@ -412,8 +412,14 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
     let mut pc = start_pc;
     for (_pc, in_line, out_line) in lines.as_mut_slice() {
 
-        notes.as_mut().unwrap().push(format!("{:?}", &in_line));
-        notes.as_mut().unwrap().push(format!("{:?}", &out_line));
+        let in_string = format!("{:?}", &in_line);
+        let out_string = format!("{:?}", &out_line);
+        if in_string == out_string {
+            notes.as_mut().unwrap().push(in_string);
+        } else {
+            notes.as_mut().unwrap().push(in_string);
+            notes.as_mut().unwrap().push(out_string);
+        }
 
         let mut push_byte = |pc: &mut u32, b: u8| {
             rom.push(b);
