@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 strum = "0.18.0"
-RustyXML = "0.3.0"
+RustyXML = { git = "https://github.com/Florob/RustyXML", features = ["ordered_attrs"], rev = "d0450dbbf5dbd78598d07a40d94ba4b225dd2b99" }
 alu = { path = "../alu" }
 assemble = { path = "../assemble" }
 common = { path = "../common" }
