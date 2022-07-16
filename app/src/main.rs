@@ -6,7 +6,7 @@ use compiler::backend::emit_assembly;
 use compiler::il::*;
 use sim::*;
 use ucode::*;
-use std::{borrow::Cow, collections::BTreeMap, fs::File, io::{Read, BufRead, BufReader, Write}, path::Path};
+use std::{borrow::Cow, collections::BTreeMap, fs::File, io::{Read, Write}, path::Path};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -215,24 +215,34 @@ fn main() {
             {
                 let hex_path = get_param("hex_path").expect("hex path not specified.");
                 let file = File::open(hex_path).unwrap();
-                let file = BufReader::new(file);
-                let mut lines = file.lines();
-                assert_eq!("v2.0 raw", lines.next().unwrap().unwrap());
-                for line in lines {
-                    let line = line.unwrap();
-                    let line = line.trim();
-                    if line.starts_with("#") {
-                        continue;
-                    }
-                    for token in line.split_whitespace() {
-                        contents.push_str(token);
-                        columns += 1;
-                        if columns == 8 {
-                            contents.push('\n');
-                            columns = 0;
-                        } else {
-                            contents.push(' ');
+                let hex = HexFile::read(file).unwrap();
+
+                for line in &hex.lines {
+                    match line {
+                        HexFileLine::Data(data) => {
+                            for data in data {
+                                match data {
+                                    HexFileData::Byte(b) => {
+                                        contents.push_str(&format!("{:x}", *b));
+                                    }
+                                    HexFileData::Run(count, b) => {
+                                        contents.push_str(&format!("{}", count)); 
+                                        contents.push('*');
+                                        contents.push_str(&format!("{:x}", *b));
+
+                                    }
+                                }
+
+                                columns += 1;
+                                if columns >= 8 {
+                                    contents.push('\n');
+                                    columns = 0;
+                                } else {
+                                    contents.push(' ');
+                                }
+                            }
                         }
+                        _ => {}
                     }
                 }
             }
