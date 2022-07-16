@@ -3,6 +3,12 @@
 version = 3
 
 [[package]]
+name = "RustyXML"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b5ace29ee3216de37c0546865ad08edef58b0f9e76838ed8959a84a990e58c5"
+
+[[package]]
 name = "alu"
 version = "0.1.0"
 dependencies = [
@@ -17,6 +23,7 @@ dependencies = [
 name = "app"
 version = "0.1.0"
 dependencies = [
+ "RustyXML",
  "alu",
  "assemble",
  "common",
@@ -276,9 +283,9 @@ checksum = "643f8f41a8ebc4c5dc4515c82bb8abd397b527fc20fd681b7c011c2aee5d44fb"
 
 [[package]]
 name = "serde"
-version = "1.0.138"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1578c6245786b9d168c5447eeacfb96856573ca56c9d68fdcf394be134882a47"
+checksum = "0171ebb889e45aa68b44aee0859b3eede84c6f5f5c228e6f140c0b2a0a46cad6"
 
 [[package]]
 name = "sha-1"
@@ -366,9 +373,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c"
+checksum = "15c61ba63f9235225a22310255a29b806b907c9b8c964bcbd0a2c70f3f2deea7"
 
 [[package]]
 name = "unicode-segmentation"

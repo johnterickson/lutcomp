@@ -6,7 +6,7 @@ use compiler::backend::emit_assembly;
 use compiler::il::*;
 use sim::*;
 use ucode::*;
-use std::{borrow::Cow, collections::BTreeMap, fs::File, io::Read, path::Path};
+use std::{borrow::Cow, collections::BTreeMap, fs::File, io::{Read, BufRead, BufReader, Write}, path::Path};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -163,6 +163,82 @@ fn main() {
                 c.stdin_out = true;
                 while c.step() { }
             }
+        }
+        Some("modify_circ") => {
+            let circ_path = get_param("circ_path").expect("circ path not specified.");
+
+            let mut project: xml::Element = {
+                let mut file = File::open(circ_path).unwrap();
+                let mut xml = String::new();
+                file.read_to_string(&mut xml).unwrap();
+                xml.parse().unwrap()
+            };
+
+            let circuit = get_param("circuit").unwrap_or("main");
+            let label = get_param("label").expect("label not specified.");
+            let mut circuits = project.children.iter_mut().filter_map(|e| match e {
+                xml::Xml::ElementNode(e) if e.name == "circuit" => Some(e),
+                _ => None,
+            });
+            let circuit = circuits.find(|c| 
+                c.name == "circuit" &&
+                c.attributes.iter().any(|a| a.0.0 == "name" && a.1 == circuit)).unwrap();
+            let mut comps = circuit.children.iter_mut().filter_map(|e| match e {
+                xml::Xml::ElementNode(e) if e.name == "comp" => Some(e),
+                _ => None,
+            });
+            
+            let comp = comps.find(|e| {
+                e.children.iter().any(|e| match e {
+                    xml::Xml::ElementNode(e)
+                        if e.name == "a" => {
+                            e.attributes.iter().any(|a| a.0.0 == "name" && a.1 == "label") &&
+                            e.attributes.iter().any(|a| a.0.0 == "val" && a.1 == label)
+                        },
+                        _ => false,
+                })}).unwrap();
+            
+            let contents = comp.children.iter_mut()
+                .find_map(|e| match e {
+                    xml::Xml::ElementNode(e) if e.name == "a" &&
+                        e.attributes.iter().any(|a| a.0.0 == "name" && a.1 == "contents") => Some(e),
+                    _ => None}).unwrap();
+
+            let contents = contents.children.iter_mut()
+                .find_map(|e| match e {
+                    xml::Xml::CharacterNode(c) => Some(c),
+                    _ => None}).unwrap();
+            
+            contents.truncate(contents.find('\n').unwrap() + 1); // keep first line
+            let mut columns = 0;
+
+            {
+                let hex_path = get_param("hex_path").expect("hex path not specified.");
+                let file = File::open(hex_path).unwrap();
+                let file = BufReader::new(file);
+                let mut lines = file.lines();
+                assert_eq!("v2.0 raw", lines.next().unwrap().unwrap());
+                for line in lines {
+                    let line = line.unwrap();
+                    let line = line.trim();
+                    if line.starts_with("#") {
+                        continue;
+                    }
+                    for token in line.split_whitespace() {
+                        contents.push_str(token);
+                        columns += 1;
+                        if columns == 8 {
+                            contents.push('\n');
+                            columns = 0;
+                        } else {
+                            contents.push(' ');
+                        }
+                    }
+                }
+            }
+
+            let mut file = File::create(circ_path).unwrap();
+            write!(file, "{}", &project).unwrap();
         }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),
         None => eprintln!("no arg provided"),
