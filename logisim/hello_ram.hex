@@ -31,63 +31,92 @@ ff 00 00 00 00
 # Var t7 (t7 Number(U8, 95)) U8 Some([16])
 # Var t8 (t8 Number(U8, 82)) U8 Some([16])
 # Var t9 (t9 Number(U8, 65)) U8 Some([16])
-# 80422 Instruction { source: "t0 <- 0n72/0x48u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x48=72)], resolved: None }
+# (t0 <- 0n72/0x48u8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }", "Number(U8, 72)", "Number(U8, 72)"] })
+# 80422 Instruction { source: "(t0 <- 0n72/0x48u8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\", \"Number(U8, 72)\", \"Number(U8, 72)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x48=72)], resolved: None }
 00 10 48 
-# 80425 Instruction { source: "ttyout <- t0", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t0, SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }"] })
+# 80425 Instruction { source: "(ttyout <- t0, SourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80427 Instruction { source: "t1 <- 0n105/0x69u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x69=105)], resolved: None }
+# (t1 <- 0n105/0x69u8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }", "Number(U8, 105)", "Number(U8, 105)"] })
+# 80427 Instruction { source: "(t1 <- 0n105/0x69u8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\", \"Number(U8, 105)\", \"Number(U8, 105)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x69=105)], resolved: None }
 00 10 69 
-# 8042a Instruction { source: "ttyout <- t1", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t1, SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }"] })
+# 8042a Instruction { source: "(ttyout <- t1, SourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 8042c Instruction { source: "t2 <- 0n95/0x5fu8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
+# (t2 <- 0n95/0x5fu8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }", "Number(U8, 95)", "Number(U8, 95)"] })
+# 8042c Instruction { source: "(t2 <- 0n95/0x5fu8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\", \"Number(U8, 95)\", \"Number(U8, 95)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
 00 10 5f 
-# 8042f Instruction { source: "ttyout <- t2", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t2, SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }"] })
+# 8042f Instruction { source: "(ttyout <- t2, SourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80431 Instruction { source: "t3 <- 0n102/0x66u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x66=102)], resolved: None }
+# (t3 <- 0n102/0x66u8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 102) }", "Number(U8, 102)", "Number(U8, 102)"] })
+# 80431 Instruction { source: "(t3 <- 0n102/0x66u8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 102) }\", \"Number(U8, 102)\", \"Number(U8, 102)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x66=102)], resolved: None }
 00 10 66 
-# 80434 Instruction { source: "ttyout <- t3", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t3, SourceContext { contexts: ["TtyOut { value: Number(U8, 102) }"] })
+# 80434 Instruction { source: "(ttyout <- t3, SourceContext { contexts: [\"TtyOut { value: Number(U8, 102) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80436 Instruction { source: "t4 <- 0n114/0x72u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x72=114)], resolved: None }
+# (t4 <- 0n114/0x72u8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 114) }", "Number(U8, 114)", "Number(U8, 114)"] })
+# 80436 Instruction { source: "(t4 <- 0n114/0x72u8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\", \"Number(U8, 114)\", \"Number(U8, 114)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x72=114)], resolved: None }
 00 10 72 
-# 80439 Instruction { source: "ttyout <- t4", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t4, SourceContext { contexts: ["TtyOut { value: Number(U8, 114) }"] })
+# 80439 Instruction { source: "(ttyout <- t4, SourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 8043b Instruction { source: "t5 <- 0n111/0x6fu8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6f=111)], resolved: None }
+# (t5 <- 0n111/0x6fu8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }", "Number(U8, 111)", "Number(U8, 111)"] })
+# 8043b Instruction { source: "(t5 <- 0n111/0x6fu8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\", \"Number(U8, 111)\", \"Number(U8, 111)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6f=111)], resolved: None }
 00 10 6f 
-# 8043e Instruction { source: "ttyout <- t5", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t5, SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }"] })
+# 8043e Instruction { source: "(ttyout <- t5, SourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80440 Instruction { source: "t6 <- 0n109/0x6du8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6d=109)], resolved: None }
+# (t6 <- 0n109/0x6du8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 109) }", "Number(U8, 109)", "Number(U8, 109)"] })
+# 80440 Instruction { source: "(t6 <- 0n109/0x6du8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\", \"Number(U8, 109)\", \"Number(U8, 109)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6d=109)], resolved: None }
 00 10 6d 
-# 80443 Instruction { source: "ttyout <- t6", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t6, SourceContext { contexts: ["TtyOut { value: Number(U8, 109) }"] })
+# 80443 Instruction { source: "(ttyout <- t6, SourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80445 Instruction { source: "t7 <- 0n95/0x5fu8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
+# (t7 <- 0n95/0x5fu8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }", "Number(U8, 95)", "Number(U8, 95)"] })
+# 80445 Instruction { source: "(t7 <- 0n95/0x5fu8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\", \"Number(U8, 95)\", \"Number(U8, 95)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
 00 10 5f 
-# 80448 Instruction { source: "ttyout <- t7", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t7, SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }"] })
+# 80448 Instruction { source: "(ttyout <- t7, SourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 8044a Instruction { source: "t8 <- 0n82/0x52u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x52=82)], resolved: None }
+# (t8 <- 0n82/0x52u8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }", "Number(U8, 82)", "Number(U8, 82)"] })
+# 8044a Instruction { source: "(t8 <- 0n82/0x52u8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\", \"Number(U8, 82)\", \"Number(U8, 82)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x52=82)], resolved: None }
 00 10 52 
-# 8044d Instruction { source: "ttyout <- t8", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t8, SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }"] })
+# 8044d Instruction { source: "(ttyout <- t8, SourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 8044f Instruction { source: "t9 <- 0n65/0x41u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x41=65)], resolved: None }
+# (t9 <- 0n65/0x41u8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 65) }", "Number(U8, 65)", "Number(U8, 65)"] })
+# 8044f Instruction { source: "(t9 <- 0n65/0x41u8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\", \"Number(U8, 65)\", \"Number(U8, 65)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x41=65)], resolved: None }
 00 10 41 
-# 80452 Instruction { source: "ttyout <- t9", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t9, SourceContext { contexts: ["TtyOut { value: Number(U8, 65) }"] })
+# 80452 Instruction { source: "(ttyout <- t9, SourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80454 Instruction { source: "t10 <- 0n77/0x4du8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x4d=77)], resolved: None }
+# (t10 <- 0n77/0x4du8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 77) }", "Number(U8, 77)", "Number(U8, 77)"] })
+# 80454 Instruction { source: "(t10 <- 0n77/0x4du8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 77) }\", \"Number(U8, 77)\", \"Number(U8, 77)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x4d=77)], resolved: None }
 00 10 4d 
-# 80457 Instruction { source: "ttyout <- t10", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t10, SourceContext { contexts: ["TtyOut { value: Number(U8, 77) }"] })
+# 80457 Instruction { source: "(ttyout <- t10, SourceContext { contexts: [\"TtyOut { value: Number(U8, 77) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80459 Instruction { source: "t11 <- 0n33/0x21u8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x21=33)], resolved: None }
+# (t11 <- 0n33/0x21u8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }", "Number(U8, 33)", "Number(U8, 33)"] })
+# 80459 Instruction { source: "(t11 <- 0n33/0x21u8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\", \"Number(U8, 33)\", \"Number(U8, 33)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x21=33)], resolved: None }
 00 10 21 
-# 8045c Instruction { source: "ttyout <- t11", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t11, SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }"] })
+# 8045c Instruction { source: "(ttyout <- t11, SourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 8045e Instruction { source: "t12 <- 0n10/0x0au8 ", opcode: LoadImm8, args: [Register(0x10), Constant8(0x0a=10)], resolved: None }
+# (t12 <- 0n10/0x0au8 , SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] })
+# 8045e Instruction { source: "(t12 <- 0n10/0x0au8 , SourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] })", opcode: LoadImm8, args: [Register(0x10), Constant8(0x0a=10)], resolved: None }
 00 10 0a 
-# 80461 Instruction { source: "ttyout <- t12", opcode: TtyOut, args: [Register(0x10)], resolved: None }
+# (ttyout <- t12, SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] })
+# 80461 Instruction { source: "(ttyout <- t12, SourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] })", opcode: TtyOut, args: [Register(0x10)], resolved: None }
 13 10 
-# 80463 Instruction { source: "t13 <- 0xaabbccddu32 ", opcode: LoadImm32, args: [Register(0x14), Constant32(0xaabbccdd=2864434397)], resolved: None }
+# (t13 <- 0xaabbccddu32 , SourceContext { contexts: ["Return { value: Some(Number(USIZE, 2864434397)) }", "Number(USIZE, 2864434397)", "Number(USIZE, 2864434397)"] })
+# 80463 Instruction { source: "(t13 <- 0xaabbccddu32 , SourceContext { contexts: [\"Return { value: Some(Number(USIZE, 2864434397)) }\", \"Number(USIZE, 2864434397)\", \"Number(USIZE, 2864434397)\"] })", opcode: LoadImm32, args: [Register(0x14), Constant32(0xaabbccdd=2864434397)], resolved: None }
 80 14 dd cc bb aa 
-# 80469 Instruction { source: "return Some(t13)", opcode: Copy32, args: [Register(0x14), Register(0x00)], resolved: None }
+# (return Some(t13), SourceContext { contexts: ["Return { value: Some(Number(USIZE, 2864434397)) }"] })
+# 80469 Instruction { source: "(return Some(t13), SourceContext { contexts: [\"Return { value: Some(Number(USIZE, 2864434397)) }\"] })", opcode: Copy32, args: [Register(0x14), Register(0x00)], resolved: None }
 81 14 00 
 # 8046c Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
-# 8046e Instruction { source: "Unreachable", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
+# (Unreachable, SourceContext { contexts: [] })
+# 8046e Instruction { source: "(Unreachable, SourceContext { contexts: [] })", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
 ff 00 00 00 10 

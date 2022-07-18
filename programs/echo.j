@@ -13,8 +13,8 @@ fn main() -> u8 {
     ttyout(10);
     ch: u8 = 0;
     while (0 == 0) {
-        ttyout(':');
         ttyout('>');
+        ttyout(':');
         ch = 0;
         while (ch != 10) {
             ch = getchar();

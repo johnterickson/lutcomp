@@ -120,6 +120,7 @@ impl<'a> Computer<'a> {
     }
 
     pub fn reg_u32(&self, reg_num: u8) -> u32 {
+        assert_eq!(reg_num % 4, 0);
         self.mem_word(common::RAM_MIN + reg_num as u32)
     }
 

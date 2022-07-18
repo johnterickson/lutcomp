@@ -74,7 +74,7 @@ fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
         b = stack_pop(stack);
     }
     
-    if (ch == '+') {         
+    if (ch == '+') {
         sum: usize = (b+a);
         print_dec32(sum);
         ttyout(10);
@@ -103,8 +103,7 @@ fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
         RpnCalc_push_pending(c);
     } else if (ch == 32) {
         RpnCalc_push_pending(c);
-    }
-    else if (ch == 'c') {
+    } else if (ch == 'c') {
         RpnCalc_init(c);
     } else if (ch == 'd') {
         i: u8 = 0;
@@ -127,18 +126,26 @@ fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
 }
 
 fn main() -> u8 {
-    calcs: RpnCalc[8];
-    calc: &RpnCalc = &(calcs[0x0]);
+    ttyout('R');
 
-    RpnCalc_init(calc);
+    static calc: RpnCalc;
+
+    ttyout('P');
+    
+    RpnCalc_init(&calc);
+
+    ttyout('N');
+    ttyout(10);
 
     while (0 == 0) {
         ch: u8 = getchar();
-        result: u8 = RpnCalc_handle(calc, ch);
+        result: u8 = RpnCalc_handle(&calc, ch);
         if (result == 0) {
             return 0;
         }
     }
+
+    return 1;
 }
 
 fn print_digit(a:u8) {

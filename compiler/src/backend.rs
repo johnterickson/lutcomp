@@ -49,7 +49,7 @@ impl<'a> BackendProgram<'a> {
             };
 
             for s in &f.body {
-                if let IlInstruction::Call{f: callee, ..} = s {
+                if let IlInstruction::Call{f: callee, ..} = &s.0 {
                     info.functions_directly_called.insert(callee.clone());
                 }
             }
@@ -326,7 +326,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         for s in &f.body {
             // dbg!(s);
             let source = format!("{:?}", &s);
-            match s {
+            ctxt.lines.push(AssemblyInputLine::Comment(source.to_owned()));
+            match &s.0 {
                 IlInstruction::Unreachable => {
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                         opcode: Opcode::Halt,

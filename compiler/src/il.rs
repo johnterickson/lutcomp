@@ -67,11 +67,26 @@ pub struct IlLabelId(pub String);
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct IlFunctionId(pub String);
 
+#[derive(Clone, Debug, Default)]
+pub struct SourceContext {
+    pub contexts: VecDeque<String>,
+}
+
+impl SourceContext {
+    fn push<D: Debug>(&mut self, d: &D) {
+        self.contexts.push_back(format!("{:?}", d));
+    }
+
+    fn pop(&mut self) {
+        self.contexts.pop_back();
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct IlFunction {
     pub id: IlFunctionId,
     pub args: Vec<IlVarId>,
-    pub body: Vec<IlInstruction>,
+    pub body: Vec<(IlInstruction,SourceContext)>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
     pub consts: BTreeMap<IlVarId, IlNumber>,
     pub ret: Option<IlType>,
@@ -104,6 +119,10 @@ impl IlFunction {
         }
     }
 
+    fn add_inst(&mut self, ctxt: &IlContext, inst: IlInstruction) {
+        self.body.push((inst, ctxt.src_ctxt.clone()));
+    }
+
     fn alloc_tmp(&mut self, info: IlVarInfo) -> IlVarId {
         let id = IlVarId(format!("t{}", self.next_temp_num));
         self.vars.insert(id.clone(), info);
@@ -133,9 +152,11 @@ impl IlFunction {
         (id.clone(), info.clone())
     }
 
-    fn alloc_tmp_and_emit_value(&mut self, ctxt: &IlContext, e: &Expression) -> (IlVarId, IlVarInfo) {
+    fn alloc_tmp_and_emit_value(&mut self, ctxt: &mut IlContext, e: &Expression) -> (IlVarId, IlVarInfo) {
+        ctxt.src_ctxt.push(e);
         let (id, info) = self.alloc_tmp_for_expression(ctxt, e);
         self.emit_expression(ctxt, id.clone(), e);
+        ctxt.src_ctxt.pop();
         (id, info)
     }
 
@@ -164,14 +185,14 @@ impl IlFunction {
             byte_size: var_type.byte_count(ctxt.program),
             var_type
         });
-        self.body.push(IlInstruction::AssignNumber {
-            dest: addr_var.clone(),
-            src: IlNumber::U32(addr),
-        });
+        self.add_inst(ctxt, IlInstruction::AssignNumber {
+                dest: addr_var.clone(),
+                src: IlNumber::U32(addr),
+            });
         addr_var
     }
 
-    fn emit_address(&mut self, ctxt: &IlContext, value: &Expression) -> (IlVarId, Option<u32>) {
+    fn emit_address(&mut self, ctxt: &mut IlContext, value: &Expression) -> (IlVarId, Option<u32>) {
         match value {
             Expression::Ident(n) => {
                 let info = ctxt.find_arg_or_var(&self, n);
@@ -370,7 +391,7 @@ impl IlFunction {
         }
     }
 
-    fn emit_target_expression(&mut self, ctxt: &IlContext, target: &Expression) -> TargetLocation {
+    fn emit_target_expression(&mut self, ctxt: &mut IlContext, target: &Expression) -> TargetLocation {
         // dbg!(target);
         match target {
             Expression::Ident(n) => {
@@ -384,7 +405,7 @@ impl IlFunction {
                         }
                     },
                     IlLocation::FrameOffset(_) | IlLocation::Static(_) => {
-                        let (address, size) = self.emit_address(ctxt,  target);
+                        let (address, size) = self.emit_address(ctxt, target);
                         TargetLocation {
                             target: address,
                             target_subrange: None,
@@ -449,23 +470,32 @@ impl IlFunction {
         }
     }
 
-    fn emit_comparison(&mut self, ctxt: &IlContext, c: &Comparison, true_label: IlLabelId, false_label: IlLabelId) {
+    fn emit_comparison(&mut self, ctxt: &mut IlContext, c: &Comparison, true_label: IlLabelId, false_label: IlLabelId) {
+        ctxt.src_ctxt.push(c);
+
         let (left, left_info) = self.alloc_tmp_and_emit_value(ctxt, &c.left);
         let (right, right_info) = self.alloc_tmp_and_emit_value(ctxt, &c.right);
 
         assert_eq!(left_info.var_type, right_info.var_type);
 
-        self.body.push(IlInstruction::IfThenElse{
-            left: left.clone(),
-            op: c.op.into(), 
-            right: right.clone(),
-            then_label: true_label.clone(),
-            else_label: false_label.clone(),
-        });
+        self.add_inst(
+            ctxt,
+            IlInstruction::IfThenElse{
+                left: left.clone(),
+                op: c.op.into(), 
+                right: right.clone(),
+                then_label: true_label.clone(),
+                else_label: false_label.clone(),
+            });
+        
+        ctxt.src_ctxt.pop();
     }
     
     fn emit_statement(&mut self, ctxt: &mut IlContext, s: &Statement) {
-        // println!("{:?}", s);
+        
+        ctxt.src_ctxt.contexts.clear();
+        ctxt.src_ctxt.push(s);
+
         match s {
             Statement::Declare { .. } => {},
             Statement::Assign { target, var_type, value } => {
@@ -473,7 +503,7 @@ impl IlFunction {
                     TargetLocation {target, target_subrange: None, mem_size: Some(size)} => {
                         let (value_reg, info) = self.alloc_tmp_and_emit_value(ctxt, value);
                         assert_eq!(size.byte_count(), info.var_type.byte_count(ctxt.program));
-                        self.body.push(IlInstruction::WriteMemory{addr: target, src: value_reg.clone(), size});
+                        self.add_inst(ctxt, IlInstruction::WriteMemory{addr: target, src: value_reg.clone(), size});
                         info.var_type
                     }
                     TargetLocation {target, target_subrange: None, mem_size: None} => {
@@ -485,7 +515,7 @@ impl IlFunction {
                         let (tmp, tmp_info) = self.alloc_tmp_and_emit_value(ctxt, value);
                         assert_eq!(size.byte_count(), tmp_info.byte_size);
 
-                        self.body.push(IlInstruction::AssignVar {
+                        self.add_inst(ctxt, IlInstruction::AssignVar {
                             dest: target,
                             dest_range: Some(dest_subrange),
                             src: tmp,
@@ -513,36 +543,36 @@ impl IlFunction {
                 let mut prev_false = None;
                 for (i, (predicate, when_true)) in if_blocks.iter().enumerate() {
                     if let Some(prev_false) = prev_false.take() {
-                        self.body.push(IlInstruction::Label(prev_false));
+                        self.add_inst(ctxt, IlInstruction::Label(prev_false));
                     }
                     let true_label = self.alloc_label(&format!("if_true_{}", i));
                     let false_label = self.alloc_label(&format!("if_else_{}", i));
                     self.emit_comparison(ctxt, predicate, true_label.clone(), false_label.clone());
-                    self.body.push(IlInstruction::Label(true_label));
+                    self.add_inst(ctxt, IlInstruction::Label(true_label));
                     for s in when_true {
                         self.emit_statement(ctxt, s);
                     }
-                    self.body.push(IlInstruction::Goto(end_label.clone()));
+                    self.add_inst(ctxt, IlInstruction::Goto(end_label.clone()));
                     prev_false = Some(false_label);
                 }
 
-                self.body.push(IlInstruction::Label(prev_false.unwrap()));
+                self.add_inst(ctxt, IlInstruction::Label(prev_false.unwrap()));
                 for s in else_block {
                     self.emit_statement(ctxt, s);
                 }
 
-                self.body.push(IlInstruction::Label(end_label.clone()));
+                self.add_inst(ctxt, IlInstruction::Label(end_label.clone()));
             },
             Statement::While { predicate, while_true } => {
                 let pred_label = self.alloc_label("while_predicate");
                 let body_label= self.alloc_label("while_body");
                 let end_label= self.alloc_label("while_end");
 
-                self.body.push(IlInstruction::Label(pred_label.clone()));
+                self.add_inst(ctxt, IlInstruction::Label(pred_label.clone()));
 
                 self.emit_comparison(ctxt, predicate, body_label.clone(), end_label.clone());
 
-                self.body.push(IlInstruction::Label(body_label.clone()));
+                self.add_inst(ctxt, IlInstruction::Label(body_label.clone()));
 
                 let loop_ctxt = LoopContext { 
                     break_label: end_label.clone(),
@@ -555,17 +585,17 @@ impl IlFunction {
                 }
                 assert_eq!(Some(loop_ctxt), ctxt.loops.pop_back());
 
-                self.body.push(IlInstruction::Goto(pred_label.clone()));
+                self.add_inst(ctxt, IlInstruction::Goto(pred_label.clone()));
 
-                self.body.push(IlInstruction::Label(end_label.clone()));
+                self.add_inst(ctxt, IlInstruction::Label(end_label.clone()));
             },
             Statement::Continue => {
                 let closest_loop = ctxt.loops.iter().last().expect("Continue must be in loop");
-                self.body.push(IlInstruction::Goto(closest_loop.continue_label.clone()));
+                self.add_inst(ctxt, IlInstruction::Goto(closest_loop.continue_label.clone()));
             },
             Statement::Break => {
                 let closest_loop = ctxt.loops.iter().last().expect("Break must be in loop");
-                self.body.push(IlInstruction::Goto(closest_loop.break_label.clone()));
+                self.add_inst(ctxt, IlInstruction::Goto(closest_loop.break_label.clone()));
             },
             Statement::Return { value } => {
                 let val = if let Some(value) = value {
@@ -582,11 +612,11 @@ impl IlFunction {
                         location: IlLocation::U32,
                         var_type: Type::Number(NumberType::USIZE),
                     });
-                    self.body.push(IlInstruction::AssignNumber {
+                    self.add_inst(ctxt, IlInstruction::AssignNumber {
                         dest: stack_size.clone(),
                         src: IlNumber::U32(self.vars_stack_size),
                     });
-                    self.body.push(IlInstruction::AssignBinary {
+                    self.add_inst(ctxt, IlInstruction::AssignBinary {
                         dest: IlVarId::frame_pointer(),
                         op: IlBinaryOp::Add,
                         src1: IlVarId::frame_pointer(),
@@ -594,17 +624,19 @@ impl IlFunction {
                     });
                 }
                 
-                self.body.push(IlInstruction::Return{val})
+                self.add_inst(ctxt, IlInstruction::Return{val})
             },
             Statement::TtyOut { value } => {
                 let (value_reg, _) = self.alloc_tmp_and_emit_value(ctxt, &value);
-                self.body.push(IlInstruction::TtyOut{src: value_reg.clone()})
+                self.add_inst(ctxt, IlInstruction::TtyOut{src: value_reg.clone()})
             },
         }
+        ctxt.src_ctxt.pop();
     }
 
-    fn emit_expression(&mut self, ctxt: &IlContext, dest: IlVarId, e: &Expression) {
+    fn emit_expression(&mut self, ctxt: &mut IlContext, dest: IlVarId, e: &Expression) {
         // println!("START {:?}", e);
+        ctxt.src_ctxt.push(e);
         match e {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);
@@ -612,13 +644,13 @@ impl IlFunction {
                     IlLocation::U8 | IlLocation::U32 => {
                         let src = IlVarId(name.clone());
                         let size = info.location.try_into().unwrap();
-                        self.body.push(IlInstruction::AssignVar{dest, src, size, src_range: None, dest_range: None});
+                        self.add_inst(ctxt, IlInstruction::AssignVar{dest, src, size, src_range: None, dest_range: None});
                     }
                     IlLocation::FrameOffset(_) => todo!(),
                     IlLocation::Static(_) => {
                         let addr = self.alloc_tmp_and_emit_static_address(ctxt, name, &info);
 
-                        self.body.push(IlInstruction::ReadMemory {
+                        self.add_inst(ctxt, IlInstruction::ReadMemory {
                             dest,
                             addr,
                             size: info.byte_size.try_into().unwrap(),
@@ -631,10 +663,10 @@ impl IlFunction {
                     NumberType::U8 => IlNumber::U8((*val).try_into().unwrap()),
                     NumberType::USIZE => IlNumber::U32(*val)
                 };
-                self.body.push(IlInstruction::AssignNumber{dest, src});
+                self.add_inst(ctxt, IlInstruction::AssignNumber{dest, src});
             },
             Expression::TtyIn() => {
-                self.body.push(IlInstruction::TtyIn {dest});
+                self.add_inst(ctxt, IlInstruction::TtyIn {dest});
             },
             Expression::Arithmetic(op, left, right) => {
 
@@ -665,7 +697,7 @@ impl IlFunction {
 
                 let (left_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, &left);
                 let (right_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, &right);
-                self.body.push(IlInstruction::AssignBinary {
+                self.add_inst(ctxt, IlInstruction::AssignBinary {
                     dest,
                     op: IlBinaryOp::from(op),
                     src1: left_tmp.clone(),
@@ -676,7 +708,7 @@ impl IlFunction {
             Expression::Deref(ptr) => {
                 let (addr, ptr_info) = self.alloc_tmp_and_emit_value(ctxt, ptr);
                 let derefed_type = ptr_info.var_type.get_element_type().unwrap();
-                self.body.push(IlInstruction::ReadMemory {
+                self.add_inst(ctxt, IlInstruction::ReadMemory {
                     dest,
                     addr,
                     size: derefed_type.byte_count(ctxt.program).try_into().unwrap(),
@@ -685,7 +717,7 @@ impl IlFunction {
             Expression::LocalFieldDeref(_,_) |
             Expression::PtrFieldDeref(_,_) => {
                 let (addr, size) = self.emit_address(ctxt, e);
-                self.body.push(IlInstruction::ReadMemory {
+                self.add_inst(ctxt, IlInstruction::ReadMemory {
                     dest,
                     addr,
                     size: size.unwrap().try_into().unwrap(),
@@ -693,7 +725,7 @@ impl IlFunction {
             },
             Expression::AddressOf(n) => {
                 let (addr, _mem_size) = self.emit_address(ctxt, n);
-                self.body.push(IlInstruction::AssignVar {
+                self.add_inst(ctxt, IlInstruction::AssignVar {
                     dest,
                     src: addr,
                     size: IlType::U32,
@@ -708,7 +740,7 @@ impl IlFunction {
                         let index = index.try_get_const();
                         match (info.location, index) {
                             (IlLocation::U32, Some(index)) => {
-                                self.body.push(IlInstruction::AssignVar {
+                                self.add_inst(ctxt, IlInstruction::AssignVar {
                                     dest,
                                     dest_range: None,
                                     src: IlVarId(n.clone()),
@@ -721,7 +753,7 @@ impl IlFunction {
                     }
                     (_, Type::Ptr(..)) | (_, Type::Array(..)) =>  {
                         let (addr, size) = self.emit_address(ctxt, e);
-                        self.body.push(IlInstruction::ReadMemory {
+                        self.add_inst(ctxt, IlInstruction::ReadMemory {
                             dest,
                             addr,
                             size: size.unwrap().try_into().unwrap(),
@@ -743,7 +775,7 @@ impl IlFunction {
                         assert_eq!(&old_type, &old_var_info.var_type);
                         assert_ne!(&old_nt, &new_nt);
 
-                        self.body.push(IlInstruction::Resize {
+                        self.add_inst(ctxt, IlInstruction::Resize {
                             src: old_var,
                             src_size: old_size.try_into().unwrap(),
                             dest,
@@ -771,7 +803,7 @@ impl IlFunction {
                     _ => Some(dest),
                 };
 
-                self.body.push(IlInstruction::Call {
+                self.add_inst(ctxt, IlInstruction::Call {
                     f: IlFunctionId(c.function.clone()),
                     ret,
                     args: params,
@@ -782,6 +814,7 @@ impl IlFunction {
         }
         // println!("END   {:?}", &e);
         // println!("{:#?}", &self.body);
+        ctxt.src_ctxt.pop();
     }
 
     fn emit_from(ctxt: &mut IlContext) -> IlFunction {
@@ -869,11 +902,11 @@ impl IlFunction {
                 location: IlLocation::U32,
                 var_type: Type::Number(NumberType::USIZE),
             });
-            func.body.push(IlInstruction::AssignNumber {
+            func.add_inst(ctxt, IlInstruction::AssignNumber {
                 dest: stack_size.clone(),
                 src: IlNumber::U32(func.vars_stack_size.wrapping_neg()),
             });
-            func.body.push(IlInstruction::AssignBinary {
+            func.add_inst(ctxt, IlInstruction::AssignBinary {
                 dest: IlVarId::frame_pointer(),
                 op: IlBinaryOp::Add,
                 src1: IlVarId::frame_pointer(),
@@ -889,7 +922,7 @@ impl IlFunction {
             func.emit_statement(ctxt, &Statement::Return{value: None });
         }
 
-        func.body.push(IlInstruction::Unreachable);
+        func.add_inst(ctxt, IlInstruction::Unreachable);
 
         //func.optimize();
 
@@ -905,7 +938,7 @@ impl IlFunction {
                     }
 
                     let write = &func.body[*refs.writes.iter().next().unwrap()];
-                    let const_val = match write {
+                    let const_val = match &write.0 {
                         IlInstruction::AssignNumber { dest, src } => {
                             assert_eq!(id, dest);
                             Some(src.clone())
@@ -933,7 +966,7 @@ impl IlFunction {
             refs.insert(v.clone(), VarReferences { reads: BTreeSet::new(), writes: BTreeSet::new()});
         }
 
-        for (index, usages) in self.body.iter_mut().map(|s| s.var_usages_mut()).enumerate() {
+        for (index, usages) in self.body.iter_mut().map(|s| s.0.var_usages_mut()).enumerate() {
             
             if let Some(dest) = usages.dest {
                 let refs = refs.get_mut(dest).unwrap();
@@ -960,7 +993,7 @@ impl IlFunction {
                 if read != write {
                     let var_to_remove = var;
 
-                    if let Some(write_src) = match &self.body[*write] {
+                    if let Some(write_src) = match &self.body[*write].0 {
                         IlInstruction::AssignVar {dest, src, size:_, src_range: None, dest_range: None } => {
                             assert_eq!(dest, var_to_remove);
                             Some(src.clone())
@@ -968,7 +1001,7 @@ impl IlFunction {
                         _ => None,
                     } {
                         // dbg!((&self.body[*write], &self.body[*read]));
-                        for src in self.body[*read].var_usages_mut().srcs {
+                        for src in self.body[*read].0.var_usages_mut().srcs {
                             if src == var_to_remove {
                                 *src = write_src.clone();
                             }
@@ -1346,6 +1379,7 @@ impl IlProgram {
                 il: &mut il,
                 func_def: def,
                 loops: VecDeque::new(),
+                src_ctxt: SourceContext::default(),
             };
             let f = IlFunction::emit_from(&mut il_ctxt);
             next_static_addr = il_ctxt.next_static_addr;
@@ -1370,6 +1404,7 @@ struct IlContext<'a> {
     il: &'a mut IlProgram,
     func_def: &'a FunctionDefinition,
     loops: VecDeque<LoopContext>,
+    src_ctxt: SourceContext,
 }
 
 impl<'a> IlContext<'a> {
@@ -1413,7 +1448,7 @@ impl<'a> IlLiveness<'a> {
         // dbg!(&f.vars);
 
         let labels: BTreeMap<&IlLabelId, usize> = f.body.iter().enumerate()
-            .filter_map(|(i,s)| match s {
+            .filter_map(|(i,s)| match &s.0 {
                 IlInstruction::Label(label) => Some((label, i)),
                 _ => None
             })
@@ -1423,7 +1458,7 @@ impl<'a> IlLiveness<'a> {
         
         let succ = f.body.iter().enumerate()
             .map(|(i,s)| {
-                let nexts = match s {
+                let nexts = match &s.0 {
                     IlInstruction::Goto(target) => [Some(labels[target]), None],
                     IlInstruction::IfThenElse { left:_, op:_, right:_, then_label, else_label } => {
                         [Some(labels[then_label]), Some(labels[else_label])]
@@ -1437,16 +1472,16 @@ impl<'a> IlLiveness<'a> {
 
         let gen: Vec<BTreeSet<&IlVarId>> = f.body.iter()
             .map(|s| {
-                let usages = s.var_usages();
+                let usages = s.0.var_usages();
                 usages.srcs.iter().map(|s| *s).collect()
             }).collect();
 
         let kill: Vec<BTreeSet<&IlVarId>> = f.body.iter()
             .map(|s| {
-                match s {
+                match &s.0 {
                     IlInstruction::AssignVar {dest_range: Some(_), ..} => BTreeSet::new(),
                     _ => {
-                        let usages = s.var_usages();
+                        let usages = s.0.var_usages();
                         [usages.dest].iter()
                             .filter_map(|s| s.as_ref())
                             .map(|s| *s)
@@ -1519,7 +1554,7 @@ impl<'a> IlLiveness<'a> {
             for x in &l.kill[i] {
                 for y in  &l.outs[i] {
                     if x == y { continue; }
-                    match inst {
+                    match &inst.0 {
                         IlInstruction::AssignVar {dest, src, size:_, src_range:_, dest_range:_}
                             if dest == *x && src == *y => {}
                         _ => {
@@ -1581,6 +1616,8 @@ mod tests {
             );
         }
 
+        let ctxt = SourceContext::default();
+
         let f = IlFunction {
             id: IlFunctionId("fib".to_owned()),
             args: vec![n.clone()],
@@ -1591,7 +1628,7 @@ mod tests {
             consts: BTreeMap::new(),
             vars,
             labels: ([&loop_label, &body_label, &end_label]).iter().map(|l| (**l).clone()).collect(),
-            body : vec![
+            body : [
                 IlInstruction::AssignNumber {dest: one.clone(), src: IlNumber::U8(1)},
                 IlInstruction::AssignNumber {dest: a.clone(), src: IlNumber::U8(0)},
                 IlInstruction::AssignNumber {dest: b.clone(), src: IlNumber::U8(1)},
@@ -1608,7 +1645,7 @@ mod tests {
                 IlInstruction::Goto(loop_label.clone()),
                 IlInstruction::Label(end_label.clone()),
                 IlInstruction::Return{val: Some(a.clone())},
-            ]
+            ].iter().map(|i| (i.clone(), ctxt.clone())).collect(),
         };
 
         let l = IlLiveness::calculate(&f);
