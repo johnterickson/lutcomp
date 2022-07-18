@@ -1,0 +1,251 @@
+v2.0 raw
+#  line: 'loadimm8 r00 <- $01'
+#   instruction: 'loadimm8 r00 <- $01'
+#    loadimm8: 'loadimm8 r00 <- $01'
+#     register: 'r00'
+#      unsigned_hex_constant: '00'
+#     constant8: '$01'
+#      signed_hex_constant: '01'
+#       unsigned_hex_constant: '01'
+#  line: 'and8 r00 r00 -> r00'
+#   instruction: 'and8 r00 r00 -> r00'
+#    and8: 'and8 r00 r00 -> r00'
+#     register: 'r00'
+#      unsigned_hex_constant: '00'
+#     register: 'r00'
+#      unsigned_hex_constant: '00'
+#     register: 'r00'
+#      unsigned_hex_constant: '00'
+#  line: 'loadimm8 r01 <- 'H''
+#   instruction: 'loadimm8 r01 <- 'H''
+#    loadimm8: 'loadimm8 r01 <- 'H''
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     constant8: ''H''
+#      char_constant: ''H''
+#  line: 'ttyout r01'
+#   instruction: 'ttyout r01'
+#    ttyout: 'ttyout r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: 'loadimm8 r01 <- 'i''
+#   instruction: 'loadimm8 r01 <- 'i''
+#    loadimm8: 'loadimm8 r01 <- 'i''
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     constant8: ''i''
+#      char_constant: ''i''
+#  line: 'ttyout r01'
+#   instruction: 'ttyout r01'
+#    ttyout: 'ttyout r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: 'loadimm8 r01 <- '!''
+#   instruction: 'loadimm8 r01 <- '!''
+#    loadimm8: 'loadimm8 r01 <- '!''
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     constant8: ''!''
+#      char_constant: ''!''
+#  line: 'ttyout r01'
+#   instruction: 'ttyout r01'
+#    ttyout: 'ttyout r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: 'loadimm8 r01 <- $0A'
+#   instruction: 'loadimm8 r01 <- $0A'
+#    loadimm8: 'loadimm8 r01 <- $0A'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     constant8: '$0A'
+#      signed_hex_constant: '0A'
+#       unsigned_hex_constant: '0A'
+#  line: 'ttyout r01'
+#   instruction: 'ttyout r01'
+#    ttyout: 'ttyout r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: ':prompt'
+#   label: ':prompt'
+#  line: 'loadimm8 r01 <- '>''
+#   instruction: 'loadimm8 r01 <- '>''
+#    loadimm8: 'loadimm8 r01 <- '>''
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     constant8: ''>''
+#      char_constant: ''>''
+#  line: 'ttyout r01'
+#   instruction: 'ttyout r01'
+#    ttyout: 'ttyout r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: 'loadimm8 r01 <- ':''
+#   instruction: 'loadimm8 r01 <- ':''
+#    loadimm8: 'loadimm8 r01 <- ':''
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     constant8: '':''
+#      char_constant: '':''
+#  line: 'ttyout r01'
+#   instruction: 'ttyout r01'
+#    ttyout: 'ttyout r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: ':read'
+#   label: ':read'
+#  line: 'ttyin r01'
+#   instruction: 'ttyin r01'
+#    ttyin: 'ttyin r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: 'and8 r01 r01 -> r02'
+#   instruction: 'and8 r01 r01 -> r02'
+#    and8: 'and8 r01 r01 -> r02'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     register: 'r02'
+#      unsigned_hex_constant: '02'
+#  line: 'andimm8 r02 <- $80'
+#   instruction: 'andimm8 r02 <- $80'
+#    andimm8: 'andimm8 r02 <- $80'
+#     register: 'r02'
+#      unsigned_hex_constant: '02'
+#     constant8: '$80'
+#      signed_hex_constant: '80'
+#       unsigned_hex_constant: '80'
+#  line: 'jzimm :read'
+#   instruction: 'jzimm :read'
+#    jzimm: 'jzimm :read'
+#     constant24: ':read'
+#      label: ':read'
+#  line: 'andimm8 r01 <- $7f'
+#   instruction: 'andimm8 r01 <- $7f'
+#    andimm8: 'andimm8 r01 <- $7f'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     constant8: '$7f'
+#      signed_hex_constant: '7f'
+#       unsigned_hex_constant: '7f'
+#  line: 'ttyout r01'
+#   instruction: 'ttyout r01'
+#    ttyout: 'ttyout r01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#  line: 'and8 r01 r01 -> r02'
+#   instruction: 'and8 r01 r01 -> r02'
+#    and8: 'and8 r01 r01 -> r02'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     register: 'r02'
+#      unsigned_hex_constant: '02'
+#  line: 'xorimm8 r02 <- 'q''
+#   instruction: 'xorimm8 r02 <- 'q''
+#    xorimm8: 'xorimm8 r02 <- 'q''
+#     register: 'r02'
+#      unsigned_hex_constant: '02'
+#     constant8: ''q''
+#      char_constant: ''q''
+#  line: 'jzimm :halt'
+#   instruction: 'jzimm :halt'
+#    jzimm: 'jzimm :halt'
+#     constant24: ':halt'
+#      label: ':halt'
+#  line: 'and8 r01 r01 -> r02'
+#   instruction: 'and8 r01 r01 -> r02'
+#    and8: 'and8 r01 r01 -> r02'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     register: 'r01'
+#      unsigned_hex_constant: '01'
+#     register: 'r02'
+#      unsigned_hex_constant: '02'
+#  line: 'xorimm8 r02 <- $0A'
+#   instruction: 'xorimm8 r02 <- $0A'
+#    xorimm8: 'xorimm8 r02 <- $0A'
+#     register: 'r02'
+#      unsigned_hex_constant: '02'
+#     constant8: '$0A'
+#      signed_hex_constant: '0A'
+#       unsigned_hex_constant: '0A'
+#  line: 'jzimm :prompt'
+#   instruction: 'jzimm :prompt'
+#    jzimm: 'jzimm :prompt'
+#     constant24: ':prompt'
+#      label: ':prompt'
+#  line: 'jmpimm :read'
+#   instruction: 'jmpimm :read'
+#    jmpimm: 'jmpimm :read'
+#     constant24: ':read'
+#      label: ':read'
+#  line: ':halt'
+#   label: ':halt'
+#  line: 'halt $00000000'
+#   instruction: 'halt $00000000'
+#    halt: 'halt $00000000'
+#     constant32: '$00000000'
+#      signed_hex_constant: '00000000'
+#       unsigned_hex_constant: '00000000'
+#  EOI: ''
+# 00000 Instruction { source: "loadimm8 r00 <- $01", opcode: LoadImm8, args: [Register(0x00), Constant8(0x01=1)], resolved: None }
+00 00 01 
+# 00003 Instruction { source: "and8 r00 r00 -> r00", opcode: And8, args: [Register(0x00), Register(0x00), Register(0x00)], resolved: None }
+33 00 00 00 
+# 00007 Instruction { source: "loadimm8 r01 <- 'H'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x48=72)], resolved: None }
+00 01 48 
+# 0000a Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
+13 01 
+# 0000c Instruction { source: "loadimm8 r01 <- 'i'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x69=105)], resolved: None }
+00 01 69 
+# 0000f Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
+13 01 
+# 00011 Instruction { source: "loadimm8 r01 <- '!'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x21=33)], resolved: None }
+00 01 21 
+# 00014 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
+13 01 
+# 00016 Instruction { source: "loadimm8 r01 <- $0A", opcode: LoadImm8, args: [Register(0x01), Constant8(0x0a=10)], resolved: None }
+00 01 0a 
+# 00019 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
+13 01 
+# :prompt
+# 0001b Instruction { source: "loadimm8 r01 <- '>'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3e=62)], resolved: None }
+00 01 3e 
+# 0001e Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
+13 01 
+# 00020 Instruction { source: "loadimm8 r01 <- ':'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3a=58)], resolved: None }
+00 01 3a 
+# 00023 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
+13 01 
+# :read
+# 00025 Instruction { source: "ttyin r01", opcode: TtyIn, args: [Register(0x01)], resolved: None }
+12 01 
+# 00027 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
+33 01 01 02 
+# 0002b Instruction { source: "andimm8 r02 <- $80", opcode: AndImm8, args: [Register(0x02), Constant8(0x80=128)], resolved: None }
+30 02 80 
+# 0002e Instruction { source: "jzimm :read", opcode: JzImm, args: [Label24(:read)], resolved: None }
+42 25 00 00 
+# 00032 Instruction { source: "andimm8 r01 <- $7f", opcode: AndImm8, args: [Register(0x01), Constant8(0x7f=127)], resolved: None }
+30 01 7f 
+# 00035 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
+13 01 
+# 00037 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
+33 01 01 02 
+# 0003b Instruction { source: "xorimm8 r02 <- 'q'", opcode: XorImm8, args: [Register(0x02), Constant8(0x71=113)], resolved: None }
+32 02 71 
+# 0003e Instruction { source: "jzimm :halt", opcode: JzImm, args: [Label24(:halt)], resolved: None }
+42 51 00 00 
+# 00042 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
+33 01 01 02 
+# 00046 Instruction { source: "xorimm8 r02 <- $0A", opcode: XorImm8, args: [Register(0x02), Constant8(0x0a=10)], resolved: None }
+32 02 0a 
+# 00049 Instruction { source: "jzimm :prompt", opcode: JzImm, args: [Label24(:prompt)], resolved: None }
+42 1b 00 00 
+# 0004d Instruction { source: "jmpimm :read", opcode: JmpImm, args: [Label24(:read)], resolved: None }
+40 25 00 00 
+# :halt
+# 00051 Instruction { source: "halt $00000000", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
+ff 00 00 00 00 
