@@ -36,6 +36,15 @@ pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {
         }
     }
 
+    for line in assembly.iter_mut() {
+        if let AssemblyInputLine::Instruction(i) = line {
+            if (i.opcode == Opcode::Copy8 || i.opcode == Opcode::Copy32) && i.args[0] == i.args[1] {
+                *line = AssemblyInputLine::Comment(format!("optimized away noop copy {:?}", i));
+                optimizations_applied += 1;
+            }
+        }
+    }
+
     for instruction_pairs in instruction_indices.windows(2) {
         let index1 = instruction_pairs[0];
         let index2 = instruction_pairs[1];

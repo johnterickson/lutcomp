@@ -325,7 +325,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
         for s in &f.body {
             // dbg!(s);
-            let source = format!("{:?}", &s);
+            let source = format!("{:?}\n\t{:?}", &s.0, &s.1);
             ctxt.lines.push(AssemblyInputLine::Comment(source.to_owned()));
             match &s.0 {
                 IlInstruction::Unreachable => {

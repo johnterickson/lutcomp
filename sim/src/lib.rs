@@ -45,6 +45,7 @@ pub struct Computer<'a> {
     trap_addrs: BTreeSet<u32>,
     pub tick_count: u64,
     pub pc_hit_count: Option<BTreeMap<u32, usize>>,
+    prev_log: Option<(u32, Option<u8>)>,
 }
 
 impl<'a> Debug for Computer<'a> {
@@ -100,6 +101,7 @@ impl<'a> Computer<'a> {
             trap_addrs: BTreeSet::new(),
             pc_hit_count: None,
             tick_count: 0,
+            prev_log: None,
         };
 
         assert_eq!(c.alu_lut.len(), 1 << MEM_BITS_PER_CHIP);
@@ -221,6 +223,18 @@ impl<'a> Computer<'a> {
         slice
     }
 
+    fn log(&mut self, data_bus: Option<u8>) {
+        let log = (u32::from_le_bytes(self.pc), data_bus);
+        if Some(log) != self.prev_log {
+            if let Some(data_bus) = log.1 {
+                // println!("{:06x}  {:02x}", log.0, data_bus);
+            } else {
+                // println!("{:06x}  xx", log.0);
+            }
+            self.prev_log = Some(log);
+        }
+    }
+
     pub fn step(&mut self) -> bool {
         if self.print {
             println!("\n{:?}", &self);
@@ -303,6 +317,8 @@ impl<'a> Computer<'a> {
             DataBusOutputLevel::Reserved7 => return false,
         };
 
+        self.log(data_bus);
+
         if let Some(data_bus) = data_bus {
             if self.print {
                 println!("data_bus: {:02x}", data_bus);
@@ -349,11 +365,13 @@ impl<'a> Computer<'a> {
                 *self.mem_byte_mut(addr_bus) = data_bus.unwrap();
             }
             DataBusLoadEdge::PcInc => {
-                self.pc = if urom_op.data_bus_out == DataBusOutputLevel::PcSPE {
-                    addr_bus.to_le_bytes()
+                self.pc = (if urom_op.data_bus_out == DataBusOutputLevel::PcSPE {
+                    addr_bus
                 } else {
-                    (u32::from_le_bytes(self.pc) + 1).to_le_bytes()
-                };
+                    u32::from_le_bytes(self.pc) + 1
+                }).to_le_bytes();
+
+                self.log(data_bus);
             }
             DataBusLoadEdge::TtyIn => {
                 let _ = self.tty_in.pop_front();

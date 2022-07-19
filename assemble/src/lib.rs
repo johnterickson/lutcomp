@@ -14,7 +14,7 @@ use std::{collections::BTreeMap, convert::TryInto, fmt::Debug, io::{Read, BufRea
 #[grammar = "assembly.pest"]
 struct AssemblyParser;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Value {
     Constant8(u8),
     Constant24(u32),
@@ -518,7 +518,9 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
 
         match out_line {
             AssemblyOutputLine::Comment(comment) => {
-                println!("# {}", &comment);
+                for line in comment.lines() {
+                    println!("# {}", &line);
+                }
             }
             AssemblyOutputLine::Instruction(i) => {
                 println!("# {:05x} {:?}", pc, i);

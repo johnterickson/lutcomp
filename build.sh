@@ -15,9 +15,9 @@ cargo run --release -- compile programs/echo.j > logisim/echo.j.hex
 cargo run --release -- modify_circ --circuit=main --label=ROM --circ_path=./logisim/lutcomp.circ --hex_path=./logisim/echo.j.hex
 cat logisim/test.txt | java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -tty tty,speed,halt
 
-cargo run --release -- compile programs/rpn.j > logisim/rpn.hex
+echo "6 7 * q" | cargo run --release -- compile programs/rpn.j --sim=true > logisim/rpn.hex
 cargo run --release -- modify_circ --circuit=main --label=ROM --circ_path=./logisim/lutcomp.circ --hex_path=./logisim/rpn.hex
-echo 6 7 * q | java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -tty tty,speed,halt
+echo "6 7 * q" | java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -tty tty,speed,halt
 
 # TODO RAM stuff
 # cargo run --release -- compile programs/bootram.j > logisim/bootram.hex
