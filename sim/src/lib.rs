@@ -226,11 +226,11 @@ impl<'a> Computer<'a> {
     fn log(&mut self, data_bus: Option<u8>) {
         let log = (u32::from_le_bytes(self.pc), data_bus);
         if Some(log) != self.prev_log {
-            if let Some(data_bus) = log.1 {
-                // println!("{:06x}  {:02x}", log.0, data_bus);
-            } else {
-                // println!("{:06x}  xx", log.0);
-            }
+            // if let Some(data_bus) = log.1 {
+            //     // println!("{:06x}  {:02x}", log.0, data_bus);
+            // } else {
+            //     // println!("{:06x}  xx", log.0);
+            // }
             self.prev_log = Some(log);
         }
     }
