@@ -8,12 +8,15 @@ use common::*;
 use std::{borrow::Cow, collections::{BTreeSet, BTreeMap, VecDeque}, convert::TryInto, fmt::Debug, io, ops::Range, sync::{Mutex, mpsc::{self, Receiver}}, thread};
 use ucode::*;
 
-fn spawn_stdin_channel() -> Receiver<String> {
-    let (tx, rx) = mpsc::channel::<String>();
-    thread::spawn(move || loop {
-        let mut buffer = String::new();
-        io::stdin().read_line(&mut buffer).unwrap();
-        tx.send(buffer).unwrap();
+fn spawn_stdin_channel() -> Receiver<Option<String>> {
+    let (tx, rx) = mpsc::channel::<Option<String>>();
+    thread::spawn(move || {
+        tx.send(None).unwrap();
+        loop {
+            let mut buffer = String::new();
+            io::stdin().read_line(&mut buffer).unwrap();
+            tx.send(Some(buffer)).unwrap();
+        }
     });
     rx
 }
@@ -21,7 +24,7 @@ fn spawn_stdin_channel() -> Receiver<String> {
 
 use lazy_static::lazy_static;
 lazy_static! {
-    pub static ref NONBLOCKING_STDIN: Mutex<Receiver<String>> = Mutex::new(spawn_stdin_channel());
+    pub static ref NONBLOCKING_STDIN: Mutex<Receiver<Option<String>>> = Mutex::new(spawn_stdin_channel());
 }
 
 pub struct Computer<'a> {
@@ -44,8 +47,10 @@ pub struct Computer<'a> {
     pub stdin_out: bool,
     trap_addrs: BTreeSet<u32>,
     pub tick_count: u64,
-    pub pc_hit_count: Option<BTreeMap<u32, usize>>,
+    pub pc_hit_count: Option<BTreeMap<u32, u64>>,
+    pub stack_dump_rate: u64,
     prev_log: Option<(u32, Option<u8>)>,
+    stdin_ready: bool,
 }
 
 impl<'a> Debug for Computer<'a> {
@@ -74,6 +79,7 @@ impl<'a> Computer<'a> {
                 bytes: rom,
                 start_addr: 0,
                 symbols: BTreeMap::new(),
+                functions: BTreeMap::new(),
             }),
             print)
     }
@@ -102,6 +108,8 @@ impl<'a> Computer<'a> {
             pc_hit_count: None,
             tick_count: 0,
             prev_log: None,
+            stack_dump_rate: 0,
+            stdin_ready: false,
         };
 
         assert_eq!(c.alu_lut.len(), 1 << MEM_BITS_PER_CHIP);
@@ -240,6 +248,12 @@ impl<'a> Computer<'a> {
             println!("\n{:?}", &self);
         }
 
+        if self.stdin_out && !self.stdin_ready {
+            let empty = NONBLOCKING_STDIN.lock().unwrap().recv().unwrap();
+            assert_eq!(None, empty);
+            self.stdin_ready = true;
+        }
+
         self.tick_count += 8;
 
         let urom_entry = MicroEntry {
@@ -302,7 +316,7 @@ impl<'a> Computer<'a> {
                 if self.stdin_out {
                     let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
                     if let Ok(line) = stdin_channel.try_recv() {
-                        for c in line.chars() {
+                        for c in line.unwrap().chars() {
                             self.tty_in.push_back(c as u8);
                         }
                     }
@@ -351,11 +365,7 @@ impl<'a> Computer<'a> {
             }
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
             DataBusLoadEdge::IR0 => {
-                let pc = addr_bus;
-                self.ir0_pc = Some(pc);
-                if let Some(pc_hit_count) = &mut self.pc_hit_count {
-                    *pc_hit_count.entry(pc).or_insert(0) += 1;
-                }
+                self.ir0_pc = Some(addr_bus);
                 self.ir0 = data_bus.unwrap();
             },
             DataBusLoadEdge::Mem => {
@@ -387,6 +397,43 @@ impl<'a> Computer<'a> {
         }
 
         self.upc += 2;
+
+        if let (Some(pc),Some(pc_hit_count)) = (self.ir0_pc, &mut self.pc_hit_count) {
+            *pc_hit_count.entry(pc).or_insert(0) += 1;
+        }
+
+        if self.stack_dump_rate != 0 && self.tick_count % self.stack_dump_rate == 0 {
+            let orig_sp = self.reg_u32(REG_SP);
+            
+            print!("# STACK DUMP");
+
+            if let Some(pc) = self.ir0_pc {
+                print!(" pc:{:05x}", pc);
+                if let Some(f) = self.image.find_containing_function(pc) {
+                    print!("={}+0x{:x}", f.2, pc - f.0);
+                }
+            }
+                
+            
+            print!(" sp:{:05x}", orig_sp);
+
+            let mut sp = orig_sp;
+            while sp < RAM_MAX {
+                if let Some(a) = self.try_mem_slice(sp, 4) {
+                    let mut addr = [0u8;4];
+                    addr.copy_from_slice(&a);
+                    let addr = u32::from_le_bytes(addr);
+                    if addr != 0 && addr < ROM_MAX {
+                        print!(" [sp+0x{:02x}]={:05x}", sp - orig_sp, addr);
+                        if let Some(f) = self.image.find_containing_function(addr) {
+                            print!("={}+0x{:x}", f.2, addr - f.0);
+                        }
+                    }
+                }
+                sp += 4;
+            }
+            println!();
+        }
 
         true
     }

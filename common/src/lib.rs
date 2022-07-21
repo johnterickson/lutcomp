@@ -16,7 +16,7 @@ bitflags! {
         const CARRY = 0b0001;
         const ZERO = 0b0010;
         const NEG = 0b0100;
-        const PHASE = 0b1000;
+        const LOHI = 0b1000;
     }
 }
 
@@ -322,4 +322,18 @@ pub struct Image {
     pub start_addr: u32,
     pub bytes: Vec<u8>,
     pub symbols: BTreeMap<u32,Symbol>,
+    pub functions: BTreeMap<u32, (u32, String)>,
+}
+
+impl Image {
+    pub fn find_containing_function(&self, addr: u32) -> Option<(u32, u32, &String)> {
+        self.functions.iter()
+            .find_map(|(start,(end, name))| {
+                if *start <= addr && addr <= *end {
+                    Some((*start, *end, name))
+                } else {
+                    None
+                }
+            })
+    }
 }

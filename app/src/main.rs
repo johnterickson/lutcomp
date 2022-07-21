@@ -130,6 +130,9 @@ fn main() {
                 if profile {
                     c.pc_hit_count = Some(BTreeMap::new());
                 }
+                if let Some(n) = get_param("stack_dump_rate") {
+                    c.stack_dump_rate = u64::from_str_radix(n, 10).unwrap();
+                }
                 c.stdin_out = true;
 
                 let mut last_ir0 = None;

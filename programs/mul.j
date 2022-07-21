@@ -46,6 +46,13 @@ fn mul32_32(a:usize, b:usize) -> usize {
     return (c + d);
 }
 
+fn mul32_by10(a:usize) -> usize {
+    a = (a + a); /* a is 2a */
+    b: usize = (a + a); /* b is 4a */
+    b = (b + b); /* b is 8a */
+    return (b + a);
+}
+
 !include 'U64.j'
 
 fn mul32_64(a:usize, b:usize, c: &U64) {

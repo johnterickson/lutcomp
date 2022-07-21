@@ -117,7 +117,7 @@ fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
     } else if (ch <= '9') {
         if (ch >= '0') {
             c->have_num = 1;
-            c->num = mul32_32(c->num, 0xA);
+            c->num = mul32_by10(c->num);
             c->num = (c->num + ((ch - '0') AS usize));
         }
     }
@@ -162,7 +162,7 @@ fn print_dec32(a:usize) {
     if (a >= 0xA) {
         b: usize = div32_by10(a);
         print_dec32(b);
-        a = (a - mul32_32(b,0xA));
+        a = (a - mul32_by10(b));
     }
 
     ttyout((a[0] + '0'));

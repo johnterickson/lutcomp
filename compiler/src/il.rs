@@ -924,7 +924,7 @@ impl IlFunction {
 
         func.add_inst(ctxt, IlInstruction::Unreachable);
 
-        //func.optimize();
+        func.optimize();
 
         {
             let refs = func.find_refs();
@@ -987,34 +987,67 @@ impl IlFunction {
 
         // dbg!(&self.body);
 
-        for (var, refs) in &refs {
-            if refs.writes.len() == 1 && refs.reads.len() == 1 {
-                let (read, write) = (refs.reads.iter().next().unwrap(), refs.writes.iter().next().unwrap());
-                if read != write {
-                    let var_to_remove = var;
+        // for (var, refs) in &refs {
+        //     if refs.writes.len() == 1 && refs.reads.len() == 1 {
+        //         let (read, write) = (refs.reads.iter().next().unwrap(), refs.writes.iter().next().unwrap());
+        //         if read != write {
+        //             let var_to_remove = var;
 
-                    if let Some(write_src) = match &self.body[*write].0 {
-                        IlInstruction::AssignVar {dest, src, size:_, src_range: None, dest_range: None } => {
-                            assert_eq!(dest, var_to_remove);
-                            Some(src.clone())
-                        }
-                        _ => None,
-                    } {
-                        // dbg!((&self.body[*write], &self.body[*read]));
-                        for src in self.body[*read].0.var_usages_mut().srcs {
-                            if src == var_to_remove {
-                                *src = write_src.clone();
-                            }
-                        }
-                        // dbg!(&self.body[*read]);
+        //             if let Some(write_src) = match &self.body[*write].0 {
+        //                 IlInstruction::AssignVar {dest, src, size:_, src_range: None, dest_range: None } => {
+        //                     assert_eq!(dest, var_to_remove);
+        //                     Some(src.clone())
+        //                 }
+        //                 _ => None,
+        //             } {
+        //                 // dbg!((&self.body[*write], &self.body[*read]));
+        //                 for src in self.body[*read].0.var_usages_mut().srcs {
+        //                     if src == var_to_remove {
+        //                         *src = write_src.clone();
+        //                     }
+        //                 }
+        //                 // dbg!(&self.body[*read]);
 
-                        self.body.remove(*write);
-                        self.vars.remove(var_to_remove);
-                        return true;
+        //                 self.body.remove(*write);
+        //                 self.vars.remove(var_to_remove);
+        //                 return true;
+        //             }
+        //         }
+        //     }
+        // }
+
+        for offset in [0,1] {
+            for pair in self.body.as_mut_slice()[offset..].chunks_mut(2) {
+                if pair.len() != 2 { continue; }
+                let (first,second) = pair.split_first_mut().unwrap();
+                let second = &mut second[0];
+                if let (IlInstruction::AssignNumber { dest: num_dest, src },
+                        IlInstruction::AssignBinary { dest, op, src1, src2 }) = (&mut first.0, &mut second.0) {
+                    if num_dest == src2 && 
+                       *src == IlNumber::U32(4) && 
+                       *op == IlBinaryOp::Multiply
+                    {
+                        let refs: &VarReferences = &refs[num_dest];
+                        if refs.reads.len() == 1 && refs.writes.len() == 1 {
+                            // println!("# MUL4 {:?} {:?} {:?} {:?} {:?} {:?}", num_dest, src, dest, op, src1, src2);
+                            first.0 = IlInstruction::AssignBinary {
+                                dest: dest.clone(),
+                                op:IlBinaryOp::Add,
+                                src1: src1.clone(),
+                                src2: src1.clone(),
+                            };
+                            second.0 = IlInstruction::AssignBinary {
+                                dest: dest.clone(),
+                                op: IlBinaryOp::Add,
+                                src1: dest.clone(),
+                                src2: dest.clone(),
+                            };
+                        }
                     }
                 }
             }
         }
+        
 
         false
     }
@@ -1031,7 +1064,7 @@ pub enum IlUnaryOp {
     BinaryInvert
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IlBinaryOp {
     Add,
     Subtract,

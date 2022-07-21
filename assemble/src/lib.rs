@@ -223,7 +223,9 @@ pub enum AssemblyInputLine {
 
 #[derive(Debug,Clone)]
 pub enum AssemblyDirective {
-    FillWithHalt
+    FillWithHalt,
+    FunctionStart(String),
+    FunctionEnd,
 }
 
 impl AssemblyInputLine {
@@ -404,6 +406,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
 
     let mut lines : Vec<(u32, AssemblyInputLine, AssemblyOutputLine)> = Vec::new();
     let mut labels = BTreeMap::new();
+    let mut functions = BTreeMap::new();
 
     let start_pc = input.iter().filter_map(|line| match line {
         AssemblyInputLine::ImageBaseAddress(base) => Some(*base),
@@ -412,6 +415,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
 
     let mut pc = start_pc;
     let mut fill_with_halt = None;
+    let mut current_function = None;
     for line in input.drain(..) {
         let source = format!("{:?}", line);
         //lines.push(AssemblyOutputLine::Comment(source.to_owned()));
@@ -420,6 +424,16 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
             AssemblyInputLine::Directive(directive) => {
                 match directive {
                     AssemblyDirective::FillWithHalt => { fill_with_halt = Some(true);},
+                    AssemblyDirective::FunctionStart(name) => {
+                        assert_eq!(current_function, None);
+                        current_function = Some((name,pc));
+                    },
+                    AssemblyDirective::FunctionEnd => {
+                        let current_function = current_function.take().unwrap();
+                        functions.insert(
+                            current_function.1,
+                            (pc, current_function.0));
+                    },
                 }
             }
             AssemblyInputLine::ImageBaseAddress(base) => {
@@ -559,5 +573,6 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
         start_addr: start_pc,
         bytes: rom,
         symbols,
+        functions,
     }
 }

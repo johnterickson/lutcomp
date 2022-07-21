@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use assemble::AssemblyDirective;
+
 use crate::*;
 use crate::il::*;
 use crate::optimize::optimize_assembly;
@@ -287,6 +289,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
             lines: &mut lines,
         };
 
+        ctxt.lines.push(AssemblyInputLine::Directive(
+            AssemblyDirective::FunctionStart(f.id.0.to_string())
+        ));
         ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &f.id.0)));
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Ret {:?}", f.ret)));
         for (i, arg_name) in f.args.iter().enumerate() {
@@ -791,6 +796,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 },
             }
         }
+        
+        lines.push(AssemblyInputLine::Directive(
+            AssemblyDirective::FunctionEnd,
+        ));
     }
 
     optimize_assembly(&mut lines);
