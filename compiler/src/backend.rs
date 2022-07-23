@@ -411,23 +411,41 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         },
                         IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr | IlBinaryOp::Divide=> {
 
-                            let opcode = match (op, size) {
-                                (IlBinaryOp::Add, IlType::U8) => Opcode::Add8NoCarryIn,
-                                (IlBinaryOp::Add, IlType::U32) => Opcode::Add32NoCarryIn,
-                                (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::And8,
-                                (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::And32,
-                                (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::Or8,
-                                (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::Or32,
-                                (IlBinaryOp::Divide, IlType::U8) => Opcode::Divide8,
-                                _ => panic!(),
-                            };
+                            if (&IlBinaryOp::Add, IlType::U32) == (op, size) {
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    opcode: Opcode::ClearCarry, args: vec![], resolved: None, source: source.clone(),
+                                }));
 
-                            ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                opcode,
-                                args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
-                                resolved: None,
-                                source
-                            }));
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    opcode: Opcode::AddCarry32_1,
+                                    args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
+                                    resolved: None,
+                                    source: source.clone()
+                                }));
+
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    opcode: Opcode::AddCarry32_2, args: vec![], resolved: None, source
+                                }));
+
+                            } else {
+
+                                let opcode1 = match (op, size) {
+                                    (IlBinaryOp::Add, IlType::U8) => Opcode::Add8NoCarryIn,
+                                    (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::And8,
+                                    (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::And32,
+                                    (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::Or8,
+                                    (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::Or32,
+                                    (IlBinaryOp::Divide, IlType::U8) => Opcode::Divide8,
+                                    _ => panic!(),
+                                };
+
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    opcode: opcode1,
+                                    args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
+                                    resolved: None,
+                                    source: source
+                                }));
+                            }
                         },
                         IlBinaryOp::Subtract => {
                             let temp_regs: Vec<_> = (0u8..(src2_size.try_into().unwrap())).collect();
@@ -479,8 +497,22 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     }));
 
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Add32NoCarryIn,
+                                        opcode: Opcode::ClearCarry,
+                                        args: vec![],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::AddCarry32_1,
                                         args: vec![Value::Register(src1_regs[0]), Value::Register(temp_regs[0]), Value::Register(dest_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::AddCarry32_2,
+                                        args: vec![],
                                         resolved: None,
                                         source: source.clone()
                                     }));

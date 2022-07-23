@@ -16,7 +16,7 @@ bitflags! {
         const CARRY = 0b0001;
         const ZERO = 0b0010;
         const NEG = 0b0100;
-        const LOHI = 0b1000;
+        const CARRY_PENDING = 0b1000;
     }
 }
 
@@ -24,8 +24,8 @@ bitflags! {
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum AluOpcode {
-    AddLoNoCarry = 0,
-    AddLoCarry = 1,
+    AddLo = 0,
+    Unused1 = 1,
     AddHiNoCarry = 2,
     AddHiCarry = 3,
     Or = 4,
@@ -35,14 +35,6 @@ pub enum AluOpcode {
 }
 
 impl AluOpcode {
-    pub fn addlo(f: Flags) -> AluOpcode {
-        if f.contains(Flags::CARRY) {
-            AluOpcode::AddLoCarry
-        } else {
-            AluOpcode::AddLoNoCarry
-        }
-    }
-
     pub fn addhi(f: Flags) -> AluOpcode {
         if f.contains(Flags::CARRY) {
             AluOpcode::AddHiCarry
@@ -157,7 +149,8 @@ pub enum Opcode {
     LoadImm8 = 0, // regA <- [8-bit constant B]
     Invert8 = 3, // ~regA -> regA
     Negate8 = 4, // (~regA + 1) -> regA + FLAGS
-    Init = 0xF,
+    ClearCarry = 0xE, // FLAGS & ~CARRY -> FLAGS
+    Init = 0xF, // Flags and all internal regs to zero
 
     Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
@@ -167,9 +160,9 @@ pub enum Opcode {
     Pop8 = 0x15, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
     Copy8 = 0x16, // regA -> regB
 
-    Mul8_1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R0R1
+    Mul8_1 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB R00/R01
     Mul8_2 = 0x21,
-    Add8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
+    AddCarry8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
     Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
     Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
     Cmp8 = 0x25, // 8bit regB - 8bit regA -> FLAGS
@@ -199,10 +192,9 @@ pub enum Opcode {
     Store32_2 = 0x93, // [none] must follow Part1
     StoreImm32 = 0x94,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
-    Add32NoCarryIn = 0xA0, // regA + regB -> regC [carry out undefined]
-    Add32_1 = 0xA1,      // 32-bit carry + regA + regB -> regC + carry
-    Add32_2 = 0xA2,      // [none] must follow Part1
-    AddImm32IgnoreCarry = 0xA3, // RegA += [32-bit constant BCDE] [carry out unchanged]
+    AddCarry32_1 = 0xA2,      // 32-bit carry + regA + regB -> regC + carry
+    AddCarry32_2 = 0xA3,      // [none] must follow Part1
+    AddImm32IgnoreCarry = 0xA4, // RegA += [32-bit constant BCDE] [carry out unchanged]
 
     Or32 = 0xB0,  // regA | regB -> regC
     And32 = 0xB1, // regA & regB -> regC
@@ -237,6 +229,7 @@ impl Opcode {
             Opcode::LoadImm8 => &[1,1],
             Opcode::Invert8 => &[1],
             Opcode::Negate8 => &[1],
+            Opcode::ClearCarry => &[],
             Opcode::Init => &[],
             Opcode::Load8 => &[1,1],
             Opcode::Store8 => &[1,1],
@@ -247,7 +240,7 @@ impl Opcode {
             Opcode::Copy8 => &[1,1],
             Opcode::Mul8_1 => &[1,1],
             Opcode::Mul8_2 => &[],
-            Opcode::Add8 => &[1,1,1],
+            Opcode::AddCarry8 => &[1,1,1],
             Opcode::Add8NoCarry => &[1,1,1],
             Opcode::Add8NoCarryIn => &[1,1,1],
             Opcode::Cmp8 => &[1,1],
@@ -272,9 +265,8 @@ impl Opcode {
             Opcode::Store32_1 => &[1,1],
             Opcode::Store32_2 => &[],
             Opcode::StoreImm32 => &[1,4],
-            Opcode::Add32NoCarryIn => &[1,1,1],
-            Opcode::Add32_1 => &[1,1,1],
-            Opcode::Add32_2 => &[],
+            Opcode::AddCarry32_1 => &[1,1,1],
+            Opcode::AddCarry32_2 => &[],
             Opcode::AddImm32IgnoreCarry => &[1,4],
             Opcode::Or32 => &[1,1,1],
             Opcode::And32 => &[1,1,1],

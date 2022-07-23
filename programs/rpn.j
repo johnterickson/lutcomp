@@ -159,6 +159,11 @@ fn print_digit(a:u8) {
 }
 
 fn print_dec32(a:usize) {
+    if (a < 0x100) {
+        print_dec8(a[0]);
+        return;
+    }
+
     if (a >= 0xA) {
         b: usize = div32_by10(a);
         print_dec32(b);

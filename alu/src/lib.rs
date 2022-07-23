@@ -17,7 +17,7 @@ lazy_static! {
 }
 
 pub const MAJOR_VERSION: u8 = 1;
-pub const MINOR_VERSION: u8 = 0;
+pub const MINOR_VERSION: u8 = 1;
 pub const PATCH_VERSION: u8 = 0;
 
 #[derive(Debug, PackedStruct)]
@@ -74,13 +74,17 @@ pub fn alu(print: bool) -> (Vec<u8>,u32) {
 
         let carry_in = entry.op as u8 % 2;
         let out = match entry.op {
-            AluOpcode::AddLoNoCarry | AluOpcode::AddLoCarry => {
-                entry.in1.wrapping_add(entry.in2).wrapping_add(carry_in)
-            }
+            AluOpcode::AddLo => {
+                entry.in1.wrapping_add(entry.in2)
+            },
+            AluOpcode::Unused1 => 0xCC,
             AluOpcode::AddHiNoCarry | AluOpcode::AddHiCarry => {
                 let sum = (entry.in1 as u16) + (entry.in2 as u16) + (carry_in as u16);
 
                 let mut flags = Flags::from_bits_truncate(0);
+                if carry_in != 0 {
+                    flags.insert(Flags::CARRY_PENDING)
+                }
                 if sum > 0xFF {
                     flags.insert(Flags::CARRY);
                 }
@@ -378,11 +382,11 @@ mod tests {
             eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::Hash3 as u8),
         ]);
 
-        assert_eq!(1198411863, hash); // if you have to change this, also change the version
+        assert_eq!(3234633389, hash); // if you have to change this, also change the version
 
         let mut hasher = DefaultHasher::new();
         hasher.write(&ALU);
         let whole_hash = hasher.finish();
-        assert_eq!(1034588938491616518, whole_hash); // if you have to change this, but not the above then something is screwy
+        assert_eq!(2226516058768861115, whole_hash); // if you have to change this, but not the above then something is screwy
     }
 }

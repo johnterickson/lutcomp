@@ -6,13 +6,13 @@ v2.0 raw
 # 00001 Instruction { source: "Initialzing stack register to 0x000ffffc.", opcode: LoadImm32, args: [Register(0x0c), Constant32(0x000ffffc=1048572)], resolved: None }
 80 0c fc ff 0f 00 
 # 00007 Instruction { source: "PseudoCall(Label24(:main))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
-a3 0c fc ff ff ff 
+a4 0c fc ff ff ff 
 # 0000d Instruction { source: "PseudoCall(Label24(:main))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
 94 0c 17 00 00 00 
 # 00013 Instruction { source: "PseudoCall(Label24(:main))", opcode: JmpImm, args: [Label24(:main)], resolved: None }
 40 57 00 00 
 # 00017 Instruction { source: "PseudoCall(Label24(:main))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
-a3 0c 04 00 00 00 
+a4 0c 04 00 00 00 
 # 0001d Instruction { source: "Halting after return from entry function.", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
 ff 00 00 00 00 
 # :getchar
@@ -213,13 +213,13 @@ ff 00 00 00 10
 # Registers used by callee tree: {16, 17, 18}
 # Registers to save: []
 # 00096 Instruction { source: "PseudoCall(Label24(:getchar))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
-a3 0c fc ff ff ff 
+a4 0c fc ff ff ff 
 # 0009c Instruction { source: "PseudoCall(Label24(:getchar))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
 94 0c a6 00 00 00 
 # 000a2 Instruction { source: "PseudoCall(Label24(:getchar))", opcode: JmpImm, args: [Label24(:getchar)], resolved: None }
 40 22 00 00 
 # 000a6 Instruction { source: "PseudoCall(Label24(:getchar))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
-a3 0c 04 00 00 00 
+a4 0c 04 00 00 00 
 # 000ac Instruction { source: "Some(ch) <= call getchar()\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }\", \"Call(Call { function: \\\"getchar\\\", parameters: [] })\"] }", opcode: Copy8, args: [Register(0x00), Register(0x13)], resolved: None }
 16 00 13 
 # t10 <- ch U8

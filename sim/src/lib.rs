@@ -625,7 +625,7 @@ mod tests {
         }
         rom.push(Opcode::Halt as u8);
 
-        let mut c = Computer::from_raw_with_print(rom, true);
+        let mut c = Computer::from_raw_with_print(rom, false);
         for arg in args {
             *c.reg_u8_mut(arg.0) = arg.1;
         }
@@ -643,6 +643,8 @@ mod tests {
         let reg_c = 5;
 
         let args = [(reg_a,arg1_value),(reg_b, arg2_value), (reg_c, 0xFF)];
+
+        println!("{:?}, {}", &args, carry_in);
         let c = run(
             if carry_in {Flags::CARRY} else { Flags::empty() },
             op,
@@ -1115,7 +1117,7 @@ mod tests {
                     }
 
                     reg8(
-                        Opcode::Add8,
+                        Opcode::AddCarry8,
                         *carry_in, *a, *b,
                         (sum & 0xFF) as u8,
                         sum > 0xFF
@@ -1210,13 +1212,13 @@ mod tests {
     }
 
     #[test]
-    fn add32() {
+    fn addcarry32() {
         let mut rom = Vec::new();
-        rom.push(Opcode::Add32_1 as u8);
+        rom.push(Opcode::AddCarry32_1 as u8);
         rom.push(0x4);
         rom.push(0x8);
         rom.push(0xc);
-        rom.push(Opcode::Add32_2 as u8);
+        rom.push(Opcode::AddCarry32_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);
@@ -1246,64 +1248,31 @@ mod tests {
     }
 
     fn run_add32_tests(carry_in: bool, in1: u32, in2: u32) {
-        add32_tester(carry_in, in1, in2);
-        add32_tester(carry_in, in2, in1);
-        add32nocarryin_tester(carry_in, in1, in2, 0, 4, 8);
-        add32nocarryin_tester(carry_in, in2, in1, 0, 4, 8);
-        add32nocarryin_tester(carry_in, in1, in2, 0, 4, 0); //re-use reg1
-        add32nocarryin_tester(carry_in, in1, in2, 0, 4, 4); //re-use reg2
+        addcarry32_tester(carry_in, in1, in2, 0, 4, 8);
+        addcarry32_tester(carry_in, in2, in1, 0, 4, 8);
+        addcarry32_tester(carry_in, in1, in2, 0, 4, 0); //re-use reg1
+        addcarry32_tester(carry_in, in1, in2, 0, 4, 4); //re-use reg2
         addimm32nocarry_tester(carry_in, in1, in2);
         addimm32nocarry_tester(carry_in, in2, in1);
     }
 
-    fn add32_tester(carry_in: bool, in1: u32, in2: u32) {
+    fn addcarry32_tester(carry_in: bool, in1: u32, in2: u32, reg1: u8, reg2: u8, reg_sum: u8) {
         let sum = in1 as u64 + in2 as u64 + carry_in as u64;
         let carry_out = sum > u32::max_value() as u64;
         let sum = (sum & 0xFFFFFFFF) as u32;
 
         println!(
-            "add32_tester test case {:?} + {:08x} + {:08x} -> {:08x} + {:?}",
-            carry_in, in1, in2, sum, carry_out
-        );
-
-        let mut rom = Vec::new();
-        rom.push(Opcode::Add32_1 as u8);
-        rom.push(0);
-        rom.push(4);
-        rom.push(8);
-        rom.push(Opcode::Add32_2 as u8);
-        rom.push(Opcode::Halt as u8);
-
-        let mut c = Computer::from_raw(rom);
-
-        c.reg_u32_set(0, in1);
-        c.reg_u32_set(4, in2);
-
-        if carry_in {
-            c.flags |= Flags::CARRY;
-        } else {
-            c.flags.remove(Flags::CARRY);
-        }
-
-        while c.step() {}
-
-        assert_eq!(sum, c.reg_u32(8));
-        assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
-    }
-
-    fn add32nocarryin_tester(carry_in: bool, in1: u32, in2: u32, reg1: u8, reg2: u8, reg_sum: u8) {
-        let sum = in1.wrapping_add(in2);
-        println!(
-            "add32nocarryin_tester test case {:08x} + {:08x} -> {:08x}",
-            in1, in2, sum
+            "add32nocarryin_tester test case cin:{} + r{:02x}={:08x} + r{:02x}={:08x} -> r{:02x}={:08x}",
+            carry_in, reg1, in1, reg2, in2, reg_sum, sum
         );
 
         let mut rom = Vec::new();
 
-        rom.push(Opcode::Add32NoCarryIn as u8);
+        rom.push(Opcode::AddCarry32_1 as u8);
         rom.push(reg1);
         rom.push(reg2);
         rom.push(reg_sum);
+        rom.push(Opcode::AddCarry32_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);
@@ -1325,7 +1294,8 @@ mod tests {
         if reg2 != reg_sum {
             assert_eq!(in2, c.reg_u32(reg2));
         }
-        assert_eq!(sum, c.reg_u32(reg_sum));
+        assert_eq!(sum, c.reg_u32(reg_sum), "Expected:0x{:x} Actual:0x{:x}", sum, c.reg_u32(reg_sum));
+        assert_eq!(carry_out, c.flags.contains(Flags::CARRY));
     }
 
     fn addimm32nocarry_tester(carry_in: bool, in1: u32, in2: u32) {
@@ -1355,7 +1325,7 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(sum, c.reg_u32(0));
+        assert_eq!(sum, c.reg_u32(0), "Expected:0x{:x} Actual:0x{:x}", sum, c.reg_u32(0));
     }
 
     #[test]
@@ -1410,20 +1380,14 @@ mod tests {
     }
 
     #[test]
-    fn add32_coverage() {
+    fn addcarry32_coverage() {
+        addcarry32_tester(true, 0x01000000, 0xff, 0, 4, 8);
         run_add_cases(|carry_in, in1, in2| {
-            add32_tester(carry_in, in1, in2);
-            add32_tester(carry_in, in2, in1);
-        });
-    }
-
-    #[test]
-    fn add32nocarryin_coverage() {
-        run_add_cases(|carry_in, in1, in2| {
-            add32nocarryin_tester(carry_in, in1, in2, 0, 4, 8);
-            add32nocarryin_tester(carry_in, in2, in1, 0, 4, 8);
-            add32nocarryin_tester(carry_in, in1, in2, 0, 4, 0); //re-use reg1
-            add32nocarryin_tester(carry_in, in1, in2, 0, 4, 4); //re-use reg2
+            addcarry32_tester(carry_in, in1, in2, 0, 4, 8);
+            addcarry32_tester(carry_in, in2, in1, 0, 4, 8);
+            addcarry32_tester(carry_in, in1, in2, 0, 4, 0); //re-use reg1
+            addcarry32_tester(carry_in, in1, in2, 0, 4, 4); //re-use reg2
+            // addcarry32_tester(carry_in, in1, in2, 4, 4, 4); //re-use both
         });
     }
 
