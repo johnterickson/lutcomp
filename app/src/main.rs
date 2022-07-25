@@ -156,7 +156,7 @@ fn main() {
 
                         if let Some(sym) = rom.symbols.get(h.0) {
                             for line in &sym.notes {
-                                println!(" {}", line);
+                                println!("\t{}", &line[..[100, line.len()].iter().min().copied().unwrap()]);
                             }
                         }
                     }

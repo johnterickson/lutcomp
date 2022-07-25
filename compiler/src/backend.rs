@@ -364,24 +364,28 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 IlInstruction::AssignUnary { dest:_, op:_, src:_ } => todo!(),
                 IlInstruction::AssignBinary { dest, op, src1, src2 } => {
                     let src1_regs = ctxt.find_registers(src1);
-                    let byte_count = ctxt.byte_count(src1);
-                    let size = byte_count.try_into().unwrap();
-
-                    assert_eq!(src1_regs.len(), byte_count as usize);
-
-                    let dest_size = ctxt.byte_count(dest);
-                    assert_eq!(dest_size, byte_count);
-                    let dest_regs = ctxt.find_registers(dest);
-                    assert_eq!(dest_regs.len(), dest_size as usize);
+                    let src1_size = ctxt.byte_count(src1);
+                    let src1_type = src1_size.try_into().unwrap();
+                    assert_eq!(src1_regs.len(), src1_size as usize);
 
                     let src2_regs = ctxt.find_registers(src2);
                     let src2_size = src2_regs.len() as u32;
+                    assert_eq!(src1_size, src2_size);
 
-                    assert_eq!(dest_size, src2_size);
+                    let dest_size = ctxt.byte_count(dest);
+                    let dest_regs = ctxt.find_registers(dest);
+                    assert_eq!(dest_regs.len(), dest_size as usize);
+
+                    let result_sizes = match op {
+                        IlBinaryOp::Multiply => [1, 4],
+                        _ => [src2_size, src2_size],
+                    };
+
+                    assert!(result_sizes.contains(&dest_size));
 
                     match op {
                         IlBinaryOp::ShiftLeft | IlBinaryOp::ShiftRight | IlBinaryOp::RotateLeft | IlBinaryOp::RotateRight => {
-                            match size {
+                            match src1_type {
                                 IlType::U8 => {
                                     let mode = match op {
                                         IlBinaryOp::RotateLeft | &IlBinaryOp::RotateRight => ShiftMode::Rotate,
@@ -411,7 +415,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         },
                         IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr | IlBinaryOp::Divide=> {
 
-                            if (&IlBinaryOp::Add, IlType::U32) == (op, size) {
+                            if (&IlBinaryOp::Add, IlType::U32) == (op, src1_type) {
                                 ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                     opcode: Opcode::ClearCarry, args: vec![], resolved: None, source: source.clone(),
                                 }));
@@ -429,7 +433,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
                             } else {
 
-                                let opcode1 = match (op, size) {
+                                let opcode1 = match (op, src1_type) {
                                     (IlBinaryOp::Add, IlType::U8) => Opcode::Add8NoCarryIn,
                                     (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::And8,
                                     (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::And32,
@@ -449,7 +453,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         },
                         IlBinaryOp::Subtract => {
                             let temp_regs: Vec<_> = (0u8..(src2_size.try_into().unwrap())).collect();
-                            match size {
+                            match src1_type {
                                 IlType::U8 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                         opcode: Opcode::Copy8,
@@ -520,49 +524,34 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             }
                         },
                         IlBinaryOp::Multiply => {
-                            match size {
-                                IlType::U8 => {
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_1,
-                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_2,
-                                        args: vec![],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
+                            let (product_regs, product_size) = match dest_size {
+                                1 => ((0u8..1).collect(), IlType::U8),
+                                4 => ((0u8..4).collect(), IlType::U32),
+                                _ => panic!(),
+                            };
 
-                                    let product_regs = vec![0u8];
-                                    let product_size = IlType::U8;
-                                    ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
-                                },
-                                IlType::U32 => {
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::LoadImm32,
-                                        args: vec![Value::Register(0), Value::Constant32(0)],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_1,
-                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_2,
-                                        args: vec![],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
-                                    let product_regs = (0u8..4u8).collect();
-                                    let product_size = IlType::U32;
-                                    ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
-                                },
+                            if product_size == IlType::U32 {
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    opcode: Opcode::LoadImm32,
+                                    args: vec![Value::Register(0), Value::Constant32(0)],
+                                    resolved: None,
+                                    source: source.clone()
+                                }));
                             }
+
+                            ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                opcode: Opcode::Mul8_1,
+                                args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
+                                resolved: None,
+                                source: source.clone()
+                            }));
+                            ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                opcode: Opcode::Mul8_2,
+                                args: vec![],
+                                resolved: None,
+                                source: source.clone()
+                            }));
+                            ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
                         },
                     }
                 },

@@ -138,13 +138,15 @@ impl Expression {
                     None
                 }
             }
-            Expression::Arithmetic(_, left, right) => {
+            Expression::Arithmetic(op, left, right) => {
                 let left = left.try_emit_type(ctxt, f);
                 let right = right.try_emit_type(ctxt, f);
                 if let (Some(left), Some(right)) = (left, right) {
-                    match (left.byte_count(ctxt),right.byte_count(ctxt)) {
-                        (1,1) => Some(Type::Number(NumberType::U8)),
-                        (1,4) | (4,1) | (4,4) => Some(Type::Number(NumberType::USIZE)),
+                    match (op, left.byte_count(ctxt),right.byte_count(ctxt)) {
+                        (ArithmeticOperator::Multiply, 4, 4) => Some(Type::Number(NumberType::USIZE)),
+                        (ArithmeticOperator::Multiply, _, _) => None,
+                        (_, 1,1) => Some(Type::Number(NumberType::U8)),
+                        (_, 1,4) | (_, 4,1) | (_, 4,4) => Some(Type::Number(NumberType::USIZE)),
                         _ => None,
                     }
                 } else {

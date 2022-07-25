@@ -78,23 +78,7 @@ impl IlFunction {
             let mut inc_pc = true;
 
             let s = &self.body[s_index];
-            // println!("{} {:?};", self.id.0, s);
-            // {
-            //     let usages = s.var_usages();
-            //     if usages.dest.is_some() || usages.srcs.len() > 0 {
-            //         print!(" ");
-            //         if let Some(dest) = usages.dest {
-            //             print!("{}[{:?}] <- ", dest.0, vars.get(&dest));
-            //         }
-
-            //         for src in usages.srcs {
-            //             print!(" {}[{:?}]", src.0, vars.get(&src));
-            //         }
-
-            //         println!();
-            //     }
-            // }
-            // println!("{} {:?}; [{:?}]", self.id.0, s, vars);
+            println!("{} {:?}; [{:?}]", self.id.0, s, vars);
 
             match &s.0 {
                 IlInstruction::Unreachable => panic!(),
@@ -170,8 +154,15 @@ impl IlFunction {
                         .expect(&format!("Could not find {:?}.", &src1));
                     let src2 = *vars.get(src2)
                         .expect(&format!("Could not find {:?}.", &src2));
-                    let result = match (src1, src2) {
-                        (IlNumber::U8(n1), IlNumber::U8(n2)) => {
+                    let dest_info =  self.vars.get(dest)
+                        .expect(&format!("Could not find {:?}.", &dest));
+                    let dest_size = dest_info.var_type.get_number_type()
+                        .expect(&format!("Not a number {:?}.", &dest_info));
+
+                    let result = match (op, src1, src2, dest_size) {
+                        (IlBinaryOp::Multiply, IlNumber::U8(n1), IlNumber::U8(n2), NumberType::USIZE) =>
+                            IlNumber::U32((n1 as u32).checked_mul(n2 as u32).unwrap()),
+                        (_, IlNumber::U8(n1), IlNumber::U8(n2), _) => {
                             IlNumber::U8(match op {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
@@ -188,7 +179,7 @@ impl IlFunction {
                                 IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
                             })
                         }
-                        (IlNumber::U32(n1), IlNumber::U32(n2)) => {
+                        (_, IlNumber::U32(n1), IlNumber::U32(n2), _) => {
                             IlNumber::U32(match op {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
@@ -299,7 +290,10 @@ impl IlFunction {
                     }
                 },
                 IlInstruction::Return { val } => {
-                    return val.as_ref().map(|v| vars[v]);
+                    dbg!(&val);
+                    let ret = val.as_ref().map(|v| vars[v]);
+                    dbg!(&ret);
+                    return ret;
                 },
                 IlInstruction::TtyIn { dest } => {
                     {
@@ -400,7 +394,7 @@ mod tests {
     fn mul8() {
         test_var_inputs(
             "mul8",
-            include_str!("../../programs/mul.j"),
+            include_str!("../../programs/mul8.j"),
             &[
                 (vec![0u8.into(), 0u8.into()],0u8.into()),
                 (vec![128u8.into(), 0u8.into()],0u8.into()),
@@ -415,14 +409,14 @@ mod tests {
     fn mul8_16() {
         test_var_inputs(
             "mul8_16",
-            include_str!("../../programs/mul.j"),
+            include_str!("../../programs/mul8.j"),
             &[
-                (vec![16u8.into(), 16u8.into()],256u32.into()),
-                (vec![0u8.into(), 0u8.into()],0u32.into()),
-                (vec![128u8.into(), 0u8.into()],0u32.into()),
-                (vec![0u8.into(), 128u8.into()],0u32.into()),
-                (vec![8u8.into(), 8u8.into()],64u32.into()),
-                (vec![51u8.into(), 5u8.into()],255u32.into()),
+                (vec![16u8.into(), 16u8.into()], 256u32.into()),
+                (vec![0u8.into(), 0u8.into()], 0u32.into()),
+                (vec![128u8.into(), 0u8.into()], 0u32.into()),
+                (vec![0u8.into(), 128u8.into()], 0u32.into()),
+                (vec![8u8.into(), 8u8.into()], 64u32.into()),
+                (vec![51u8.into(), 5u8.into()], 255u32.into()),
             ]);
     }
 
@@ -1439,6 +1433,7 @@ mod tests {
         let mut sim = il.create_sim(&args);
         sim.mem.append(&mut mem);
         let il_result = sim.run();
+        assert_eq!(il_result.il_type(), out_type);
 
         // run in HW simulator
         let hw_sim_args: Vec<_> = args.iter().map(|a| match a {
@@ -1474,6 +1469,8 @@ mod tests {
 
             let (tc, actual) = run_var_input(&ctxt, &il, &rom, ins, expected_type);
 
+            println!("{:?} {:?} {:?}", &case, &expected_type, &actual);
+
             match expected {
                 TestVar::Ascii(expected) => {
                     let actual = tc.comp.mem_slice(actual.as_u32(), expected.len().try_into().unwrap());
@@ -1503,7 +1500,7 @@ mod tests {
                         IlNumber::U32(actual) => {
                             assert_eq!(*expected, actual, "{:?}", &(ins, expected));
                         },
-                        IlNumber::U8(_) => panic!(),
+                        IlNumber::U8(_) => panic!("expected: Usize({}), but found {:?}", expected, actual),
                     }
                 },
             };
