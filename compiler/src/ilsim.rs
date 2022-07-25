@@ -305,7 +305,7 @@ impl IlFunction {
                     {
                         let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
                         if let Ok(line) = stdin_channel.try_recv() {
-                            for c in line.unwrap().chars() {
+                            for c in line.chars() {
                                 ctxt.tty_in.push_back(c as u8);
                             }
                         }

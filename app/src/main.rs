@@ -116,22 +116,19 @@ fn main() {
             }
             let rom = assemble::assemble(assembly);
 
-            let profile = if let Some("true") = get_param("profile") {
-                true
-            } else {
-                false
-            };
-
             if let Some("true") = get_param("sim") {
                 if sim_args.len() != 0 {
                     todo!();
                 }
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
-                if profile {
+                if let Some("true") = get_param("profile") {
                     c.pc_hit_count = Some(BTreeMap::new());
                 }
                 if let Some(n) = get_param("stack_dump_rate") {
                     c.stack_dump_rate = u64::from_str_radix(n, 10).unwrap();
+                }
+                if let Some("true") = get_param("block_for_stdin") {
+                    c.block_for_stdin = true;
                 }
                 c.stdin_out = true;
 
@@ -147,9 +144,16 @@ fn main() {
                 if let Some(pc_hit_count) = c.pc_hit_count {
                     let mut hits : Vec<_> = pc_hit_count.iter().collect();
                     hits.sort_by(|a,b| a.1.cmp(b.1).reverse().then_with(|| a.0.cmp(b.0)));
-                    hits.truncate(20);
+                    hits.truncate(10);
                     for h in &hits {
-                        println!("pc:{:08x} hits:{}", h.0, h.1);
+                        print!("hits:{}", h.1);
+
+                        if let Some(f) = rom.find_containing_function(*h.0) {
+                            println!(" pc:{:06x}={}+0x{:x}", h.0, f.2, *h.0 - f.0);
+                        } else {
+                            println!(" pc:{:06x}=??", h.0);
+                        }
+
                         if let Some(sym) = rom.symbols.get(h.0) {
                             for line in &sym.notes {
                                 println!(" {}", line);
