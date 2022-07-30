@@ -33,7 +33,12 @@ struct FunctionContext<'a,'b> {
 fn are_regs_aligned_and_contiguous(regs: &[u8]) -> bool {
     let len: u8 = regs.len().try_into().unwrap();
     let aligned = (regs[0] % len) == 0;
-    let contiguous = regs.windows(2).all(|pair| pair[0] + 1 == pair[1]);
+    let contiguous = regs.windows(2).all(|pair| 
+        if let Some(p0) = pair[0].checked_add(1) {
+            p0 == pair[1]
+        } else {
+            false
+        });
     aligned && contiguous
 }
 
@@ -59,11 +64,8 @@ impl<'a> BackendProgram<'a> {
             let liveness = IlLiveness::calculate(f);
 
             for (name, var_info) in &f.vars {
-                if let Some(regs_needed) = match var_info.location {
-                    IlLocation::U8 => Some(1),
-                    IlLocation::U32 => Some(4),
-                    _ => None,
-                } {
+                if let IlLocation::Reg(il_type) = var_info.location {
+                    let regs_needed = il_type.byte_count().try_into().unwrap();
                     let regs = self.alloc_registers(name, &liveness, &mut info, regs_needed, regs_needed)
                         .expect(&format!("Could not allocate a register for {:#?}", &f.body));
                     for r in &regs {
@@ -213,24 +215,42 @@ impl<'a,'b> FunctionContext<'a,'b> {
 
     fn emit_num_to_reg(&mut self, dest_regs: &Vec<u8>, n: &IlNumber, expected_size: &IlType, source: String) {
         assert_eq!(&n.il_type(), expected_size);
-        self.lines.push(AssemblyInputLine::Instruction(match n {
+        match n {
             IlNumber::U8(n) => {
-                Instruction {
-                    opcode: Opcode::LoadImm8,
-                    args: vec![Value::Register(dest_regs[0]), Value::Constant8(*n)],
-                    resolved: None,
-                    source,
-                }
-            },
+                self.lines.push(AssemblyInputLine::Instruction(
+                    Instruction {
+                        opcode: Opcode::LoadImm8,
+                        args: vec![Value::Register(dest_regs[0]), Value::Constant8(*n)],
+                        resolved: None,
+                        source,
+                    }));
+            }
+            IlNumber::U16(n) => {
+                self.lines.push(AssemblyInputLine::Instruction(
+                    Instruction {
+                        opcode: Opcode::LoadImm8,
+                        args: vec![Value::Register(dest_regs[0]), Value::Constant8((*n % 256) as u8)],
+                        resolved: None,
+                        source: source.clone(),
+                    }));
+                self.lines.push(AssemblyInputLine::Instruction(
+                    Instruction {
+                        opcode: Opcode::LoadImm8,
+                        args: vec![Value::Register(dest_regs[0]), Value::Constant8((*n / 256) as u8)],
+                        resolved: None,
+                        source,
+                    }));
+            }
             IlNumber::U32(n) => {
-                Instruction {
-                    opcode: Opcode::LoadImm32,
-                    args: vec![Value::Register(dest_regs[0]), Value::Constant32(*n)],
-                    resolved: None,
-                    source,
-                }
-            },
-        }));
+                self.lines.push(AssemblyInputLine::Instruction(
+                    Instruction {
+                        opcode: Opcode::LoadImm32,
+                        args: vec![Value::Register(dest_regs[0]), Value::Constant32(*n)],
+                        resolved: None,
+                        source,
+                    }));
+            }
+        }
     }
 }
 
@@ -406,7 +426,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source
                                     }));
                                 },
-                                IlType::U32 => todo!(),
+                                IlType::U16 | IlType::U32 => todo!(),
                             }
                         },
                         IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr | IlBinaryOp::Divide=> {
@@ -472,6 +492,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source
                                     }));
                                 }
+                                IlType::U16 => todo!(),
                                 IlType::U32 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                         opcode: Opcode::Copy32,
@@ -529,6 +550,14 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source: source.clone()
                                     }));
                                 },
+                                IlType::U16 => {
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::Mul8_16,
+                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                }
                                 IlType::U32 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                         opcode: Opcode::Mul8_16,
@@ -563,6 +592,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
                     let op = match size {
                         IlType::U8 => Opcode::Load8,
+                        IlType::U16 => todo!(),
                         IlType::U32 => Opcode::Load32,
                     };
 
@@ -590,6 +620,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 source: source.clone(),
                             }));
                         },
+                        IlType::U16 => todo!(),
                         IlType::U32 => {
                             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                 opcode: Opcode::Store32_1,

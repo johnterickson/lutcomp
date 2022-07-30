@@ -134,11 +134,11 @@ impl IlFunction {
         let id = IlVarId(format!("t{}", self.next_temp_num));
         let t = e.try_emit_type(ctxt.program, Some(ctxt.func_def))
             .expect(&format!("Could not determine type for '{:?}'.", e));
-        let location = match t.byte_count(ctxt.program) {
-            0 | 1 => IlLocation::U8,
-            4 => IlLocation::U32,
-            _ => panic!(),
+        let il_type: IlType = match t.byte_count(ctxt.program) {
+            0 => IlType::U8,
+            n => n.try_into().unwrap()
         };
+        let location = IlLocation::Reg(il_type);
         let var_type = e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap();
         let info = IlVarInfo {
             description: format!("{} {:?}", &id.0, e),
@@ -181,7 +181,7 @@ impl IlFunction {
         let var_type = Type::Ptr(Box::new(info.var_type.clone()));
         let addr_var = self.alloc_tmp(IlVarInfo {
             description: format!("static {:?}", &name),
-            location: IlLocation::U32,
+            location: IlLocation::Reg(IlType::U32),
             byte_size: var_type.byte_count(ctxt.program),
             var_type
         });
@@ -197,7 +197,7 @@ impl IlFunction {
             Expression::Ident(n) => {
                 let info = ctxt.find_arg_or_var(&self, n);
                 match info.location {
-                    IlLocation::U8 | IlLocation::U32 => 
+                    IlLocation::Reg(_) => 
                         panic!("Cannot emit address of '{}' because it is in a register.", n)
                     ,
                     IlLocation::FrameOffset(offset) => {
@@ -254,7 +254,7 @@ impl IlFunction {
 
                 let base_addr_num_expression = match info.location {
                     IlLocation::Static(addr) => Expression::Number(NumberType::USIZE, addr),
-                    IlLocation::U32 | IlLocation::U8 => {
+                    IlLocation::Reg(_) => {
                         Expression::Cast {
                             old_type: Some(ptr_type.clone()),
                             new_type: Type::Number(NumberType::USIZE),
@@ -304,7 +304,7 @@ impl IlFunction {
 
                 let base_expression = match info.location {
                     IlLocation::Static(addr) => Expression::Number(NumberType::USIZE, addr),
-                    IlLocation::U8 | IlLocation::U32 => todo!(),
+                    IlLocation::Reg(_) => todo!(),
                     IlLocation::FrameOffset(offset) => {
                         let frame = Expression::frame_pointer();
                         if offset == 0 {
@@ -357,7 +357,7 @@ impl IlFunction {
                     IlLocation::Static(_) => {
                         todo!()
                     }
-                    IlLocation::U8 | IlLocation::U32 => {
+                    IlLocation::Reg(_) => {
                         Expression::Cast {
                             old_type: Some(ptr_type.clone()),
                             new_type: Type::Number(NumberType::USIZE),
@@ -397,7 +397,7 @@ impl IlFunction {
             Expression::Ident(n) => {
                 let info= ctxt.find_arg_or_var(&self, n);
                 match info.location {
-                    IlLocation::U8 | IlLocation::U32 => {
+                    IlLocation::Reg(_) => {
                         TargetLocation {
                             target: IlVarId(n.clone()),
                             target_subrange: None,
@@ -440,10 +440,10 @@ impl IlFunction {
                 let info = ctxt.find_arg_or_var(&self, n);
 
                 match (info.location, info.var_type) {
-                    (IlLocation::U32, Type::Number(NumberType::USIZE)) => {
+                    (IlLocation::Reg(IlType::U32), Type::Number(NumberType::USIZE)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
-                            (IlLocation::U32, Some(index)) => {
+                            (IlLocation::Reg(IlType::U32), Some(index)) => {
                                 TargetLocation {
                                     target: IlVarId(n.clone()),
                                     target_subrange: Some(index..(index+1)),
@@ -609,7 +609,7 @@ impl IlFunction {
                     let stack_size = self.alloc_tmp(IlVarInfo {
                         byte_size: 4,
                         description: "Stack size".to_owned(),
-                        location: IlLocation::U32,
+                        location: IlLocation::Reg(IlType::U32),
                         var_type: Type::Number(NumberType::USIZE),
                     });
                     self.add_inst(ctxt, IlInstruction::AssignNumber {
@@ -641,7 +641,7 @@ impl IlFunction {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);
                 match info.location {
-                    IlLocation::U8 | IlLocation::U32 => {
+                    IlLocation::Reg(_) => {
                         let src = IlVarId(name.clone());
                         let size = info.location.try_into().unwrap();
                         self.add_inst(ctxt, IlInstruction::AssignVar{dest, src, size, src_range: None, dest_range: None});
@@ -736,10 +736,10 @@ impl IlFunction {
             Expression::Index(n, index) => {
                 let info = ctxt.find_arg_or_var(&self, n);
                 match (info.location, info.var_type) {
-                    (IlLocation::U32, Type::Number(NumberType::USIZE)) => {
+                    (IlLocation::Reg(IlType::U32), Type::Number(NumberType::USIZE)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
-                            (IlLocation::U32, Some(index)) => {
+                            (IlLocation::Reg(IlType::U32), Some(index)) => {
                                 self.add_inst(ctxt, IlInstruction::AssignVar {
                                     dest,
                                     dest_range: None,
@@ -891,7 +891,7 @@ impl IlFunction {
                 IlVarId::frame_pointer_str().to_owned(),
                 IlVarInfo {
                     description: IlVarId::frame_pointer_str().to_owned(),
-                    location: IlLocation::U32,
+                    location: IlLocation::Reg(IlType::U32),
                     var_type: Type::Number(NumberType::USIZE),
                     byte_size: 4,
                 });
@@ -899,7 +899,7 @@ impl IlFunction {
             let stack_size = func.alloc_tmp(IlVarInfo {
                 byte_size: 4,
                 description: "Stack size negated".to_owned(),
-                location: IlLocation::U32,
+                location: IlLocation::Reg(IlType::U32),
                 var_type: Type::Number(NumberType::USIZE),
             });
             func.add_inst(ctxt, IlInstruction::AssignNumber {
@@ -1134,6 +1134,7 @@ impl From<ComparisonOperator> for IlCmpOp {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IlType {
     U8,
+    U16,
     U32,
 }
 
@@ -1143,6 +1144,7 @@ impl TryFrom<u32> for IlType {
     fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
             1 => Ok(IlType::U8),
+            2 => Ok(IlType::U16),
             4 => Ok(IlType::U32),
             _ => Err(())
         }
@@ -1154,8 +1156,7 @@ impl TryFrom<IlLocation> for IlType {
 
     fn try_from(value: IlLocation) -> Result<Self, Self::Error> {
         match value {
-            IlLocation::U8 => Ok(IlType::U8),
-            IlLocation::U32 =>Ok(IlType::U32),
+            IlLocation::Reg(il_type) => Ok(il_type),
             _ => Err(())
         }
     }
@@ -1172,10 +1173,7 @@ impl From<&NumberType> for IlType {
 
 impl ByteSize for IlType {
     fn byte_count(&self, _ctxt: &ProgramContext) -> u32 {
-        match self {
-            IlType::U8 => 1,
-            IlType::U32 => 4,
-        }
+        self.byte_count()
     }
 }
 
@@ -1183,6 +1181,7 @@ impl IlType {
     pub fn byte_count(&self) -> u32 {
         match self {
             IlType::U8 => 1,
+            IlType::U16 => 2,
             IlType::U32 => 4,
         }
     }
@@ -1190,8 +1189,7 @@ impl IlType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IlLocation {
-    U8,
-    U32,
+    Reg(IlType),
     FrameOffset(u32),
     Static(u32),
 }
@@ -1200,11 +1198,8 @@ impl TryFrom<u32> for IlLocation {
     type Error = ();
 
     fn try_from(value: u32) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(IlLocation::U8),
-            2..=4 => Ok(IlLocation::U32),
-            _ => Err(()),
-        }
+        value.try_into()
+            .map(|il_type| IlLocation::Reg(il_type))
     }
 }
 
@@ -1332,6 +1327,7 @@ impl Debug for IlInstruction {
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub enum IlNumber {
     U8(u8),
+    U16(u16),
     U32(u32),
 }
 
@@ -1339,6 +1335,7 @@ impl IlNumber {
     pub fn il_type(&self) -> IlType {
         match self {
             IlNumber::U8(_) => IlType::U8,
+            IlNumber::U16(_) => IlType::U16,
             IlNumber::U32(_) => IlType::U32,
         }
     }
@@ -1346,6 +1343,7 @@ impl IlNumber {
     pub fn as_bytes(&self) -> Vec<u8> {
         match self {
             IlNumber::U8(n) => vec![*n],
+            IlNumber::U16(n) => n.to_le_bytes().iter().cloned().collect(),
             IlNumber::U32(n) => n.to_le_bytes().iter().cloned().collect(),
         }
     }
@@ -1353,6 +1351,7 @@ impl IlNumber {
     pub fn as_u32(&self) -> u32 {
         match self {
             IlNumber::U8(n) => (*n).into(),
+            IlNumber::U16(n) => (*n).into(),
             IlNumber::U32(n) => *n,
         }
     }
@@ -1362,6 +1361,7 @@ impl Debug for IlNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::U8(arg0) => write!(f, "0n{}/0x{:02x}u8", arg0, arg0),
+            Self::U16(arg0) => write!(f, "0n{}/0x{:04x}u16", arg0, arg0),
             Self::U32(arg0) => if *arg0 >= 0x80000000 {
                 write!(f, "0x{:08x}u32", arg0)
             } else {
@@ -1374,6 +1374,12 @@ impl Debug for IlNumber {
 impl From<u8> for IlNumber {
     fn from(x: u8) -> Self {
         IlNumber::U8(x)
+    }
+}
+
+impl From<u16> for IlNumber {
+    fn from(x: u16) -> Self {
+        IlNumber::U16(x)
     }
 }
 
@@ -1643,7 +1649,7 @@ mod tests {
                 IlVarInfo {
                     byte_size: 1,
                     description: v.0.to_owned(),
-                    location: IlLocation::U8,
+                    location: IlLocation::Reg(IlType::U8),
                     var_type: Type::Number(NumberType::U8)
                 }
             );

@@ -96,6 +96,8 @@ impl IlFunction {
             // }
             // println!("{} {:?}; [{:?}]", self.id.0, s, vars);
 
+            dbg!(&s.0);
+
             match &s.0 {
                 IlInstruction::Unreachable => panic!(),
                 IlInstruction::Comment(_) | IlInstruction::Label(_) => {},
@@ -109,7 +111,7 @@ impl IlFunction {
                                 let b= n.to_le_bytes()[src_range.start as usize];
                                 IlNumber::U8(b.into())
                             }
-                            IlNumber::U8(_) => panic!(),
+                            IlNumber::U8(_) | IlNumber::U16(_) => panic!(),
                         }
                     } else {
                         value
@@ -156,6 +158,12 @@ impl IlFunction {
                                 IlUnaryOp::BinaryInvert => !n,
                             })
                         }
+                        IlNumber::U16(n) => {
+                            IlNumber::U16(match op {
+                                IlUnaryOp::Negate => n.wrapping_neg(),
+                                IlUnaryOp::BinaryInvert => !n,
+                            })
+                        }
                         IlNumber::U8(n) => {
                             IlNumber::U8(match op {
                                 IlUnaryOp::Negate => n.wrapping_neg(),
@@ -192,7 +200,11 @@ impl IlFunction {
                             IlNumber::U32(match op {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
                                 IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF,
+                                IlBinaryOp::Multiply => {
+                                    // assert!(n1 <= 0xFF);
+                                    // assert!(n2 <= 0xFF);
+                                    (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF
+                                },
                                 IlBinaryOp::BitwiseAnd => n1 & n2,
                                 IlBinaryOp::BitwiseOr => n1 | n2,
                                 IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2),
@@ -213,6 +225,14 @@ impl IlFunction {
                         match size {
                             IlType::U8 => {
                                 vars.insert(dest, IlNumber::U8(ctxt.mem[&addr]));
+                            }
+                            IlType::U16 => {
+                                assert_eq!(0, addr % 2);
+                                let r = u16::from_le_bytes([
+                                    ctxt.mem[&(addr+0)],
+                                    ctxt.mem[&(addr+1)],
+                                ]);
+                                vars.insert(dest, IlNumber::U16(r));
                             }
                             IlType::U32 => {
                                 assert_eq!(0, addr % 4);
@@ -237,6 +257,15 @@ impl IlFunction {
                             IlNumber::U8(n) => {
                                 assert_eq!(size, &IlType::U8);
                                 ctxt.mem.insert(addr, n);
+                            },
+                            IlNumber::U16(n) => {
+                                assert_eq!(0, addr % 2);
+                                assert_eq!(size, &IlType::U16);
+                                let bytes = n.to_le_bytes();
+                                for (i, b) in bytes.iter().enumerate() {
+                                    let i = i as u32;
+                                    ctxt.mem.insert(addr + i, *b);
+                                }
                             },
                             IlNumber::U32(n) => {
                                 assert_eq!(0, addr % 4);
@@ -569,7 +598,7 @@ mod tests {
         test_var_inputs(
             "main",
             include_str!("../../programs/idfn.j"),
-            &[(vec![],TestVar::U8(7u8))]);
+            &[(vec![],TestVar::Num(IlNumber::U8(7u8)))]);
     }
 
     #[test]
@@ -1007,6 +1036,7 @@ mod tests {
 
     #[test]
     fn array_to_ptr() {
+        // unsafe { backtrace_on_stack_overflow::enable() };
         test_inputs(
             "main",
             include_str!("../../programs/array_to_ptr.j"),
@@ -1041,9 +1071,9 @@ mod tests {
             "strlen",
             include_str!("../../programs/strlen.j"),
             &[
-                (vec![TestVar::Ascii(b"\0")], TestVar::Usize(0)),
-                (vec![TestVar::Ascii(b"hello\0")], TestVar::Usize(5)),
-                (vec![TestVar::Ptr(long)], TestVar::Usize(expected)),
+                (vec![TestVar::Ascii(b"\0")], TestVar::Num(IlNumber::U32(0))),
+                (vec![TestVar::Ascii(b"hello\0")], TestVar::Num(IlNumber::U32(5))),
+                (vec![TestVar::Ptr(long)], TestVar::Num(IlNumber::U32(expected))),
             ]
         );
     }
@@ -1062,16 +1092,16 @@ mod tests {
             "strncmp",
             include_str!("../../programs/strncmp.j"),
             &[
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(0)], TestVar::U8(0)),
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(1)], TestVar::U8(0)),
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Usize(2)], TestVar::U8(0)),
-                (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Usize(1)], TestVar::U8(0)),
-                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(1)], TestVar::U8(0)),
-                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Usize(2)], TestVar::U8(255)),
-                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(2)], TestVar::U8(1)),
-                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Usize(1000)], TestVar::U8(1)),
-                (vec![TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Usize(same_len)], TestVar::U8(0)),
-                (vec![TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Usize(same_len+1)], TestVar::U8(255)),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(0))], TestVar::Num(IlNumber::U8(0))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(1))], TestVar::Num(IlNumber::U8(0))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(2))], TestVar::Num(IlNumber::U8(0))),
+                (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Num(IlNumber::U32(1))], TestVar::Num(IlNumber::U8(0))),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Num(IlNumber::U32(1))], TestVar::Num(IlNumber::U8(0))),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Num(IlNumber::U32(2))], TestVar::Num(IlNumber::U8(255))),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Num(IlNumber::U32(2))], TestVar::Num(IlNumber::U8(1))),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Num(IlNumber::U32(1000))], TestVar::Num(IlNumber::U8(1))),
+                (vec![TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Num(IlNumber::U32(same_len))], TestVar::Num(IlNumber::U8(0))),
+                (vec![TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Num(IlNumber::U32(same_len+1))], TestVar::Num(IlNumber::U8(255))),
             ]
         );
     }
@@ -1082,13 +1112,13 @@ mod tests {
             "strstr",
             include_str!("../../programs/strstr.j"),
             &[
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], TestVar::Usize(0)),
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], TestVar::Num(IlNumber::U32(0))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], TestVar::Num(IlNumber::U32(0))),
                 (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"\0")], TestComputer::arg_base_addr_var(0)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"h\0")], TestComputer::arg_base_addr_var(0)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"he\0")], TestComputer::arg_base_addr_var(0)),
-                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"Z\0")], TestVar::Usize(0)),
-                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"hi\0")], TestVar::Usize(0)),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"Z\0")], TestVar::Num(IlNumber::U32(0))),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"hi\0")], TestVar::Num(IlNumber::U32(0))),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"el\0")], TestComputer::arg_base_addr_var(1)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"ll\0")], TestComputer::arg_base_addr_var(2)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"lo\0")], TestComputer::arg_base_addr_var(3)),
@@ -1100,20 +1130,20 @@ mod tests {
     fn parse_hex_nibble() {
         let mut cases = Vec::new();
         for (i, c) in ('0'..='9').enumerate() {
-            cases.push((vec![TestVar::U8(c as u8)], TestVar::U8(i.try_into().unwrap())));
+            cases.push((vec![TestVar::Num(IlNumber::U8(c as u8))], TestVar::Num(IlNumber::U8(i.try_into().unwrap()))));
         }
         for (i, c) in ('a'..='f').enumerate() {
             let i: u8 = i.try_into().unwrap();
-            cases.push((vec![TestVar::U8(c as u8)], TestVar::U8(10+i)));
-            cases.push((vec![TestVar::U8(char::to_ascii_uppercase(&c) as u8)], TestVar::U8(10+i)));
+            cases.push((vec![TestVar::Num(IlNumber::U8(c as u8))], TestVar::Num(IlNumber::U8(10+i))));
+            cases.push((vec![TestVar::Num(IlNumber::U8(char::to_ascii_uppercase(&c) as u8))], TestVar::Num(IlNumber::U8(10+i))));
         }
 
         test_var_inputs(
             "parseHexNibble",
             include_str!("../../programs/print_hex.j"),
             &[
-                (vec![TestVar::U8('9' as u8)], TestVar::U8(0x9)),
-                (vec![TestVar::U8('a' as u8)], TestVar::U8(0xA)),
+                (vec![TestVar::Num(IlNumber::U8('9' as u8))], TestVar::Num(IlNumber::U8(0x9))),
+                (vec![TestVar::Num(IlNumber::U8('a' as u8))], TestVar::Num(IlNumber::U8(0xA))),
             ]
         );
     }
@@ -1122,8 +1152,8 @@ mod tests {
     fn parse_hex() {
         let mut cases = Vec::new();
         for i in 0..=0xFFu8 {
-            cases.push((vec![TestVar::String(format!("{:02x}", i))], TestVar::U8(i)));
-            cases.push((vec![TestVar::String(format!("{:02X}", i))], TestVar::U8(i)));
+            cases.push((vec![TestVar::String(format!("{:02x}", i))], TestVar::Num(IlNumber::U8(i))));
+            cases.push((vec![TestVar::String(format!("{:02X}", i))], TestVar::Num(IlNumber::U8(i))));
         }
         test_var_inputs(
             "parseHex",
@@ -1277,7 +1307,7 @@ mod tests {
         }
 
         pub fn arg_base_addr_var(offset: u32) -> TestVar {
-            TestVar::Usize(TestComputer::arg_base_addr() + offset)
+            TestVar::Num(IlNumber::U32(TestComputer::arg_base_addr() + offset))
         }
 
         pub fn from_rom(rom: &'a Image) -> TestComputer<'a> {
@@ -1314,40 +1344,51 @@ mod tests {
         Ascii(&'static [u8]),
         String(String),
         Ptr(Vec<u8>),
-        U8(u8),
-        Usize(u32),
+        Num(IlNumber)
     }
 
     impl TestVar {
         fn byte_count(&self) -> u32 {
             match self {
-                TestVar::String(_) | TestVar::Ascii(_) | TestVar::Ptr(_) | TestVar::Usize(_) => 4,
-                TestVar::U8(_) => 1,
+                TestVar::String(_) | TestVar::Ascii(_) | TestVar::Ptr(_) => 4,
+                TestVar::Num(n) => n.il_type().byte_count(),
             }
         }
     }
 
     impl From<u8> for TestVar {
         fn from(i: u8) -> Self {
-            TestVar::U8(i)
+            TestVar::Num(i.into())
         }
     }
 
     impl From<&u8> for TestVar {
         fn from(i: &u8) -> Self {
-            TestVar::U8(*i)
+           (*i).into()
+        }
+    }
+
+    impl From<u16> for TestVar {
+        fn from(i: u16) -> Self {
+            TestVar::Num(i.into())
+        }
+    }
+
+    impl From<&u16> for TestVar {
+        fn from(i: &u16) -> Self {
+            (*i).into()
         }
     }
 
     impl From<u32> for TestVar {
         fn from(i: u32) -> Self {
-            TestVar::Usize(i)
+            TestVar::Num(i.into())
         }
     }
 
     impl From<&u32> for TestVar {
         fn from(i: &u32) -> Self {
-            TestVar::Usize(*i)
+            (*i).into()
         }
     }
 
@@ -1415,15 +1456,14 @@ mod tests {
                 TestVar::Ascii(s) => Some(*s),
                 TestVar::String(s) => Some(s.as_bytes()),
                 TestVar::Ptr(s) => Some(s.as_slice()),
-                TestVar::U8(u8) => { args.push(IlNumber::U8(*u8)); None}
-                TestVar::Usize(u32) => { args.push(IlNumber::U32(*u32)); None}
+                TestVar::Num(n) => { args.push(*n); None}
             } {
-                let arg = ptr;
+                let arg_base = ptr;
                 for b in bytes {
                     mem.insert(ptr, *b);
                     ptr += 1;
                 }
-                args.push(IlNumber::U32(arg));
+                args.push(IlNumber::U32(arg_base));
 
                 ptr = (ptr+3)/4*4; // round up
                 ptr += 4; // add buffer
@@ -1441,14 +1481,12 @@ mod tests {
         let il_result = sim.run();
 
         // run in HW simulator
-        let hw_sim_args: Vec<_> = args.iter().map(|a| match a {
-            IlNumber::U8(n) => (*n).into(),
-            IlNumber::U32(n) => *n,
-        }).collect();
+        let hw_sim_args: Vec<_> = args.iter().map(|a| a.as_u32()).collect();
         let hw_result = c.run(hw_sim_args.as_slice());
         let hw_result = match il_result.il_type() {
             IlType::U32 => IlNumber::U32(hw_result),
-            IlType::U8 => IlNumber::U8((hw_result & 0xFF) as u8)
+            IlType::U16 => IlNumber::U16((hw_result & 0xFFFF) as u16),
+            IlType::U8 => IlNumber::U8((hw_result & 0xFF) as u8),
         };
 
         assert_eq!(il_result, hw_result, "IL and HW have different results for {:?}", ins);
@@ -1468,7 +1506,7 @@ mod tests {
             let (ins, expected) = case;
 
             let expected_type = match expected {
-                TestVar::U8(_) => IlType::U8,
+                TestVar::Num(IlNumber::U8(_)) => IlType::U8,
                 _ => IlType::U32,
             };
 
@@ -1490,21 +1528,8 @@ mod tests {
                     let actual = std::str::from_utf8(actual).unwrap();
                     assert_eq!(expected, actual, "{:?}", &ins);
                 },
-                TestVar::U8(expected) => {
-                    match actual {
-                        IlNumber::U8(actual) => {
-                            assert_eq!(*expected, actual, "{:?}", &(ins, expected));
-                        },
-                        IlNumber::U32(_) => panic!(),
-                    }
-                },
-                TestVar::Usize(expected) => {
-                    match actual {
-                        IlNumber::U32(actual) => {
-                            assert_eq!(*expected, actual, "{:?}", &(ins, expected));
-                        },
-                        IlNumber::U8(_) => panic!(),
-                    }
+                TestVar::Num(expected) => {
+                    assert_eq!(*expected, actual, "{:?}", &(ins, expected));
                 },
             };
 

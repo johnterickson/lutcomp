@@ -17,14 +17,14 @@ a4 0c 04 00 00 00
 ff 00 00 00 00 
 # :getchar
 # Ret Some(U8)
-# Var t0 (t0 Arithmetic(And, Ident("tty"), Number(U8, 128))) U8 Some([16])
-# Var t1 (t1 Ident("tty")) U8 Some([16])
-# Var t2 (t2 Number(U8, 128)) U8 Some([17])
-# Var t3 (t3 Number(U8, 0)) U8 Some([17])
-# Var t4 (t4 Arithmetic(And, Ident("tty"), Number(U8, 127))) U8 Some([16])
-# Var t5 (t5 Ident("tty")) U8 Some([16])
-# Var t6 (t6 Number(U8, 127)) U8 Some([17])
-# Var tty (Local tty Number(U8) U8) U8 Some([18])
+# Var t0 (t0 Arithmetic(And, Ident("tty"), Number(U8, 128))) Reg(U8) Some([16])
+# Var t1 (t1 Ident("tty")) Reg(U8) Some([16])
+# Var t2 (t2 Number(U8, 128)) Reg(U8) Some([17])
+# Var t3 (t3 Number(U8, 0)) Reg(U8) Some([17])
+# Var t4 (t4 Arithmetic(And, Ident("tty"), Number(U8, 127))) Reg(U8) Some([16])
+# Var t5 (t5 Ident("tty")) Reg(U8) Some([16])
+# Var t6 (t6 Number(U8, 127)) Reg(U8) Some([17])
+# Var tty (Local tty Number(U8) Reg(U8)) Reg(U8) Some([18])
 # tty <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["Assign { target: Ident(\"tty\"), var_type: Some(Number(U8)), value: Number(U8, 0) }", "Number(U8, 0)"] }
 # 00022 Instruction { source: "tty <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: Some(Number(U8)), value: Number(U8, 0) }\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x12), Constant8(0x00=0)], resolved: None }
@@ -94,21 +94,21 @@ ff 00 00 00 00
 ff 00 00 00 10 
 # :main
 # Ret Some(U8)
-# Var ch (Local ch Number(U8) U8) U8 Some([19])
-# Var t0 (t0 Number(U8, 72)) U8 Some([19])
-# Var t1 (t1 Number(U8, 105)) U8 Some([19])
-# Var t10 (t10 Ident("ch")) U8 Some([19])
-# Var t11 (t11 Ident("ch")) U8 Some([19])
-# Var t12 (t12 Number(U8, 113)) U8 Some([20])
-# Var t13 (t13 Number(U8, 0)) U8 Some([19])
-# Var t2 (t2 Number(U8, 33)) U8 Some([19])
-# Var t3 (t3 Number(U8, 10)) U8 Some([19])
-# Var t4 (t4 Number(U8, 0)) U8 Some([19])
-# Var t5 (t5 Number(U8, 0)) U8 Some([20])
-# Var t6 (t6 Number(U8, 62)) U8 Some([19])
-# Var t7 (t7 Number(U8, 58)) U8 Some([19])
-# Var t8 (t8 Ident("ch")) U8 Some([19])
-# Var t9 (t9 Number(U8, 10)) U8 Some([20])
+# Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([19])
+# Var t0 (t0 Number(U8, 72)) Reg(U8) Some([19])
+# Var t1 (t1 Number(U8, 105)) Reg(U8) Some([19])
+# Var t10 (t10 Ident("ch")) Reg(U8) Some([19])
+# Var t11 (t11 Ident("ch")) Reg(U8) Some([19])
+# Var t12 (t12 Number(U8, 113)) Reg(U8) Some([20])
+# Var t13 (t13 Number(U8, 0)) Reg(U8) Some([19])
+# Var t2 (t2 Number(U8, 33)) Reg(U8) Some([19])
+# Var t3 (t3 Number(U8, 10)) Reg(U8) Some([19])
+# Var t4 (t4 Number(U8, 0)) Reg(U8) Some([19])
+# Var t5 (t5 Number(U8, 0)) Reg(U8) Some([20])
+# Var t6 (t6 Number(U8, 62)) Reg(U8) Some([19])
+# Var t7 (t7 Number(U8, 58)) Reg(U8) Some([19])
+# Var t8 (t8 Ident("ch")) Reg(U8) Some([19])
+# Var t9 (t9 Number(U8, 10)) Reg(U8) Some([20])
 # t0 <- 0n72/0x48u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }", "Number(U8, 72)", "Number(U8, 72)"] }
 # 00057 Instruction { source: "t0 <- 0n72/0x48u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\", \"Number(U8, 72)\", \"Number(U8, 72)\"] }", opcode: LoadImm8, args: [Register(0x13), Constant8(0x48=72)], resolved: None }
