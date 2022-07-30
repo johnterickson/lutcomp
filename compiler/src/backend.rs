@@ -523,32 +523,19 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             match size {
                                 IlType::U8 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8,
-                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
+                                        opcode: Opcode::Mul8_8,
+                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
                                         resolved: None,
                                         source: source.clone()
                                     }));
-
-                                    let product_regs = vec![0u8];
-                                    let product_size = IlType::U8;
-                                    ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
                                 },
                                 IlType::U32 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::LoadImm32,
-                                        args: vec![Value::Register(0), Value::Constant32(0)],
+                                        opcode: Opcode::Mul8_32,
+                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
                                         resolved: None,
                                         source: source.clone()
                                     }));
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8,
-                                        args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
-                                    let product_regs = (0u8..4u8).collect();
-                                    let product_size = IlType::U32;
-                                    ctxt.emit_reg_to_var(dest, &product_regs, &product_size, source)
                                 },
                             }
                         },

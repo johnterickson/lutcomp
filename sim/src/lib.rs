@@ -1164,12 +1164,15 @@ mod tests {
     }
 
     fn mul8_helper(a: u8, b: u8) {
-        println!("testing {}*{}", a, b);
-
         let mut rom = Vec::new();
-        rom.push(Opcode::Mul8 as u8);
+        rom.push(Opcode::Mul8_8 as u8);
         rom.push(0x4);
         rom.push(0x5);
+        rom.push(0xF);
+        rom.push(Opcode::Mul8_32 as u8);
+        rom.push(0x4);
+        rom.push(0x5);
+        rom.push(0x8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw_with_print(rom, false);
@@ -1180,8 +1183,15 @@ mod tests {
         while c.step() {}
 
         assert_eq!(
+            a.wrapping_mul(b),
+            c.reg_u8(0xF),
+            "{}*{} actual vs expected", a, b
+        );
+
+        assert_eq!(
             (a as u16) * (b as u16),
-            (c.reg_u32(0) & 0xFFFF) as u16
+            c.reg_u32(0x8) as u16,
+            "{}*{} actual vs expected", a, b
         );
     }
 

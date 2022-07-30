@@ -1280,7 +1280,7 @@ impl Ucode {
                         add!(self, Output::Direct(*reg), Load::Mem(AddressBusOutputLevel::Addr));
                     }
                 }
-                Some(Opcode::Mul8) => {
+                Some(Opcode::Mul8_8) => {
                     self.start_of_ram();
                     
                     // Load x & y
@@ -1315,9 +1315,67 @@ impl Ucode {
                     add!(self, Output::Direct(in1), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Direct(in2), Load::Alu(AluOpcode::MulLoHi));
 
-                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+                }
+                Some(Opcode::Mul8_32) => {
+                    self.start_of_ram();
+                    
+                    // Load x & y
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::X));
+
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Y));
+
+                    // Load RegC into Z
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Z));
+
+                    // zero out high two bytes
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(2), Load::Alu(AluOpcode::AddLo));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Imm(3), Load::Alu(AluOpcode::AddLo));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    // determine order of X & Y
+                    // first comupte X / Y
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Alu(AluOpcode::Divide));
+
+                    // now compute flags for (0 + (X / Y))
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+
+                    let (in1, in2) = if flags.contains(Flags::ZERO) {
+                        // X/Y == 0 --> X < Y
+                        (DataBusOutputLevel::Y, DataBusOutputLevel::X)
+                        
+                    } else {
+                        // when Y == 0: X >= Y.  Div(X, 0)=0xFF.  0xFF != 0
+                        // when Y != 0: Div(X, Y) != 0 implies X >= Y
+                        (DataBusOutputLevel::X, DataBusOutputLevel::Y)
+                    };
+
+                    add!(self, Output::Direct(in1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(in2), Load::Alu(AluOpcode::MulLoHi));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
+                    // increment RegC is in Z so increment it, so that we point to the next reg
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddLo));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
+
+                    // now compute the high byte
                     let (in1, in2) = if flags.contains(Flags::ZERO) {
                         // X < Y
                         (DataBusOutputLevel::X, DataBusOutputLevel::Y)
@@ -1331,7 +1389,7 @@ impl Ucode {
                     add!(self, Output::Imm(SpecialMicroHelper::Decrement as u8), Load::Alu(AluOpcode::Special));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Direct(in2), Load::Alu(AluOpcode::MulLoHi));
-                    add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
                     // check if in1 is 0
@@ -1714,7 +1772,7 @@ mod tests {
         let hash = hasher.finish();
         let hash = hash % 0x1_0000_0000;
         
-        assert_eq!(478319540, hash); // if you have to change this, also change the version
+        assert_eq!(946426664, hash); // if you have to change this, also change the version
         assert_eq!(MAJOR_VERSION, 1);
         assert_eq!(MINOR_VERSION, 1);
         assert_eq!(PATCH_VERSION, 1);
