@@ -20,7 +20,7 @@ lazy_static! {
 }
 
 pub const MAJOR_VERSION: u8 = 1;
-pub const MINOR_VERSION: u8 = 0;
+pub const MINOR_VERSION: u8 = 1;
 pub const PATCH_VERSION: u8 = 1;
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -1280,119 +1280,68 @@ impl Ucode {
                         add!(self, Output::Direct(*reg), Load::Mem(AddressBusOutputLevel::Addr));
                     }
                 }
-                Some(Opcode::Mul8_1) => {
+                Some(Opcode::Mul8) => {
                     self.start_of_ram();
+                    
+                    // Load x & y
                     pc_inc!(self);
-                    // 16-bit "A" in WX
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::W));
-                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::X));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::X));
 
-                    // 8-bit "B" in Y
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Y));
 
-                    // point memory to product0
-                    add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
+                    // determine order of X & Y
+                    // first comupte X / Y
+                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Alu(AluOpcode::Divide));
 
-                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
-                }
-                Some(Opcode::Mul8_2) => {
-                    self.inc_pc = false; // handle this manually
-
-                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
+                    // now compute flags for (0 + (X / Y))
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-                    if flags.contains(Flags::ZERO) {
-                        pc_inc!(self);
-                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::None));
+
+                    let (in1, in2) = if flags.contains(Flags::ZERO) {
+                        // X/Y == 0 --> X < Y
+                        (DataBusOutputLevel::Y, DataBusOutputLevel::X)
+                        
                     } else {
-                        self.add_op(noop, file!(), line!());
-                        self.add_op(noop, file!(), line!());
-                    }
+                        // when Y == 0: X >= Y.  Div(X, 0)=0xFF.  0xFF != 0
+                        // when Y != 0: Div(X, Y) != 0 implies X >= Y
+                        (DataBusOutputLevel::X, DataBusOutputLevel::Y)
+                    };
 
-                    //   Z = if b & 1 { 0xFF } else { 0x00 }
+                    add!(self, Output::Direct(in1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(in2), Load::Alu(AluOpcode::MulLoHi));
+
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
-
-                    // store mask in Z
-                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(SpecialMicroHelper::AllBitsIfOdd as u8), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
-
-                    // mask W with Z
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-
-                    // add product0 masked W
-                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::AddHiNoCarry));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::AddLo));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
-                    // point memory to product1
+                    let (in1, in2) = if flags.contains(Flags::ZERO) {
+                        // X < Y
+                        (DataBusOutputLevel::X, DataBusOutputLevel::Y)
+                    } else {
+                        // X >= Y
+                        (DataBusOutputLevel::Y, DataBusOutputLevel::X)
+                    };
+
+                    // we'll compute assuming in1 != 0, but correct for that later
+                    add!(self, Output::Direct(in1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::Decrement as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Direct(in2), Load::Alu(AluOpcode::MulLoHi));
                     add!(self, Output::Imm(1), Load::Direct(DataBusLoadEdge::Addr0));
-
-                    // mask X with Z
-                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-
-                    // add product1 masked X
-                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Alu(AluOpcode::AddLo));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    let inc = if flags.contains(Flags::CARRY) { 1 } else { 0 };
-                    add!(self, Output::Imm(inc), Load::Alu(AluOpcode::AddLo));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
 
-                    //   need to left-shift [WX] by 1
+                    // check if in1 is 0
+                    add!(self, Output::Direct(in1), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
 
-                    // create shift command and store in Z: 01==Shift 00=Rotate
-                    add!(self, Output::Imm(0b0100), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::Or));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
-
-                    // rotate X by 1
-                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
-
-                    // rotate W by 1
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-
-                    // create ~1 mask and store in Z
-                    add!(self, Output::Imm(0x1), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(SpecialMicroHelper::Invert as u8), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
-
-                    // clear out lowest bit from X
-                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
-
-                    // grab lowest bit from W and OR into X
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(1), Load::Alu(AluOpcode::And));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::X), Load::Alu(AluOpcode::Or));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::X));
-
-                    // clear out lowest bit from W
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Alu(AluOpcode::And));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
-
-                    //   need to right-shift Y by 1
-                    add!(self, Output::Direct(DataBusOutputLevel::Y), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(SpecialMicroHelper::RightShiftByOne as u8), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Y));
+                    if flags.contains(Flags::ZERO) {
+                        add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
+                    }
                 }
                 Some(Opcode::AndImm32) => {
                     self.start_of_ram();
@@ -1765,9 +1714,9 @@ mod tests {
         let hash = hasher.finish();
         let hash = hash % 0x1_0000_0000;
         
-        assert_eq!(3315508735, hash); // if you have to change this, also change the version
+        assert_eq!(478319540, hash); // if you have to change this, also change the version
         assert_eq!(MAJOR_VERSION, 1);
-        assert_eq!(MINOR_VERSION, 0);
+        assert_eq!(MINOR_VERSION, 1);
         assert_eq!(PATCH_VERSION, 1);
     }
 }

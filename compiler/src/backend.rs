@@ -523,14 +523,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             match size {
                                 IlType::U8 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_1,
+                                        opcode: Opcode::Mul8,
                                         args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_2,
-                                        args: vec![],
                                         resolved: None,
                                         source: source.clone()
                                     }));
@@ -547,14 +541,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source: source.clone()
                                     }));
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_1,
+                                        opcode: Opcode::Mul8,
                                         args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0])],
-                                        resolved: None,
-                                        source: source.clone()
-                                    }));
-                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_2,
-                                        args: vec![],
                                         resolved: None,
                                         source: source.clone()
                                     }));

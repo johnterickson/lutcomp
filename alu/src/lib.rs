@@ -17,7 +17,7 @@ lazy_static! {
 }
 
 pub const MAJOR_VERSION: u8 = 1;
-pub const MINOR_VERSION: u8 = 1;
+pub const MINOR_VERSION: u8 = 2;
 pub const PATCH_VERSION: u8 = 0;
 
 #[derive(Debug, PackedStruct)]
@@ -77,7 +77,13 @@ pub fn alu(print: bool) -> (Vec<u8>,u32) {
             AluOpcode::AddLo => {
                 entry.in1.wrapping_add(entry.in2)
             },
-            AluOpcode::Unused1 => 0xCC,
+            AluOpcode::MulLoHi => {
+                if entry.in1 >= entry.in2 {
+                    entry.in1.wrapping_mul(entry.in2)
+                } else {
+                    (((entry.in1 as u16 + 1) * entry.in2 as u16) / 256).try_into().unwrap()
+                }
+            },
             AluOpcode::AddHiNoCarry | AluOpcode::AddHiCarry => {
                 let sum = (entry.in1 as u16) + (entry.in2 as u16) + (carry_in as u16);
 
@@ -99,7 +105,7 @@ pub fn alu(print: bool) -> (Vec<u8>,u32) {
             AluOpcode::Or => entry.in1 | entry.in2,
             AluOpcode::Divide => {
                 if entry.in2 == 0 {
-                    0xCC
+                    0xFF
                 } else {
                     entry.in1 / entry.in2
                 }
@@ -382,11 +388,58 @@ mod tests {
             eval_special_micro(SpecialMicroHelper::GetInfo, SpecialMicroHelperInfo::Hash3 as u8),
         ]);
 
-        assert_eq!(3234633389, hash); // if you have to change this, also change the version
+        assert_eq!(1822093141, hash); // if you have to change this, also change the version
 
         let mut hasher = DefaultHasher::new();
         hasher.write(&ALU);
         let whole_hash = hasher.finish();
-        assert_eq!(2226516058768861115, whole_hash); // if you have to change this, but not the above then something is screwy
+        assert_eq!(4006551507680735044, whole_hash); // if you have to change this, but not the above then something is screwy
+    }
+
+    #[test]
+    fn mul() {
+        for x in 0u8..=0xFF {
+            for y in 0u8..=0xFF {
+                let product = (x as u16) * (y as u16);
+
+                let mullo = |x, y| {
+                    let (in1, in2) = if x >= y {
+                        (x,y)
+                    } else {
+                        (y,x)
+                    };
+
+                    assert!(in1 >= in2);
+
+                    let index = LutEntry { in1, in2, op: AluOpcode::MulLoHi }.to_index() as usize;
+                    ALU[index]
+                };
+
+                assert_eq!(
+                    mullo(x,y),
+                    (product % 256).try_into().unwrap()
+                    );
+
+                let mulhi = |x: u8, y: u8| {
+                    
+                    let (in1, in2) = match (x,y) {
+                        (0u8, _) | (_, 0u8) => return 0,
+                        (a, b) if a < b => (a.checked_sub(1u8).unwrap(), b),
+                        (a, b) if a >= b => (b.checked_sub(1u8).unwrap(), a),
+                        _ => unreachable!(),
+                    };
+
+                    assert!(in1 < in2, "For mulhi({}*{}) Expected {} < {}", x, y, in1, in2);
+
+                    let index = LutEntry { in1, in2, op: AluOpcode::MulLoHi }.to_index() as usize;
+                    ALU[index]
+                };
+
+                assert_eq!(
+                    mulhi(x,y),
+                    (product / 256).try_into().unwrap()
+                    );
+            }
+        }
     }
 }

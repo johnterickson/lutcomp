@@ -1167,10 +1167,9 @@ mod tests {
         println!("testing {}*{}", a, b);
 
         let mut rom = Vec::new();
-        rom.push(Opcode::Mul8_1 as u8);
+        rom.push(Opcode::Mul8 as u8);
         rom.push(0x4);
         rom.push(0x5);
-        rom.push(Opcode::Mul8_2 as u8);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw_with_print(rom, false);
