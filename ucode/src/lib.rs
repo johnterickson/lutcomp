@@ -1319,7 +1319,7 @@ impl Ucode {
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
                 }
-                Some(Opcode::Mul8_32) => {
+                Some(Opcode::Mul8_16) => {
                     self.start_of_ram();
                     
                     // Load x & y
@@ -1334,15 +1334,6 @@ impl Ucode {
                     // Load RegC into Z
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Z));
-
-                    // zero out high two bytes
-                    add!(self, Output::Direct(DataBusOutputLevel::Z), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(2), Load::Alu(AluOpcode::AddLo));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
-                    add!(self, Output::Imm(3), Load::Alu(AluOpcode::AddLo));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Addr0));
-                    add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
 
                     // determine order of X & Y
                     // first comupte X / Y
@@ -1772,7 +1763,7 @@ mod tests {
         let hash = hasher.finish();
         let hash = hash % 0x1_0000_0000;
         
-        assert_eq!(946426664, hash); // if you have to change this, also change the version
+        assert_eq!(1796100314, hash); // if you have to change this, also change the version
         assert_eq!(MAJOR_VERSION, 1);
         assert_eq!(MINOR_VERSION, 1);
         assert_eq!(PATCH_VERSION, 1);

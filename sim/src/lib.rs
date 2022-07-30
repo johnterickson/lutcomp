@@ -128,6 +128,11 @@ impl<'a> Computer<'a> {
         self.mem_byte_mut(common::RAM_MIN + reg_num as u32)
     }
 
+    pub fn reg_u16(&self, reg_num: u8) -> u16 {
+        assert_eq!(reg_num % 2, 0);
+        self.mem_u16(common::RAM_MIN + reg_num as u32)
+    }
+
     pub fn reg_u32(&self, reg_num: u8) -> u32 {
         assert_eq!(reg_num % 4, 0);
         self.mem_word(common::RAM_MIN + reg_num as u32)
@@ -212,6 +217,13 @@ impl<'a> Computer<'a> {
 
     pub fn mem_byte(&self, addr: u32) -> u8 {
         self.mem_slice(addr, 1)[0]
+    }
+
+    pub fn mem_u16(&self, addr: u32) -> u16 {
+        if addr % 2 != 0 {
+            panic!("Access of {:08x} is not aligned.", addr);
+        }
+        u16::from_le_bytes(self.mem_slice(addr,2).try_into().unwrap())
     }
 
     pub fn mem_word(&self, addr: u32) -> u32 {
@@ -1169,10 +1181,10 @@ mod tests {
         rom.push(0x4);
         rom.push(0x5);
         rom.push(0xF);
-        rom.push(Opcode::Mul8_32 as u8);
+        rom.push(Opcode::Mul8_16 as u8);
         rom.push(0x4);
         rom.push(0x5);
-        rom.push(0x8);
+        rom.push(0xa);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw_with_print(rom, false);
@@ -1190,7 +1202,7 @@ mod tests {
 
         assert_eq!(
             (a as u16) * (b as u16),
-            c.reg_u32(0x8) as u16,
+            c.reg_u16(0xa),
             "{}*{} actual vs expected", a, b
         );
     }

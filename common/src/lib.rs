@@ -161,7 +161,7 @@ pub enum Opcode {
     Copy8 = 0x16, // regA -> regB
 
     Mul8_8 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 8-bit LSB RegC
-    Mul8_32 = 0x21, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB RegC
+    Mul8_16 = 0x21, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB RegC
     AddCarry8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
     Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
     Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
@@ -239,7 +239,7 @@ impl Opcode {
             Opcode::Pop8 => &[1],
             Opcode::Copy8 => &[1,1],
             Opcode::Mul8_8 => &[1,1,1],
-            Opcode::Mul8_32 => &[1,1,1],
+            Opcode::Mul8_16 => &[1,1,1],
             Opcode::AddCarry8 => &[1,1,1],
             Opcode::Add8NoCarry => &[1,1,1],
             Opcode::Add8NoCarryIn => &[1,1,1],

@@ -531,8 +531,20 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 },
                                 IlType::U32 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                                        opcode: Opcode::Mul8_32,
+                                        opcode: Opcode::Mul8_16,
                                         args: vec![Value::Register(src1_regs[0]), Value::Register(src2_regs[0]), Value::Register(dest_regs[0])],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::LoadImm8,
+                                        args: vec![Value::Register(dest_regs[2]), Value::Constant8(0)],
+                                        resolved: None,
+                                        source: source.clone()
+                                    }));
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode: Opcode::LoadImm8,
+                                        args: vec![Value::Register(dest_regs[3]), Value::Constant8(0)],
                                         resolved: None,
                                         source: source.clone()
                                     }));
