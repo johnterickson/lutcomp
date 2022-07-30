@@ -196,6 +196,24 @@ impl IlFunction {
                                 IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
                             })
                         }
+                        (IlNumber::U16(n1), IlNumber::U16(n2)) => {
+                            IlNumber::U16(match op {
+                                IlBinaryOp::Add => n1.wrapping_add(n2),
+                                IlBinaryOp::Subtract => n1.wrapping_sub(n2),
+                                IlBinaryOp::Multiply => {
+                                    // assert!(n1 <= 0xFF);
+                                    // assert!(n2 <= 0xFF);
+                                    (n1 & 0xFF).wrapping_mul(n2 & 0xFF)
+                                },
+                                IlBinaryOp::BitwiseAnd => n1 & n2,
+                                IlBinaryOp::BitwiseOr => n1 | n2,
+                                IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
+                                IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
+                                IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
+                                IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
+                                &IlBinaryOp::Divide => todo!(),
+                            })
+                        }
                         (IlNumber::U32(n1), IlNumber::U32(n2)) => {
                             IlNumber::U32(match op {
                                 IlBinaryOp::Add => n1.wrapping_add(n2),
@@ -353,6 +371,7 @@ impl IlFunction {
                     let src = vars[src];
                     assert_eq!(&src.il_type(), src_size);
                     let n = match (dest_size, src) {
+                        (IlType::U16, IlNumber::U8(n)) => IlNumber::U16(n as u16),
                         (IlType::U32, IlNumber::U8(n)) => IlNumber::U32(n as u32),
                         (IlType::U8, IlNumber::U32(n)) => IlNumber::U8((n & 0xFF) as u8),
                         _ => panic!(),
@@ -446,12 +465,12 @@ mod tests {
             "mul8_16",
             include_str!("../../programs/mul.j"),
             &[
-                (vec![16u8.into(), 16u8.into()],256u32.into()),
-                (vec![0u8.into(), 0u8.into()],0u32.into()),
-                (vec![128u8.into(), 0u8.into()],0u32.into()),
-                (vec![0u8.into(), 128u8.into()],0u32.into()),
-                (vec![8u8.into(), 8u8.into()],64u32.into()),
-                (vec![51u8.into(), 5u8.into()],255u32.into()),
+                (vec![16u8.into(), 16u8.into()],IlNumber::U16(256).into()),
+                // (vec![0u8.into(), 0u8.into()],0u16.into()),
+                // (vec![128u8.into(), 0u8.into()],0u16.into()),
+                // (vec![0u8.into(), 128u8.into()],0u16.into()),
+                // (vec![8u8.into(), 8u8.into()],64u16.into()),
+                // (vec![51u8.into(), 5u8.into()],255u16.into()),
             ]);
     }
 
@@ -1356,6 +1375,12 @@ mod tests {
         }
     }
 
+    impl From<IlNumber> for TestVar {
+        fn from(i: IlNumber) -> Self {
+            TestVar::Num(i)
+        }
+    }
+
     impl From<u8> for TestVar {
         fn from(i: u8) -> Self {
             TestVar::Num(i.into())
@@ -1423,6 +1448,7 @@ mod tests {
 
     fn check_args_inner(ctxt: &ProgramContext, test_case: (&Vec<TestVar>, u32)) {
         let entry = &ctxt.function_defs[&ctxt.entry];
+        dbg!(&entry);
         let entry_args = &entry.args;
         let (test_args, test_return_size) = test_case;
         assert_eq!(entry_args.len(), test_args.len());
@@ -1506,7 +1532,7 @@ mod tests {
             let (ins, expected) = case;
 
             let expected_type = match expected {
-                TestVar::Num(IlNumber::U8(_)) => IlType::U8,
+                TestVar::Num(n) => n.il_type(),
                 _ => IlType::U32,
             };
 

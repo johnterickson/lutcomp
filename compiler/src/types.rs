@@ -3,6 +3,7 @@ use super::*;
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum NumberType {
     U8,
+    U16,
     USIZE,
 }
 
@@ -10,6 +11,7 @@ impl NumberType {
     pub fn try_parse(s: &str) -> Option<NumberType> {
         match  s {
             "u8" | "char" => Some(NumberType::U8),
+            "u16" => Some(NumberType::U16),
             "usize" => Some(NumberType::USIZE),
             _ => None
         }
@@ -29,6 +31,7 @@ impl TryByteSize for NumberType {
     fn try_byte_count(&self) -> Option<u32> {
         Some(match self {
             NumberType::U8 => 1,
+            NumberType::U16 => 2,
             NumberType::USIZE => 4,
         })
     }

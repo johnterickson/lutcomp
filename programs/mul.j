@@ -2,10 +2,9 @@ fn mul8(x:u8, y:u8) -> u8 {
     return (x*y);
 }
 
-fn mul8_16(x:u8, y:u8) -> usize {
-    return (((x) AS usize)*((y) AS usize));
+fn mul8_16(x:u8, y:u8) -> u16 {
+    return (((x) AS u16)*((y) AS u16));
 }
-
 
 fn mul16_32(a:usize, b:usize) -> usize {
     c: usize = (a * b);

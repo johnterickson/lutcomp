@@ -113,7 +113,7 @@ impl Expression {
                         Type::Ptr(element_type) => Some(element_type.as_ref().clone()),
                         Type::Number(nt) => {
                             match nt {
-                                NumberType::U8 => panic!(),
+                                NumberType::U8 | NumberType::U16 => panic!(),
                                 NumberType::USIZE => Some(Type::Number(NumberType::U8)),
                             }
                         }
@@ -144,7 +144,8 @@ impl Expression {
                 if let (Some(left), Some(right)) = (left, right) {
                     match (left.byte_count(ctxt),right.byte_count(ctxt)) {
                         (1,1) => Some(Type::Number(NumberType::U8)),
-                        (1,4) | (4,1) | (4,4) => Some(Type::Number(NumberType::USIZE)),
+                        (1,2) | (2,1) | (2,2) => Some(Type::Number(NumberType::U16)),
+                        (1,4) | (4,1) | (2,4) | (4,2) | (4,4) => Some(Type::Number(NumberType::USIZE)),
                         _ => None,
                     }
                 } else {

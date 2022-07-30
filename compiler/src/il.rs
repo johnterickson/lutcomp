@@ -226,7 +226,7 @@ impl IlFunction {
                 let index = match index_type {
                     Type::Number(nt) => {
                         match nt {
-                            NumberType::U8 => {
+                            NumberType::U8 | NumberType::U16 => {
                                 Box::new(Expression::Cast {
                                     old_type: Some(index_type),
                                     new_type: Type::Number(NumberType::USIZE),
@@ -661,6 +661,7 @@ impl IlFunction {
             Expression::Number(num_type, val) => {
                 let src = match num_type {
                     NumberType::U8 => IlNumber::U8((*val).try_into().unwrap()),
+                    NumberType::U16 => IlNumber::U16((*val).try_into().unwrap()),
                     NumberType::USIZE => IlNumber::U32(*val)
                 };
                 self.add_inst(ctxt, IlInstruction::AssignNumber{dest, src});
@@ -824,9 +825,7 @@ impl IlFunction {
         let return_size = ctxt.func_def.return_type.byte_count(ctxt.program);
         func.ret = match return_size {
             0 => None,
-            1 => Some(IlType::U8),
-            4 => Some(IlType::U32),
-            _ => panic!(),
+            n => Some(n.try_into().unwrap())
         };
         
         for (i, (name, var_type)) in ctxt.func_def.args.iter().enumerate() {
@@ -1166,6 +1165,7 @@ impl From<&NumberType> for IlType {
     fn from(nt: &NumberType) -> Self {
         match nt {
             NumberType::U8 => IlType::U8,
+            NumberType::U16 => IlType::U16,
             NumberType::USIZE => IlType::U32,
         }
     }

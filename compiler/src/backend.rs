@@ -782,8 +782,16 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 source: format!("Zero-pad for {}", &source)
                             }));
                         }
+                        (IlType::U8, IlType::U16) => {
+                            ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                opcode: Opcode::LoadImm8,
+                                args: vec![Value::Register(dest_regs[1]), Value::Constant8(0)],
+                                resolved: None,
+                                source: format!("Zero-pad for {}", &source)
+                            }));
+                        }
                         (IlType::U32, IlType::U8) => { }
-                        _ => panic!(),
+                        _ => todo!("Cast from {:?} to {:?}", &src_size, &dest_size),
                     }
 
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
@@ -796,21 +804,35 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 IlInstruction::Return { val } => {
                     if let Some(val) = val {
                         let src_regs = ctxt.find_registers(val);
-                        ctxt.lines.push(AssemblyInputLine::Instruction(match src_regs.len() {
-                            1 => Instruction {
+                        match src_regs.len() {
+                            1 => ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                 opcode: Opcode::Copy8,
                                 args: vec![Value::Register(src_regs[0]), Value::Register(0)],
                                 source,
                                 resolved: None,
+                            })),
+                            2 => {
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    opcode: Opcode::Copy8,
+                                    args: vec![Value::Register(src_regs[0]), Value::Register(0)],
+                                    source: source.clone(),
+                                    resolved: None,
+                                }));
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    opcode: Opcode::Copy8,
+                                    args: vec![Value::Register(src_regs[1]), Value::Register(1)],
+                                    source,
+                                    resolved: None,
+                                }));
                             },
-                            4 => Instruction {
+                            4 => ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                 opcode: Opcode::Copy32,
                                 args: vec![Value::Register(src_regs[0]), Value::Register(0)],
                                 source,
                                 resolved: None,
-                            },
+                            })),
                             _ => todo!(),
-                        }));
+                        }
                     }
 
                     if stack_size > 0 {
