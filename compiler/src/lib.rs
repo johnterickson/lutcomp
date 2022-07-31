@@ -123,6 +123,18 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
             statics_base_address: STATICS_START_ADDRESS,
             image_base_address: 0,
         };
+        
+        // add intrinsics
+        ctxt.function_defs.insert(
+            "__mul8_16".to_owned(),
+            FunctionDefinition { 
+                name: "__mul8_16".to_owned(), 
+                args: vec![("x".to_owned(), Type::Number(NumberType::U8)),("y".to_owned(), Type::Number(NumberType::U8))],
+                vars: BTreeMap::new(),
+                return_type: Type::Number(NumberType::U16), 
+                body: FunctionImpl::Intrinsic(Intrinsic::Mul8_16),
+            }
+        );
 
         let to_parse = input.clone();
 

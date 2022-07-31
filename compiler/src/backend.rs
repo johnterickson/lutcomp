@@ -302,6 +302,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
     for f in ctxt.il.functions.values() {
 
+        if f.intrinsic.is_some() {
+            continue;
+        }
+
         let mut ctxt = FunctionContext {
             program: ctxt,
             f_il: f,
@@ -705,6 +709,28 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let target = &ctxt.program.il.functions[target];
                     assert_eq!(target.args.len(), args.len());
 
+                    if let Some(i) = &target.intrinsic {
+                        match i {
+                            &Intrinsic::Mul8_16 => {
+                                assert_eq!(2, args.len());
+                                let src1_reg = ctxt.find_registers(&args[0]);
+                                assert_eq!(1, src1_reg.len());
+                                let src2_reg = ctxt.find_registers(&args[1]);
+                                assert_eq!(1, src2_reg.len());
+                                let dst_reg = ctxt.find_registers(ret.as_ref().unwrap());
+                                assert_eq!(2, dst_reg.len());
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    source: format!("{:?}", i),
+                                    opcode: Opcode::Mul8_16,
+                                    args: vec![Value::Register(src1_reg[0]), Value::Register(src2_reg[0]), Value::Register(dst_reg[0])],
+                                    resolved: None,
+                                }));
+                            }
+                        }
+
+                        continue;
+                    }
+
                     for (i, (arg_name, arg_value)) in target.args.iter().zip(args.iter()).enumerate() {
                         let arg_size = target.vars[arg_name].var_type.byte_count(ctxt.program.frontend_context);
                         let byte_count = ctxt.byte_count(arg_value);
@@ -742,8 +768,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     }
 
                     ctxt.lines.push(AssemblyInputLine::from_str(&format!("!call :{}", target.id.0)));
-
-
 
                     for r in &regs_to_save {
                         assert!(*r >= 0x10);

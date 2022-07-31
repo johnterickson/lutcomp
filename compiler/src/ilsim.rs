@@ -336,7 +336,25 @@ impl IlFunction {
                 IlInstruction::Call { ret, f, args } => {
                     let f = &ctxt.program.functions[f];
                     let args: Vec<_> = args.iter().map(|a| vars[a]).collect();
-                    let result = f.simulate(ctxt, &args);
+
+                    let result = if let Some(i) = &f.intrinsic {
+                        match i {
+                            Intrinsic::Mul8_16 => {
+                                let src1 = match args[0] {
+                                    IlNumber::U8(n) => n,
+                                    _ => panic!(),
+                                };
+                                let src2 = match args[1] {
+                                    IlNumber::U8(n) => n,
+                                    _ => panic!(),
+                                };
+                                Some(IlNumber::U16((src1 as u16)*(src2 as u16)))
+                            },
+                        }
+                    } else {
+                       f.simulate(ctxt, &args)
+                    };
+
                     match (result, ret) {
                         (Some(result), Some(ret)) => {
                             vars.insert(ret, result);
@@ -466,11 +484,11 @@ mod tests {
             include_str!("../../programs/mul.j"),
             &[
                 (vec![16u8.into(), 16u8.into()],IlNumber::U16(256).into()),
-                // (vec![0u8.into(), 0u8.into()],0u16.into()),
-                // (vec![128u8.into(), 0u8.into()],0u16.into()),
-                // (vec![0u8.into(), 128u8.into()],0u16.into()),
-                // (vec![8u8.into(), 8u8.into()],64u16.into()),
-                // (vec![51u8.into(), 5u8.into()],255u16.into()),
+                (vec![0u8.into(), 0u8.into()],0u16.into()),
+                (vec![128u8.into(), 0u8.into()],0u16.into()),
+                (vec![0u8.into(), 128u8.into()],0u16.into()),
+                (vec![8u8.into(), 8u8.into()],64u16.into()),
+                (vec![51u8.into(), 5u8.into()],255u16.into()),
             ]);
     }
 
@@ -1023,22 +1041,23 @@ mod tests {
                 ]);
     }
 
-    // #[test]
-    // fn rpn() {
-    //     test_tty(
-    //         "main",
-    //         include_str!("../../programs/rpn.j"),
-    //         &[
-    //             ("0\nq",0x0,0x0,"RPN\n"),
-    //             ("0\n0+q",0x0,0x0,"RPN\n0\n"),
-    //             ("1\n2+q",0x0,0x0,"RPN\n3\n"),
-    //             ("5\n2-q",0x0,0x0,"RPN\n3\n"),
-    //             ("3\n4*q",0x0,0x0,"RPN\n12\n"),
-    //             ("13\n4/q",0x0,0x0,"RPN\n3\n"),
-    //             ("3\n4+5*q",0x0,0x0,"RPN\n7\n35\n"),
-    //             ("1000 1000* 50000/q",0x0,0x0,"RPN\n1000000\n20\n"),
-    //         ]);
-    // }
+    #[test]
+    fn rpn() {
+        test_tty(
+            "main",
+            include_str!("../../programs/rpn.j"),
+            &[
+                ("0\nq",0x0,0x0,"RPN\n"),
+                ("1 2 3 d\nq",0x0,0x0,"RPN\n0:1\n1:2\n2:3\n"),
+                ("0\n0+q",0x0,0x0,"RPN\n0\n"),
+                ("1\n2+q",0x0,0x0,"RPN\n3\n"),
+                ("5\n2-q",0x0,0x0,"RPN\n3\n"),
+                ("3\n4*q",0x0,0x0,"RPN\n12\n"),
+                ("13\n4/q",0x0,0x0,"RPN\n3\n"),
+                ("3\n4+5*q",0x0,0x0,"RPN\n7\n35\n"),
+                ("1000 1000* 50000/q",0x0,0x0,"RPN\n1000000\n20\n"),
+            ]);
+    }
 
     #[test]
     fn local_array() {
@@ -1448,7 +1467,7 @@ mod tests {
 
     fn check_args_inner(ctxt: &ProgramContext, test_case: (&Vec<TestVar>, u32)) {
         let entry = &ctxt.function_defs[&ctxt.entry];
-        dbg!(&entry);
+        // dbg!(&entry);
         let entry_args = &entry.args;
         let (test_args, test_return_size) = test_case;
         assert_eq!(entry_args.len(), test_args.len());

@@ -3,7 +3,7 @@ fn mul8(x:u8, y:u8) -> u8 {
 }
 
 fn mul8_16(x:u8, y:u8) -> u16 {
-    return (((x) AS u16)*((y) AS u16));
+    return __mul8_16(x,y);
 }
 
 fn mul16_32(a:usize, b:usize) -> usize {

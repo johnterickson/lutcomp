@@ -1666,7 +1666,7 @@ impl Ucode {
 
             let uop_remaining = MAX_UOPS - uop_count;
             if self.print {
-                println!("# Filling in remaining {} uops with HALT", uop_remaining);
+                println!("# Filling in remaining {} uops of {:?} with HALT", uop_remaining, opcode);
             }
             let filler_bytes = 2 * uop_remaining;
             let halt = halt.emit();

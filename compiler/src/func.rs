@@ -7,10 +7,23 @@ pub struct FunctionDefinition {
     pub args: Vec<(String,Type)>,
     pub vars: BTreeMap<String,(Scope,Type)>,
     pub return_type: Type,
-    pub body: Vec<Statement>,
+    pub body: FunctionImpl,
+}
+
+#[derive(Clone,Debug)]
+pub enum FunctionImpl {
+    Body(Vec<Statement>),
+    Intrinsic(Intrinsic)
 }
 
 impl FunctionDefinition {
+
+    pub fn is_intrinsic(&self) -> bool {
+        match self.body {
+            FunctionImpl::Intrinsic(_) => true,
+            _ => false,
+        }
+    }
 
     pub fn find_arg_or_var(&self, name: &str) -> Option<(&Scope, &Type)> {
         if let Some((s,t)) = self.vars.get(name) {
@@ -137,6 +150,8 @@ impl FunctionDefinition {
         for s in body.iter_mut() {
             while s.optimize(ctxt) { }
         }
+
+        let body = FunctionImpl::Body(body);
 
         FunctionDefinition { name, args, vars, return_type, body}
     }

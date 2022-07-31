@@ -32,8 +32,6 @@ pub enum IlInstruction {
     Unreachable,
 }
 
-
-
 #[derive(Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct IlVarId(pub String);
 
@@ -93,7 +91,8 @@ pub struct IlFunction {
     labels: BTreeSet<IlLabelId>,
     next_temp_num: usize,
     next_label_num: usize,
-    pub vars_stack_size: u32, 
+    pub vars_stack_size: u32,
+    pub intrinsic: Option<Intrinsic>,
 }
 
 #[derive(Debug)]
@@ -104,7 +103,7 @@ struct TargetLocation {
 }
 
 impl IlFunction {
-    fn new(id: IlFunctionId) -> IlFunction {
+    fn new(id: IlFunctionId, intrinsic: Option<Intrinsic>) -> IlFunction {
         IlFunction {
             id, 
             args: Vec::new(),
@@ -115,6 +114,7 @@ impl IlFunction {
             next_temp_num: 0,
             next_label_num: 0,
             vars_stack_size: 0,
+            intrinsic,
             ret: None,
         }
     }
@@ -820,7 +820,13 @@ impl IlFunction {
 
     fn emit_from(ctxt: &mut IlContext) -> IlFunction {
         let id = IlFunctionId(ctxt.func_def.name.clone());
-        let mut func = IlFunction::new(id.clone());
+
+        let intrinsic = match &ctxt.func_def.body {
+            FunctionImpl::Body(_) => None,
+            FunctionImpl::Intrinsic(i) => Some(i.clone()),
+        };
+
+        let mut func = IlFunction::new(id.clone(), intrinsic);
 
         let return_size = ctxt.func_def.return_type.byte_count(ctxt.program);
         func.ret = match return_size {
@@ -913,10 +919,17 @@ impl IlFunction {
             });
         }
 
-        for s in &ctxt.func_def.body {
-            func.emit_statement(ctxt, s);
+        match &ctxt.func_def.body {
+            FunctionImpl::Body(body) => {
+                for s in body {
+                    func.emit_statement(ctxt, s);
+                }
+            },
+            FunctionImpl::Intrinsic(_) => {
+                func.add_inst(ctxt, IlInstruction::Unreachable);
+            },
         }
-
+        
         if ctxt.func_def.return_type == Type::Void {
             func.emit_statement(ctxt, &Statement::Return{value: None });
         }
@@ -1265,7 +1278,7 @@ impl IlInstruction {
             IlInstruction::Goto(_) => (vec![], None),
             IlInstruction::IfThenElse { left, op:_, right, then_label:_ , else_label:_ } => 
                 (vec![left, right], None),
-            IlInstruction::Call { ret, f:_, args } =>
+            IlInstruction::Call { ret, f:_, args} =>
                 (args.iter_mut().collect(), ret.as_mut()),
             IlInstruction::Resize { dest, dest_size:_, src, src_size:_ } => 
                 (vec![src], Some(dest)),
@@ -1307,7 +1320,7 @@ impl Debug for IlInstruction {
             IlInstruction::Goto(arg0) => write!(f, "goto {}", arg0.0),
             IlInstruction::IfThenElse { left, op, right, then_label, else_label } => 
                 write!(f, "if {} {:?} {:?} then '{}' else '{}'", left.0, op, right, then_label.0, else_label.0),
-            IlInstruction::Call { ret, f: func, args } => {
+            IlInstruction::Call { ret, f: func, args} => {
                 write!(f, "{:?} <= call {}(", ret.as_ref(), func.0)?;
                 for a in args {
                     write!(f, "{},", a.0)?;
@@ -1422,7 +1435,7 @@ impl IlProgram {
             };
             let f = IlFunction::emit_from(&mut il_ctxt);
             next_static_addr = il_ctxt.next_static_addr;
-            il.functions.insert(f.id.clone(), f);
+            il.functions.insert(IlFunctionId(def.name.clone()), f);
         }
 
         il.statics_addresses = ctxt.statics_base_address..next_static_addr;
@@ -1665,6 +1678,7 @@ mod tests {
             vars_stack_size: 0, 
             ret: Some(IlType::U8),
             consts: BTreeMap::new(),
+            intrinsic: None,
             vars,
             labels: ([&loop_label, &body_label, &end_label]).iter().map(|l| (**l).clone()).collect(),
             body : [

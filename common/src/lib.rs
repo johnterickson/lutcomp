@@ -329,3 +329,8 @@ impl Image {
             })
     }
 }
+
+#[derive(Clone,Debug)]
+pub enum Intrinsic {
+    Mul8_16
+}
