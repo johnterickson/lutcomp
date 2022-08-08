@@ -8,6 +8,7 @@ use strum::IntoEnumIterator;
 
 extern crate packed_struct;
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::{collections::BTreeSet, fs::File, unimplemented};
 use std::{collections::BTreeMap, convert::TryInto, io::Read};
@@ -129,6 +130,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
             "__mul8_16".to_owned(),
             FunctionDefinition { 
                 name: "__mul8_16".to_owned(), 
+                attributes: HashSet::new(),
                 args: vec![("x".to_owned(), Type::Number(NumberType::U8)),("y".to_owned(), Type::Number(NumberType::U8))],
                 vars: BTreeMap::new(),
                 return_type: Type::Number(NumberType::U16), 

@@ -2,7 +2,7 @@ fn mul8(x:u8, y:u8) -> u8 {
     return (x*y);
 }
 
-fn mul8_16(x:u8, y:u8) -> u16 {
+fn [inline] mul8_16(x:u8, y:u8) -> u16 {
     return __mul8_16(x,y);
 }
 

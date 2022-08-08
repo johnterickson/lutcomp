@@ -1,19 +1,35 @@
+use std::{collections::{HashSet}, hash::Hash};
+
 use super::*;
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum FunctionAttribute {
+    Inline,
+}
 
-#[derive(Clone,Debug)]
-pub struct FunctionDefinition {
-    pub name: String,
-    pub args: Vec<(String,Type)>,
-    pub vars: BTreeMap<String,(Scope,Type)>,
-    pub return_type: Type,
-    pub body: FunctionImpl,
+impl FunctionAttribute {
+    pub fn parse(s: &str) -> Option<FunctionAttribute> {
+        match s {
+            "inline" => Some(FunctionAttribute::Inline),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone,Debug)]
 pub enum FunctionImpl {
     Body(Vec<Statement>),
     Intrinsic(Intrinsic)
+}
+
+#[derive(Clone,Debug)]
+pub struct FunctionDefinition {
+    pub name: String,
+    pub attributes: HashSet<FunctionAttribute>,
+    pub args: Vec<(String,Type)>,
+    pub vars: BTreeMap<String,(Scope,Type)>,
+    pub return_type: Type,
+    pub body: FunctionImpl,
 }
 
 impl FunctionDefinition {
@@ -83,7 +99,19 @@ impl FunctionDefinition {
 
         let mut pairs = pair.into_inner();
 
-        let name = pairs.next().unwrap().as_str().to_owned();
+        let mut attributes = HashSet::new();
+
+        let mut pair = pairs.next().unwrap();
+
+        if pair.as_rule() == Rule::attributes {
+            for pair in pair.into_inner() {
+                attributes.insert(FunctionAttribute::parse(pair.as_str()).unwrap());
+            }
+            pair = pairs.next().unwrap();
+        }
+
+        assert_eq!(pair.as_rule(), Rule::ident);
+        let name = pair.as_str().to_owned();
 
         for arg in pairs.next().unwrap().into_inner() {
             let mut arg_tokens = arg.into_inner();
@@ -153,6 +181,6 @@ impl FunctionDefinition {
 
         let body = FunctionImpl::Body(body);
 
-        FunctionDefinition { name, args, vars, return_type, body}
+        FunctionDefinition { name, attributes, args, vars, return_type, body}
     }
 }

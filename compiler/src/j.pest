@@ -84,10 +84,15 @@ statement = {
     while_loop | assign | static_statement | declare_statement | break_statement |
     void_expression_statement
     }
+
+inline_attribute = { "inline" }
+attribute = { inline_attribute }
+attributes = { ("[" ~ attribute ~ "]")* }
+
 body = { (statement)+ }
-paramters = { variable_decl? ~ ("," ~ variable_decl)* }
+parameters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}
-function = {"fn " ~ ident ~ "(" ~ paramters ~ ")" ~ function_return_type? ~ "{" ~ body ~ "}"}
+function = {"fn " ~ attributes ~ ident ~ "(" ~ parameters ~ ")" ~ function_return_type? ~ "{" ~ body ~ "}"}
 
 field = { variable_decl }
 fields = { (field ~ ";")+ }
