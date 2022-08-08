@@ -26,7 +26,7 @@ fn [inline] mul16_32(a:usize, b:usize) -> usize {
     return (c + d);
 }
 
-fn mul32_32(a:usize, b:usize) -> usize {
+fn [inline] mul32_32(a:usize, b:usize) -> usize {
     c: usize = mul16_32(a, b);
 
     a_hi: usize = 0x0;
@@ -45,7 +45,7 @@ fn mul32_32(a:usize, b:usize) -> usize {
     return (c + d);
 }
 
-fn mul32_by10(a:usize) -> usize {
+fn [inline] mul32_by10(a:usize) -> usize {
     a = (a + a); /* a is 2a */
     b: usize = (a + a); /* b is 4a */
     b = (b + b); /* b is 8a */

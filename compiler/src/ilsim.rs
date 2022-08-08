@@ -96,7 +96,7 @@ impl IlFunction {
             // }
             // println!("{} {:?}; [{:?}]", self.id.0, s, vars);
 
-            dbg!(&s.0);
+            // dbg!(&s.0);
 
             match &s.0 {
                 IlInstruction::Unreachable => panic!(),
@@ -1055,6 +1055,7 @@ mod tests {
                 ("3\n4*q",0x0,0x0,"RPN\n12\n"),
                 ("13\n4/q",0x0,0x0,"RPN\n3\n"),
                 ("3\n4+5*q",0x0,0x0,"RPN\n7\n35\n"),
+                ("6 7 * q",0x0,0x0,"RPN\n42\n"),
                 ("1000 1000* 50000/q",0x0,0x0,"RPN\n1000000\n20\n"),
             ]);
     }
@@ -1354,7 +1355,7 @@ mod tests {
             }
         }
 
-        pub fn run(&mut self, inputs: &[u32]) -> u32{
+        pub fn run(&mut self, inputs: &[u32], output_size: u32) -> u32{
             dbg!(inputs);
             assert!(inputs.len() <= 3);
             for (i,val) in inputs.iter().enumerate() {
@@ -1372,7 +1373,12 @@ mod tests {
                 step_count += 1;
                 assert!(step_count < 1_0000_0000);
             }
-            self.comp.reg_u32(0)
+            match output_size {
+                1 => self.comp.reg_u8(0).into(),
+                2 => self.comp.reg_u16(0).into(),
+                4 => self.comp.reg_u32(0),
+                _ => panic!(),
+            }
         }
     }
 
@@ -1527,11 +1533,11 @@ mod tests {
 
         // run in HW simulator
         let hw_sim_args: Vec<_> = args.iter().map(|a| a.as_u32()).collect();
-        let hw_result = c.run(hw_sim_args.as_slice());
+        let hw_result = c.run(hw_sim_args.as_slice(), il_result.il_type().byte_count());
         let hw_result = match il_result.il_type() {
             IlType::U32 => IlNumber::U32(hw_result),
-            IlType::U16 => IlNumber::U16((hw_result & 0xFFFF) as u16),
-            IlType::U8 => IlNumber::U8((hw_result & 0xFF) as u8),
+            IlType::U16 => IlNumber::U16(hw_result.try_into().unwrap()),
+            IlType::U8 => IlNumber::U8(hw_result.try_into().unwrap()),
         };
 
         assert_eq!(il_result, hw_result, "IL and HW have different results for {:?}", ins);
@@ -1592,19 +1598,24 @@ mod tests {
     }
 
     fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
+        eprintln!("Compiling to IL...");
         let (ctxt, il) = emit_il(entry,program, &test_programs_dir());
         // dbg!(&il);
 
+        eprintln!("Compiling to assembly...");
         let (_, asm) = emit_assembly(&ctxt, &il);
+
+        eprintln!("Assembling...");
         let rom = assemble::assemble(asm);
 
+        eprintln!("Running...");
         for (ttyin, input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
             dbg!((ttyin, input1, input2, expected));
             for ch in ttyin.chars() {
                 c.comp.tty_in.push_back(ch as u8);
             }
-            assert_eq!(0, c.run(&[*input1, *input2]) & 0xFF);
+            assert_eq!(0, c.run(&[*input1, *input2], 1));
 
             let mut out = String::new();
             for c in &c.comp.tty_out {

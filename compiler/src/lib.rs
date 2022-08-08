@@ -44,34 +44,46 @@ use sim::*;
 pub fn print_state(c: &Computer) {
     let pc = u32::from_le_bytes(c.pc);
     //let pc_byte = *c.mem_byte_mut(pc);
-    let sp = c.reg_u32(common::REG_SP);
     let op = Opcode::iter().filter(|o| *o as u8 == c.ir0).next();
-    print!(
-        "pc:{:05x} sp:{:08x} flags:{:01x}",
-        pc,
-        sp,
-        c.flags.bits());
+    print!("pc:{:05x}", pc);
+
+    if (0..4).into_iter().all(|i| c.regs_written[(REG_SP+i) as usize]) {
+        let sp = c.reg_u32(common::REG_SP);
+
+        print!(" sp:{:08x}", sp);
     
-    for stack_offset in [0,4,8,0xc] {
-        let stack_mem = sp + stack_offset;
-        print!(" mem[sp");
-        if stack_offset != 0 {
-            print!("+{}", stack_offset);
-        }
-        print!("]:");
-        if let Some(stack_slice) = c.try_mem_slice(stack_mem, 4) {
-            let slice: &[u8; 4] = stack_slice.try_into().unwrap();
-            print!("{:08x}", u32::from_le_bytes(*slice));
-        } else {
-            print!("err     ");
+        for stack_offset in [0,4,8,0xc] {
+            let stack_mem = sp + stack_offset;
+            print!(" mem[sp");
+            if stack_offset != 0 {
+                print!("+{}", stack_offset);
+            }
+            print!("]:");
+            if let Some(stack_slice) = c.try_mem_slice(stack_mem, 4) {
+                let slice: &[u8; 4] = stack_slice.try_into().unwrap();
+                print!("{:08x}", u32::from_le_bytes(*slice));
+            } else {
+                print!("err     ");
+            }
         }
     }
+
+    print!(" flags:{:01x}", c.flags.bits());
+
     for r in 0u8..=255u8 {
         if (r % 4) != 0 { continue; }
         if r == REG_SP { continue; }
-        let v = c.reg_u32(r);
-        if v == 0xCCCCCCCC { continue; }
-        print!(" r{:02x}:{:08x}", r, c.reg_u32(r));
+        if (0..4).into_iter().all(|i| c.regs_written[(r+i) as usize]) {
+            print!(" r{:02x}:{:08x}", r, c.reg_u32(r));
+        } else if !(0..4).into_iter().any(|i| c.regs_written[(r+i) as usize]) {
+        } else {
+            for i in 0..4 {
+                if c.regs_written[(r+i) as usize] {
+                    print!(" r{:02x}:{:02x}", r+i, c.reg_u8(r+i));
+                }
+            }
+        }
+        
     }
     println!(" ir0:{:?}", &op);
     // println!(

@@ -120,7 +120,11 @@ fn main() {
                 if sim_args.len() != 0 {
                     todo!();
                 }
-                let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
+
+                let trace_ucode = Some("true") == get_param("trace_ucode");
+                let trace_pc = Some("true") == get_param("trace_pc");
+
+                let mut c = Computer::from_image(Cow::Borrowed(&rom), trace_ucode);
                 if let Some("true") = get_param("profile") {
                     c.pc_hit_count = Some(BTreeMap::new());
                 }
@@ -132,12 +136,12 @@ fn main() {
                 }
                 c.stdin_out = true;
 
-                let mut last_ir0 = None;
+                let mut last_ir0_pc = None;
                 while c.step() { 
-                    if last_ir0 != Some(c.ir0) {
-                        // print_state(&c);
+                    if last_ir0_pc != c.ir0_pc && trace_pc {
+                        print_state(&c);
                     }
-                    last_ir0 = Some(c.ir0);
+                    last_ir0_pc = c.ir0_pc;
                 }
                 // print_state(&c);
 

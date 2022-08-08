@@ -7,7 +7,7 @@ fn [inline] getchar() -> u8 {
     return (tty & 127);
 }
 
-fn readline(buf:&u8) {
+fn [inline] readline(buf:&u8) {
     while (0 == 0) {
         ch: u8 = getchar();
         if (ch == 13) {
@@ -22,7 +22,7 @@ fn readline(buf:&u8) {
     }
 }
 
-fn println(buf: &u8) {
+fn [inline] println(buf: &u8) {
     ch: u8 = *buf;
     while (ch != 0) {
         ttyout(ch);

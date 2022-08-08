@@ -3,7 +3,7 @@ struct U64 {
     hi: usize;
 }
 
-fn add_U64(a: &U64, b: &U64, c: &U64) {
+fn [inline] add_U64(a: &U64, b: &U64, c: &U64) {
     lo: usize = a->lo;
     c->hi = (a->hi + b->hi);
     c->lo = (a->lo + b->lo);

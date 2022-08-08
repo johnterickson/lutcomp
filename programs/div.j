@@ -1,6 +1,6 @@
 !include 'mul.j'
 
-fn shiftright1(a:usize) -> usize {
+fn [inline] shiftright1(a:usize) -> usize {
     a[0] = (a[0] >ROR> 1);
     a[1] = (a[1] >ROR> 1);
     a[2] = (a[2] >ROR> 1);
@@ -17,7 +17,7 @@ fn shiftright1(a:usize) -> usize {
     return a;
 }
 
-fn div16(a:usize, b:usize) -> usize {
+fn [inline] div16(a:usize, b:usize) -> usize {
     if (a < b) {
         return 0x0;
     }
@@ -63,7 +63,7 @@ fn div16(a:usize, b:usize) -> usize {
     return lo;
 }
 
-fn div32(a:usize, b:usize) -> usize {
+fn [inline] div32(a:usize, b:usize) -> usize {
     if (a < b) {
         return 0x0;
     }
@@ -108,7 +108,7 @@ fn div32(a:usize, b:usize) -> usize {
     return lo;
 }
 
-fn shiftright3(a:usize) -> usize {
+fn [inline] shiftright3(a:usize) -> usize {
     a[0] = (a[0] >ROR> 3);
     a[1] = (a[1] >ROR> 3);
     a[2] = (a[2] >ROR> 3);
@@ -124,7 +124,7 @@ fn shiftright3(a:usize) -> usize {
     return a;
 }
 
-fn div32_by10(a:usize) -> usize {
+fn [inline] div32_by10(a:usize) -> usize {
     static prod: U64;
     /* https://godbolt.org/z/jT8YajqGv */
     mul32_64(a, 0xCCCCCCCD, &prod);

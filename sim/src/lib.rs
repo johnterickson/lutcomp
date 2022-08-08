@@ -50,6 +50,7 @@ pub struct Computer<'a> {
     pub stack_dump_rate: u64,
     prev_log: Option<(u32, Option<u8>)>,
     pub block_for_stdin: bool,
+    pub regs_written: [bool;256],
 }
 
 impl<'a> Debug for Computer<'a> {
@@ -109,6 +110,7 @@ impl<'a> Computer<'a> {
             prev_log: None,
             stack_dump_rate: 0,
             block_for_stdin: false,
+            regs_written: [false; 256],
         };
 
         assert_eq!(c.alu_lut.len(), 1 << MEM_BITS_PER_CHIP);
@@ -173,6 +175,14 @@ impl<'a> Computer<'a> {
             },
             1 => {
                 assert!(RAM_MIN <= addr && addr <= RAM_MAX);
+                
+                // allow Push8 because we use it to save registers to the stack
+                if chip_address < 256 && self.ir0 != Opcode::Push8 as u8 {
+                    for i in 0..len {
+                        assert!(self.regs_written[(chip_address + i) as usize]);
+                    }
+                }
+
                 if let Some(slice) = self.ram.get(chip_address as usize .. (chip_address+len) as usize) {
                     Some(slice)
                 } else {
@@ -196,6 +206,11 @@ impl<'a> Computer<'a> {
             0 => None,
             1 => {
                 assert!(RAM_MIN <= addr && addr <= RAM_MAX);
+                if chip_address < 256 {
+                    for i in 0..len {
+                        self.regs_written[(chip_address + i) as usize] = true;
+                    }
+                }
                 Some(&mut self.ram)
             },
             _ => None,

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::Debug, hash::Hash, ops::Range};
+use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::{Debug, Display}, hash::Hash, ops::Range};
 
 use crate::*;
 
@@ -46,6 +46,12 @@ impl IlVarId {
 }
 
 impl Debug for IlVarId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f,"{}", self.0)
+    }
+}
+
+impl Display for IlVarId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f,"{}", self.0)
     }
@@ -206,7 +212,14 @@ impl IlFunction {
                 IlInstruction::Call { ret: _, f, args: _ } => {
                     let callee = &program.functions[f];
                     if callee.attributes.contains(&FunctionAttribute::Inline) {
-                        Some(i)
+                        if !self.vars.contains_key(&IlVarId::frame_pointer()) &&
+                            callee.vars.contains_key(&IlVarId::frame_pointer())
+                        {
+                            None
+                        }
+                        else {
+                            Some(i)
+                        }
                     } else {
                         None
                     }
@@ -227,7 +240,7 @@ impl IlFunction {
                     IlLocation::FrameOffset(offset) => {
                         let addr = Expression::Arithmetic(
                             ArithmeticOperator::Add,
-                            Box::new(Expression::Ident(IlVarId::frame_pointer_str().to_owned())),
+                            Box::new(Expression::frame_pointer()),
                             Box::new(Expression::Number(NumberType::USIZE, offset))
                         );
                         let (id, _) = self.alloc_tmp_and_emit_value(ctxt, &addr);
@@ -286,7 +299,7 @@ impl IlFunction {
                         }
                     },
                     IlLocation::FrameOffset(offset) => {
-                        let frame = Expression::Ident(IlVarId::frame_pointer_str().to_owned());
+                        let frame = Expression::frame_pointer();
                         if offset == 0 {
                             frame
                         } else {
@@ -1243,11 +1256,13 @@ impl TryFrom<u32> for IlLocation {
     }
 }
 
+#[derive(Debug)]
 pub struct IlUsages<'a> {
     pub srcs: Vec<&'a IlVarId>,
     pub dest: Option<&'a IlVarId>,
 }
 
+#[derive(Debug)]
 pub struct IlUsagesMut<'a> {
     srcs: Vec<&'a mut IlVarId>,
     dest: Option<&'a mut IlVarId>,
@@ -1491,11 +1506,11 @@ impl IlProgram {
             match call {
                 IlInstruction::Call { ret, f, args: caller_param_values } => {
 
-                    if caller.id == f {
+                    let callee = &self.functions[&f];
+
+                    if caller.id == callee.id {
                         todo!("recursive not implemented.");
                     }
-
-                    let callee = &self.functions[&f];
 
                     for label in &callee.labels {
                         let inlined_label = IlLabelId(format!("inline_{}_{}_{}_{}", caller.id.0, callee.id.0, inline_iteration, label.0));
@@ -1506,7 +1521,14 @@ impl IlProgram {
                         caller.labels.insert(inlined_label);
                     }
 
+                    // identity mapping for frame pointer
+
                     for (var_id, var_info) in &callee.vars {
+                        if var_id == &IlVarId::frame_pointer() {
+                            assert!(caller.vars.contains_key(&IlVarId::frame_pointer()));
+                            continue;
+                        }
+
                         let inlined_name = IlVarId(format!("inline_{}_{}", inline_iteration, var_id.0));
                         let inlined_location = match var_info.location {
                             IlLocation::Reg(r) => IlLocation::Reg(r),
@@ -1545,7 +1567,7 @@ impl IlProgram {
 
                         if let IlInstruction::Return { val }  = stmt {
                             match (val.as_ref(), (&ret).as_ref()) {
-                                (None, None) => {},
+                                (None, None) => { },
                                 (Some(val), Some(ret)) => {
                                     inlined_instructions.push((
                                         IlInstruction::AssignVar {
@@ -1557,13 +1579,16 @@ impl IlProgram {
                                         },
                                         src_ctxt.clone()));
 
-                                    inlined_instructions.push((
-                                        IlInstruction::Goto(callee_label_to_caller_inlined_label[&callee.end_label].clone()),
-                                        src_ctxt.clone(),
-                                    ));
+                                    
                                 },
                                 _ => panic!(),
                             }
+
+                            inlined_instructions.push((
+                                IlInstruction::Goto(callee_label_to_caller_inlined_label[&callee.end_label].clone()),
+                                src_ctxt.clone(),
+                            ));
+
                             continue;
                         }
 

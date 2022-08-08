@@ -9,13 +9,13 @@ struct RpnCalc {
     have_num: u8;
 }
 
-fn RpnCalc_init(c: &RpnCalc) {
+fn [inline] RpnCalc_init(c: &RpnCalc) {
     s: &Stack = &(c->stack);
     stack_init(s);
     c->num = 0x0;
 }
 
-fn RpnCalc_push_pending(c: &RpnCalc) {
+fn [inline] RpnCalc_push_pending(c: &RpnCalc) {
     if (c->have_num != 0) {
         stack_push(&(c->stack), c->num);
         c->num = 0x0;
@@ -23,7 +23,7 @@ fn RpnCalc_push_pending(c: &RpnCalc) {
     }
 }
 
-fn RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
+fn [inline] RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
     stack: &Stack = &(c->stack);
 
     a: usize = 0;
@@ -140,7 +140,7 @@ fn main() -> u8 {
     return 1;
 }
 
-fn print_digit(a:u8) {
+fn [inline] print_digit(a:u8) {
     if (a < 10) {
         ttyout((a + '0'));
     } else {
