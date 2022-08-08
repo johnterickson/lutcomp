@@ -1362,13 +1362,13 @@ mod tests {
                 self.comp.reg_u32_set(4*i, *val);
             }
 
-            // let mut last_pc = None;
+            let mut last_pc = None;
             let mut step_count = 0u64;
             while self.comp.step() {
-                // if last_pc != Some(self.comp.pc) {
-                //     print_state(&mut self.comp);
-                // }
-                // last_pc = Some(self.comp.pc);
+                if last_pc != self.comp.ir0_pc {
+                    // print_state(&mut self.comp);
+                }
+                last_pc = self.comp.ir0_pc;
                 step_count += 1;
                 assert!(step_count < 1_0000_0000);
             }

@@ -1,4 +1,4 @@
-fn mul8(x:u8, y:u8) -> u8 {
+fn [inline] mul8(x:u8, y:u8) -> u8 {
     return (x*y);
 }
 
@@ -6,7 +6,7 @@ fn [inline] mul8_16(x:u8, y:u8) -> u16 {
     return __mul8_16(x,y);
 }
 
-fn mul16_32(a:usize, b:usize) -> usize {
+fn [inline] mul16_32(a:usize, b:usize) -> usize {
     c: usize = (a * b);
     
     f: usize = ((a[1] AS usize) * (b[1] AS usize));

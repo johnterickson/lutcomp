@@ -104,7 +104,7 @@ pub fn print_state(c: &Computer) {
         let mut seen = BTreeSet::new();
         for note in &symbol.notes {
             if seen.insert(note) {
-                println!("   {}", note);
+                // println!("   {}", note);
             }
         }   
     }
@@ -115,6 +115,8 @@ pub const STATICS_START_ADDRESS: u32 = common::RAM_MIN as u32 + common::REGISTER
 
 pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
     let mut input = input.to_owned();
+
+    let mut includes = BTreeSet::new();
 
     'reparse: loop {
         let mut ctxt = ProgramContext {
@@ -140,8 +142,6 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
 
         let to_parse = input.clone();
 
-        let mut includes = BTreeSet::new();
-
         // handle includes
         {
             let mut program = ProgramParser::parse(Rule::program, &to_parse)
@@ -161,6 +161,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                         path.push(relative_include_path);
                         let path = path.canonicalize().unwrap();
                         if includes.insert(path.to_owned()) {
+                            // dbg!(&path);
                             let mut file = File::open(&path).expect(&format!("Could not open '{:?}'", &path));
                             let mut contents = String::new();
                             contents += &format!("\n/* BEGIN INCLUDE '{:?}' */\n", &path);
@@ -215,7 +216,8 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                 },
                 Rule::function => {
                     let f = FunctionDefinition::parse(&ctxt, pair);
-                    ctxt.function_defs.insert(f.name.clone(), f);
+                    let existing = ctxt.function_defs.insert(f.name.clone(), f);
+                    assert!(existing.is_none(), "{:?} is already defined.", &existing);
                 },
                 // Rule::global => {
                 //     let mut decl = pair.into_inner();

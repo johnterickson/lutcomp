@@ -3,14 +3,6 @@
 !include 'mul.j'
 !include 'div.j'
 
-fn getchar() -> u8 {
-    tty: u8 = 0;
-    while ((tty & 128) == 0) {
-        tty = ttyin;
-    }
-    return (tty & 127);
-}
-
 struct RpnCalc {
     stack: Stack;
     num: usize;

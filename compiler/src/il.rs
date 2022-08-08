@@ -83,12 +83,14 @@ impl SourceContext {
 #[derive(Clone, Debug)]
 pub struct IlFunction {
     pub id: IlFunctionId,
+    pub attributes: HashSet<FunctionAttribute>,
     pub args: Vec<IlVarId>,
     pub body: Vec<(IlInstruction,SourceContext)>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
     pub consts: BTreeMap<IlVarId, IlNumber>,
     pub ret: Option<IlType>,
     labels: BTreeSet<IlLabelId>,
+    end_label: IlLabelId,
     next_temp_num: usize,
     next_label_num: usize,
     pub vars_stack_size: u32,
@@ -103,9 +105,11 @@ struct TargetLocation {
 }
 
 impl IlFunction {
-    fn new(id: IlFunctionId, intrinsic: Option<Intrinsic>) -> IlFunction {
+    fn new(id: IlFunctionId, attributes: HashSet<FunctionAttribute>, intrinsic: Option<Intrinsic>) -> IlFunction {
         IlFunction {
-            id, 
+            end_label: IlLabelId(format!("function_end_{}", &id.0)),
+            id,
+            attributes,
             args: Vec::new(),
             vars: BTreeMap::new(),
             body: Vec::new(),
@@ -190,6 +194,26 @@ impl IlFunction {
                 src: IlNumber::U32(addr),
             });
         addr_var
+    }
+
+    fn find_call_to_inline(&self, program: &IlProgram) -> Option<usize> {
+        if self.intrinsic.is_some() {
+            return None;
+        }
+        
+        self.body.iter().enumerate().filter_map(|(i, (stmt,_ctxt))| {
+            match stmt {
+                IlInstruction::Call { ret: _, f, args: _ } => {
+                    let callee = &program.functions[f];
+                    if callee.attributes.contains(&FunctionAttribute::Inline) {
+                        Some(i)
+                    } else {
+                        None
+                    }
+                }
+                _ => None
+            }
+        }).last()
     }
 
     fn emit_address(&mut self, ctxt: &mut IlContext, value: &Expression) -> (IlVarId, Option<u32>) {
@@ -826,7 +850,7 @@ impl IlFunction {
             FunctionImpl::Intrinsic(i) => Some(i.clone()),
         };
 
-        let mut func = IlFunction::new(id.clone(), intrinsic);
+        let mut func = IlFunction::new(id.clone(), ctxt.func_def.attributes.clone(), intrinsic);
 
         let return_size = ctxt.func_def.return_type.byte_count(ctxt.program);
         func.ret = match return_size {
@@ -933,6 +957,9 @@ impl IlFunction {
         if ctxt.func_def.return_type == Type::Void {
             func.emit_statement(ctxt, &Statement::Return{value: None });
         }
+
+        func.labels.insert(func.end_label.clone());
+        func.add_inst(ctxt, IlInstruction::Label(func.end_label.clone()));
 
         func.add_inst(ctxt, IlInstruction::Unreachable);
 
@@ -1440,7 +1467,167 @@ impl IlProgram {
 
         il.statics_addresses = ctxt.statics_base_address..next_static_addr;
 
+        il.inline();
+
         il
+    }
+
+    fn inline(&mut self) {
+
+        let mut inline_iteration = 0;
+
+        while let Some((caller, instruction_index)) = self.functions
+                .iter()
+                .find_map(|(caller, func)| 
+                    func.find_call_to_inline(&self).map(|i| (caller.clone(), i))
+                )
+        {
+            let mut callee_var_to_caller_inlined_var = BTreeMap::new();
+            let mut callee_label_to_caller_inlined_label = BTreeMap::new();
+            let mut inlined_instructions = Vec::new();
+
+            let mut caller = self.functions.remove(&caller).unwrap();
+            let (call, call_source_ctxt) = caller.body.remove(instruction_index);
+            match call {
+                IlInstruction::Call { ret, f, args: caller_param_values } => {
+
+                    if caller.id == f {
+                        todo!("recursive not implemented.");
+                    }
+
+                    let callee = &self.functions[&f];
+
+                    for label in &callee.labels {
+                        let inlined_label = IlLabelId(format!("inline_{}_{}_{}_{}", caller.id.0, callee.id.0, inline_iteration, label.0));
+                        callee_label_to_caller_inlined_label.insert(
+                            label.clone(),
+                            inlined_label.clone(),
+                        );
+                        caller.labels.insert(inlined_label);
+                    }
+
+                    for (var_id, var_info) in &callee.vars {
+                        let inlined_name = IlVarId(format!("inline_{}_{}", inline_iteration, var_id.0));
+                        let inlined_location = match var_info.location {
+                            IlLocation::Reg(r) => IlLocation::Reg(r),
+                            IlLocation::FrameOffset(o) => IlLocation::FrameOffset(caller.vars_stack_size+o),
+                            IlLocation::Static(a) => IlLocation::Static(a),
+                        };
+                        let mut inlined_var = var_info.clone();
+                        inlined_var.location = inlined_location;
+
+                        callee_var_to_caller_inlined_var.insert(var_id.clone(), inlined_name.clone());
+
+                        caller.vars.insert(
+                            inlined_name,
+                            inlined_var
+                        );
+                    }
+
+                    caller.vars_stack_size += callee.vars_stack_size;
+
+                    assert_eq!(caller_param_values.len(), callee.args.len());
+
+                    for (caller_param_value, arg) in caller_param_values.iter().zip(callee.args.iter()) {
+                        inlined_instructions.push((IlInstruction::AssignVar {
+                            dest: callee_var_to_caller_inlined_var[arg].clone(),
+                            dest_range: None,
+                            src: caller_param_value.clone(),
+                            src_range: None,
+                            size: callee.vars[arg].byte_size.try_into().unwrap(),
+                        },
+                        call_source_ctxt.clone()));
+                    }
+
+                    for (stmt, src_ctxt) in &callee.body {
+
+                        // dbg!(&stmt);
+
+                        if let IlInstruction::Return { val }  = stmt {
+                            match (val.as_ref(), (&ret).as_ref()) {
+                                (None, None) => {},
+                                (Some(val), Some(ret)) => {
+                                    inlined_instructions.push((
+                                        IlInstruction::AssignVar {
+                                            dest: ret.clone(),
+                                            dest_range: None, 
+                                            src: callee_var_to_caller_inlined_var[val].clone(),
+                                            src_range: None,
+                                            size: callee.vars[val].byte_size.try_into().unwrap(),
+                                        },
+                                        src_ctxt.clone()));
+
+                                    inlined_instructions.push((
+                                        IlInstruction::Goto(callee_label_to_caller_inlined_label[&callee.end_label].clone()),
+                                        src_ctxt.clone(),
+                                    ));
+                                },
+                                _ => panic!(),
+                            }
+                            continue;
+                        }
+
+                        let mut stmt = stmt.clone();
+                        let usages = stmt.var_usages_mut();
+                        for src in usages.srcs {
+                            *src = callee_var_to_caller_inlined_var[src].clone();
+                        }
+                        if let Some(dest) = usages.dest {
+                            *dest = callee_var_to_caller_inlined_var[dest].clone();
+                        }
+
+                        // dbg!(&stmt);
+
+                        match stmt {
+                            IlInstruction::Goto(l) => {
+                                inlined_instructions.push((
+                                    IlInstruction::Goto(callee_label_to_caller_inlined_label[&l].clone()),
+                                    src_ctxt.clone(),
+                                ));
+                            }
+                            IlInstruction::Label(l) => {
+                                inlined_instructions.push((
+                                    IlInstruction::Label(callee_label_to_caller_inlined_label[&l].clone()),
+                                    src_ctxt.clone(),
+                                ));
+                            },
+                            IlInstruction::IfThenElse { left, op, right, then_label, else_label } => {
+                                inlined_instructions.push((
+                                    IlInstruction::IfThenElse
+                                    {
+                                        left,
+                                        op,
+                                        right,
+                                        then_label: callee_label_to_caller_inlined_label[&then_label].clone(),
+                                        else_label: callee_label_to_caller_inlined_label[&else_label].clone(),
+                                    },
+                                    src_ctxt.clone(),
+                                ));
+                            }
+                            IlInstruction::Return { val:_ } => {
+                                panic!("Should be handled above.")
+                            }
+                            stmt => {
+                                inlined_instructions.push((stmt, src_ctxt.clone()));
+                            }
+                        }
+                    }
+
+                }
+                _ => panic!(),
+            }
+
+            if let Some(IlInstruction::Unreachable) = inlined_instructions.last().map(|(i,_)| i) {
+                inlined_instructions.pop();
+            }
+
+            for i in inlined_instructions.into_iter().rev() {
+                caller.body.insert(instruction_index, i)
+            }
+            self.functions.insert(caller.id.clone(), caller);
+
+            inline_iteration += 1;
+        }
     }
 }
 
@@ -1495,9 +1682,7 @@ pub struct IlLiveness<'a> {
 impl<'a> IlLiveness<'a> {
     pub fn calculate(f: &'a IlFunction) -> IlLiveness<'a> {
         let len = f.body.len();
-
-        // dbg!(&f.body);
-        // dbg!(&f.vars);
+        // dbg!(&f);
 
         let labels: BTreeMap<&IlLabelId, usize> = f.body.iter().enumerate()
             .filter_map(|(i,s)| match &s.0 {
@@ -1610,7 +1795,7 @@ impl<'a> IlLiveness<'a> {
                         IlInstruction::AssignVar {dest, src, size:_, src_range:_, dest_range:_}
                             if dest == *x && src == *y => {}
                         _ => {
-                            // dbg!(i, x, y);
+                            // dbg!(&l, &inst, i, x, y);
                             l.interferes.get_mut(*x).unwrap().insert(*y);
                             l.interferes.get_mut(*y).unwrap().insert(*x);
                         }
@@ -1672,6 +1857,7 @@ mod tests {
 
         let f = IlFunction {
             id: IlFunctionId("fib".to_owned()),
+            attributes: HashSet::new(),
             args: vec![n.clone()],
             next_label_num: 0,
             next_temp_num: 0,
@@ -1681,6 +1867,7 @@ mod tests {
             intrinsic: None,
             vars,
             labels: ([&loop_label, &body_label, &end_label]).iter().map(|l| (**l).clone()).collect(),
+            end_label: IlLabelId("end".to_owned()),
             body : [
                 IlInstruction::AssignNumber {dest: one.clone(), src: IlNumber::U8(1)},
                 IlInstruction::AssignNumber {dest: a.clone(), src: IlNumber::U8(0)},

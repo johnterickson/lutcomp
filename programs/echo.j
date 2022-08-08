@@ -1,10 +1,4 @@
-fn getchar() -> u8 {
-    tty: u8 = 0;
-    while ((tty & 128) == 0) {
-        tty = ttyin;
-    }
-    return (tty & 127);
-}
+!include 'echoline.j'
 
 fn main() -> u8 {
     ttyout('H');
