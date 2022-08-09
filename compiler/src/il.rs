@@ -103,6 +103,7 @@ pub struct IlFunction {
     next_label_num: usize,
     pub vars_stack_size: u32,
     pub intrinsic: Option<Intrinsic>,
+    frame_pointer_size_instruction_index: Option<(IlVarId,usize)>,
 }
 
 #[derive(Debug)]
@@ -127,8 +128,28 @@ impl IlFunction {
             next_label_num: 0,
             vars_stack_size: 0,
             intrinsic,
+            frame_pointer_size_instruction_index: None,
             ret: None,
         }
+    }
+
+    fn increase_stack_size(&mut self, additional_bytes: u32) {
+        if additional_bytes == 0 {
+            return;
+        }
+
+        let (stack_size_var, instruction_index) = self.frame_pointer_size_instruction_index.as_ref().unwrap();
+        let (mut existing, src_ctxt) = self.body.remove(*instruction_index);
+        match &mut existing {
+            IlInstruction::AssignNumber { dest, src } => {
+                assert_eq!(dest, stack_size_var);
+                assert_eq!(src.as_u32(), self.vars_stack_size);
+                self.vars_stack_size += additional_bytes;
+                *src = IlNumber::U32(self.vars_stack_size);
+            },
+            _ => panic!(),
+        }
+        self.body.insert(*instruction_index, (existing, src_ctxt));
     }
 
     fn add_inst(&mut self, ctxt: &IlContext, inst: IlInstruction) {
@@ -919,6 +940,8 @@ impl IlFunction {
                 location: IlLocation::Reg(IlType::U32),
                 var_type: Type::Number(NumberType::USIZE),
             });
+
+            func.frame_pointer_size_instruction_index = Some((stack_size.clone(), func.body.len()));
             func.add_inst(ctxt, IlInstruction::AssignNumber {
                 dest: stack_size.clone(),
                 src: IlNumber::U32(func.vars_stack_size.wrapping_neg()),
@@ -1552,7 +1575,7 @@ impl IlProgram {
                         );
                     }
 
-                    caller.vars_stack_size += callee.vars_stack_size;
+                    caller.increase_stack_size(callee.vars_stack_size);
 
                     assert_eq!(caller_param_values.len(), callee.args.len());
 
@@ -1896,6 +1919,7 @@ mod tests {
             ret: Some(IlType::U8),
             consts: BTreeMap::new(),
             intrinsic: None,
+            frame_pointer_size_instruction_index: None,
             vars,
             labels: ([&loop_label, &body_label, &end_label]).iter().map(|l| (**l).clone()).collect(),
             end_label: IlLabelId("end".to_owned()),
