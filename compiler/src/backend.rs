@@ -67,7 +67,7 @@ impl<'a> BackendProgram<'a> {
                 if let IlLocation::Reg(il_type) = var_info.location {
                     let regs_needed = il_type.byte_count().try_into().unwrap();
                     let regs = self.alloc_registers(name, &liveness, &mut info, regs_needed, regs_needed)
-                        .expect(&format!("Could not allocate a register for {:#?}", &f.body));
+                        .or_else(|| panic!("Could not allocate a register for {:#?}", &f.body)).unwrap();
                     for r in &regs {
                         if !(REG_SP..REG_SP+4).contains(r) {
                             info.registers_directly_used.insert(*r);

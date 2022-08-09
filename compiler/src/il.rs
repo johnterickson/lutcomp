@@ -2,6 +2,8 @@
 
 use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::{Debug, Display}, hash::Hash, ops::Range};
 
+use topological_sort::TopologicalSort;
+
 use crate::*;
 
 pub fn emit_il(entry: &str, input: &str, root: &Path) -> (ProgramContext, IlProgram) {
@@ -200,33 +202,6 @@ impl IlFunction {
                 src: IlNumber::U32(addr),
             });
         addr_var
-    }
-
-    fn find_call_to_inline(&self, program: &IlProgram) -> Option<usize> {
-        if self.intrinsic.is_some() {
-            return None;
-        }
-        
-        self.body.iter().enumerate().filter_map(|(i, (stmt,_ctxt))| {
-            match stmt {
-                IlInstruction::Call { ret: _, f, args: _ } => {
-                    let callee = &program.functions[f];
-                    if callee.attributes.contains(&FunctionAttribute::Inline) {
-                        if !self.vars.contains_key(&IlVarId::frame_pointer()) &&
-                            callee.vars.contains_key(&IlVarId::frame_pointer())
-                        {
-                            None
-                        }
-                        else {
-                            Some(i)
-                        }
-                    } else {
-                        None
-                    }
-                }
-                _ => None
-            }
-        }).last()
     }
 
     fn emit_address(&mut self, ctxt: &mut IlContext, value: &Expression) -> (IlVarId, Option<u32>) {
@@ -1491,12 +1466,42 @@ impl IlProgram {
 
         let mut inline_iteration = 0;
 
-        while let Some((caller, instruction_index)) = self.functions
-                .iter()
-                .find_map(|(caller, func)| 
-                    func.find_call_to_inline(&self).map(|i| (caller.clone(), i))
-                )
-        {
+        loop {
+            let mut locations = Vec::new();
+            let mut ts = TopologicalSort::<&IlFunctionId>::new();
+            for (_, caller) in &self.functions {
+                for (i, (stmt, _)) in caller.body.iter().enumerate() {
+                    match stmt {
+                        IlInstruction::Call { ret: _, f: callee, args: _ } => {
+                            let callee = &self.functions[callee];
+                            if   callee.attributes.contains(&FunctionAttribute::Inline) &&
+                                (caller.vars.contains_key(&IlVarId::frame_pointer()) || !callee.vars.contains_key(&IlVarId::frame_pointer()))
+                            {
+                                ts.add_dependency(&callee.id, &caller.id);
+                                locations.push((&caller.id, &callee.id, i));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+
+            // dbg!(&locations);
+            // dbg!(&ts);
+
+            let callee_leaf_function = match ts.pop() {
+                Some(f) => f,
+                None => return,
+            };
+
+            // dbg!(callee_leaf_function);
+
+            let (caller, _, instruction_index) = locations.iter()
+                .find(|(_, callee, _)| *callee == callee_leaf_function)
+                .cloned()
+                .unwrap();
+            let caller = caller.clone();
+
             let mut callee_var_to_caller_inlined_var = BTreeMap::new();
             let mut callee_label_to_caller_inlined_label = BTreeMap::new();
             let mut inlined_instructions = Vec::new();
@@ -1508,6 +1513,7 @@ impl IlProgram {
 
                     let callee = &self.functions[&f];
 
+                    // dbg!((&caller.id, &callee.id));
                     if caller.id == callee.id {
                         todo!("recursive not implemented.");
                     }
@@ -1529,7 +1535,7 @@ impl IlProgram {
                             continue;
                         }
 
-                        let inlined_name = IlVarId(format!("inline_{}_{}", inline_iteration, var_id.0));
+                        let inlined_name = IlVarId(format!("inline_{}_{}_{}_{}", caller.id.0, callee.id.0, inline_iteration, var_id.0));
                         let inlined_location = match var_info.location {
                             IlLocation::Reg(r) => IlLocation::Reg(r),
                             IlLocation::FrameOffset(o) => IlLocation::FrameOffset(caller.vars_stack_size+o),

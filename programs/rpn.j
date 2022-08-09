@@ -150,7 +150,7 @@ fn [inline] print_digit(a:u8) {
     }
 }
 
-fn print_dec32(a:usize) {
+fn [inline] print_dec32(a:usize) {
     if (a < 0x100) {
         print_dec8(a[0]);
         return;
@@ -165,7 +165,7 @@ fn print_dec32(a:usize) {
     ttyout((a[0] + '0'));
 }
 
-fn print_dec8(a:u8) {
+fn [inline] print_dec8(a:u8) {
     if (a >= 10) {
         b: u8 = (a / 10);
         print_dec8(b);

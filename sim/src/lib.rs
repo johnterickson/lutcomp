@@ -140,6 +140,11 @@ impl<'a> Computer<'a> {
         self.mem_word(common::RAM_MIN + reg_num as u32)
     }
 
+    pub fn try_reg_u32(&self, reg_num: u8) -> Option<u32> {
+        assert_eq!(reg_num % 4, 0);
+        self.try_mem_word(common::RAM_MIN + reg_num as u32)
+    }
+
     pub fn reg_u32_set(&mut self, reg_num: u8, value: u32) {
         assert!(reg_num % 4 == 0);
         *self.mem_word_mut(common::RAM_MIN + reg_num as u32) = value.to_le_bytes();
@@ -179,7 +184,10 @@ impl<'a> Computer<'a> {
                 // allow Push8 because we use it to save registers to the stack
                 if chip_address < 256 && self.ir0 != Opcode::Push8 as u8 {
                     for i in 0..len {
-                        assert!(self.regs_written[(chip_address + i) as usize]);
+                        if !self.regs_written[(chip_address + i) as usize] {
+                            return None;
+                        }
+                        // assert!(self.regs_written[(chip_address + i) as usize]);
                     }
                 }
 
@@ -246,6 +254,13 @@ impl<'a> Computer<'a> {
             panic!("Access of {:08x} is not word-aligned.", addr);
         }
         u32::from_le_bytes(self.mem_slice(addr,4).try_into().unwrap())
+    }
+
+    pub fn try_mem_word(&self, addr: u32) -> Option<u32> {
+        if addr % 4 != 0 {
+            panic!("Access of {:08x} is not word-aligned.", addr);
+        }
+        self.try_mem_slice(addr,4).map(|bytes| u32::from_le_bytes(bytes.try_into().unwrap()))
     }
 
     pub fn mem_byte_mut(&mut self, addr_bus: u32) -> &mut u8 {
@@ -429,38 +444,38 @@ impl<'a> Computer<'a> {
         }
 
         if self.stack_dump_rate != 0 && self.tick_count % self.stack_dump_rate == 0 {
-            let orig_sp = self.reg_u32(REG_SP);
-            
-            print!("# STACK DUMP");
+            if let Some(orig_sp) = self.try_reg_u32(REG_SP) {
+                print!("# STACK DUMP");
 
-            let print_pc = |pc| {
-                if let Some(f) = self.image.find_containing_function(pc) {
-                    print!("={}+0x{:x}", f.2, pc - f.0);
-                }
-            };
-
-            if let Some(pc) = self.ir0_pc {
-                print!(" pc:{:05x}", pc);
-                print_pc(pc);
-            }
-                
-            
-            print!(" sp:{:05x}", orig_sp);
-
-            let mut sp = orig_sp;
-            while sp < RAM_MAX {
-                if let Some(a) = self.try_mem_slice(sp, 4) {
-                    let mut addr = [0u8;4];
-                    addr.copy_from_slice(&a);
-                    let addr = u32::from_le_bytes(addr);
-                    if addr != 0 && addr < ROM_MAX {
-                        print!(" [sp+0x{:02x}]:{:05x}", sp - orig_sp, addr);
-                        print_pc(addr);
+                let print_pc = |pc| {
+                    if let Some(f) = self.image.find_containing_function(pc) {
+                        print!("={}+0x{:x}", f.2, pc - f.0);
                     }
+                };
+
+                if let Some(pc) = self.ir0_pc {
+                    print!(" pc:{:05x}", pc);
+                    print_pc(pc);
                 }
-                sp += 4;
+                    
+                
+                print!(" sp:{:05x}", orig_sp);
+
+                let mut sp = orig_sp;
+                while sp < RAM_MAX {
+                    if let Some(a) = self.try_mem_slice(sp, 4) {
+                        let mut addr = [0u8;4];
+                        addr.copy_from_slice(&a);
+                        let addr = u32::from_le_bytes(addr);
+                        if addr != 0 && addr < ROM_MAX {
+                            print!(" [sp+0x{:02x}]:{:05x}", sp - orig_sp, addr);
+                            print_pc(addr);
+                        }
+                    }
+                    sp += 4;
+                }
+                println!();
             }
-            println!();
         }
 
         true
