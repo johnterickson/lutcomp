@@ -261,6 +261,44 @@ fn main() {
             let mut file = File::create(circ_path).unwrap();
             write!(file, "{}", &project).unwrap();
         }
+        Some("program_ram") => {
+
+            let hex_path = get_param("hex_path").expect("hex path not specified.");
+            let file = File::open(hex_path).unwrap();
+            let hex = HexFile::read(file).unwrap();
+
+            let mut base_address = None;
+            for line in &hex.lines {
+                match line {
+                    HexFileLine::Data(_) => {},
+                    HexFileLine::Comment(line) => {
+                        if line.starts_with(" ImageBaseAddress=0x") {
+                            let mut parts = line.split("0x");
+                            let _ = parts.next().unwrap();
+                            base_address = Some(u32::from_str_radix(parts.next().unwrap(), 16).unwrap());
+                        }
+                    },
+                }
+            }
+
+            let base_address = base_address.expect("Did not find a base address");
+            assert!(base_address >= RAM_MIN);
+
+            print!("s{:08x}\n", base_address);
+    
+            for b in &hex.bytes() {
+                print!("w{:02x}\nn\n", b);
+            }
+    
+            // overwrite the return address
+            print!("s{:08x}\n", INITIAL_STACK-4);
+    
+            for b in base_address.to_le_bytes() {
+                print!("w{:02x}\nn\n", b);
+            }
+    
+            print!("q\n");
+        }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),
         None => eprintln!("no arg provided"),
     }
