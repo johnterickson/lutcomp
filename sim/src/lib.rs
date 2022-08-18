@@ -13,8 +13,14 @@ fn spawn_stdin_channel() -> Receiver<String> {
     thread::spawn(move || {
         loop {
             let mut buffer = String::new();
-            io::stdin().read_line(&mut buffer).unwrap();
-            tx.send(buffer).unwrap();
+            if let Ok(bytes) = io::stdin().read_line(&mut buffer) {
+                if bytes == 0 {
+                    break;
+                }
+                tx.send(buffer).unwrap();
+            } else {
+                break;
+            }
         }
     });
     rx
@@ -202,7 +208,7 @@ impl<'a> Computer<'a> {
     }
 
     pub fn mem_slice(&self, addr: u32, len: u32) -> &[u8] { 
-        self.try_mem_slice(addr, len).expect(&format!("Invalid memory read: {:08x}", addr))
+        self.try_mem_slice(addr, len).or_else(|| panic!("Invalid memory read: {:08x}", addr)).unwrap()
     }
 
     pub fn try_mem_slice_mut(&mut self, addr: u32, len: u32) -> Option<&mut [u8]> {

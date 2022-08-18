@@ -2,3 +2,4 @@ target/*
 **/*.hex
 !logisim/*.hex
 lcov.info
+flamegraph.svg
