@@ -2,7 +2,7 @@ set -e
 cargo test --release
 
 cargo run --release -- alu > logisim/alu.hex
-cargo run --release -- modify_circ --circuit=main --label=ALU\ LUT --circ_path=./logisim/lutcomp.circ --hex_path=./logisim/alu.hex
+cargo run --release -- modify_circ --circuit=main --label=ALU_LUT --circ_path=./logisim/lutcomp.circ --hex_path=./logisim/alu.hex
 
 cargo run --release -- ucode > logisim/ucode.hex
 cargo run --release -- modify_circ --circuit=main --label=uROM --circ_path=./logisim/lutcomp.circ --hex_path=./logisim/ucode.hex

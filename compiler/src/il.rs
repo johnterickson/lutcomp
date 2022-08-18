@@ -1578,7 +1578,7 @@ impl IlProgram {
                     caller.increase_stack_size(callee.vars_stack_size);
 
                     assert_eq!(caller_param_values.len(), callee.args.len());
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
                     for (caller_param_value, arg) in caller_param_values.iter().zip(callee.args.iter()) {
                         inlined_instructions.push((IlInstruction::AssignVar {
                             dest: callee_var_to_caller_inlined_var[arg].clone(),
