@@ -1,8 +1,6 @@
-use std::{collections::{HashSet}, hash::Hash};
-
 use super::*;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FunctionAttribute {
     Inline,
 }
@@ -25,7 +23,7 @@ pub enum FunctionImpl {
 #[derive(Clone,Debug)]
 pub struct FunctionDefinition {
     pub name: String,
-    pub attributes: HashSet<FunctionAttribute>,
+    pub attributes: BTreeSet<FunctionAttribute>,
     pub args: Vec<(String,Type)>,
     pub vars: BTreeMap<String,(Scope,Type)>,
     pub return_type: Type,
@@ -99,7 +97,7 @@ impl FunctionDefinition {
 
         let mut pairs = pair.into_inner();
 
-        let mut attributes = HashSet::new();
+        let mut attributes = BTreeSet::new();
 
         let mut pair = pairs.next().unwrap();
 

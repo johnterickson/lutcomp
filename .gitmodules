@@ -5,3 +5,6 @@
 	path = logisim/Logisim-Ita
 	url = https://github.com/johnterickson/Logisim-Ita.git
 	branch = perf
+[submodule "topological-sort"]
+	path = topological-sort
+	url = https://github.com/johnterickson/topological-sort-rs.git

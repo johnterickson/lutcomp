@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::{Debug, Display}, hash::Hash, ops::Range};
+use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::{Debug, Display}, ops::Range};
 
 use topological_sort::TopologicalSort;
 
@@ -34,7 +34,7 @@ pub enum IlInstruction {
     Unreachable,
 }
 
-#[derive(Clone, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct IlVarId(pub String);
 
 impl IlVarId {
@@ -67,10 +67,10 @@ pub struct IlVarInfo {
     pub byte_size: u32,
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct IlLabelId(pub String);
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct IlFunctionId(pub String);
 
 #[derive(Clone, Debug, Default)]
@@ -91,7 +91,7 @@ impl SourceContext {
 #[derive(Clone, Debug)]
 pub struct IlFunction {
     pub id: IlFunctionId,
-    pub attributes: HashSet<FunctionAttribute>,
+    pub attributes: BTreeSet<FunctionAttribute>,
     pub args: Vec<IlVarId>,
     pub body: Vec<(IlInstruction,SourceContext)>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
@@ -114,7 +114,7 @@ struct TargetLocation {
 }
 
 impl IlFunction {
-    fn new(id: IlFunctionId, attributes: HashSet<FunctionAttribute>, intrinsic: Option<Intrinsic>) -> IlFunction {
+    fn new(id: IlFunctionId, attributes: BTreeSet<FunctionAttribute>, intrinsic: Option<Intrinsic>) -> IlFunction {
         IlFunction {
             end_label: IlLabelId(format!("function_end_{}", &id.0)),
             id,
@@ -1377,7 +1377,7 @@ impl Debug for IlInstruction {
 }
 
 
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum IlNumber {
     U8(u8),
     U16(u16),
@@ -1911,7 +1911,7 @@ mod tests {
 
         let f = IlFunction {
             id: IlFunctionId("fib".to_owned()),
-            attributes: HashSet::new(),
+            attributes: BTreeSet::new(),
             args: vec![n.clone()],
             next_label_num: 0,
             next_temp_num: 0,
