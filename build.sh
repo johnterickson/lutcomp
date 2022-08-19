@@ -9,11 +9,11 @@ cargo run --release -- modify_circ --circuit=main --label=uROM --circ_path=./log
 
 cargo run --release -- assemble programs/echo.asm > logisim/echo.asm.hex
 cargo run --release -- modify_circ --circuit=main --label=ROM --circ_path=./logisim/lutcomp.circ --hex_path=./logisim/echo.asm.hex
-cat logisim/test.txt | java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -tty tty,speed,halt
+java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -tty tty,speed,halt < logisim/test.txt
 
 cargo run --release -- compile programs/echo.j > logisim/echo.j.hex
 cargo run --release -- modify_circ --circuit=main --label=ROM --circ_path=./logisim/lutcomp.circ --hex_path=./logisim/echo.j.hex
-cat logisim/test.txt | java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -tty tty,speed,halt
+java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -tty tty,speed,halt < logisim/test.txt
 
 echo "6 7 * q" | cargo run --release -- compile programs/rpn.j --sim=true > logisim/rpn.hex
 
