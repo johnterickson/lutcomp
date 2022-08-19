@@ -70,7 +70,7 @@ pub struct IlVarInfo {
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct IlLabelId(pub String);
 
-#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub struct IlFunctionId(pub String);
 
 #[derive(Clone, Debug, Default)]
@@ -1512,8 +1512,11 @@ impl IlProgram {
             // dbg!(&locations);
             // dbg!(&ts);
 
-            let callee_leaf_function = match ts.pop() {
-                Some(f) => f,
+            let mut callee_leaf_functions = ts.pop_all();
+            callee_leaf_functions.sort();
+
+            let callee_leaf_function = match callee_leaf_functions.get(0) {
+                Some(f) => *f,
                 None => return,
             };
 
