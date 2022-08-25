@@ -1482,7 +1482,44 @@ impl IlProgram {
 
         il.inline();
 
+        loop {
+            let mut called_functions = BTreeSet::new();
+            called_functions.insert(il.entry.clone());
+            il.find_calls( |_, callee, _| {
+                called_functions.insert(callee.clone());
+            });
+
+            let mut function_removed = false;
+
+            let mut new_functions = BTreeMap::new();
+            for (id, f) in il.functions.into_iter() {
+                if called_functions.contains(&id) {
+                    new_functions.insert(id, f);
+                } else {
+                    function_removed = true;
+                }
+            }
+            il.functions = new_functions;
+
+            if !function_removed {
+                break;
+            }
+        }
+
         il
+    }
+
+    fn find_calls<'a, F: FnMut(&'a IlFunction, &'a IlFunctionId, usize)>(&'a self, mut f: F) {
+        for (_, caller) in &self.functions {
+            for (i, (stmt, _)) in caller.body.iter().enumerate() {
+                match stmt {
+                    IlInstruction::Call { ret: _, f: callee, args: _ } => {
+                        f(caller, callee, i);
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 
     fn inline(&mut self) {
@@ -1492,22 +1529,15 @@ impl IlProgram {
         loop {
             let mut locations = Vec::new();
             let mut ts = TopologicalSort::<&IlFunctionId>::new();
-            for (_, caller) in &self.functions {
-                for (i, (stmt, _)) in caller.body.iter().enumerate() {
-                    match stmt {
-                        IlInstruction::Call { ret: _, f: callee, args: _ } => {
-                            let callee = &self.functions[callee];
-                            if   callee.attributes.contains(&FunctionAttribute::Inline) &&
-                                (caller.vars.contains_key(&IlVarId::frame_pointer()) || !callee.vars.contains_key(&IlVarId::frame_pointer()))
-                            {
-                                ts.add_dependency(&callee.id, &caller.id);
-                                locations.push((&caller.id, &callee.id, i));
-                            }
-                        }
-                        _ => {}
-                    }
+            self.find_calls( |caller, callee, i| {
+                let callee = &self.functions[callee];
+                if   callee.attributes.contains(&FunctionAttribute::Inline) &&
+                    (caller.vars.contains_key(&IlVarId::frame_pointer()) || !callee.vars.contains_key(&IlVarId::frame_pointer()))
+                {
+                    ts.add_dependency(&callee.id, &caller.id);
+                    locations.push((&caller.id, &callee.id, i));
                 }
-            }
+            });
 
             // dbg!(&locations);
             // dbg!(&ts);
