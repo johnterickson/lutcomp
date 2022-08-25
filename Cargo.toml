@@ -5,7 +5,6 @@ members = [
     "assemble",
     "common",
     "compiler",
-    "topological-sort",
     "sim",
     "ucode",
     ]
