@@ -77,7 +77,7 @@ unsigned long tickCount = 0;
 bool paused = false;
 bool halted = false;
 bool debug = false;
-#define DELAY_US  1
+#define DELAY_US  2
 #define INNER_TICKS (4*8)
 
 void initOutput(int pin, int initValue) {

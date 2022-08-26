@@ -1,4 +1,4 @@
-fn printHexDigit(a:u8) {
+fn [inline] printHexDigit(a:u8) {
     if (a < 10) {
         ttyout((a + '0'));
     } else {
@@ -8,7 +8,7 @@ fn printHexDigit(a:u8) {
     }
 }
 
-fn printHex(a:u8) {
+fn [inline] printHex(a:u8) {
     if (a > 15) {
         b: u8 = (a / 16);
         printHexDigit(b);
@@ -26,7 +26,7 @@ fn printHexTest(a:u8, b:u8) -> u8 {
     return 0;
 }
 
-fn parseHexNibble(ch: char) -> u8 {
+fn [inline] parseHexNibble(ch: char) -> u8 {
     if (ch >= 'a') {
         return ((ch - 'a') + 10);
     }
@@ -37,7 +37,7 @@ fn parseHexNibble(ch: char) -> u8 {
     return ((ch -'A') + 10);
 }
 
-fn parseHex(c: &char) -> u8 {
+fn [inline] parseHex(c: &char) -> u8 {
     h: u8 = (16 * (parseHexNibble(*c)));
     c = &c[0x1];
     h = (h + parseHexNibble(*c));

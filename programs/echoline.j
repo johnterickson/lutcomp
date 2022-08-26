@@ -1,6 +1,7 @@
 
 fn [inline] getchar() -> u8 {
     tty: u8 = 0;
+    tty = ttyin;
     while ((tty & 128) == 0) {
         tty = ttyin;
     }

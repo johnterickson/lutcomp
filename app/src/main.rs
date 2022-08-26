@@ -153,9 +153,9 @@ fn main() {
                         print!("hits:{}", h.1);
 
                         if let Some(f) = rom.find_containing_function(*h.0) {
-                            println!(" pc:{:06x}={}+0x{:x}", h.0, f.2, *h.0 - f.0);
+                            println!(" pc:{:05x}={}+0x{:x}", h.0, f.2, *h.0 - f.0);
                         } else {
-                            println!(" pc:{:06x}=??", h.0);
+                            println!(" pc:{:05x}=??", h.0);
                         }
 
                         if let Some(sym) = rom.symbols.get(h.0) {
