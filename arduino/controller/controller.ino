@@ -27,7 +27,7 @@ const int DATA_PINS[] = {
 
 #elif defined(ARDUINO_AVR_MEGA2560)
 
-#define ENABLE_WIFI
+//#define ENABLE_WIFI
 
 const int
   RESET_ = 7,
@@ -68,16 +68,16 @@ WiFiServer server(23);
 WiFiClient client;
 #endif
 
-const int QUEUE_LENGTH = 64;
-cppQueue  inputQueue(sizeof(char), QUEUE_LENGTH, FIFO, false);
-cppQueue  outputQueue(sizeof(char), QUEUE_LENGTH, FIFO, false);
+cppQueue  ttlToArduinoQueue(sizeof(char), 512, FIFO, false);
+cppQueue  arduinoToTtlQueue(sizeof(char), 256, FIFO, false);
 
 unsigned long tickCount = 0;
 //unsigned long breakPoint = 0;//1700/4*4;
 //long dataBreakPoint = 0x23;
 bool paused = false;
 bool halted = false;
-#define DELAY_US  2
+bool debug = false;
+#define DELAY_US  1
 #define INNER_TICKS (4*8)
 
 void initOutput(int pin, int initValue) {
@@ -97,13 +97,20 @@ void setDataPinsInput() {
 }
 
 void setDataPinsOutput() {
-  for(int i=0; i<8;i++) {
-    byte b;
-    if(outputQueue.peek(&b)) {
-      b |= 0x80;
-    } else {
-      b = 0;
+  byte b;
+  if(arduinoToTtlQueue.peek(&b)) {
+    if (debug) {
+      Serial.print("#Arduino->TTL    @");
+      Serial.print(millis());
+      Serial.print(": ");
+      Serial.println(b, HEX);
     }
+    b |= 0x80;
+  } else {
+    b = 0;
+  }
+
+  for(int i=0; i<8;i++) {
     initOutput(DATA_PINS[i], (b >> i) & 0x1);
   }
 }
@@ -129,7 +136,16 @@ ISR(PCINT_vect){   // Port D, PCINT16 - PCINT23
   if (!prevTTYOUT_CP && newTTYOUT_CP) {
     byte b = readDataPins();
     if (b != 0) {
-      inputQueue.push(&b);
+      if (!ttlToArduinoQueue.push(&b)) {
+        Serial.println("#ERR ttlToArduinoQueue overflow");
+        halted = true;
+      }
+      if (debug) {
+        Serial.print("#TTL->Arduino@");
+        Serial.print(millis());
+        Serial.print(": ");
+        Serial.println(b, HEX);
+      }
     }
   }
   prevTTYOUT_CP = newTTYOUT_CP;
@@ -138,16 +154,24 @@ ISR(PCINT_vect){   // Port D, PCINT16 - PCINT23
   bool newTTYIN_CP = digitalRead(TTYIN_CP);
   if (!prevTTYIN_CP && newTTYIN_CP) {
     byte dequeued;
-    if (!outputQueue.pop(&dequeued)) {
-      //Serial.print("TTL->ARDUINO ACK: Nothing to dequeue.");
+    if (!arduinoToTtlQueue.pop(&dequeued)) {
+//      if (debug) {
+//        Serial.println("#TTL->ARDUINO ACK: Nothing to dequeue.");
+//      }
     } else {
       dequeued &= 0x7f;
       byte acked = readDataPins() & 0x7f;
-      if (dequeued != acked) {
-        Serial.print("TTL->ARDUINO ACK: 0x");
+      if (debug || dequeued != acked) {
+        Serial.print("#Arduino<-TTL ACK@");
+        Serial.print(millis());
+        Serial.print(": 0x");
         Serial.print(dequeued, HEX);
-        Serial.print(" vs 0x");
-        Serial.println(acked, HEX);
+        if (dequeued != acked) {
+          Serial.print(" vs 0x");
+          Serial.println(acked, HEX);
+        } else {
+          Serial.println();
+        }
       }
     }
   }
@@ -188,15 +212,20 @@ void checkSerial() {
       reset();
     } else if (b == 'p') {
       paused = !paused;
+    } else if (b == '?') {
+      debug = !debug;
     } else {
-      /*
-      Serial.print("#PC->Arduino @");
-      Serial.print(millis());
-      Serial.print(": ");
-      Serial.println(b, HEX);
-      */
+      if (debug) {
+        Serial.print("#PC->Arduino@");
+        Serial.print(millis());
+        Serial.print(": ");
+        Serial.println(b, HEX);
+      }
       cli();
-      outputQueue.push(&b);
+      if (!arduinoToTtlQueue.push(&b)) {
+        Serial.println("#ERR arduinoToTtlQueue overflow");
+        halted = true;
+      }
       sei();
     }
   }
@@ -210,14 +239,17 @@ void checkSerial() {
     while (client.available() > 0) {
       b = client.read();
       cli();
-      outputQueue.push(&b);
+      if (!arduinoToTtlQueue.push(&b)) {
+        Serial.println("#ERR arduinoToTtlQueue overflow");
+        halted = true;
+      }
       sei();
     }
   }
 #endif
 
   cli();
-  if (inputQueue.pop(&b)) {
+  if (ttlToArduinoQueue.pop(&b)) {
     sei();
     if (b > 0) {
       Serial.print((char)b);
@@ -246,8 +278,8 @@ void reset() {
   tick(true);
   tick(true);
   delay(100);
-  inputQueue.clean();
-  outputQueue.clean();
+  ttlToArduinoQueue.clean();
+  arduinoToTtlQueue.clean();
   tickCount = 0;
   halted = false;
   digitalWrite(RESET_, HIGH);
@@ -255,7 +287,26 @@ void reset() {
 }
 
 void loop() {
-  for (int i=0; i< 4; i++) {
+  static uint16_t previousInCount = 0;
+  static uint16_t previousOutCount = 0;
+
+  if (debug) {
+    uint16_t inCount = ttlToArduinoQueue.getCount();
+    if (previousInCount != inCount) {
+      Serial.print("#ttlToArduinoQueue length:");
+      Serial.println(inCount);
+      previousInCount = inCount;
+    }
+    
+    uint16_t outCount = arduinoToTtlQueue.getCount();
+    if (previousOutCount != outCount) {
+      Serial.print("#arduinoToTtlQueue length:");
+      Serial.println(outCount);
+      previousOutCount = outCount;
+    }
+  }
+  
+  for (int i=0; i< 16; i++) {
     if ((tickCount & 0xFF) == 0) {
       checkSerial();
     }
@@ -274,10 +325,7 @@ void loop() {
   }
 }
 
-
-
 void setup() {
-  
   initOutput(LED, LOW);
   initOutput(RESET_, HIGH);
   initOutput(CLK, LOW);
@@ -287,6 +335,18 @@ void setup() {
   pinMode(TTYIN_OE_, INPUT);
 
   Serial.begin(2000000);
+
+  if (!ttlToArduinoQueue.isInitialized()) {
+    Serial.println("# ttlToArduinoQueue not initialized.");
+    Serial.flush();
+    return;
+  }
+
+  if (!arduinoToTtlQueue.isInitialized()) {
+    Serial.println("# arduinoToTtlQueue not initialized.");
+    Serial.flush();
+    return;
+  }
 
 #if defined(ENABLE_WIFI)
   memset(&wifiConnection, sizeof(wifiConnection), 0);
@@ -334,6 +394,6 @@ void setup() {
   cli();
   // https://thewanderingengineer.com/2014/08/11/arduino-pin-change-interrupts/
   PCMSK |= PCMSK_FLAGS;
-  PCICR |=  PCICR_FLAGS;
+  PCICR |= PCICR_FLAGS;
   sei();
 }
