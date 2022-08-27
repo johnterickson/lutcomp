@@ -35,7 +35,7 @@
         </entry>
         <entry>
           <string>lastDataFile</string>
-          <file>echo.asm.hex</file>
+          <file>rpn.hex</file>
         </entry>
         <entry>
           <string>autoReload</string>
@@ -401,16 +401,16 @@
           <string>Testdata</string>
           <testData>
             <dataString>ADDR    ADDR_OE_ MEM_OE_ $DATA A0_CP A1_CP A2_CP MEM_CP DATA
-Z       1        1       0x03  C     0     0     0      0x03
+Z       1        1       0x00  C     0     0     0      0x00
 Z       1        1       0x00  0     C     0     0      0x00
 Z       1        1       0x00  0     0     C     0      0x00
-0x3     0        0       Z     0     0     0     0      0x33
+0x0     0        0       Z     0     0     0     0      0x0F
 Z       1        1       0x08  0     0     C     0      0x08
-0x80003 0        1       0xAA  0     0     0     C      0xAA
+0x80000 0        1       0xAA  0     0     0     C      0xAA
 Z       1        1       0x02  C     0     0     0      0x02
 0x80002 0        1       0xBB  0     0     0     C      0xBB
-Z       1        1       0x03  C     0     0     0      0x03
-0x80003 0        0       Z     0     0     0     0      0xAA
+Z       1        1       0x00  C     0     0     0      0x00
+0x80000 0        0       Z     0     0     0     0      0xAA
 Z       1        1       0x02  C     0     0     0      0x02
 0x80002 0        0       Z     0     0     0     0      0xBB</dataString>
           </testData>
