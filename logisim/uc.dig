@@ -681,6 +681,10 @@
           <string>Label</string>
           <string>RESET_</string>
         </entry>
+        <entry>
+          <string>InDefault</string>
+          <value v="1" z="false"/>
+        </entry>
       </elementAttributes>
       <pos x="-1520" y="-160"/>
     </visualElement>
@@ -1111,6 +1115,24 @@
       <elementAttributes>
         <entry>
           <string>Label</string>
+          <string>$uAddr</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>19</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>hex</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="120" y="-100"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
           <string>$uPC</string>
         </entry>
         <entry>
@@ -1137,24 +1159,6 @@
         </entry>
       </elementAttributes>
       <pos x="-340" y="680"/>
-    </visualElement>
-    <visualElement>
-      <elementName>Out</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Label</string>
-          <string>$uAddr</string>
-        </entry>
-        <entry>
-          <string>Bits</string>
-          <int>19</int>
-        </entry>
-        <entry>
-          <string>intFormat</string>
-          <intFormat>hex</intFormat>
-        </entry>
-      </elementAttributes>
-      <pos x="120" y="-100"/>
     </visualElement>
     <visualElement>
       <elementName>Out</elementName>
