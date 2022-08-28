@@ -35,7 +35,7 @@
         </entry>
         <entry>
           <string>lastDataFile</string>
-          <file>rpn.hex</file>
+          <file>rom.hex</file>
         </entry>
         <entry>
           <string>autoReload</string>
@@ -299,25 +299,6 @@
       <pos x="1340" y="520"/>
     </visualElement>
     <visualElement>
-      <elementName>RAM.dig</elementName>
-      <elementAttributes/>
-      <pos x="1240" y="180"/>
-    </visualElement>
-    <visualElement>
-      <elementName>Out</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Label</string>
-          <string>DATA</string>
-        </entry>
-        <entry>
-          <string>Bits</string>
-          <int>8</int>
-        </entry>
-      </elementAttributes>
-      <pos x="1500" y="220"/>
-    </visualElement>
-    <visualElement>
       <elementName>Not</elementName>
       <elementAttributes/>
       <pos x="1000" y="980"/>
@@ -395,24 +376,24 @@
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>A*</string>
+          <string>mem-A*</string>
         </entry>
         <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>ADDR    ADDR_OE_ MEM_OE_ $DATA A0_CP A1_CP A2_CP MEM_CP DATA
-Z       1        1       0x00  C     0     0     0      0x00
-Z       1        1       0x00  0     C     0     0      0x00
-Z       1        1       0x00  0     0     C     0      0x00
-0x0     0        0       Z     0     0     0     0      0x0F
-Z       1        1       0x08  0     0     C     0      0x08
-0x80000 0        1       0xAA  0     0     0     C      0xAA
-Z       1        1       0x02  C     0     0     0      0x02
-0x80002 0        1       0xBB  0     0     0     C      0xBB
-Z       1        1       0x00  C     0     0     0      0x00
-0x80000 0        0       Z     0     0     0     0      0xAA
-Z       1        1       0x02  C     0     0     0      0x02
-0x80002 0        0       Z     0     0     0     0      0xBB</dataString>
+            <dataString>ADDR_out ADDR_OE_ MEM_OE_ DATA  A0_CP A1_CP A2_CP MEM_CP DATA_out
+Z        1        1       0x00  C     0     0     0      0x00
+Z        1        1       0x00  0     C     0     0      0x00
+Z        1        1       0x00  0     0     C     0      0x00
+0x0      0        0       Z     0     0     0     0      0x0F
+Z        1        1       0x08  0     0     C     0      0x08
+0x80000  0        1       0xAA  0     0     0     C      0xAA
+Z        1        1       0x02  C     0     0     0      0x02
+0x80002  0        1       0xBB  0     0     0     C      0xBB
+Z        1        1       0x00  C     0     0     0      0x00
+0x80000  0        0       Z     0     0     0     0      0xAA
+Z        1        1       0x02  C     0     0     0      0x02
+0x80002  0        0       Z     0     0     0     0      0xBB</dataString>
           </testData>
         </entry>
       </elementAttributes>
@@ -423,7 +404,7 @@ Z       1        1       0x02  C     0     0     0      0x02
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>$DATA</string>
+          <string>DATA</string>
         </entry>
         <entry>
           <string>Bits</string>
@@ -451,34 +432,20 @@ Z       1        1       0x02  C     0     0     0      0x02
       <pos x="1220" y="400"/>
     </visualElement>
     <visualElement>
-      <elementName>Out</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Label</string>
-          <string>ADDR</string>
-        </entry>
-        <entry>
-          <string>Bits</string>
-          <int>24</int>
-        </entry>
-      </elementAttributes>
-      <pos x="1180" y="1200"/>
-    </visualElement>
-    <visualElement>
       <elementName>Testcase</elementName>
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>ADDR</string>
+          <string>mem-ADDR</string>
         </entry>
         <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>$ADDR    ADDR_OE_ MEM_OE_ $DATA MEM_CP ADDR    DATA
-0x80007  1        1       0xAB  C      0x80007 0xAB
-0x90001  1        1       0x34  C      0x90001 0x34
-0x80007  1        0       Z     0      0x80007 0xAB
-0x90001  1        0       Z     0      0x90001 0x34</dataString>
+            <dataString>ADDR     ADDR_OE_ MEM_OE_ DATA  MEM_CP ADDR_out DATA_out
+0x80007  1        1       0xAB  C      0x80007  0xAB
+0x90001  1        1       0x34  C      0x90001  0x34
+0x80007  1        0       Z     0      0x80007  0xAB
+0x90001  1        0       Z     0      0x90001  0x34</dataString>
           </testData>
         </entry>
       </elementAttributes>
@@ -489,7 +456,7 @@ Z       1        1       0x02  C     0     0     0      0x02
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>$ADDR</string>
+          <string>ADDR</string>
         </entry>
         <entry>
           <string>Bits</string>
@@ -505,6 +472,11 @@ Z       1        1       0x02  C     0     0     0      0x02
         </entry>
       </elementAttributes>
       <pos x="980" y="1320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>ram.dig</elementName>
+      <elementAttributes/>
+      <pos x="1240" y="180"/>
     </visualElement>
   </visualElements>
   <wires>
@@ -617,10 +589,6 @@ Z       1        1       0x02  C     0     0     0      0x02
       <p2 x="1440" y="220"/>
     </wire>
     <wire>
-      <p1 x="1440" y="220"/>
-      <p2 x="1500" y="220"/>
-    </wire>
-    <wire>
       <p1 x="1220" y="540"/>
       <p2 x="1240" y="540"/>
     </wire>
@@ -681,28 +649,24 @@ Z       1        1       0x02  C     0     0     0      0x02
       <p2 x="600" y="940"/>
     </wire>
     <wire>
-      <p1 x="920" y="240"/>
-      <p2 x="1240" y="240"/>
-    </wire>
-    <wire>
       <p1 x="760" y="240"/>
       <p2 x="880" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="920" y="240"/>
+      <p2 x="1240" y="240"/>
     </wire>
     <wire>
       <p1 x="900" y="1200"/>
       <p2 x="1000" y="1200"/>
     </wire>
     <wire>
-      <p1 x="1000" y="1200"/>
-      <p2 x="1180" y="1200"/>
+      <p1 x="1120" y="500"/>
+      <p2 x="1240" y="500"/>
     </wire>
     <wire>
       <p1 x="1100" y="180"/>
       <p2 x="1240" y="180"/>
-    </wire>
-    <wire>
-      <p1 x="1120" y="500"/>
-      <p2 x="1240" y="500"/>
     </wire>
     <wire>
       <p1 x="720" y="440"/>

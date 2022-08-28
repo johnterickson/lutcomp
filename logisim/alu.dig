@@ -121,20 +121,6 @@
       <pos x="460" y="400"/>
     </visualElement>
     <visualElement>
-      <elementName>Out</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Label</string>
-          <string>DATA</string>
-        </entry>
-        <entry>
-          <string>Bits</string>
-          <int>8</int>
-        </entry>
-      </elementAttributes>
-      <pos x="1200" y="220"/>
-    </visualElement>
-    <visualElement>
       <elementName>VDD</elementName>
       <elementAttributes/>
       <pos x="580" y="260"/>
@@ -225,12 +211,16 @@
       <elementName>Testcase</elementName>
       <elementAttributes>
         <entry>
+          <string>Label</string>
+          <string>ALU</string>
+        </entry>
+        <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>$DATA $DATA_OE ALU_OP IN1_CP ALU_CP ALU_OE_ DATA
-0x1   1        X      C      0      1       0X1
-0x2   1        0      0      C      1       0x2
-X     0        X      0      0      0       0x3</dataString>
+            <dataString>DATA  ALU_OP IN1_CP ALU_CP ALU_OE_ DATA_out
+0x1   X      C      0      1       0X1
+0x2   0      0      C      1       0x2
+Z     X      0      0      0       0x3</dataString>
           </testData>
         </entry>
       </elementAttributes>
@@ -241,7 +231,7 @@ X     0        X      0      0      0       0x3</dataString>
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>$DATA</string>
+          <string>DATA</string>
         </entry>
         <entry>
           <string>Bits</string>
@@ -250,48 +240,13 @@ X     0        X      0      0      0       0x3</dataString>
         <entry>
           <string>isHighZ</string>
           <boolean>true</boolean>
+        </entry>
+        <entry>
+          <string>InDefault</string>
+          <value v="0" z="true"/>
         </entry>
       </elementAttributes>
       <pos x="-160" y="140"/>
-    </visualElement>
-    <visualElement>
-      <elementName>In</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Label</string>
-          <string>$DATA_OE</string>
-        </entry>
-        <entry>
-          <string>isHighZ</string>
-          <boolean>true</boolean>
-        </entry>
-      </elementAttributes>
-      <pos x="-160" y="0"/>
-    </visualElement>
-    <visualElement>
-      <elementName>PullDown</elementName>
-      <elementAttributes/>
-      <pos x="-120" y="20"/>
-    </visualElement>
-    <visualElement>
-      <elementName>PullDown</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Bits</string>
-          <int>8</int>
-        </entry>
-      </elementAttributes>
-      <pos x="-120" y="160"/>
-    </visualElement>
-    <visualElement>
-      <elementName>Driver</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Bits</string>
-          <int>8</int>
-        </entry>
-      </elementAttributes>
-      <pos x="-80" y="140"/>
     </visualElement>
   </visualElements>
   <wires>
@@ -306,14 +261,6 @@ X     0        X      0      0      0       0x3</dataString>
     <wire>
       <p1 x="700" y="160"/>
       <p2 x="720" y="160"/>
-    </wire>
-    <wire>
-      <p1 x="-160" y="0"/>
-      <p2 x="-120" y="0"/>
-    </wire>
-    <wire>
-      <p1 x="-120" y="0"/>
-      <p2 x="-80" y="0"/>
     </wire>
     <wire>
       <p1 x="480" y="360"/>
@@ -333,15 +280,7 @@ X     0        X      0      0      0       0x3</dataString>
     </wire>
     <wire>
       <p1 x="-160" y="140"/>
-      <p2 x="-120" y="140"/>
-    </wire>
-    <wire>
-      <p1 x="-60" y="140"/>
       <p2 x="40" y="140"/>
-    </wire>
-    <wire>
-      <p1 x="-120" y="140"/>
-      <p2 x="-100" y="140"/>
     </wire>
     <wire>
       <p1 x="900" y="300"/>
@@ -408,12 +347,12 @@ X     0        X      0      0      0       0x3</dataString>
       <p2 x="980" y="60"/>
     </wire>
     <wire>
-      <p1 x="980" y="220"/>
-      <p2 x="1200" y="220"/>
-    </wire>
-    <wire>
       <p1 x="480" y="360"/>
       <p2 x="480" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="160"/>
+      <p2 x="720" y="300"/>
     </wire>
     <wire>
       <p1 x="580" y="260"/>
@@ -428,44 +367,16 @@ X     0        X      0      0      0       0x3</dataString>
       <p2 x="100" y="540"/>
     </wire>
     <wire>
+      <p1 x="980" y="60"/>
+      <p2 x="980" y="340"/>
+    </wire>
+    <wire>
       <p1 x="40" y="60"/>
       <p2 x="40" y="140"/>
     </wire>
     <wire>
       <p1 x="40" y="140"/>
       <p2 x="40" y="180"/>
-    </wire>
-    <wire>
-      <p1 x="300" y="100"/>
-      <p2 x="300" y="140"/>
-    </wire>
-    <wire>
-      <p1 x="300" y="500"/>
-      <p2 x="300" y="620"/>
-    </wire>
-    <wire>
-      <p1 x="-80" y="0"/>
-      <p2 x="-80" y="120"/>
-    </wire>
-    <wire>
-      <p1 x="720" y="160"/>
-      <p2 x="720" y="300"/>
-    </wire>
-    <wire>
-      <p1 x="980" y="60"/>
-      <p2 x="980" y="220"/>
-    </wire>
-    <wire>
-      <p1 x="980" y="220"/>
-      <p2 x="980" y="340"/>
-    </wire>
-    <wire>
-      <p1 x="-120" y="0"/>
-      <p2 x="-120" y="20"/>
-    </wire>
-    <wire>
-      <p1 x="-120" y="140"/>
-      <p2 x="-120" y="160"/>
     </wire>
     <wire>
       <p1 x="920" y="260"/>
@@ -482,6 +393,14 @@ X     0        X      0      0      0       0x3</dataString>
     <wire>
       <p1 x="440" y="60"/>
       <p2 x="440" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="300" y="100"/>
+      <p2 x="300" y="140"/>
+    </wire>
+    <wire>
+      <p1 x="300" y="500"/>
+      <p2 x="300" y="620"/>
     </wire>
     <wire>
       <p1 x="380" y="180"/>

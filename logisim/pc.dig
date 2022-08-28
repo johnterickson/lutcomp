@@ -359,20 +359,6 @@
       <pos x="660" y="-40"/>
     </visualElement>
     <visualElement>
-      <elementName>Out</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Label</string>
-          <string>ADDR</string>
-        </entry>
-        <entry>
-          <string>Bits</string>
-          <int>24</int>
-        </entry>
-      </elementAttributes>
-      <pos x="960" y="-40"/>
-    </visualElement>
-    <visualElement>
       <elementName>In</elementName>
       <elementAttributes>
         <entry>
@@ -396,9 +382,13 @@
       <elementName>Testcase</elementName>
       <elementAttributes>
         <entry>
+          <string>Label</string>
+          <string>pc</string>
+        </entry>
+        <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>OE_ PC_SPE_ PC_INC RESET_ $ADDR_IN ADDR
+            <dataString>OE_ PC_SPE_ PC_INC RESET_ ADDR ADDR_out
 X X X 0 Z X
 0 1 0 1 Z 0
 repeat(256) 0 1 C 1 Z (n+1)
@@ -422,11 +412,19 @@ end loop</dataString>
         </entry>
         <entry>
           <string>Label</string>
-          <string>$ADDR_IN</string>
+          <string>ADDR</string>
         </entry>
         <entry>
           <string>Bits</string>
           <int>24</int>
+        </entry>
+        <entry>
+          <string>InDefault</string>
+          <value v="0" z="true"/>
+        </entry>
+        <entry>
+          <string>isHighZ</string>
+          <boolean>true</boolean>
         </entry>
       </elementAttributes>
       <pos x="-260" y="-40"/>
@@ -654,10 +652,6 @@ end loop</dataString>
     <wire>
       <p1 x="-260" y="-40"/>
       <p2 x="-180" y="-40"/>
-    </wire>
-    <wire>
-      <p1 x="900" y="-40"/>
-      <p2 x="960" y="-40"/>
     </wire>
     <wire>
       <p1 x="760" y="-40"/>

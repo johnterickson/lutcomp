@@ -17,6 +17,9 @@ java -jar ./logisim/Logisim-Ita/Compiled/Logisim-ITA.jar logisim/lutcomp.circ -t
 
 echo "6 7 * q" | cargo run --release -- compile programs/rpn.j --sim=true > logisim/rpn.hex
 
+cp logisim/rpn.hex logisim/rom.hex
+find logisim/*.dig -exec java -cp ../Digital/target/Digital.jar CLI test -verbose -circ {} \;
+
 echo "Upload echo to RAM and run it"
 cargo run --release -- compile programs/hello_ram.j --image_base_address=080400 > logisim/hello_ram.hex
 cargo run --release -- program_ram --hex_path=./logisim/hello_ram.hex | cargo run --release -- compile programs/bootram.j --sim=true --block_for_stdin=true > logisim/bootram.hex
