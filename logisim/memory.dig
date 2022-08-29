@@ -475,7 +475,12 @@ Z        1        1       0x02  C     0     0     0      0x02
     </visualElement>
     <visualElement>
       <elementName>ram.dig</elementName>
-      <elementAttributes/>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>RAM</string>
+        </entry>
+      </elementAttributes>
       <pos x="1240" y="180"/>
     </visualElement>
   </visualElements>

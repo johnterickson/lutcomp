@@ -156,11 +156,9 @@ fn [inline] print_dec32(a:usize) {
         return;
     }
 
-    if (a >= 0xA) {
-        b: usize = div32_by10(a);
-        print_dec32(b);
-        a = (a - mul32_by10(b));
-    }
+    b: usize = div32_by10(a);
+    print_dec32(b);
+    a = (a - mul32_by10(b));
 
     ttyout((a[0] + '0'));
 }

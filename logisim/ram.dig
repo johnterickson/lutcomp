@@ -65,6 +65,10 @@
           <int>19</int>
         </entry>
         <entry>
+          <string>Label</string>
+          <string>RAM</string>
+        </entry>
+        <entry>
           <string>Bits</string>
           <int>8</int>
         </entry>

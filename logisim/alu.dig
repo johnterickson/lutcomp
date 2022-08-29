@@ -248,6 +248,48 @@ Z     X      0      0      0       0x3</dataString>
       </elementAttributes>
       <pos x="-160" y="140"/>
     </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>$IN1</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>8</int>
+        </entry>
+      </elementAttributes>
+      <pos x="480" y="100"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>$ALU_REG</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>8</int>
+        </entry>
+      </elementAttributes>
+      <pos x="1060" y="340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>$ALU_RESULT</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>8</int>
+        </entry>
+      </elementAttributes>
+      <pos x="760" y="200"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -263,12 +305,20 @@ Z     X      0      0      0       0x3</dataString>
       <p2 x="720" y="160"/>
     </wire>
     <wire>
+      <p1 x="380" y="100"/>
+      <p2 x="480" y="100"/>
+    </wire>
+    <wire>
       <p1 x="480" y="360"/>
       <p2 x="500" y="360"/>
     </wire>
     <wire>
       <p1 x="580" y="360"/>
       <p2 x="600" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="700" y="200"/>
+      <p2 x="760" y="200"/>
     </wire>
     <wire>
       <p1 x="280" y="140"/>
@@ -324,11 +374,19 @@ Z     X      0      0      0       0x3</dataString>
     </wire>
     <wire>
       <p1 x="660" y="340"/>
-      <p2 x="760" y="340"/>
+      <p2 x="700" y="340"/>
     </wire>
     <wire>
       <p1 x="920" y="340"/>
       <p2 x="980" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="980" y="340"/>
+      <p2 x="1060" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="700" y="340"/>
+      <p2 x="760" y="340"/>
     </wire>
     <wire>
       <p1 x="760" y="660"/>
@@ -403,8 +461,16 @@ Z     X      0      0      0       0x3</dataString>
       <p2 x="300" y="620"/>
     </wire>
     <wire>
+      <p1 x="380" y="100"/>
+      <p2 x="380" y="180"/>
+    </wire>
+    <wire>
       <p1 x="380" y="180"/>
       <p2 x="380" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="700" y="200"/>
+      <p2 x="700" y="340"/>
     </wire>
   </wires>
   <measurementOrdering/>
