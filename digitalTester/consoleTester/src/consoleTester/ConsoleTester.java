@@ -11,14 +11,16 @@ import de.neemann.digital.draw.library.ElementNotFoundException;
 import de.neemann.digital.gui.components.terminal.Keyboard;
 
 
-public class Main {
+public class ConsoleTester {
 		
 	public static void main(String[] args) throws TestException, IOException, ElementNotFoundException, PinException, NodeException {
 		var stdin = new StdInKeyboard();
 		
-		var tester = new UnitTester(new File(args[1]));
+		var tester = new UnitTester(new File(args[0]));
 		var keyboardNode = (Keyboard)tester.getNode(n -> n instanceof Keyboard);
 		keyboardNode.setKeyboard(stdin);
+		
+		stdin.start();
 		
 		tester.runToBreak();
 	}
