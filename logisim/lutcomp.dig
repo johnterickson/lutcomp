@@ -428,7 +428,7 @@
         <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>RESET_ HALT
+            <dataString>RESET_ HALT_
 0      1</dataString>
           </testData>
         </entry>
