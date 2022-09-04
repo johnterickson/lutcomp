@@ -326,6 +326,23 @@
       </elementAttributes>
       <pos x="1100" y="260"/>
     </visualElement>
+    <visualElement>
+      <elementName>Testcase</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>ParallelToPS2</string>
+        </entry>
+        <entry>
+          <string>Testdata</string>
+          <testData>
+            <dataString>CLK PS2_CLK_out PS2_DATA_out
+0   1           1</dataString>
+          </testData>
+        </entry>
+      </elementAttributes>
+      <pos x="560" y="300"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
