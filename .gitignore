@@ -1,5 +1,5 @@
 target/*
 **/*.hex
-!logisim/*.hex
+!circuit/*.hex
 lcov.info
 flamegraph.svg

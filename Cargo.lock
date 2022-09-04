@@ -3,14 +3,6 @@
 version = 3
 
 [[package]]
-name = "RustyXML"
-version = "0.3.0"
-source = "git+https://github.com/Florob/RustyXML?rev=d0450dbbf5dbd78598d07a40d94ba4b225dd2b99#d0450dbbf5dbd78598d07a40d94ba4b225dd2b99"
-dependencies = [
- "indexmap",
-]
-
-[[package]]
 name = "alu"
 version = "0.1.0"
 dependencies = [
@@ -25,7 +17,6 @@ dependencies = [
 name = "app"
 version = "0.1.0"
 dependencies = [
- "RustyXML",
  "alu",
  "assemble",
  "common",
@@ -46,12 +37,6 @@ dependencies = [
  "sim",
  "strum",
 ]
-
-[[package]]
-name = "autocfg"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "bitflags"
@@ -163,28 +148,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "hashbrown"
-version = "0.12.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
-
-[[package]]
 name = "heck"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
 dependencies = [
  "unicode-segmentation",
-]
-
-[[package]]
-name = "indexmap"
-version = "1.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10a35a97730320ffe8e2d410b5d3b69279b98d2c14bdb8b70ea89ecf7888d41e"
-dependencies = [
- "autocfg",
- "hashbrown",
 ]
 
 [[package]]

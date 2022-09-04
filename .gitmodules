@@ -1,7 +1,3 @@
 [submodule "arduino/sst39sf040-avr"]
 	path = arduino/sst39sf040-avr
 	url = https://github.com/johnterickson/sst39sf040-avr.git
-[submodule "logisim/Logisim-Ita"]
-	path = logisim/Logisim-Ita
-	url = https://github.com/johnterickson/Logisim-Ita.git
-	branch = perf
