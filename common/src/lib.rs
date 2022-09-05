@@ -17,6 +17,8 @@ bitflags! {
         const ZERO = 0b0010;
         const NEG = 0b0100;
         const CARRY_PENDING = 0b1000;
+        const INTERRUPTS_ENABLED = 0b1000_0000;
+        const STANDARD_FLAGS = 0b01111;
     }
 }
 
@@ -146,65 +148,65 @@ pub struct ShiftCommand {
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
 pub enum Opcode {
-    LoadImm8 = 0, // regA <- [8-bit constant B]
-    Invert8 = 3, // ~regA -> regA
-    Negate8 = 4, // (~regA + 1) -> regA + FLAGS
-    ClearCarry = 0xE, // FLAGS & ~CARRY -> FLAGS
-    Init = 0xF, // Flags and all internal regs to zero
+    Init = 0x0, // Flags and all internal regs to zero
+    Invert8 = 0x1, // ~regA -> regA
+    Negate8 = 0x2, // (~regA + 1) -> regA + FLAGS
+    ClearCarry = 0x3, // FLAGS & ~CARRY -> FLAGS
+    LoadImm8 = 0x4, // regA <- [8-bit constant B]
+    Load8 = 0x5,     // 8-bit MEM[24-bit RegA] -> RegB
+    Store8 = 0x6,    // Reg A -> 8-bit MEM[24-bit RegB]
+    TtyIn = 0x7,  // TTY -> RegA
+    TtyOut = 0x8, // RegA -> TTY
+    Push8 = 0x9, // Reg_SP -= 1; RegA -> 8-bit MEM[Reg_SP]
+    Pop8 = 0xA, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
+    Copy8 = 0xB, // regA -> regB
 
-    Load8 = 0x10,     // 8-bit MEM[24-bit RegA] -> RegB
-    Store8 = 0x11,    // Reg A -> 8-bit MEM[24-bit RegB]
-    TtyIn = 0x12,  // TTY -> RegA
-    TtyOut = 0x13, // RegA -> TTY
-    Push8 = 0x14, // Reg_SP -= 1; RegA -> 8-bit MEM[Reg_SP]
-    Pop8 = 0x15, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
-    Copy8 = 0x16, // regA -> regB
+    Mul8_8 = 0x10, // 8-bit LSB RegA * 8-bit LSB RegB -> 8-bit LSB RegC
+    Mul8_16 = 0x11, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB RegC
+    AddCarry8 = 0x12, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
+    Add8NoCarry = 0x13, // 8bit regA + 8bit regB -> 8bit regC
+    Add8NoCarryIn = 0x14, // 8bit regA + 8bit regB -> 8bit regC
+    Cmp8 = 0x15, // 8bit regB - 8bit regA -> FLAGS
+    Cmp8IfZero = 0x16, // if Flags & ZERO { 8bit regB - 8bit regA } else { Flags } -> Flags
+    Divide8 = 0x17, // carry + 8bit regA / 8bit regB -> 8 bit regC + ZERO
 
-    Mul8_8 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 8-bit LSB RegC
-    Mul8_16 = 0x21, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB RegC
-    AddCarry8 = 0x22, // carry + 8bit regA + 8bit regB -> 8bit regC + carry
-    Add8NoCarry = 0x23, // 8bit regA + 8bit regB -> 8bit regC
-    Add8NoCarryIn = 0x24, // 8bit regA + 8bit regB -> 8bit regC
-    Cmp8 = 0x25, // 8bit regB - 8bit regA -> FLAGS
-    Cmp8IfZero = 0x26, // if Flags & ZERO { 8bit regB - 8bit regA } else { Flags } -> Flags
-    Divide8 = 0x27, // carry + 8bit regA / 8bit regB -> 8 bit regC + ZERO
+    AndImm8 = 0x18, // regA &= [8-bit constant B]
+    OrImm8 = 0x19, // regA |= [8-bit constant B]
+    XorImm8 = 0x1A, // regA ^= [8-bit constant B]
+    And8 = 0x1B, // regA & regB -> regC + FLAGS
+    Or8 = 0x1C, // regA | regB -> regC + FLAGS
+    Xor8 = 0x1D, // regA ^ regB -> regC + FLAGS
+    Shift8 = 0x1E,  // shift((ShiftCommand)regA, (amount)regA, (value) regB, (dest) regC)
 
-    AndImm8 = 0x30, // regA &= [8-bit constant B]
-    OrImm8 = 0x31, // regA |= [8-bit constant B]
-    XorImm8 = 0x32, // regA ^= [8-bit constant B]
-    And8 = 0x33, // regA & regB -> regC + FLAGS
-    Or8 = 0x34, // regA | regB -> regC + FLAGS
-    Xor8 = 0x35, // regA ^ regB -> regC + FLAGS
-    Shift8 = 0x36,  // shift((ShiftCommand)regA, (amount)regA, (value) regB, (dest) regC)
+    LoadImm32 = 0x20, // regA <- [32-bit constant BCDE]
+    Copy32 = 0x21,    // regA -> regB
+    Load32 = 0x22,       // 32-bit MEM[24-bit RegA] -> RegB
+    Store32_1 = 0x23, // RegA -> 32-bit MEM[24-bit RegB]
+    Store32_2 = 0x24, // [none] must follow Part1
+    StoreImm32 = 0x25,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
 
-    JmpImm = 0x40, // pc <- [24-bit constant ABC]
-    JcImm = 0x41,  // if Flags & CARRY { pc <- [24-bit constant ABC] }
-    JzImm = 0x42,  // if Flags & ZERO { px <- [24-bit constant ABC] }
-    JnImm = 0x43,  // if Flags & NEG { pc <- [24 LSB of Reg A] }
-    JmpReg = 0x48, // pc <- 24 LSB of Reg A
-    JmpMem = 0x49, // pc <- MEM[24 LSB of Reg A]
+    AddCarry32_1 = 0x30,      // 32-bit carry + regA + regB -> regC + carry
+    AddCarry32_2 = 0x31,      // [none] must follow Part1
+    AddImm32IgnoreCarry = 0x32, // RegA += [32-bit constant BCDE] [carry out unchanged]
 
-    LoadImm32 = 0x80, // regA <- [32-bit constant BCDE]
-    Copy32 = 0x81,    // regA -> regB
+    Or32 = 0x40,  // regA | regB -> regC
+    And32 = 0x41, // regA & regB -> regC
+    OrImm32 = 0x42,  // regA |= [32-bit constant BCDE]
+    AndImm32 = 0x43, // regA &= [32-bit constant BCDE]
 
-    Load32 = 0x90,       // 32-bit MEM[24-bit RegA] -> RegB
-    Store32_1 = 0x92, // RegA -> 32-bit MEM[24-bit RegB]
-    Store32_2 = 0x93, // [none] must follow Part1
-    StoreImm32 = 0x94,          // 32-bit MEM[24-bit RegA] <- [32-bit constant BCDE]
+    JmpImm = 0x70, // pc <- [24-bit constant ABC]
+    JcImm = 0x71,  // if Flags & CARRY { pc <- [24-bit constant ABC] }
+    JzImm = 0x72,  // if Flags & ZERO { px <- [24-bit constant ABC] }
+    JnImm = 0x73,  // if Flags & NEG { pc <- [24 LSB of Reg A] }
+    JmpReg = 0x74, // pc <- 24 LSB of Reg A
+    JmpMem = 0x75, // pc <- MEM[24 LSB of Reg A]
 
-    AddCarry32_1 = 0xA2,      // 32-bit carry + regA + regB -> regC + carry
-    AddCarry32_2 = 0xA3,      // [none] must follow Part1
-    AddImm32IgnoreCarry = 0xA4, // RegA += [32-bit constant BCDE] [carry out unchanged]
-
-    Or32 = 0xB0,  // regA | regB -> regC
-    And32 = 0xB1, // regA & regB -> regC
-    OrImm32 = 0xB2,  // regA |= [32-bit constant BCDE]
-    AndImm32 = 0xB3, // regA &= [32-bit constant BCDE]
-
-    HaltRAM = 0xCC, // imm32 halt code
-    GetUcodeInfo = 0xFD, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
-    GetAluInfo = 0xFE, // SpecialMicroHelperInfo(regA), 8-bit value regB
-    Halt = 0xFF, // imm32 halt code
+    HaltRAM = 0x4C, // (0xCC & 0x7F) imm32 halt code
+    EnableInterrupts = 0x7B,
+    DisableInterrupts = 0x7C,
+    GetUcodeInfo = 0x7D, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
+    GetAluInfo = 0x7E, // SpecialMicroHelperInfo(regA), 8-bit value regB
+    Halt = 0x7F, // (0xFF & 0x7F) imm32 halt code
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -276,6 +278,8 @@ impl Opcode {
             Opcode::GetAluInfo => &[1,1,1,4],
             Opcode::Halt => &[4],
             Opcode::HaltRAM => &[4],
+            Opcode::EnableInterrupts => &[],
+            Opcode::DisableInterrupts => &[],
         }
     }
 }
@@ -303,6 +307,10 @@ pub const ROM_MAX: u32 = ROM_MIN + ROM_SIZE - 1;
 pub const RAM_MIN: u32 = ROM_MAX + 1;
 pub const RAM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP;
 pub const RAM_MAX: u32 = RAM_MIN + RAM_SIZE - 1;
+
+pub const INTERRUPT_ISR: u32 = (RAM_MAX as u32/4)*4;
+pub const INTERRUPT_PC: u32 = INTERRUPT_ISR - 4;
+pub const INITIAL_STACK: u32 = RAM_MAX - 0x1000 + 1;
 
 #[derive(Clone,Debug,Default)]
 pub struct Symbol {

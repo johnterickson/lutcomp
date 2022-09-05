@@ -563,7 +563,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
 
     if fill_with_halt == Some(true) {
         let old_len = rom.len();
-        rom.resize(ROM_SIZE as usize, 0xff);
+        rom.resize(ROM_SIZE as usize, Opcode::Halt as u8);
         let added = rom.len() - old_len;
         println!("# Fill with HALT");
         println!("{}*ff", added);
