@@ -121,7 +121,6 @@ pub fn print_state(c: &Computer) {
     }
 }
 
-pub const INITIAL_STACK: u32 = (RAM_MAX as u32/4)*4;
 pub const STATICS_START_ADDRESS: u32 = common::RAM_MIN as u32 + common::REGISTER_COUNT;
 
 pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {

@@ -299,8 +299,28 @@ impl<'a> Computer<'a> {
 
         self.tick_count += 8;
 
+        // process interrupts
+        if self.stdin_out {
+            let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
+            let line = if self.block_for_stdin {
+                stdin_channel.recv().map(|l| Some(l)).unwrap_or_default()
+            } else {
+                stdin_channel.try_recv().map(|l| Some(l)).unwrap_or_default()
+            };
+
+            if let Some(line) = line {
+                for c in line.chars() {
+                    self.tty_in.push_back(c as u8);
+                }
+            }
+        }
+
+        let interrupt_pending = false; // !self.tty_in.is_empty();
+        let process_interrupt = interrupt_pending && self.flags.contains(Flags::INTERRUPTS_ENABLED);
+
         let urom_entry = MicroEntry {
             flags: self.flags.bits().into(),
+            process_interrupt: process_interrupt,
             instruction: self.ir0,
         };
         let mut urom_addr = u16::from_le_bytes(urom_entry.pack_lsb()) as usize;
@@ -315,6 +335,8 @@ impl<'a> Computer<'a> {
                 "urom_addr {:05x} = {:?} {:?} + {:02x}",
                 urom_addr, urom_entry, opcode, self.upc);
         }
+
+
 
         // match opcode {
         //     Some(Opcode::Store32Part1) => {
@@ -356,20 +378,6 @@ impl<'a> Computer<'a> {
                 None
             }
             DataBusOutputLevel::TtyIn => {
-                if self.stdin_out {
-                    let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
-                    let line = if self.block_for_stdin {
-                        stdin_channel.recv().map(|l| Some(l)).unwrap_or_default()
-                    } else {
-                        stdin_channel.try_recv().map(|l| Some(l)).unwrap_or_default()
-                    };
-
-                    if let Some(line) = line {
-                        for c in line.chars() {
-                            self.tty_in.push_back(c as u8);
-                        }
-                    }
-                }
                 let peek = self.tty_in.front();
                 Some(peek.map_or(0x00, |c| 0x80 | *c))
             }
@@ -421,7 +429,10 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
             DataBusLoadEdge::IR0 => {
                 self.ir0_pc = Some(addr_bus);
-                self.ir0 = data_bus.unwrap();
+
+                let ir0 = data_bus.unwrap() & 0x7F;
+                let process_interrupt: u8 = process_interrupt.into();
+                self.ir0 = ir0 | (process_interrupt << 7);
             },
             DataBusLoadEdge::Mem => {
                 if self.print {
