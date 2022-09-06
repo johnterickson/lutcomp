@@ -35,6 +35,7 @@ lazy_static! {
 pub struct Computer<'a> {
     pub image: Cow<'a, Image>,
     ram: Vec<u8>,
+    pub ps2: VecDeque<u8>,
     pub tty_in: VecDeque<u8>,
     pub tty_out: VecDeque<u8>,
     alu_lut: &'a [u8],
@@ -95,6 +96,7 @@ impl<'a> Computer<'a> {
         let c = Computer {
             image,
             ram: vec![0xCC; RAM_SIZE as usize],
+            ps2: VecDeque::new(),
             tty_in: VecDeque::new(),
             tty_out: VecDeque::new(),
             alu_lut: &alu::ALU,
@@ -371,6 +373,10 @@ impl<'a> Computer<'a> {
                 let peek = self.tty_in.front();
                 Some(peek.map_or(0x00, |c| 0x80 | *c))
             }
+            DataBusOutputLevel::PS2 => {
+                let peek = self.ps2.front();
+                Some(peek.map_or(0x00, |c| 0x80 | *c))
+            }
             DataBusOutputLevel::W => Some(self.regs[0]),
             DataBusOutputLevel::X => Some(self.regs[1]),
             DataBusOutputLevel::Y => Some(self.regs[2]),
@@ -387,7 +393,9 @@ impl<'a> Computer<'a> {
         }
 
         match urom_op.data_bus_load {
-            DataBusLoadEdge::None => {},
+            DataBusLoadEdge::PS2 => {
+                let _ = self.ps2.pop_front();
+            },
             DataBusLoadEdge::Addr0 => self.addr[0] = data_bus.unwrap(),
             DataBusLoadEdge::Addr1 => self.addr[1] = data_bus.unwrap(),
             DataBusLoadEdge::Addr2 => self.addr[2] = data_bus.unwrap(),
@@ -845,6 +853,7 @@ mod tests {
     #[test]
     fn ttyin() {
         let mut rom = Vec::new();
+        rom.push(Opcode::Init as u8);
         rom.push(Opcode::TtyIn as u8);
         rom.push(0);
         rom.push(Opcode::TtyIn as u8);
@@ -853,12 +862,37 @@ mod tests {
 
         let mut c = Computer::from_raw(rom);
 
-        c.tty_in.push_front('A' as u8);
+        c.tty_in.push_back('A' as u8);
 
         while c.step() {}
 
         assert_eq!(0x80 | ('A' as u8), c.reg_u8(0));
         assert_eq!(0, c.reg_u8(1));
+    }
+
+    #[test]
+    fn ps2_read() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Init as u8);
+        for i in 0..=8 {
+            rom.push(Opcode::ReadPS2 as u8);
+            rom.push(i);
+        }
+        rom.push(Opcode::Halt as u8);
+
+        let mut c = Computer::from_raw(rom);
+
+        let codes = &ASCII_TO_PS2_SCAN_CODES[('a' as u8) as usize];
+        for code in codes {
+            c.ps2.push_back(*code);
+        }
+
+        while c.step() {}
+
+        for (i, code) in codes.iter().enumerate() {
+            assert_eq!(0x80 | *code, c.reg_u8(i as u8));
+        }
+        assert_eq!(0, c.reg_u8(8));
     }
 
     fn modify8(op: Opcode, input: u8, output: u8) {

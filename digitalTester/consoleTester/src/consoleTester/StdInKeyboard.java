@@ -9,17 +9,15 @@ import de.neemann.digital.gui.components.terminal.Keyboard.KeyboardInterface;
 public class StdInKeyboard extends Thread implements KeyboardInterface {
 	private final Object textLock = new Object();
 	private String text = new String();
-	private boolean hasRead = false;
 			
 	@Override
     public int getChar() {
         synchronized (textLock) {
             if (text.length() == 0) {
-            	//System.out.println("Reading : {nothing}");
+            	// System.out.println("Reading : {nothing}");
                 return 0;
             } else {
-            	//System.out.println("Reading :" + text.charAt(0));
-            	hasRead = true;
+            	// System.out.println("Reading :" + text.charAt(0));
                 return text.charAt(0);
             }
         }
@@ -28,10 +26,9 @@ public class StdInKeyboard extends Thread implements KeyboardInterface {
 	@Override
     public void deleteFirstChar() {
         synchronized (textLock) {
-            if (hasRead && text.length() > 0) {
-            	//System.out.println("Dequeing :" + text.charAt(0));
+            if (text.length() > 0) {
+            	// System.out.println("Dequeing :" + text.charAt(0));
                 text = text.substring(1);
-                hasRead = false;
             }
         }
     }
@@ -49,7 +46,7 @@ public class StdInKeyboard extends Thread implements KeyboardInterface {
 				}
 				line = line.trim() + '\n';
 				synchronized (textLock) {
-					//System.out.println("Enqueing :" + line);
+					// System.out.println("Enqueing :" + line);
 					text = text + line;				
 				}
 			} catch (IOException e) {

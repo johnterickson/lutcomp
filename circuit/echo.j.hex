@@ -152,7 +152,7 @@ ff 00 00 00 00
 # inline_main_getchar_0_t1 <- inline_main_getchar_0_tty U8
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }", "Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Ident(\"tty\")", "Ident(\"tty\")"] }
 # 00066 Instruction { source: "inline_main_getchar_0_t1 <- inline_main_getchar_0_tty U8\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Ident(\\\"tty\\\")\", \"Ident(\\\"tty\\\")\"] }", opcode: Copy8, args: [Register(0x12), Register(0x10)], resolved: None }
-16 12 10 
+17 12 10 
 # inline_main_getchar_0_t2 <- 0n128/0x80u8 
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }", "Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Number(U8, 128)", "Number(U8, 128)"] }
 # 00069 Instruction { source: "inline_main_getchar_0_t2 <- 0n128/0x80u8 \n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Number(U8, 128)\", \"Number(U8, 128)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x80=128)], resolved: None }
@@ -190,7 +190,7 @@ ff 00 00 00 00
 # inline_main_getchar_0_t5 <- inline_main_getchar_0_tty U8
 # 	SourceContext { contexts: ["Return { value: Some(Arithmetic(And, Ident(\"tty\"), Number(U8, 127))) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Ident(\"tty\")", "Ident(\"tty\")"] }
 # 00084 Instruction { source: "inline_main_getchar_0_t5 <- inline_main_getchar_0_tty U8\n\tSourceContext { contexts: [\"Return { value: Some(Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Ident(\\\"tty\\\")\", \"Ident(\\\"tty\\\")\"] }", opcode: Copy8, args: [Register(0x12), Register(0x10)], resolved: None }
-16 12 10 
+17 12 10 
 # inline_main_getchar_0_t6 <- 0n127/0x7fu8 
 # 	SourceContext { contexts: ["Return { value: Some(Arithmetic(And, Ident(\"tty\"), Number(U8, 127))) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Number(U8, 127)", "Number(U8, 127)"] }
 # 00087 Instruction { source: "inline_main_getchar_0_t6 <- 0n127/0x7fu8 \n\tSourceContext { contexts: [\"Return { value: Some(Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Number(U8, 127)\", \"Number(U8, 127)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x7f=127)], resolved: None }
@@ -240,7 +240,7 @@ ff 00 00 00 00
 # return Some(t13)
 # 	SourceContext { contexts: ["Return { value: Some(Number(U8, 0)) }"] }
 # 000a1 Instruction { source: "return Some(t13)\n\tSourceContext { contexts: [\"Return { value: Some(Number(U8, 0)) }\"] }", opcode: Copy8, args: [Register(0x10), Register(0x00)], resolved: None }
-16 10 00 
+17 10 00 
 # 000a4 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
 49 0c 
 # goto main_if_end_6

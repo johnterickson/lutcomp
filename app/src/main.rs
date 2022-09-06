@@ -175,6 +175,47 @@ fn main() {
                 while c.step() { }
             }
         }
+        Some("ascii_to_ps2") => {
+            println!("v2.0 raw");
+            for (c, codes) in ASCII_TO_PS2_SCAN_CODES.iter().enumerate() {
+                if 0xA <= c && c <= 0xD {
+                    println!("# ASCII 0x{:02x}", c);
+                } else {
+                    println!("# ASCII 0x{:02x} == `{}`", c, (c as u8) as char);
+                }
+
+                for code in codes {
+                    print!("{:02x} ", *code);
+                }
+
+                println!("");
+            }
+        }
+        Some("ps2_to_ascii") => {
+            for (code, mapping) in PS2_SCAN_CODE_TO_ASCII.iter().enumerate() {
+                let code = code as u8;
+                println!("# PS2 CODE 0x{:02x}", code);
+                if let Some(key_name) = mapping.key_name {
+                    println!("# \"{}\"", key_name);
+                }
+                if mapping.ascii != 0 {
+                    if 0xA <= mapping.ascii && mapping.ascii <= 0xD {
+                        println!("# NORMAL ASCII  0x{:02x}", mapping.ascii);
+                    } else {
+                        println!("#  NORMAL ASCII 0x{:02x} == `{}`", mapping.ascii, mapping.ascii as char);
+                    }
+                }
+
+                if let Some(shifted_key_name) = mapping.shift_key_name {
+                    println!("# \"{}\"", shifted_key_name);
+                }
+                if mapping.shift_ascii != 0 {
+                    println!("# SHIFTED ASCII 0x{:02x} == `{}`", mapping.shift_ascii, mapping.shift_ascii as char);
+                }
+
+                println!("{:02x} {:02x} {:02x} 00", mapping.ascii, mapping.shift_ascii, if mapping.is_shift {1} else {0} );
+            }
+        }
         Some("program_ram") => {
 
             let hex_path = get_param("hex_path").expect("hex path not specified.");

@@ -6,6 +6,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="../Digital/target/Digital.jar" sourcepath="../Digital"/>
+	<classpathentry kind="lib" path="./../../../Digital/target/Digital.jar" sourcepath="./../../../Digital"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

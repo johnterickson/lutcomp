@@ -1192,6 +1192,26 @@
       </elementAttributes>
       <pos x="760" y="-340"/>
     </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>PS2_CP</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1220" y="60"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>PS2_OE_</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1360" y="1360"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -1217,6 +1237,10 @@
     <wire>
       <p1 x="540" y="0"/>
       <p2 x="560" y="0"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1280"/>
+      <p2 x="1020" y="1280"/>
     </wire>
     <wire>
       <p1 x="-220" y="900"/>
@@ -1611,6 +1635,10 @@
       <p2 x="-660" y="60"/>
     </wire>
     <wire>
+      <p1 x="1140" y="60"/>
+      <p2 x="1220" y="60"/>
+    </wire>
+    <wire>
       <p1 x="-620" y="60"/>
       <p2 x="-600" y="60"/>
     </wire>
@@ -1713,6 +1741,10 @@
     <wire>
       <p1 x="20" y="1360"/>
       <p2 x="160" y="1360"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1360"/>
+      <p2 x="1360" y="1360"/>
     </wire>
     <wire>
       <p1 x="760" y="720"/>
@@ -2245,6 +2277,10 @@
     <wire>
       <p1 x="1000" y="400"/>
       <p2 x="1000" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1280"/>
+      <p2 x="1000" y="1360"/>
     </wire>
     <wire>
       <p1 x="-940" y="220"/>

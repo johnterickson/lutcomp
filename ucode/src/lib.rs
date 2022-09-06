@@ -20,8 +20,8 @@ lazy_static! {
 }
 
 pub const MAJOR_VERSION: u8 = 1;
-pub const MINOR_VERSION: u8 = 1;
-pub const PATCH_VERSION: u8 = 1;
+pub const MINOR_VERSION: u8 = 2;
+pub const PATCH_VERSION: u8 = 0;
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
@@ -34,7 +34,7 @@ pub enum DataBusLoadEdge {
     Alu = 3,
     Mem = 4,
     TtyIn = 5,
-    None = 6,
+    PS2 = 6,
     Flags = 7,
     W = 8,
     X = 9,
@@ -84,6 +84,7 @@ pub enum DataBusOutputLevel {
     X = 9,
     Y = 10,
     Z = 11,
+    PS2 = 15,
 }
 
 impl DataBusOutputLevel {
@@ -175,14 +176,7 @@ impl MicroOp {
         if data_bus_out == DataBusOutputLevel::Next {
             assert_eq!(None, address_bus_out);
             assert_eq!(None, alu_opcode);
-            assert_eq!(DataBusLoadEdge::None, data_bus_load);
-            assert_eq!(None, immediate);
-        }
-
-        if data_bus_load == DataBusLoadEdge::None {
-            assert_eq!(DataBusOutputLevel::Next, data_bus_out);
-            assert_eq!(None, address_bus_out);
-            assert_eq!(None, alu_opcode);
+            assert_eq!(DataBusLoadEdge::W, data_bus_load);
             assert_eq!(None, immediate);
         }
 
@@ -1062,7 +1056,7 @@ impl Ucode {
                         pc_inc!(self); //self.start_of_ram();
                         pc_inc!(self);
                         pc_inc!(self); //pc_inc!(self);
-                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::None));
+                        add!(self, Output::Direct(DataBusOutputLevel::Next), Load::Direct(DataBusLoadEdge::W));
                         self.add_op(noop, file!(), line!());
 
                         self.add_op(noop, file!(), line!());
@@ -1153,10 +1147,40 @@ impl Ucode {
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
 
-                    add!(self, Output::Direct(DataBusOutputLevel::TtyIn), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Direct(DataBusOutputLevel::TtyIn), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
 
+                    // check top bit
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+
+                    if flags.contains(Flags::NEG) {
                     // ack it
-                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::TtyIn));
+                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::TtyIn));
+                    } else {
+                        self.add_op(noop, file!(), line!());
+                    }
+                }
+                Some(Opcode::ReadPS2) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::PS2), Load::Direct(DataBusLoadEdge::W));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
+
+                    // check top bit
+                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+
+                    if flags.contains(Flags::NEG) {
+                    // ack it
+                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::PS2));
+                    } else {
+                        self.add_op(noop, file!(), line!());
+                    }
                 }
                 Some(Opcode::TtyOut) => {
                     self.start_of_ram();
@@ -1658,7 +1682,7 @@ impl Ucode {
             }
             add!(self, 
                 Output::Direct(DataBusOutputLevel::Next),
-                Load::Direct(DataBusLoadEdge::None)
+                Load::Direct(DataBusLoadEdge::W)
             );
 
             let uop_count = self.uop_count;
@@ -1763,9 +1787,9 @@ mod tests {
         let hash = hasher.finish();
         let hash = hash % 0x1_0000_0000;
         
-        assert_eq!(1796100314, hash); // if you have to change this, also change the version
+        assert_eq!(3367832912, hash); // if you have to change this, also change the version
         assert_eq!(MAJOR_VERSION, 1);
-        assert_eq!(MINOR_VERSION, 1);
-        assert_eq!(PATCH_VERSION, 1);
+        assert_eq!(MINOR_VERSION, 2);
+        assert_eq!(PATCH_VERSION, 0);
     }
 }

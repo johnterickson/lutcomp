@@ -158,7 +158,8 @@ pub enum Opcode {
     TtyOut = 0x13, // RegA -> TTY
     Push8 = 0x14, // Reg_SP -= 1; RegA -> 8-bit MEM[Reg_SP]
     Pop8 = 0x15, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
-    Copy8 = 0x16, // regA -> regB
+    ReadPS2 = 0x16, // PS2 -> RegA
+    Copy8 = 0x17, // regA -> regB
 
     Mul8_8 = 0x20, // 8-bit LSB RegA * 8-bit LSB RegB -> 8-bit LSB RegC
     Mul8_16 = 0x21, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB RegC
@@ -233,6 +234,7 @@ impl Opcode {
             Opcode::Init => &[],
             Opcode::Load8 => &[1,1],
             Opcode::Store8 => &[1,1],
+            Opcode::ReadPS2 => &[1],
             Opcode::TtyIn => &[1],
             Opcode::TtyOut => &[1],
             Opcode::Push8 => &[1],
@@ -333,4 +335,206 @@ impl Image {
 #[derive(Clone,Debug)]
 pub enum Intrinsic {
     Mul8_16
+}
+
+use lazy_static::lazy_static;
+lazy_static! {
+    pub static ref ASCII_TO_PS2_SCAN_CODES: [[u8;8]; 128] = map_ascii_to_ps2_scan_codes();
+    pub static ref PS2_SCAN_CODE_TO_ASCII: [ScanCodeMapping; 128] = map_ps2_scan_code_to_ascii();
+}
+
+fn map_ascii_to_ps2_scan_codes() -> [[u8;8]; 128] {
+    let mut mappings = [[0;8]; 128];
+
+    for (code, key, shifted_key) in SCAN_CODE_TO_KEY {
+        if key.len() == 1 {
+            let c = key[0] as char;
+            mappings[c as usize] = [*code, 0xF0, *code, 0, 0, 0, 0, 0];
+        }
+
+        if shifted_key.len() == 1 {
+            let c = shifted_key[0] as char;
+            mappings[c as usize] = [0x12, 0xF0, *code, 0xF0, *code, 0xF0, 0x12, 0];
+        }
+    }
+
+    mappings
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct ScanCodeMapping {
+    pub key_name: Option<&'static str>,
+    pub ascii: u8,
+    pub shift_key_name: Option<&'static str>,
+    pub shift_ascii: u8,
+    pub is_shift: bool,
+}
+
+fn map_ps2_scan_code_to_ascii() -> [ScanCodeMapping; 128] {
+    let mut mappings = [Default::default(); 128];
+
+    for (code, key, shifted_key) in SCAN_CODE_TO_KEY {
+        if *code as usize >= mappings.len() {
+            continue;
+        }
+
+        let is_shift = match key {
+            &b"Left Shift" | &b"Right Shift" => true,
+            _ => false,
+        };
+
+        let key_char = if key.len() == 1 { key[0] } else { 0 };
+        let shifted_key_char = if shifted_key.len() == 1 { shifted_key[0] } else { 0 };
+
+        let key = std::str::from_utf8(*key).unwrap().trim();
+        let shifted_key = std::str::from_utf8(*shifted_key).unwrap().trim();
+
+        mappings[*code as usize] = ScanCodeMapping {
+            key_name: if key.is_empty() { None } else { Some(key) }, 
+            ascii: key_char,
+            shift_key_name: if shifted_key.is_empty() { None } else { Some(shifted_key) }, 
+            shift_ascii: shifted_key_char,
+            is_shift,
+        };
+    }
+
+    mappings
+}
+
+const SCAN_CODE_TO_KEY : &[(u8, &[u8], &[u8])] = &[
+    (0x0E,b"`",b"~"),
+    (0x16,b"1",b"!"),
+    (0x1E,b"2",b"@"),
+    (0x26,b"3",b"#"),
+    (0x25,b"4",b"$"),
+    (0x2E,b"5",b"%"),
+    (0x36,b"6",b"^"),
+    (0x3D,b"7",b"&"),
+    (0x3E,b"8",b"*"),
+    (0x46,b"9",b"("),
+    (0x45,b"0",b")"),
+    (0x4E,b"-",b"_"),
+    (0x55,b"=",b"+"),
+    (0x66,b"Backspace",b""),
+    (0x0D,b"Tab",b""),
+    (0x15,b"q",b"Q"),
+    (0x1D,b"w",b"W"),
+    (0x24,b"e",b"E"),
+    (0x2D,b"r",b"R"),
+    (0x2C,b"t",b"T"),
+    (0x35,b"y",b"Y"),
+    (0x3C,b"u",b"U"),
+    (0x43,b"i",b"I"),
+    (0x44,b"o",b"O"),
+    (0x4D,b"p",b"P"),
+    (0x54,b"[",b"{"),
+    (0x5B,b"]",b"}"),
+    (0x58,b"Caps Lock",b""),
+    (0x1C,b"a",b"A"),
+    (0x1B,b"s",b"S"),
+    (0x23,b"d",b"D"),
+    (0x2B,b"f",b"F"),
+    (0x34,b"g",b"G"),
+    (0x33,b"h",b"H"),
+    (0x3B,b"j",b"J"),
+    (0x42,b"k",b"K"),
+    (0x4B,b"l",b"L"),
+    (0x4C,b";",b":"),
+    (0x52,b"'",b"\""),
+    (0x5A,b"Enter",b"Enter"),
+    (0x12,b"Left Shift",b""),
+    (0x1A,b"z",b"Z"),
+    (0x22,b"x",b"X"),
+    (0x21,b"c",b"C"),
+    (0x2A,b"v",b"V"),
+    (0x32,b"b",b"B"),
+    (0x31,b"n",b"N"),
+    (0x3A,b"m",b"M"),
+    (0x41,b",",b"<"),
+    (0x49,b".",b">"),
+    (0x4A,b"/",b"?"),
+    (0x59,b"Right Shift",b""),
+    (0x11,b"Left Ctrl",b""),
+    (0x19,b"Left Alt",b""),
+    (0x29,b"Spacebar",b""),
+    (0x39,b"Right Alt",b""),
+    (0x58,b"Right Ctrl",b""),
+    (0x67,b"Insert",b""),
+    (0x64,b"Delete",b""),
+    (0x61,b"Left Arrow",b""),
+    (0x6E,b"Home",b""),
+    (0x65,b"End",b""),
+    (0x63,b"Up Arrow",b""),
+    (0x60,b"Down Arrow",b""),
+    (0x6F,b"Page Up",b""),
+    (0x6D,b"Page Down",b""),
+    (0x6A,b"Right Arrow",b""),
+    (0x76,b"Num Lock",b""),
+    (0x6C,b"Keypad 7",b""),
+    (0x6B,b"Keypad 4",b""),
+    (0x69,b"Keypad 1",b""),
+    (0x77,b"Keypad /",b""),
+    (0x75,b"Keypad 8",b""),
+    (0x73,b"Keypad 5",b""),
+    (0x72,b"Keypad 2",b""),
+    (0x70,b"Keypad 0",b""), // this conflicts with the F0 release byte when truncated by 0x7F
+    (0x7E,b"Keypad *",b""),
+    (0x7D,b"Keypad 9",b""),
+    (0x74,b"Keypad 6",b""),
+    (0x7A,b"Keypad 3",b""),
+    (0x71,b"Keypad .",b""),
+    (0x84,b"Keypad -",b""),
+    (0x7C,b"Keypad +",b""),
+    (0x79,b"Keypad Enter",b""),
+    (0x08,b"Esc",b""),
+    (0x07,b"F1",b""),
+    (0x0F,b"F2",b""),
+    (0x17,b"F3",b""),
+    (0x1F,b"F4",b""),
+    (0x27,b"F5",b""),
+    (0x2F,b"F6",b""),
+    (0x37,b"F7",b""),
+    (0x3F,b"F8",b""),
+    (0x47,b"F9",b""),
+    (0x4F,b"F10",b""),
+    (0x56,b"F11",b""),
+    (0x5E,b"F12",b""),
+    (0x57,b"Print Screen",b""),
+    (0x5F,b"Scroll Lock",b""),
+    (0x62,b"Pause Break",b""),
+    (0x5C,b"\\",b"|"),
+];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ps2_roundtrip() {
+        for code in 0u8..=0x7F {
+            let mapping = PS2_SCAN_CODE_TO_ASCII[code as usize];
+            if mapping.ascii != 0 {
+                assert_eq!(code, ASCII_TO_PS2_SCAN_CODES[mapping.ascii as usize][0]);
+            }
+            if mapping.shift_ascii != 0 {
+                let codes = &ASCII_TO_PS2_SCAN_CODES[mapping.shift_ascii as usize];
+                assert_eq!(code, codes[2]);
+            }
+        }
+        
+        for ascii in 0u8..0x7F {
+            let mut shift = false;
+            for code in  &ASCII_TO_PS2_SCAN_CODES[ascii as usize] {
+                if *code == 0 || *code > 0x7F {
+                    continue;
+                }
+                let mapping = &PS2_SCAN_CODE_TO_ASCII[*code as usize];
+                if mapping.is_shift {
+                    shift ^= true;
+                } else {
+                    assert_eq!(ascii, if shift { mapping.shift_ascii } else { mapping.ascii });
+                }
+            }
+        }
+    }
 }

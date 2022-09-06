@@ -17,7 +17,8 @@ public class ConsoleTester {
 		var stdin = new StdInKeyboard();
 		
 		var tester = new UnitTester(new File(args[0]));
-		var keyboardNode = (Keyboard)tester.getNode(n -> n instanceof Keyboard);
+		var keyboardNode = (Keyboard)tester.getNode(n -> n instanceof Keyboard && ((Keyboard)n).getLabel().equals("TTYIN"));
+		// System.out.println("Found keyboard: '" + keyboardNode.getLabel() + "'");
 		keyboardNode.setKeyboard(stdin);
 		
 		stdin.start();
