@@ -358,6 +358,16 @@ Z    0x61  1      1        1         Z        0          1</dataString>
       </elementAttributes>
       <pos x="400" y="320"/>
     </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>AVAILABLE</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1440" y="920"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -467,6 +477,10 @@ Z    0x61  1      1        1         Z        0          1</dataString>
     <wire>
       <p1 x="300" y="20"/>
       <p2 x="1400" y="20"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="920"/>
+      <p2 x="1440" y="920"/>
     </wire>
     <wire>
       <p1 x="280" y="540"/>
@@ -647,6 +661,10 @@ Z    0x61  1      1        1         Z        0          1</dataString>
     <wire>
       <p1 x="1040" y="680"/>
       <p2 x="1040" y="780"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="780"/>
+      <p2 x="1040" y="920"/>
     </wire>
     <wire>
       <p1 x="1300" y="200"/>
