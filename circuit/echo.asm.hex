@@ -191,61 +191,61 @@ v2.0 raw
 #       unsigned_hex_constant: '00000000'
 #  EOI: ''
 # 00000 Instruction { source: "loadimm8 r00 <- $01", opcode: LoadImm8, args: [Register(0x00), Constant8(0x01=1)], resolved: None }
-00 00 01 
+04 00 01 
 # 00003 Instruction { source: "and8 r00 r00 -> r00", opcode: And8, args: [Register(0x00), Register(0x00), Register(0x00)], resolved: None }
-33 00 00 00 
+1b 00 00 00 
 # 00007 Instruction { source: "loadimm8 r01 <- 'H'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x48=72)], resolved: None }
-00 01 48 
+04 01 48 
 # 0000a Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
-13 01 
+08 01 
 # 0000c Instruction { source: "loadimm8 r01 <- 'i'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x69=105)], resolved: None }
-00 01 69 
+04 01 69 
 # 0000f Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
-13 01 
+08 01 
 # 00011 Instruction { source: "loadimm8 r01 <- '!'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x21=33)], resolved: None }
-00 01 21 
+04 01 21 
 # 00014 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
-13 01 
+08 01 
 # 00016 Instruction { source: "loadimm8 r01 <- $0A", opcode: LoadImm8, args: [Register(0x01), Constant8(0x0a=10)], resolved: None }
-00 01 0a 
+04 01 0a 
 # 00019 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
-13 01 
+08 01 
 # :prompt
 # 0001b Instruction { source: "loadimm8 r01 <- '>'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3e=62)], resolved: None }
-00 01 3e 
+04 01 3e 
 # 0001e Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
-13 01 
+08 01 
 # 00020 Instruction { source: "loadimm8 r01 <- ':'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3a=58)], resolved: None }
-00 01 3a 
+04 01 3a 
 # 00023 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
-13 01 
+08 01 
 # :read
 # 00025 Instruction { source: "ttyin r01", opcode: TtyIn, args: [Register(0x01)], resolved: None }
-12 01 
+07 01 
 # 00027 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
-33 01 01 02 
+1b 01 01 02 
 # 0002b Instruction { source: "andimm8 r02 <- $80", opcode: AndImm8, args: [Register(0x02), Constant8(0x80=128)], resolved: None }
-30 02 80 
+18 02 80 
 # 0002e Instruction { source: "jzimm :read", opcode: JzImm, args: [Label24(:read)], resolved: None }
-42 25 00 00 
+72 25 00 00 
 # 00032 Instruction { source: "andimm8 r01 <- $7f", opcode: AndImm8, args: [Register(0x01), Constant8(0x7f=127)], resolved: None }
-30 01 7f 
+18 01 7f 
 # 00035 Instruction { source: "ttyout r01", opcode: TtyOut, args: [Register(0x01)], resolved: None }
-13 01 
+08 01 
 # 00037 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
-33 01 01 02 
+1b 01 01 02 
 # 0003b Instruction { source: "xorimm8 r02 <- 'q'", opcode: XorImm8, args: [Register(0x02), Constant8(0x71=113)], resolved: None }
-32 02 71 
+1a 02 71 
 # 0003e Instruction { source: "jzimm :halt", opcode: JzImm, args: [Label24(:halt)], resolved: None }
-42 51 00 00 
+72 51 00 00 
 # 00042 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
-33 01 01 02 
+1b 01 01 02 
 # 00046 Instruction { source: "xorimm8 r02 <- $0A", opcode: XorImm8, args: [Register(0x02), Constant8(0x0a=10)], resolved: None }
-32 02 0a 
+1a 02 0a 
 # 00049 Instruction { source: "jzimm :prompt", opcode: JzImm, args: [Label24(:prompt)], resolved: None }
-42 1b 00 00 
+72 1b 00 00 
 # 0004d Instruction { source: "jmpimm :read", opcode: JmpImm, args: [Label24(:read)], resolved: None }
-40 25 00 00 
+70 25 00 00 
 # :halt
 # 00051 Instruction { source: "halt $00000000", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
-ff 00 00 00 00 
+7e 00 00 00 00 

@@ -91,6 +91,10 @@ impl<'a> Computer<'a> {
             print)
     }
 
+    pub fn pc_u32(&self) -> u32 {
+        u32::from_le_bytes(self.pc)
+    }
+
     pub fn from_image(image: Cow<'a, Image>, print: bool) -> Computer<'a> {
         let start_pc = image.start_addr.to_le_bytes();
         let c = Computer {
@@ -299,7 +303,8 @@ impl<'a> Computer<'a> {
 
         self.tick_count += 8;
 
-        // process interrupts
+        
+        // process devices
         if self.stdin_out {
             let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
             let line = if self.block_for_stdin {
@@ -315,12 +320,11 @@ impl<'a> Computer<'a> {
             }
         }
 
-        let interrupt_pending = false; // !self.tty_in.is_empty();
+        let interrupt_pending = !self.tty_in.is_empty();
         let process_interrupt = interrupt_pending && self.flags.contains(Flags::INTERRUPTS_ENABLED);
 
         let urom_entry = MicroEntry {
             flags: self.flags.bits().into(),
-            process_interrupt: process_interrupt,
             instruction: self.ir0,
         };
         let mut urom_addr = u16::from_le_bytes(urom_entry.pack_lsb()) as usize;
@@ -335,8 +339,6 @@ impl<'a> Computer<'a> {
                 "urom_addr {:05x} = {:?} {:?} + {:02x}",
                 urom_addr, urom_entry, opcode, self.upc);
         }
-
-
 
         // match opcode {
         //     Some(Opcode::Store32Part1) => {
@@ -359,6 +361,12 @@ impl<'a> Computer<'a> {
             AddressBusOutputLevel::Pc => self.pc,
         });
 
+        if self.print {
+            if urom_op.data_bus_out == DataBusOutputLevel::Mem || urom_op.data_bus_out.is_addr() {
+                println!("addr_bus: {:06x}", addr_bus);
+            }
+        }
+
         let data_bus = match urom_op.data_bus_out {
             DataBusOutputLevel::Alu => Some(self.alu),
             DataBusOutputLevel::Halt => return false,
@@ -368,6 +376,15 @@ impl<'a> Computer<'a> {
                     println!("addr_bus: {:08x}", addr_bus);
                 }
                 Some(self.mem_byte(addr_bus))
+            }
+            DataBusOutputLevel::Addr0 => {
+                Some(((addr_bus>>0) & 0xFF) as u8)
+            }
+            DataBusOutputLevel::Addr1 => {
+                Some(((addr_bus>>8) & 0xFF) as u8)
+            }
+            DataBusOutputLevel::Addr2 => {
+                Some(((addr_bus>>16) & 0xFF) as u8)
             }
             DataBusOutputLevel::Next => {
                 self.upc = 0;
@@ -424,7 +441,10 @@ impl<'a> Computer<'a> {
                 self.alu = lut_output;
             }
             DataBusLoadEdge::Flags => {
-                self.flags = Flags::from_bits_truncate(data_bus.unwrap());
+                let incoming = Flags::from_bits_truncate(data_bus.unwrap());
+                self.flags = 
+                    (incoming & Flags::ARITHMETIC) |
+                    ((if incoming.contains(Flags::CHANGE_INTERRUPTS) { incoming } else { self.flags }) & Flags::INTERRUPTS_ENABLED);
             }
             DataBusLoadEdge::In1 => self.in1 = data_bus.unwrap(),
             DataBusLoadEdge::IR0 => {
@@ -509,6 +529,8 @@ impl<'a> Computer<'a> {
 
 #[cfg(test)]
 mod tests {
+    use packed_struct::types::IntegerAsBytes;
+
     use super::*;
 
     #[test]
@@ -1547,5 +1569,90 @@ mod tests {
         assert_eq!(ucode::PATCH_VERSION, c.reg_u8(3));
 
         assert_eq!(*ucode::UCODE_HASH, c.reg_u32(4));
+    }
+    
+    #[test]
+    fn interrupt_blocked_on_first_pc() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Init as u8);
+        rom.push(Opcode::HaltNoCode as u8);
+
+        let mut c = Computer::from_raw_with_print(rom, false);
+        c.flags = Flags::INTERRUPTS_ENABLED;
+        c.tty_in.push_back(b'!');
+
+        while c.step() { }
+
+        assert!(!c.flags.contains(Flags::INTERRUPTS_ENABLED));
+    }
+
+    #[test]
+    fn interrupt_isr_enter() {
+        let noop_end = 0x20u32;
+        let halt_start = noop_end;
+        let isr = 0x30u32;
+        let halt_end = isr;
+
+        let mut rom = Vec::new();
+        rom.push(Opcode::Init as u8);
+        rom.push(Opcode::LoadImm32 as u8);
+        rom.push(0x0);
+        rom.push(INTERRUPT_ISR.to_lsb_bytes()[0]);
+        rom.push(INTERRUPT_ISR.to_lsb_bytes()[1]);
+        rom.push(INTERRUPT_ISR.to_lsb_bytes()[2]);
+        rom.push(INTERRUPT_ISR.to_lsb_bytes()[3]);
+        rom.push(Opcode::StoreImm32 as u8);
+        rom.push(0x0);
+        rom.push(isr.to_lsb_bytes()[0]);
+        rom.push(isr.to_lsb_bytes()[1]);
+        rom.push(isr.to_lsb_bytes()[2]);
+        rom.push(isr.to_lsb_bytes()[3]);
+
+        let noop_start = rom.len() as u32;
+        assert!(noop_start + 10 < noop_end);
+        let interrupt_pc = (noop_end + noop_start)/2;
+        while rom.len() < interrupt_pc as usize {
+            rom.push(Opcode::Noop as u8);
+        }
+        
+        rom.push(Opcode::EnableInterrupts as u8);
+        
+        while rom.len() < halt_start as usize {
+            rom.push(Opcode::Noop as u8);
+        }
+
+        while rom.len() < halt_end as usize {
+            rom.push(Opcode::HaltNoCode as u8);
+        }
+
+        assert_eq!(rom.len() as u32, isr);
+
+        rom.push(Opcode::HaltNoCode as u8);
+
+        for i in noop_start..noop_end {
+            if i == interrupt_pc {
+                continue;
+            }
+
+            assert_eq!(rom[i as usize], Opcode::Noop as u8);
+        }
+
+
+        let mut c = Computer::from_raw_with_print(rom, false);
+        let mut fire_interrupt = false;
+        while c.step() {
+            assert!(c.pc_u32() < halt_start || c.pc_u32() >= halt_end);
+            assert!(c.pc_u32() <= isr + 1);
+            if !fire_interrupt {
+                assert_eq!(c.mem_word(INTERRUPT_PC), 0xCCCC_CCCC);
+                if c.pc_u32() == interrupt_pc {
+                    c.tty_in.push_back(b'!');
+                    fire_interrupt = true;
+                }
+            }
+        }
+
+        assert_eq!(c.mem_word(INTERRUPT_PC) & 0x00FFFFFF, interrupt_pc+1);
+        assert_eq!(c.pc_u32(), isr);
     }
 }

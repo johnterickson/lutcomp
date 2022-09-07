@@ -1,0 +1,497 @@
+# PS2 CODE 0x00
+00 00 00 00
+# PS2 CODE 0x01
+00 00 00 00
+# PS2 CODE 0x02
+00 00 00 00
+# PS2 CODE 0x03
+00 00 00 00
+# PS2 CODE 0x04
+00 00 00 00
+# PS2 CODE 0x05
+00 00 00 00
+# PS2 CODE 0x06
+00 00 00 00
+# PS2 CODE 0x07
+# "F1"
+00 00 00 00
+# PS2 CODE 0x08
+# "Esc"
+00 00 00 00
+# PS2 CODE 0x09
+00 00 00 00
+# PS2 CODE 0x0a
+00 00 00 00
+# PS2 CODE 0x0b
+00 00 00 00
+# PS2 CODE 0x0c
+00 00 00 00
+# PS2 CODE 0x0d
+# "Tab"
+00 00 00 00
+# PS2 CODE 0x0e
+# "`"
+#  NORMAL ASCII 0x60 == ```
+# "~"
+# SHIFTED ASCII 0x7e == `~`
+60 7e 00 00
+# PS2 CODE 0x0f
+# "F2"
+00 00 00 00
+# PS2 CODE 0x10
+00 00 00 00
+# PS2 CODE 0x11
+# "Left Ctrl"
+00 00 00 00
+# PS2 CODE 0x12
+# "Left Shift"
+00 00 01 00
+# PS2 CODE 0x13
+00 00 00 00
+# PS2 CODE 0x14
+00 00 00 00
+# PS2 CODE 0x15
+# "q"
+#  NORMAL ASCII 0x71 == `q`
+# "Q"
+# SHIFTED ASCII 0x51 == `Q`
+71 51 00 00
+# PS2 CODE 0x16
+# "1"
+#  NORMAL ASCII 0x31 == `1`
+# "!"
+# SHIFTED ASCII 0x21 == `!`
+31 21 00 00
+# PS2 CODE 0x17
+# "F3"
+00 00 00 00
+# PS2 CODE 0x18
+00 00 00 00
+# PS2 CODE 0x19
+# "Left Alt"
+00 00 00 00
+# PS2 CODE 0x1a
+# "z"
+#  NORMAL ASCII 0x7a == `z`
+# "Z"
+# SHIFTED ASCII 0x5a == `Z`
+7a 5a 00 00
+# PS2 CODE 0x1b
+# "s"
+#  NORMAL ASCII 0x73 == `s`
+# "S"
+# SHIFTED ASCII 0x53 == `S`
+73 53 00 00
+# PS2 CODE 0x1c
+# "a"
+#  NORMAL ASCII 0x61 == `a`
+# "A"
+# SHIFTED ASCII 0x41 == `A`
+61 41 00 00
+# PS2 CODE 0x1d
+# "w"
+#  NORMAL ASCII 0x77 == `w`
+# "W"
+# SHIFTED ASCII 0x57 == `W`
+77 57 00 00
+# PS2 CODE 0x1e
+# "2"
+#  NORMAL ASCII 0x32 == `2`
+# "@"
+# SHIFTED ASCII 0x40 == `@`
+32 40 00 00
+# PS2 CODE 0x1f
+# "F4"
+00 00 00 00
+# PS2 CODE 0x20
+00 00 00 00
+# PS2 CODE 0x21
+# "c"
+#  NORMAL ASCII 0x63 == `c`
+# "C"
+# SHIFTED ASCII 0x43 == `C`
+63 43 00 00
+# PS2 CODE 0x22
+# "x"
+#  NORMAL ASCII 0x78 == `x`
+# "X"
+# SHIFTED ASCII 0x58 == `X`
+78 58 00 00
+# PS2 CODE 0x23
+# "d"
+#  NORMAL ASCII 0x64 == `d`
+# "D"
+# SHIFTED ASCII 0x44 == `D`
+64 44 00 00
+# PS2 CODE 0x24
+# "e"
+#  NORMAL ASCII 0x65 == `e`
+# "E"
+# SHIFTED ASCII 0x45 == `E`
+65 45 00 00
+# PS2 CODE 0x25
+# "4"
+#  NORMAL ASCII 0x34 == `4`
+# "$"
+# SHIFTED ASCII 0x24 == `$`
+34 24 00 00
+# PS2 CODE 0x26
+# "3"
+#  NORMAL ASCII 0x33 == `3`
+# "#"
+# SHIFTED ASCII 0x23 == `#`
+33 23 00 00
+# PS2 CODE 0x27
+# "F5"
+00 00 00 00
+# PS2 CODE 0x28
+00 00 00 00
+# PS2 CODE 0x29
+# "Spacebar"
+00 00 00 00
+# PS2 CODE 0x2a
+# "v"
+#  NORMAL ASCII 0x76 == `v`
+# "V"
+# SHIFTED ASCII 0x56 == `V`
+76 56 00 00
+# PS2 CODE 0x2b
+# "f"
+#  NORMAL ASCII 0x66 == `f`
+# "F"
+# SHIFTED ASCII 0x46 == `F`
+66 46 00 00
+# PS2 CODE 0x2c
+# "t"
+#  NORMAL ASCII 0x74 == `t`
+# "T"
+# SHIFTED ASCII 0x54 == `T`
+74 54 00 00
+# PS2 CODE 0x2d
+# "r"
+#  NORMAL ASCII 0x72 == `r`
+# "R"
+# SHIFTED ASCII 0x52 == `R`
+72 52 00 00
+# PS2 CODE 0x2e
+# "5"
+#  NORMAL ASCII 0x35 == `5`
+# "%"
+# SHIFTED ASCII 0x25 == `%`
+35 25 00 00
+# PS2 CODE 0x2f
+# "F6"
+00 00 00 00
+# PS2 CODE 0x30
+00 00 00 00
+# PS2 CODE 0x31
+# "n"
+#  NORMAL ASCII 0x6e == `n`
+# "N"
+# SHIFTED ASCII 0x4e == `N`
+6e 4e 00 00
+# PS2 CODE 0x32
+# "b"
+#  NORMAL ASCII 0x62 == `b`
+# "B"
+# SHIFTED ASCII 0x42 == `B`
+62 42 00 00
+# PS2 CODE 0x33
+# "h"
+#  NORMAL ASCII 0x68 == `h`
+# "H"
+# SHIFTED ASCII 0x48 == `H`
+68 48 00 00
+# PS2 CODE 0x34
+# "g"
+#  NORMAL ASCII 0x67 == `g`
+# "G"
+# SHIFTED ASCII 0x47 == `G`
+67 47 00 00
+# PS2 CODE 0x35
+# "y"
+#  NORMAL ASCII 0x79 == `y`
+# "Y"
+# SHIFTED ASCII 0x59 == `Y`
+79 59 00 00
+# PS2 CODE 0x36
+# "6"
+#  NORMAL ASCII 0x36 == `6`
+# "^"
+# SHIFTED ASCII 0x5e == `^`
+36 5e 00 00
+# PS2 CODE 0x37
+# "F7"
+00 00 00 00
+# PS2 CODE 0x38
+00 00 00 00
+# PS2 CODE 0x39
+# "Right Alt"
+00 00 00 00
+# PS2 CODE 0x3a
+# "m"
+#  NORMAL ASCII 0x6d == `m`
+# "M"
+# SHIFTED ASCII 0x4d == `M`
+6d 4d 00 00
+# PS2 CODE 0x3b
+# "j"
+#  NORMAL ASCII 0x6a == `j`
+# "J"
+# SHIFTED ASCII 0x4a == `J`
+6a 4a 00 00
+# PS2 CODE 0x3c
+# "u"
+#  NORMAL ASCII 0x75 == `u`
+# "U"
+# SHIFTED ASCII 0x55 == `U`
+75 55 00 00
+# PS2 CODE 0x3d
+# "7"
+#  NORMAL ASCII 0x37 == `7`
+# "&"
+# SHIFTED ASCII 0x26 == `&`
+37 26 00 00
+# PS2 CODE 0x3e
+# "8"
+#  NORMAL ASCII 0x38 == `8`
+# "*"
+# SHIFTED ASCII 0x2a == `*`
+38 2a 00 00
+# PS2 CODE 0x3f
+# "F8"
+00 00 00 00
+# PS2 CODE 0x40
+00 00 00 00
+# PS2 CODE 0x41
+# ","
+#  NORMAL ASCII 0x2c == `,`
+# "<"
+# SHIFTED ASCII 0x3c == `<`
+2c 3c 00 00
+# PS2 CODE 0x42
+# "k"
+#  NORMAL ASCII 0x6b == `k`
+# "K"
+# SHIFTED ASCII 0x4b == `K`
+6b 4b 00 00
+# PS2 CODE 0x43
+# "i"
+#  NORMAL ASCII 0x69 == `i`
+# "I"
+# SHIFTED ASCII 0x49 == `I`
+69 49 00 00
+# PS2 CODE 0x44
+# "o"
+#  NORMAL ASCII 0x6f == `o`
+# "O"
+# SHIFTED ASCII 0x4f == `O`
+6f 4f 00 00
+# PS2 CODE 0x45
+# "0"
+#  NORMAL ASCII 0x30 == `0`
+# ")"
+# SHIFTED ASCII 0x29 == `)`
+30 29 00 00
+# PS2 CODE 0x46
+# "9"
+#  NORMAL ASCII 0x39 == `9`
+# "("
+# SHIFTED ASCII 0x28 == `(`
+39 28 00 00
+# PS2 CODE 0x47
+# "F9"
+00 00 00 00
+# PS2 CODE 0x48
+00 00 00 00
+# PS2 CODE 0x49
+# "."
+#  NORMAL ASCII 0x2e == `.`
+# ">"
+# SHIFTED ASCII 0x3e == `>`
+2e 3e 00 00
+# PS2 CODE 0x4a
+# "/"
+#  NORMAL ASCII 0x2f == `/`
+# "?"
+# SHIFTED ASCII 0x3f == `?`
+2f 3f 00 00
+# PS2 CODE 0x4b
+# "l"
+#  NORMAL ASCII 0x6c == `l`
+# "L"
+# SHIFTED ASCII 0x4c == `L`
+6c 4c 00 00
+# PS2 CODE 0x4c
+# ";"
+#  NORMAL ASCII 0x3b == `;`
+# ":"
+# SHIFTED ASCII 0x3a == `:`
+3b 3a 00 00
+# PS2 CODE 0x4d
+# "p"
+#  NORMAL ASCII 0x70 == `p`
+# "P"
+# SHIFTED ASCII 0x50 == `P`
+70 50 00 00
+# PS2 CODE 0x4e
+# "-"
+#  NORMAL ASCII 0x2d == `-`
+# "_"
+# SHIFTED ASCII 0x5f == `_`
+2d 5f 00 00
+# PS2 CODE 0x4f
+# "F10"
+00 00 00 00
+# PS2 CODE 0x50
+00 00 00 00
+# PS2 CODE 0x51
+00 00 00 00
+# PS2 CODE 0x52
+# "'"
+#  NORMAL ASCII 0x27 == `'`
+# """
+# SHIFTED ASCII 0x22 == `"`
+27 22 00 00
+# PS2 CODE 0x53
+00 00 00 00
+# PS2 CODE 0x54
+# "["
+#  NORMAL ASCII 0x5b == `[`
+# "{"
+# SHIFTED ASCII 0x7b == `{`
+5b 7b 00 00
+# PS2 CODE 0x55
+# "="
+#  NORMAL ASCII 0x3d == `=`
+# "+"
+# SHIFTED ASCII 0x2b == `+`
+3d 2b 00 00
+# PS2 CODE 0x56
+# "F11"
+00 00 00 00
+# PS2 CODE 0x57
+# "Print Screen"
+00 00 00 00
+# PS2 CODE 0x58
+# "Right Ctrl"
+00 00 00 00
+# PS2 CODE 0x59
+# "Right Shift"
+00 00 01 00
+# PS2 CODE 0x5a
+# "Enter"
+# "Enter"
+00 00 00 00
+# PS2 CODE 0x5b
+# "]"
+#  NORMAL ASCII 0x5d == `]`
+# "}"
+# SHIFTED ASCII 0x7d == `}`
+5d 7d 00 00
+# PS2 CODE 0x5c
+# "\"
+#  NORMAL ASCII 0x5c == `\`
+# "|"
+# SHIFTED ASCII 0x7c == `|`
+5c 7c 00 00
+# PS2 CODE 0x5d
+00 00 00 00
+# PS2 CODE 0x5e
+# "F12"
+00 00 00 00
+# PS2 CODE 0x5f
+# "Scroll Lock"
+00 00 00 00
+# PS2 CODE 0x60
+# "Down Arrow"
+00 00 00 00
+# PS2 CODE 0x61
+# "Left Arrow"
+00 00 00 00
+# PS2 CODE 0x62
+# "Pause Break"
+00 00 00 00
+# PS2 CODE 0x63
+# "Up Arrow"
+00 00 00 00
+# PS2 CODE 0x64
+# "Delete"
+00 00 00 00
+# PS2 CODE 0x65
+# "End"
+00 00 00 00
+# PS2 CODE 0x66
+# "Backspace"
+00 00 00 00
+# PS2 CODE 0x67
+# "Insert"
+00 00 00 00
+# PS2 CODE 0x68
+00 00 00 00
+# PS2 CODE 0x69
+# "Keypad 1"
+00 00 00 00
+# PS2 CODE 0x6a
+# "Right Arrow"
+00 00 00 00
+# PS2 CODE 0x6b
+# "Keypad 4"
+00 00 00 00
+# PS2 CODE 0x6c
+# "Keypad 7"
+00 00 00 00
+# PS2 CODE 0x6d
+# "Page Down"
+00 00 00 00
+# PS2 CODE 0x6e
+# "Home"
+00 00 00 00
+# PS2 CODE 0x6f
+# "Page Up"
+00 00 00 00
+# PS2 CODE 0x70
+# "Keypad 0"
+00 00 00 00
+# PS2 CODE 0x71
+# "Keypad ."
+00 00 00 00
+# PS2 CODE 0x72
+# "Keypad 2"
+00 00 00 00
+# PS2 CODE 0x73
+# "Keypad 5"
+00 00 00 00
+# PS2 CODE 0x74
+# "Keypad 6"
+00 00 00 00
+# PS2 CODE 0x75
+# "Keypad 8"
+00 00 00 00
+# PS2 CODE 0x76
+# "Num Lock"
+00 00 00 00
+# PS2 CODE 0x77
+# "Keypad /"
+00 00 00 00
+# PS2 CODE 0x78
+00 00 00 00
+# PS2 CODE 0x79
+# "Keypad Enter"
+00 00 00 00
+# PS2 CODE 0x7a
+# "Keypad 3"
+00 00 00 00
+# PS2 CODE 0x7b
+00 00 00 00
+# PS2 CODE 0x7c
+# "Keypad +"
+00 00 00 00
+# PS2 CODE 0x7d
+# "Keypad 9"
+00 00 00 00
+# PS2 CODE 0x7e
+# "Keypad *"
+00 00 00 00
+# PS2 CODE 0x7f
+00 00 00 00

@@ -1208,7 +1208,7 @@ mod tests {
             "main",
             include_str!("../../programs/bootram.j"));
 
-        let mut c = Computer::from_image(Cow::Owned(loader_image), false);
+        let mut c = Computer::from_image(Cow::Owned(loader_image), true);
 
         for ch in (format!("s{:08x}\n", a)).chars() {
             c.tty_in.push_back(ch as u8);

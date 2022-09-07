@@ -2,19 +2,19 @@ v2.0 raw
 # ImageBaseAddress=0x00000000
 # entry
 # 00000 Instruction { source: "Initialzing flags and internal regs.", opcode: Init, args: [], resolved: None }
-0f 
-# 00001 Instruction { source: "Initialzing stack register to 0x000ffffc.", opcode: LoadImm32, args: [Register(0x0c), Constant32(0x000ffffc=1048572)], resolved: None }
-80 0c fc ff 0f 00 
+00 
+# 00001 Instruction { source: "Initialzing stack register to 0x000f0f00.", opcode: LoadImm32, args: [Register(0x0c), Constant32(0x000f0f00=986880)], resolved: None }
+20 0c 00 0f 0f 00 
 # 00007 Instruction { source: "PseudoCall(Label24(:main))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0xfffffffc=4294967292)], resolved: None }
-a4 0c fc ff ff ff 
+32 0c fc ff ff ff 
 # 0000d Instruction { source: "PseudoCall(Label24(:main))", opcode: StoreImm32, args: [Register(0x0c), PcOffset(0x0000000a)], resolved: None }
-94 0c 17 00 00 00 
+25 0c 17 00 00 00 
 # 00013 Instruction { source: "PseudoCall(Label24(:main))", opcode: JmpImm, args: [Label24(:main)], resolved: None }
-40 22 00 00 
+70 22 00 00 
 # 00017 Instruction { source: "PseudoCall(Label24(:main))", opcode: AddImm32IgnoreCarry, args: [Register(0x0c), Constant32(0x00000004=4)], resolved: None }
-a4 0c 04 00 00 00 
+32 0c 04 00 00 00 
 # 0001d Instruction { source: "Halting after return from entry function.", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
-ff 00 00 00 00 
+7e 00 00 00 00 
 # :main
 # Ret Some(U8)
 # Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([16])
@@ -43,81 +43,81 @@ ff 00 00 00 00
 # t0 <- 0n72/0x48u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }", "Number(U8, 72)", "Number(U8, 72)"] }
 # 00022 Instruction { source: "t0 <- 0n72/0x48u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\", \"Number(U8, 72)\", \"Number(U8, 72)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x48=72)], resolved: None }
-00 10 48 
+04 10 48 
 # ttyout <- t0
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }"] }
 # 00025 Instruction { source: "ttyout <- t0\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-13 10 
+08 10 
 # t1 <- 0n105/0x69u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }", "Number(U8, 105)", "Number(U8, 105)"] }
 # 00027 Instruction { source: "t1 <- 0n105/0x69u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\", \"Number(U8, 105)\", \"Number(U8, 105)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x69=105)], resolved: None }
-00 10 69 
+04 10 69 
 # ttyout <- t1
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }"] }
 # 0002a Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-13 10 
+08 10 
 # t2 <- 0n33/0x21u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }", "Number(U8, 33)", "Number(U8, 33)"] }
 # 0002c Instruction { source: "t2 <- 0n33/0x21u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\", \"Number(U8, 33)\", \"Number(U8, 33)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x21=33)], resolved: None }
-00 10 21 
+04 10 21 
 # ttyout <- t2
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }"] }
 # 0002f Instruction { source: "ttyout <- t2\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-13 10 
+08 10 
 # t3 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 00031 Instruction { source: "t3 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x0a=10)], resolved: None }
-00 10 0a 
+04 10 0a 
 # ttyout <- t3
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
 # 00034 Instruction { source: "ttyout <- t3\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-13 10 
+08 10 
 # ch <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["Assign { target: Ident(\"ch\"), var_type: Some(Number(U8)), value: Number(U8, 0) }", "Number(U8, 0)"] }
 # 00036 Instruction { source: "ch <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"ch\\\"), var_type: Some(Number(U8)), value: Number(U8, 0) }\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x00=0)], resolved: None }
-00 10 00 
+04 10 00 
 # :main_while_predicate_0
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\"ch\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }"] }
 # main_while_predicate_0
 # t4 <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\"ch\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }", "Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }", "Number(U8, 0)", "Number(U8, 0)"] }
 # 00039 Instruction { source: "t4 <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }\", \"Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }\", \"Number(U8, 0)\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x00=0)], resolved: None }
-00 10 00 
+04 10 00 
 # t5 <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\"ch\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }", "Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }", "Number(U8, 0)", "Number(U8, 0)"] }
 # 0003c Instruction { source: "t5 <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }\", \"Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }\", \"Number(U8, 0)\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x00=0)], resolved: None }
-00 11 00 
+04 11 00 
 # if t4 == t5 then 'main_while_body_1' else 'main_while_end_2'
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\"ch\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }", "Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }"] }
 # 0003f Instruction { source: "if t4 == t5 then 'main_while_body_1' else 'main_while_end_2'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }\", \"Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }\"] }", opcode: Cmp8, args: [Register(0x10), Register(0x11)], resolved: None }
-25 10 11 
+15 10 11 
 # 00042 Instruction { source: "if t4 == t5 then 'main_while_body_1' else 'main_while_end_2'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }\", \"Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }\"] }", opcode: JzImm, args: [Label24(main_while_body_1)], resolved: None }
-42 4a 00 00 
+72 4a 00 00 
 # 00046 Instruction { source: "if t4 == t5 then 'main_while_body_1' else 'main_while_end_2'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }\", \"Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }\"] }", opcode: JmpImm, args: [Label24(main_while_end_2)], resolved: None }
-40 b2 00 00 
+70 b2 00 00 
 # :main_while_body_1
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident(\"ch\"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }"] }
 # main_while_body_1
 # t6 <- 0n62/0x3eu8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 62) }", "Number(U8, 62)", "Number(U8, 62)"] }
 # 0004a Instruction { source: "t6 <- 0n62/0x3eu8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 62) }\", \"Number(U8, 62)\", \"Number(U8, 62)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x3e=62)], resolved: None }
-00 10 3e 
+04 10 3e 
 # ttyout <- t6
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 62) }"] }
 # 0004d Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 62) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-13 10 
+08 10 
 # t7 <- 0n58/0x3au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 58) }", "Number(U8, 58)", "Number(U8, 58)"] }
 # 0004f Instruction { source: "t7 <- 0n58/0x3au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 58) }\", \"Number(U8, 58)\", \"Number(U8, 58)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x3a=58)], resolved: None }
-00 10 3a 
+04 10 3a 
 # ttyout <- t7
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 58) }"] }
 # 00052 Instruction { source: "ttyout <- t7\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 58) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-13 10 
+08 10 
 # ch <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["Assign { target: Ident(\"ch\"), var_type: None, value: Number(U8, 0) }", "Number(U8, 0)"] }
 # 00054 Instruction { source: "ch <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Number(U8, 0) }\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x00=0)], resolved: None }
-00 10 00 
+04 10 00 
 # :main_while_predicate_3
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }"] }
 # main_while_predicate_3
@@ -127,13 +127,13 @@ ff 00 00 00 00
 # t9 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }", "Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 00057 Instruction { source: "t9 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }\", \"Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x0a=10)], resolved: None }
-00 11 0a 
+04 11 0a 
 # if t8 != t9 then 'main_while_body_4' else 'main_while_end_5'
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }", "Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }"] }
 # 0005a Instruction { source: "if t8 != t9 then 'main_while_body_4' else 'main_while_end_5'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }\", \"Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }\"] }", opcode: Cmp8, args: [Register(0x10), Register(0x11)], resolved: None }
-25 10 11 
+15 10 11 
 # 0005d Instruction { source: "if t8 != t9 then 'main_while_body_4' else 'main_while_end_5'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }\", \"Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }\"] }", opcode: JzImm, args: [Label24(main_while_end_5)], resolved: None }
-42 ae 00 00 
+72 ae 00 00 
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if t8 != t9 then 'main_while_body_4' else 'main_while_end_5'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Call(Call { function: \\\"getchar\\\", parameters: [] }) }, TtyOut { value: Ident(\\\"ch\\\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }\", \"Comparison { op: NotEquals, left: Ident(\\\"ch\\\"), right: Number(U8, 10) }\"] }", opcode: JmpImm, args: [Label24(main_while_body_4)], resolved: None }
 # :main_while_body_4
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }"] }
@@ -141,64 +141,64 @@ ff 00 00 00 00
 # inline_main_getchar_0_tty <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["Assign { target: Ident(\"tty\"), var_type: Some(Number(U8)), value: Number(U8, 0) }", "Number(U8, 0)"] }
 # 00061 Instruction { source: "inline_main_getchar_0_tty <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: Some(Number(U8)), value: Number(U8, 0) }\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x12), Constant8(0x00=0)], resolved: None }
-00 12 00 
+04 12 00 
 # inline_main_getchar_0_tty <- ttyin
 # 	SourceContext { contexts: ["Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }", "TtyIn"] }
 # 00064 Instruction { source: "inline_main_getchar_0_tty <- ttyin\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }\", \"TtyIn\"] }", opcode: TtyIn, args: [Register(0x12)], resolved: None }
-12 12 
+07 12 
 # :inline_main_getchar_0_getchar_while_predicate_0
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }"] }
 # inline_main_getchar_0_getchar_while_predicate_0
 # inline_main_getchar_0_t1 <- inline_main_getchar_0_tty U8
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }", "Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Ident(\"tty\")", "Ident(\"tty\")"] }
 # 00066 Instruction { source: "inline_main_getchar_0_t1 <- inline_main_getchar_0_tty U8\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Ident(\\\"tty\\\")\", \"Ident(\\\"tty\\\")\"] }", opcode: Copy8, args: [Register(0x12), Register(0x10)], resolved: None }
-17 12 10 
+0b 12 10 
 # inline_main_getchar_0_t2 <- 0n128/0x80u8 
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }", "Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Number(U8, 128)", "Number(U8, 128)"] }
 # 00069 Instruction { source: "inline_main_getchar_0_t2 <- 0n128/0x80u8 \n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Number(U8, 128)\", \"Number(U8, 128)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x80=128)], resolved: None }
-00 11 80 
+04 11 80 
 # inline_main_getchar_0_t0 <- inline_main_getchar_0_t1 BitwiseAnd inline_main_getchar_0_t2
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }", "Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 128))"] }
 # 0006c Instruction { source: "inline_main_getchar_0_t0 <- inline_main_getchar_0_t1 BitwiseAnd inline_main_getchar_0_t2\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128))\"] }", opcode: And8, args: [Register(0x10), Register(0x11), Register(0x10)], resolved: None }
-33 10 11 10 
+1b 10 11 10 
 # inline_main_getchar_0_t3 <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }", "Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }", "Number(U8, 0)", "Number(U8, 0)"] }
 # 00070 Instruction { source: "inline_main_getchar_0_t3 <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\", \"Number(U8, 0)\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x00=0)], resolved: None }
-00 11 00 
+04 11 00 
 # if inline_main_getchar_0_t0 == inline_main_getchar_0_t3 then 'inline_main_getchar_0_getchar_while_body_1' else 'inline_main_getchar_0_getchar_while_end_2'
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }", "Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }"] }
 # 00073 Instruction { source: "if inline_main_getchar_0_t0 == inline_main_getchar_0_t3 then 'inline_main_getchar_0_getchar_while_body_1' else 'inline_main_getchar_0_getchar_while_end_2'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\"] }", opcode: Cmp8, args: [Register(0x10), Register(0x11)], resolved: None }
-25 10 11 
+15 10 11 
 # 00076 Instruction { source: "if inline_main_getchar_0_t0 == inline_main_getchar_0_t3 then 'inline_main_getchar_0_getchar_while_body_1' else 'inline_main_getchar_0_getchar_while_end_2'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\"] }", opcode: JzImm, args: [Label24(inline_main_getchar_0_getchar_while_body_1)], resolved: None }
-42 7e 00 00 
+72 7e 00 00 
 # 0007a Instruction { source: "if inline_main_getchar_0_t0 == inline_main_getchar_0_t3 then 'inline_main_getchar_0_getchar_while_body_1' else 'inline_main_getchar_0_getchar_while_end_2'\n\tSourceContext { contexts: [\"While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }] }\", \"Comparison { op: Equals, left: Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 128)), right: Number(U8, 0) }\"] }", opcode: JmpImm, args: [Label24(inline_main_getchar_0_getchar_while_end_2)], resolved: None }
-40 84 00 00 
+70 84 00 00 
 # :inline_main_getchar_0_getchar_while_body_1
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }"] }
 # inline_main_getchar_0_getchar_while_body_1
 # inline_main_getchar_0_tty <- ttyin
 # 	SourceContext { contexts: ["Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }", "TtyIn"] }
 # 0007e Instruction { source: "inline_main_getchar_0_tty <- ttyin\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }\", \"TtyIn\"] }", opcode: TtyIn, args: [Register(0x12)], resolved: None }
-12 12 
+07 12 
 # goto inline_main_getchar_0_getchar_while_predicate_0
 # 	SourceContext { contexts: [] }
 # 00080 Instruction { source: "goto inline_main_getchar_0_getchar_while_predicate_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_getchar_0_getchar_while_predicate_0)], resolved: None }
-40 66 00 00 
+70 66 00 00 
 # :inline_main_getchar_0_getchar_while_end_2
 # 	SourceContext { contexts: [] }
 # inline_main_getchar_0_getchar_while_end_2
 # inline_main_getchar_0_t5 <- inline_main_getchar_0_tty U8
 # 	SourceContext { contexts: ["Return { value: Some(Arithmetic(And, Ident(\"tty\"), Number(U8, 127))) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Ident(\"tty\")", "Ident(\"tty\")"] }
 # 00084 Instruction { source: "inline_main_getchar_0_t5 <- inline_main_getchar_0_tty U8\n\tSourceContext { contexts: [\"Return { value: Some(Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Ident(\\\"tty\\\")\", \"Ident(\\\"tty\\\")\"] }", opcode: Copy8, args: [Register(0x12), Register(0x10)], resolved: None }
-17 12 10 
+0b 12 10 
 # inline_main_getchar_0_t6 <- 0n127/0x7fu8 
 # 	SourceContext { contexts: ["Return { value: Some(Arithmetic(And, Ident(\"tty\"), Number(U8, 127))) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Number(U8, 127)", "Number(U8, 127)"] }
 # 00087 Instruction { source: "inline_main_getchar_0_t6 <- 0n127/0x7fu8 \n\tSourceContext { contexts: [\"Return { value: Some(Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Number(U8, 127)\", \"Number(U8, 127)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x7f=127)], resolved: None }
-00 11 7f 
+04 11 7f 
 # inline_main_getchar_0_t4 <- inline_main_getchar_0_t5 BitwiseAnd inline_main_getchar_0_t6
 # 	SourceContext { contexts: ["Return { value: Some(Arithmetic(And, Ident(\"tty\"), Number(U8, 127))) }", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))", "Arithmetic(And, Ident(\"tty\"), Number(U8, 127))"] }
 # 0008a Instruction { source: "inline_main_getchar_0_t4 <- inline_main_getchar_0_t5 BitwiseAnd inline_main_getchar_0_t6\n\tSourceContext { contexts: [\"Return { value: Some(Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))) }\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\", \"Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))\"] }", opcode: And8, args: [Register(0x10), Register(0x11), Register(0x10)], resolved: None }
-33 10 11 10 
+1b 10 11 10 
 # ch <- inline_main_getchar_0_t4 U8
 # 	SourceContext { contexts: ["Return { value: Some(Arithmetic(And, Ident(\"tty\"), Number(U8, 127))) }"] }
 # optimized away noop copy Instruction { source: "ch <- inline_main_getchar_0_t4 U8\n\tSourceContext { contexts: [\"Return { value: Some(Arithmetic(And, Ident(\\\"tty\\\"), Number(U8, 127))) }\"] }", opcode: Copy8, args: [Register(0x10), Register(0x10)], resolved: None }
@@ -214,39 +214,39 @@ ff 00 00 00 00
 # ttyout <- t10
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"ch\") }"] }
 # 0008e Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"ch\\\") }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-13 10 
+08 10 
 # t11 <- ch U8
 # 	SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }", "Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }", "Ident(\"ch\")", "Ident(\"ch\")"] }
 # optimized away noop copy Instruction { source: "t11 <- ch U8\n\tSourceContext { contexts: [\"IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }\", \"Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }\", \"Ident(\\\"ch\\\")\", \"Ident(\\\"ch\\\")\"] }", opcode: Copy8, args: [Register(0x10), Register(0x10)], resolved: None }
 # t12 <- 0n113/0x71u8 
 # 	SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }", "Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }", "Number(U8, 113)", "Number(U8, 113)"] }
 # 00090 Instruction { source: "t12 <- 0n113/0x71u8 \n\tSourceContext { contexts: [\"IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }\", \"Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }\", \"Number(U8, 113)\", \"Number(U8, 113)\"] }", opcode: LoadImm8, args: [Register(0x11), Constant8(0x71=113)], resolved: None }
-00 11 71 
+04 11 71 
 # if t11 == t12 then 'main_if_true_0_7' else 'main_if_else_0_8'
 # 	SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }", "Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }"] }
 # 00093 Instruction { source: "if t11 == t12 then 'main_if_true_0_7' else 'main_if_else_0_8'\n\tSourceContext { contexts: [\"IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }\", \"Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }\"] }", opcode: Cmp8, args: [Register(0x10), Register(0x11)], resolved: None }
-25 10 11 
+15 10 11 
 # 00096 Instruction { source: "if t11 == t12 then 'main_if_true_0_7' else 'main_if_else_0_8'\n\tSourceContext { contexts: [\"IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }\", \"Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }\"] }", opcode: JzImm, args: [Label24(main_if_true_0_7)], resolved: None }
-42 9e 00 00 
+72 9e 00 00 
 # 0009a Instruction { source: "if t11 == t12 then 'main_if_true_0_7' else 'main_if_else_0_8'\n\tSourceContext { contexts: [\"IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }\", \"Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }\"] }", opcode: JmpImm, args: [Label24(main_if_else_0_8)], resolved: None }
-40 aa 00 00 
+70 aa 00 00 
 # :main_if_true_0_7
 # 	SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }"] }
 # main_if_true_0_7
 # t13 <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["Return { value: Some(Number(U8, 0)) }", "Number(U8, 0)", "Number(U8, 0)"] }
 # 0009e Instruction { source: "t13 <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"Return { value: Some(Number(U8, 0)) }\", \"Number(U8, 0)\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x00=0)], resolved: None }
-00 10 00 
+04 10 00 
 # return Some(t13)
 # 	SourceContext { contexts: ["Return { value: Some(Number(U8, 0)) }"] }
 # 000a1 Instruction { source: "return Some(t13)\n\tSourceContext { contexts: [\"Return { value: Some(Number(U8, 0)) }\"] }", opcode: Copy8, args: [Register(0x10), Register(0x00)], resolved: None }
-17 10 00 
+0b 10 00 
 # 000a4 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
-49 0c 
+75 0c 
 # goto main_if_end_6
 # 	SourceContext { contexts: [] }
 # 000a6 Instruction { source: "goto main_if_end_6\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(main_if_end_6)], resolved: None }
-40 aa 00 00 
+70 aa 00 00 
 # :main_if_else_0_8
 # 	SourceContext { contexts: [] }
 # main_if_else_0_8
@@ -256,14 +256,14 @@ ff 00 00 00 00
 # goto main_while_predicate_3
 # 	SourceContext { contexts: [] }
 # 000aa Instruction { source: "goto main_while_predicate_3\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(main_while_predicate_3)], resolved: None }
-40 57 00 00 
+70 57 00 00 
 # :main_while_end_5
 # 	SourceContext { contexts: [] }
 # main_while_end_5
 # goto main_while_predicate_0
 # 	SourceContext { contexts: [] }
 # 000ae Instruction { source: "goto main_while_predicate_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(main_while_predicate_0)], resolved: None }
-40 39 00 00 
+70 39 00 00 
 # :main_while_end_2
 # 	SourceContext { contexts: [] }
 # main_while_end_2
@@ -273,4 +273,4 @@ ff 00 00 00 00
 # Unreachable
 # 	SourceContext { contexts: [] }
 # 000b2 Instruction { source: "Unreachable\n\tSourceContext { contexts: [] }", opcode: Halt, args: [Constant32(0x10000000=268435456)], resolved: None }
-ff 00 00 00 10 
+7e 00 00 00 10 

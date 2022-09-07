@@ -4,6 +4,7 @@ cargo test --release
 cargo run --release -- alu > circuit/alu.hex
 cargo run --release -- ucode > circuit/ucode.hex
 cargo run --release -- ascii_to_ps2 > circuit/ascii_to_ps2.hex
+cargo run --release -- ps2_to_ascii > circuit/ps2_to_ascii.hex
 
 cargo run --release -- assemble programs/echo.asm > circuit/echo.asm.hex
 cargo run --release -- compile programs/echo.j > circuit/echo.j.hex
@@ -20,7 +21,7 @@ cp circuit/echo.j.hex circuit/rom.hex
 java -classpath ./digitalTester/consoleTester/bin:../Digital/target/Digital.jar consoleTester.ConsoleTester ./circuit/lutcomp.dig < circuit/test.txt
 
 echo "run RPN in simulator"
-echo "6 7 * q" | cargo run --release -- compile programs/rpn.j --sim=true > circuit/rpn.hex 2> /tmp/err.log
+echo "6 7 * q" | cargo run --release -- compile programs/rpn.j --sim=true > circuit/rpn.hex
 
 echo "run RPN in Digital ROM"
 cp circuit/rpn.hex circuit/rom.hex

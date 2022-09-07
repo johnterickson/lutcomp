@@ -17,8 +17,12 @@ bitflags! {
         const ZERO = 0b0010;
         const NEG = 0b0100;
         const CARRY_PENDING = 0b1000;
-        const INTERRUPTS_ENABLED = 0b1000_0000;
-        const STANDARD_FLAGS = 0b01111;
+        const ARITHMETIC = 0x0F;
+
+        const INTERRUPTS_ENABLED = 0b1_0000;
+        const CHANGE_INTERRUPTS = 0b1000_0000;
+
+        const INITIAL = 0b000_0000;
     }
 }
 
@@ -161,6 +165,7 @@ pub enum Opcode {
     Pop8 = 0xA, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
     Copy8 = 0xB, // regA -> regB
     ReadPS2 = 0xC, // PS2 -> RegA
+    Noop = 0x0F, // no operands
 
     Mul8_8 = 0x10, // 8-bit LSB RegA * 8-bit LSB RegB -> 8-bit LSB RegC
     Mul8_16 = 0x11, // 8-bit LSB RegA * 8-bit LSB RegB -> 16-bit LSB RegC
@@ -201,13 +206,13 @@ pub enum Opcode {
     JnImm = 0x73,  // if Flags & NEG { pc <- [24 LSB of Reg A] }
     JmpReg = 0x74, // pc <- 24 LSB of Reg A
     JmpMem = 0x75, // pc <- MEM[24 LSB of Reg A]
-
+    EnableInterrupts = 0x76,
+    DisableInterrupts = 0x77,
     HaltRAM = 0x4C, // (0xCC & 0x7F) imm32 halt code
-    EnableInterrupts = 0x7B,
-    DisableInterrupts = 0x7C,
-    GetUcodeInfo = 0x7D, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
-    GetAluInfo = 0x7E, // SpecialMicroHelperInfo(regA), 8-bit value regB
-    Halt = 0x7F, // (0xFF & 0x7F) imm32 halt code
+    GetUcodeInfo = 0x7C, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
+    GetAluInfo = 0x7D, // SpecialMicroHelperInfo(regA), 8-bit value regB
+    Halt = 0x7E, // (0xFE & 0x7F) imm32 halt code
+    HaltNoCode = 0x7F, // (0xFF & 0x7F)
 }
 
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
@@ -280,8 +285,10 @@ impl Opcode {
             Opcode::GetAluInfo => &[1,1,1,4],
             Opcode::Halt => &[4],
             Opcode::HaltRAM => &[4],
+            Opcode::HaltNoCode => &[0],
             Opcode::EnableInterrupts => &[],
             Opcode::DisableInterrupts => &[],
+            Opcode::Noop => &[],
         }
     }
 }
@@ -310,9 +317,9 @@ pub const RAM_MIN: u32 = ROM_MAX + 1;
 pub const RAM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP;
 pub const RAM_MAX: u32 = RAM_MIN + RAM_SIZE - 1;
 
-pub const INTERRUPT_ISR: u32 = (RAM_MAX as u32/4)*4;
-pub const INTERRUPT_PC: u32 = INTERRUPT_ISR - 4;
-pub const INITIAL_STACK: u32 = RAM_MAX - 0x1000 + 1;
+pub const INTERRUPT_ISR: u32 = 0x0F0F0C;
+pub const INTERRUPT_PC: u32 = INTERRUPT_ISR-4;
+pub const INITIAL_STACK: u32 = 0x0F0F00;
 
 #[derive(Clone,Debug,Default)]
 pub struct Symbol {

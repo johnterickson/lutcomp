@@ -47,12 +47,12 @@ pub enum DataBusLoadEdge {
 }
 
 impl DataBusLoadEdge {
-    pub fn wxyz(i: usize) -> DataBusLoadEdge {
+    pub fn wxyz(i: usize) -> Self {
         match i {
-            0 => DataBusLoadEdge::W,
-            1 => DataBusLoadEdge::X,
-            2 => DataBusLoadEdge::Y,
-            3 => DataBusLoadEdge::Z,
+            0 => Self::W,
+            1 => Self::X,
+            2 => Self::Y,
+            3 => Self::Z,
             _ => panic!(),
         }
     }
@@ -84,16 +84,35 @@ pub enum DataBusOutputLevel {
     X = 9,
     Y = 10,
     Z = 11,
+    Addr0 = 12,
+    Addr1 = 13,
+    Addr2 = 14,
     PS2 = 15,
 }
 
 impl DataBusOutputLevel {
-    pub fn wxyz(i: usize) -> DataBusOutputLevel {
+    pub fn is_addr(&self) -> bool {
+        match self {
+            Self::Addr0 | Self::Addr1 | Self::Addr2 => true,
+            _ => false,
+        }
+    }
+
+    pub fn addr(i: usize) -> Self {
         match i {
-            0 => DataBusOutputLevel::W,
-            1 => DataBusOutputLevel::X,
-            2 => DataBusOutputLevel::Y,
-            3 => DataBusOutputLevel::Z,
+            0 => Self::Addr0,
+            1 => Self::Addr1,
+            2 => Self::Addr2,
+            _ => panic!(),
+        }
+    }
+
+    pub fn wxyz(i: usize) -> Self {
+        match i {
+            0 => Self::W,
+            1 => Self::X,
+            2 => Self::Y,
+            3 => Self::Z,
             _ => panic!(),
         }
     }
@@ -127,6 +146,7 @@ enum Load {
 enum Output {
     Direct(DataBusOutputLevel),
     Imm(u8),
+    Addr(AddressBusOutputLevel, usize),
     Mem(AddressBusOutputLevel),
 }
 
@@ -136,8 +156,9 @@ impl MicroOp {
             Load::Mem(a) => Some(a),
             _ => None,
         };
+
         let out_addr = match out {
-            Output::Mem(a) => Some(a),
+            Output::Mem(a) | Output::Addr(a, _) => Some(a),
             _ => None,
         };
 
@@ -158,9 +179,15 @@ impl MicroOp {
         };
 
         let (data_out, immediate) = match out {
-            Output::Direct(o) => (o, None),
+            Output::Direct(o) => {
+                assert!(!o.is_addr());
+                (o, None)
+            },
             Output::Imm(i) => (DataBusOutputLevel::Imm, Some(i)),
             Output::Mem(_) => (DataBusOutputLevel::Mem, None),
+            Output::Addr(_, reg) => {
+                (DataBusOutputLevel::addr(reg), None)
+            },
         };
 
         MicroOp::new(address_bus_out, data_out, alu_opcode, data_bus_load, immediate)
@@ -168,7 +195,7 @@ impl MicroOp {
 
     fn new(address_bus_out: Option<AddressBusOutputLevel>, data_bus_out: DataBusOutputLevel, alu_opcode: Option<AluOpcode>, data_bus_load: DataBusLoadEdge, immediate: Option<u8>) -> MicroOp {
         if data_bus_out != DataBusOutputLevel::PcSPE {
-            assert_eq!(data_bus_load == DataBusLoadEdge::Mem || data_bus_out == DataBusOutputLevel::Mem, address_bus_out.is_some());
+            assert_eq!(data_bus_load == DataBusLoadEdge::Mem || data_bus_out == DataBusOutputLevel::Mem || data_bus_out.is_addr(), address_bus_out.is_some());
         }
         assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
         assert_eq!(data_bus_out == DataBusOutputLevel::Imm, immediate.is_some());
@@ -198,7 +225,9 @@ impl MicroOp {
         }
 
         let alu_opcode = alu_opcode.unwrap_or(AluOpcode::AddLo);
-        let immediate = immediate.unwrap_or_default().into();
+        let immediate = immediate.unwrap_or_default();
+        assert!(immediate <= 0xF);
+        let immediate = immediate.into();
         MicroOp {
             data_bus_out,
             alu_opcode,
@@ -221,10 +250,8 @@ impl MicroOp {
 #[derive(Debug, PackedStruct)]
 #[packed_struct(size_bytes = "2", endian = "lsb", bit_numbering = "lsb0")]
 pub struct MicroEntry {
-    #[packed_field(bits = "0..=6")]
+    #[packed_field(bits = "0..=7")]
     pub instruction: u8,
-    #[packed_field(bits = "7..=7")]
-    pub process_interrupt: bool,
     #[packed_field(bits = "8..=11")]
     pub flags: Integer<u8, packed_bits::Bits::<4>>,
 }
@@ -248,6 +275,7 @@ pub struct Ucode {
     base_address: usize,
     uop_count: usize,
     inc_pc: bool,
+    branched: bool,
 }
 
 macro_rules! add {
@@ -270,6 +298,7 @@ impl Ucode {
             base_address: 0,
             uop_count: 0,
             inc_pc: true,
+            branched: false,
         }
     }
 
@@ -286,6 +315,10 @@ impl Ucode {
     }
 
     fn add_op(&mut self, u: MicroOp, file: &'static str, line: u32) {
+
+        if self.branched {
+            assert_ne!(u.data_bus_load, DataBusLoadEdge::Flags);
+        }
         if self.print {
             let mut file = Cow::Borrowed(file);
             if file.contains('\\') {
@@ -440,6 +473,7 @@ impl Ucode {
             self.base_address = encoded_inst as usize * MAX_UOPS * 2;
             self.uop_count = 0;
             self.inc_pc = true;
+            self.branched = false;
 
             let noop = MicroOp::create(Output::Imm(flags.bits()), Load::Direct(DataBusLoadEdge::Flags));
 
@@ -456,6 +490,9 @@ impl Ucode {
             add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::IR0));
 
             match opcode {
+                Some(Opcode::HaltNoCode) => {
+                    self.add_op(halt, file!(), line!());
+                }
                 Some(Opcode::Halt) | Some(Opcode::HaltRAM) => {
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::W));
@@ -467,19 +504,82 @@ impl Ucode {
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Z));
                     self.add_op(halt, file!(), line!());
                 }
-                _ if inst.process_interrupt => {
-                    // add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Flags));
-                    // add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                _ if inst.instruction >= 0x80 => {
+                    // make sure we leave with interrupts disabled
+                    add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS & !Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
 
-                    // todo!("um there is no way to read PC, so this is not going to work...");
+                    // save PC to WXY and compare to zero
+                    add!(self, Output::Imm(Flags::ZERO.bits()), Load::Direct(DataBusLoadEdge::Flags));
+                    for (i, load) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        add!(self, Output::Addr(AddressBusOutputLevel::Pc, i), Load::Direct(*load));
+                        add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Addr(AddressBusOutputLevel::Pc, i), Load::Alu(AluOpcode::AddHiNoCarry));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                        add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::And));
+                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    }
+
+                    // load up INTERRUPT_PC address
+                    // (or jump back to zero, but with interrupts disabled this time)
+                    self.branched = true;
+                    if flags.contains(Flags::ZERO) {
+                        for load in Ucode::ADDR_LOADS.iter().take(3) {
+                            add!(self, Output::Imm(0), Load::Direct(*load));
+                        }
+                    } else {
+                        let interrupt_pc_addr = common::INTERRUPT_PC.to_le_bytes();
+                        assert_eq!(common::INTERRUPT_PC % 4, 0);
+                        assert_eq!(0, interrupt_pc_addr[3]);
+                        assert_eq!(0, interrupt_pc_addr[1] & 0xF0);
+                        add!(self, Output::Imm(interrupt_pc_addr[1]), Load::Direct(DataBusLoadEdge::Addr1));
+                        assert_eq!(0, interrupt_pc_addr[2] & 0xF0);
+                        add!(self, Output::Imm(interrupt_pc_addr[2]), Load::Direct(DataBusLoadEdge::Addr2));
+
+                        // save PC (in WXY) to *INTERRUPT_PC
+                        for (i, out) in Ucode::WXYZ_OUTS.iter().take(3).enumerate() {
+                            let addr0 = interrupt_pc_addr[0].checked_add(i.try_into().unwrap()).unwrap();
+                            add!(self, Output::Imm(addr0), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Direct(*out), Load::Mem(AddressBusOutputLevel::Addr));
+                        }
+
+                        // load up INTERRUPT_ISR address
+                        let interrupt_isr_addr = common::INTERRUPT_ISR.to_lsb_bytes();
+                        assert_eq!(interrupt_pc_addr[3], interrupt_isr_addr[3]);
+                        assert_eq!(interrupt_pc_addr[2], interrupt_isr_addr[2]);
+                        assert_eq!(interrupt_pc_addr[1], interrupt_isr_addr[1]);
+
+                        // load ISR address to WXY
+                        for (i, load) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                            let addr0 = interrupt_isr_addr[0].checked_add(i.try_into().unwrap()).unwrap();
+                            add!(self, Output::Imm(addr0), Load::Direct(DataBusLoadEdge::Addr0));
+                            add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load));
+                        }
+
+                        // copy WXY to Addr[0..=2]
+                        for (out, load) in Ucode::WXYZ_OUTS.iter().take(3).zip(&Ucode::ADDR_LOADS) {
+                            add!(self, Output::Direct(*out), Load::Direct(*load));
+                        }
+                    }
+
+                    self.load_pc_from_address_regs();
                 }
+                Some(Opcode::Noop) => { }
                 Some(Opcode::Init) => {
-                    add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Flags));
+                    add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS & !Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(Flags::INITIAL.bits()), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::W));
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::X));
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Y));
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Z));
+
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::In1));
+                    
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr0));
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr1));
                     add!(self, Output::Imm(0), Load::Direct(DataBusLoadEdge::Addr2));
@@ -488,10 +588,18 @@ impl Ucode {
                     add!(self, Output::Imm((flags & !Flags::CARRY).bits()), Load::Direct(DataBusLoadEdge::Flags));
                 }
                 Some(Opcode::EnableInterrupts) => {
-
+                    add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS | Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                 },
                 Some(Opcode::DisableInterrupts) => {
-
+                    add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS & !Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                 },
                 Some(Opcode::JmpImm) => {
                     self.jmp_abs();
@@ -1061,7 +1169,7 @@ impl Ucode {
                         add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::W));
                         add!(self, Output::Imm(1), Load::Alu(AluOpcode::AddHiNoCarry));
                         add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                        add!(self, Output::Imm(Flags::CARRY.bits()), Load::Alu(AluOpcode::And));
+                        add!(self, Output::Imm(((flags & Flags::INTERRUPTS_ENABLED) | Flags::CARRY).bits()), Load::Alu(AluOpcode::And));
                         add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Z));
 
                         // step to A and load in into In1
@@ -1532,7 +1640,6 @@ impl Ucode {
                 Some(Opcode::AddCarry32_2) => {
                     self.write_AddCarry32(2, flags);
                     self.write_AddCarry32(3, flags);
-
                 }
                 Some(Opcode::AddImm32IgnoreCarry) => {
 
@@ -1790,20 +1897,18 @@ mod tests {
     fn pack() {
         assert_eq!(
             [   Opcode::Halt as u8, 
-                Flags::STANDARD_FLAGS.bits().into()], 
+                Flags::ARITHMETIC.bits().into()], 
             (MicroEntry { 
-                flags: Flags::STANDARD_FLAGS.bits().into(), 
-                process_interrupt: false,
+                flags: Flags::ARITHMETIC.bits().into(), 
                 instruction: Opcode::Halt as u8
             }).pack_lsb());
 
         assert_eq!(
             [   Opcode::Halt as u8 | 0x80, 
-                Flags::STANDARD_FLAGS.bits().into()], 
+                Flags::ARITHMETIC.bits().into()], 
             (MicroEntry { 
-                flags: Flags::STANDARD_FLAGS .bits().into(), 
-                process_interrupt: true,
-                instruction: Opcode::Halt as u8
+                flags: Flags::ARITHMETIC.bits().into(), 
+                instruction: Opcode::Halt as u8  | 0x80
             }).pack_lsb());
     }
 
