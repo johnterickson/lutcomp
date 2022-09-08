@@ -1595,18 +1595,10 @@ mod tests {
 
         let mut rom = Vec::new();
         rom.push(Opcode::Init as u8);
-        rom.push(Opcode::LoadImm32 as u8);
-        rom.push(0x0);
-        rom.push(INTERRUPT_ISR.to_lsb_bytes()[0]);
-        rom.push(INTERRUPT_ISR.to_lsb_bytes()[1]);
-        rom.push(INTERRUPT_ISR.to_lsb_bytes()[2]);
-        rom.push(INTERRUPT_ISR.to_lsb_bytes()[3]);
-        rom.push(Opcode::StoreImm32 as u8);
-        rom.push(0x0);
-        rom.push(isr.to_lsb_bytes()[0]);
-        rom.push(isr.to_lsb_bytes()[1]);
-        rom.push(isr.to_lsb_bytes()[2]);
-        rom.push(isr.to_lsb_bytes()[3]);
+        rom.extend_from_slice(&[Opcode::LoadImm32 as u8, 0x0]);
+        rom.extend_from_slice(&INTERRUPT_ISR.to_lsb_bytes());
+        rom.extend_from_slice(&[Opcode::StoreImm32 as u8, 0x0]);
+        rom.extend_from_slice(&isr.to_lsb_bytes());
 
         let noop_start = rom.len() as u32;
         assert!(noop_start + 10 < noop_end);
@@ -1626,7 +1618,6 @@ mod tests {
         }
 
         assert_eq!(rom.len() as u32, isr);
-
         rom.push(Opcode::HaltNoCode as u8);
 
         for i in noop_start..noop_end {
@@ -1640,11 +1631,12 @@ mod tests {
 
         let mut c = Computer::from_raw_with_print(rom, false);
         let mut fire_interrupt = false;
+
         while c.step() {
             assert!(c.pc_u32() < halt_start || c.pc_u32() >= halt_end);
             assert!(c.pc_u32() <= isr + 1);
             if !fire_interrupt {
-                assert_eq!(c.mem_word(INTERRUPT_PC), 0xCCCC_CCCC);
+                assert_eq!(c.mem_word(INTERRUPT_PREVIOUS_PC), 0xCCCC_CCCC);
                 if c.pc_u32() == interrupt_pc {
                     c.tty_in.push_back(b'!');
                     fire_interrupt = true;
@@ -1652,7 +1644,41 @@ mod tests {
             }
         }
 
-        assert_eq!(c.mem_word(INTERRUPT_PC) & 0x00FFFFFF, interrupt_pc+1);
+        assert_eq!(c.mem_word(INTERRUPT_PREVIOUS_PC) & 0x00FFFFFF, interrupt_pc+1);
         assert_eq!(c.pc_u32(), isr);
+    }
+
+    #[test]
+    fn interrupt_isr_return() {
+        let mut rom = Vec::new();
+        rom.push(Opcode::Init as u8);
+        rom.extend_from_slice(&[Opcode::LoadImm8 as u8, 0x5, 0xFF]);
+        rom.extend_from_slice(&[Opcode::LoadImm8 as u8, 0x6, 0x2]);
+        rom.extend_from_slice(&[Opcode::Add8NoCarryIn as u8, 0x5, 0x6, 0x7]);
+        let enable_interrupts_pc = rom.len() as u32;
+        rom.push(Opcode::EnableInterrupts as u8);
+        rom.push(Opcode::Noop as u8);
+        let completion_pc = rom.len() as u32;
+        rom.push(Opcode::HaltNoCode as u8);
+        rom.push(Opcode::HaltNoCode as u8);
+        let isr_addr = rom.len() as u32;
+        rom.extend_from_slice(&[Opcode::TtyIn as u8, 0x1]);
+        rom.push(Opcode::ReturnFromInterrupt as u8);
+        rom.push(Opcode::HaltNoCode as u8);
+
+        let mut c = Computer::from_raw_with_print(rom, true);
+
+        *c.mem_word_mut(INTERRUPT_ISR) = isr_addr.to_le_bytes();
+
+        c.tty_in.push_back(b'!');
+
+        dbg!(enable_interrupts_pc, completion_pc, isr_addr);
+        while c.step() { }
+
+        assert_eq!(c.mem_word(INTERRUPT_PREVIOUS_PC) & 0x00FFFFFF, enable_interrupts_pc+1);
+        assert_eq!(c.mem_byte(INTERRUPT_PREVIOUS_FLAGS), (Flags::CARRY | Flags::INTERRUPTS_ENABLED | Flags::CHANGE_INTERRUPTS).bits());
+        assert_eq!(c.flags, Flags::CARRY | Flags::INTERRUPTS_ENABLED);
+        assert_eq!(c.pc_u32(), completion_pc);
+        assert_eq!(c.reg_u8(1), b'!' | 0x80);
     }
 }

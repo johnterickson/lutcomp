@@ -505,7 +505,25 @@ impl Ucode {
                     self.add_op(halt, file!(), line!());
                 }
                 _ if inst.instruction >= 0x80 => {
-                    // make sure we leave with interrupts disabled
+
+                    // store flags - including INTERRUTPS_ENABLED+CHANGE_INTERRUPTS
+                    let interrupt_previous_flags_addr = common::INTERRUPT_PREVIOUS_FLAGS.to_le_bytes();
+                    assert_eq!(common::INTERRUPT_PREVIOUS_FLAGS % 4, 0);
+                    assert_eq!(0, interrupt_previous_flags_addr[3]);
+                    assert_eq!(0, interrupt_previous_flags_addr[2] & 0xF0);
+                    add!(self, Output::Imm(interrupt_previous_flags_addr[2]), Load::Direct(DataBusLoadEdge::Addr2));
+                    assert_eq!(0, interrupt_previous_flags_addr[1] & 0xF0);
+                    add!(self, Output::Imm(interrupt_previous_flags_addr[1]), Load::Direct(DataBusLoadEdge::Addr1));
+                    assert_eq!(0, interrupt_previous_flags_addr[0] & 0xF0);
+                    add!(self, Output::Imm(interrupt_previous_flags_addr[0]), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS | Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+                    add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
+                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
+
+                    // make sure we leave this instruction with interrupts disabled
                     add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS & !Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
                     add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
@@ -529,17 +547,16 @@ impl Ucode {
                             add!(self, Output::Imm(0), Load::Direct(*load));
                         }
                     } else {
-                        let interrupt_pc_addr = common::INTERRUPT_PC.to_le_bytes();
-                        assert_eq!(common::INTERRUPT_PC % 4, 0);
-                        assert_eq!(0, interrupt_pc_addr[3]);
-                        assert_eq!(0, interrupt_pc_addr[1] & 0xF0);
-                        add!(self, Output::Imm(interrupt_pc_addr[1]), Load::Direct(DataBusLoadEdge::Addr1));
-                        assert_eq!(0, interrupt_pc_addr[2] & 0xF0);
-                        add!(self, Output::Imm(interrupt_pc_addr[2]), Load::Direct(DataBusLoadEdge::Addr2));
+                        let interrupt_pc_addr = common::INTERRUPT_PREVIOUS_PC.to_le_bytes();
+                        assert_eq!(common::INTERRUPT_PREVIOUS_PC % 4, 0);
+                        assert_eq!(interrupt_previous_flags_addr[3], interrupt_pc_addr[3]);
+                        assert_eq!(interrupt_previous_flags_addr[2], interrupt_pc_addr[2]);
+                        assert_eq!(interrupt_previous_flags_addr[1], interrupt_pc_addr[1]);
 
                         // save PC (in WXY) to *INTERRUPT_PC
                         for (i, out) in Ucode::WXYZ_OUTS.iter().take(3).enumerate() {
                             let addr0 = interrupt_pc_addr[0].checked_add(i.try_into().unwrap()).unwrap();
+                            assert_eq!(0, addr0 & 0xF0);
                             add!(self, Output::Imm(addr0), Load::Direct(DataBusLoadEdge::Addr0));
                             add!(self, Output::Direct(*out), Load::Mem(AddressBusOutputLevel::Addr));
                         }
@@ -553,6 +570,7 @@ impl Ucode {
                         // load ISR address to WXY
                         for (i, load) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
                             let addr0 = interrupt_isr_addr[0].checked_add(i.try_into().unwrap()).unwrap();
+                            assert_eq!(0, addr0 & 0xF0);
                             add!(self, Output::Imm(addr0), Load::Direct(DataBusLoadEdge::Addr0));
                             add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load));
                         }
@@ -601,6 +619,42 @@ impl Ucode {
                     add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
                 },
+                Some(Opcode::ReturnFromInterrupt) => {
+
+                    // restore the previous flags + INTERRUPTS_ENABLED again
+                    let interrupt_previous_flags_addr = common::INTERRUPT_PREVIOUS_FLAGS.to_le_bytes();
+                    assert_eq!(common::INTERRUPT_PREVIOUS_FLAGS % 4, 0);
+                    assert_eq!(0, interrupt_previous_flags_addr[3]);
+                    assert_eq!(0, interrupt_previous_flags_addr[2] & 0xF0);
+                    add!(self, Output::Imm(interrupt_previous_flags_addr[2]), Load::Direct(DataBusLoadEdge::Addr2));
+                    assert_eq!(0, interrupt_previous_flags_addr[1] & 0xF0);
+                    add!(self, Output::Imm(interrupt_previous_flags_addr[1]), Load::Direct(DataBusLoadEdge::Addr1));
+                    assert_eq!(0, interrupt_previous_flags_addr[0] & 0xF0);
+                    add!(self, Output::Imm(interrupt_previous_flags_addr[0]), Load::Direct(DataBusLoadEdge::Addr0));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::Flags));
+
+                    // restore the previous PC
+                    let interrupt_pc_addr = common::INTERRUPT_PREVIOUS_PC.to_le_bytes();
+                    assert_eq!(common::INTERRUPT_PREVIOUS_PC % 4, 0);
+                    assert_eq!(interrupt_previous_flags_addr[3], interrupt_pc_addr[3]);
+                    assert_eq!(interrupt_previous_flags_addr[2], interrupt_pc_addr[2]);
+                    assert_eq!(interrupt_previous_flags_addr[1], interrupt_pc_addr[1]);
+
+                    // save *INTERRUPT_PC in WXY 
+                    for (i, load) in Ucode::WXYZ_LOADS.iter().take(3).enumerate() {
+                        let addr0 = interrupt_pc_addr[0].checked_add(i.try_into().unwrap()).unwrap();
+                        assert_eq!(0, addr0 & 0xF0);
+                        add!(self, Output::Imm(addr0), Load::Direct(DataBusLoadEdge::Addr0));
+                        add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(*load));
+                    }
+
+                    // copy WXY to Addr[0..=2]
+                    for (out, load) in Ucode::WXYZ_OUTS.iter().take(3).zip(&Ucode::ADDR_LOADS) {
+                        add!(self, Output::Direct(*out), Load::Direct(*load));
+                    }
+
+                    self.load_pc_from_address_regs();
+                }
                 Some(Opcode::JmpImm) => {
                     self.jmp_abs();
                 }

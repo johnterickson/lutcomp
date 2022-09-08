@@ -208,6 +208,7 @@ pub enum Opcode {
     JmpMem = 0x75, // pc <- MEM[24 LSB of Reg A]
     EnableInterrupts = 0x76,
     DisableInterrupts = 0x77,
+    ReturnFromInterrupt = 0x78,
     HaltRAM = 0x4C, // (0xCC & 0x7F) imm32 halt code
     GetUcodeInfo = 0x7C, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
     GetAluInfo = 0x7D, // SpecialMicroHelperInfo(regA), 8-bit value regB
@@ -288,6 +289,7 @@ impl Opcode {
             Opcode::HaltNoCode => &[0],
             Opcode::EnableInterrupts => &[],
             Opcode::DisableInterrupts => &[],
+            Opcode::ReturnFromInterrupt => &[],
             Opcode::Noop => &[],
         }
     }
@@ -318,7 +320,8 @@ pub const RAM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP;
 pub const RAM_MAX: u32 = RAM_MIN + RAM_SIZE - 1;
 
 pub const INTERRUPT_ISR: u32 = 0x0F0F0C;
-pub const INTERRUPT_PC: u32 = INTERRUPT_ISR-4;
+pub const INTERRUPT_PREVIOUS_PC: u32 = INTERRUPT_ISR-4;
+pub const INTERRUPT_PREVIOUS_FLAGS: u32 = INTERRUPT_PREVIOUS_PC-4;
 pub const INITIAL_STACK: u32 = 0x0F0F00;
 
 #[derive(Clone,Debug,Default)]
