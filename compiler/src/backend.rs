@@ -291,6 +291,33 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
     // args are in r00, r04, r08
     // return is in r00
 
+    if let Some((isr_function_name, isr)) = ctxt.il.functions.iter().filter(|f| f.1.is_isr()).next() {
+
+        assert_eq!(0, isr.args.len());
+        assert_eq!(None, isr.ret);
+
+        lines.push(AssemblyInputLine::Instruction(Instruction {
+            opcode: Opcode::LoadImm32,
+            args: vec![Value::Register(0x10), Value::Constant32(INTERRUPT_ISR)],
+            source: format!("load address of ISR slot 0x{:08x} into R10.", INTERRUPT_ISR),
+            resolved: None,
+        }));
+
+        lines.push(AssemblyInputLine::Instruction(Instruction {
+            opcode: Opcode::StoreImm32,
+            args: vec![Value::Register(0x10), Value::Label32(format!(":{}", isr_function_name.0))],
+            source: format!("store address of ISR {} to ISR slot 0x{:08x} into R10.", isr_function_name.0, INTERRUPT_ISR),
+            resolved: None,
+        }));
+
+        lines.push(AssemblyInputLine::Instruction(Instruction {
+            opcode: Opcode::EnableInterrupts,
+            args: vec![],
+            source: format!("Enable interrupts"),
+            resolved: None,
+        }));
+    }
+
     lines.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.il.entry.0)));
     lines.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::Halt,
@@ -325,6 +352,23 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
             let reg_assignment = ctxt.f_info.register_assignments.get(var_name);
             ctxt.lines.push(AssemblyInputLine::Comment(format!("Var {} ({}) {:?} {:?}",
                 var_name.0, var_info.description, var_info.location, reg_assignment)));
+        }
+
+        if f.is_isr() {
+            // ISR needs to save regs that it touches
+            let my_regs = &ctxt.f_info.registers_directly_used;
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by this function: {:?}", my_regs)));
+
+            for r in my_regs.iter().rev() {
+                assert!(*r >= 0x10);
+                ctxt.lines.push(AssemblyInputLine::Instruction(
+                    Instruction {
+                        opcode: Opcode::Push8,
+                        args: vec![Value::Register(*r)],
+                        source: format!("Saving reg0x{:02x} before before entering ISR body", *r),
+                        resolved: None,
+                    }));
+            }
         }
 
         let stack_size = f.vars_stack_size;
@@ -868,7 +912,32 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         }));
                     }
 
-                    ctxt.lines.push(AssemblyInputLine::from_str("!return"));
+                    if f.is_isr() {
+
+                        // ISR needs to save regs that it touches
+                        let my_regs = &ctxt.f_info.registers_directly_used;
+                        ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by this function: {:?}", my_regs)));
+
+                        for r in my_regs {
+                            assert!(*r >= 0x10);
+                            ctxt.lines.push(AssemblyInputLine::Instruction(
+                                Instruction {
+                                    opcode: Opcode::Pop8,
+                                    args: vec![Value::Register(*r)],
+                                    source: format!("Restoring reg0x{:02x} after ISR body", *r),
+                                    resolved: None,
+                                }));
+                        }
+            
+                        ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                            opcode: Opcode::ReturnFromInterrupt,
+                            source: format!("return from ISR"),
+                            args: vec![],
+                            resolved: None,
+                        }));
+                    } else {
+                        ctxt.lines.push(AssemblyInputLine::from_str("!return"));
+                    }
                 },
                 IlInstruction::TtyIn { dest } => {
                     let dest_regs = ctxt.find_registers(dest);

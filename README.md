@@ -7,7 +7,7 @@
 variable length
 
 ## registers
-Each is 32-bit
+Each is 8-bit
 ```
 r0
 r1

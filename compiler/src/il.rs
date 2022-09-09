@@ -114,6 +114,7 @@ struct TargetLocation {
 }
 
 impl IlFunction {
+
     fn new(id: IlFunctionId, attributes: BTreeSet<FunctionAttribute>, intrinsic: Option<Intrinsic>) -> IlFunction {
         IlFunction {
             end_label: IlLabelId(format!("function_end_{}", &id.0)),
@@ -131,6 +132,14 @@ impl IlFunction {
             frame_pointer_size_instruction_index: None,
             ret: None,
         }
+    }
+
+    pub fn isr_name() -> &'static str {
+        "isr"
+    }
+
+    pub fn is_isr(&self) -> bool {
+        self.id.0 == Self::isr_name()
     }
 
     fn increase_stack_size(&mut self, additional_bytes: u32) {
@@ -535,7 +544,7 @@ impl IlFunction {
                 let emitted_type = match self.emit_target_expression(ctxt, target) {
                     TargetLocation {target, target_subrange: None, mem_size: Some(size)} => {
                         let (value_reg, info) = self.alloc_tmp_and_emit_value(ctxt, value);
-                        assert_eq!(size.byte_count(), info.var_type.byte_count(ctxt.program));
+                        assert_eq!(size.byte_count(), info.var_type.byte_count(ctxt.program), "{:?}", s);
                         self.add_inst(ctxt, IlInstruction::WriteMemory{addr: target, src: value_reg.clone(), size});
                         info.var_type
                     }
@@ -1485,6 +1494,9 @@ impl IlProgram {
         loop {
             let mut called_functions = BTreeSet::new();
             called_functions.insert(il.entry.clone());
+            for isr in il.functions.iter().filter(|f| f.1.is_isr()) {
+                called_functions.insert(isr.0.clone());
+            }
             il.find_calls( |_, callee, _| {
                 called_functions.insert(callee.clone());
             });

@@ -13,7 +13,7 @@ struct heap {
     bytes: u8[1024];
 }
 
-fn get_heap() -> &heap {
+fn [inline] get_heap() -> &heap {
     static heap: heap;
     return &heap;
 }

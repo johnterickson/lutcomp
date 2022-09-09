@@ -1336,6 +1336,16 @@ mod tests {
         dir
     }
 
+    #[test]
+    fn echo_isr() {
+        test_tty(
+            "main",
+            include_str!("../../programs/echo_isr.j"),
+            &[
+                ("abcq\n",0x0,0x0,"abc"),
+            ]);
+    }
+
     pub struct TestComputer<'a> {
         pub comp: Computer<'a>,
     }
