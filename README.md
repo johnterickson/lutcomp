@@ -7,6 +7,9 @@
 - how to handle interrupts not splitting multi-opcode instructions
   - [x] leverage CARRY_PENDING?
   - [ ] add test
+- PS2 -> I/O board
+- RTC
+- hlt command to wait for an interrupt
 
 ## instruction format
 variable length
