@@ -3,6 +3,11 @@
 
 # computer  
 
+## todo
+- how to handle interrupts not splitting multi-opcode instructions
+  - [x] leverage CARRY_PENDING?
+  - [ ] add test
+
 ## instruction format
 variable length
 

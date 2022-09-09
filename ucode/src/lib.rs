@@ -2,7 +2,7 @@ extern crate strum;
 #[macro_use]
 extern crate strum_macros;
 
-use std::{collections::hash_map::DefaultHasher, hash::Hasher, convert::TryInto, borrow::Cow};
+use std::{collections::{hash_map::DefaultHasher}, hash::Hasher, convert::TryInto, borrow::Cow};
 
 use strum::IntoEnumIterator;
 
@@ -275,7 +275,7 @@ pub struct Ucode {
     base_address: usize,
     uop_count: usize,
     inc_pc: bool,
-    branched: bool,
+    possible_carry_pending: bool,
 }
 
 macro_rules! add {
@@ -298,7 +298,7 @@ impl Ucode {
             base_address: 0,
             uop_count: 0,
             inc_pc: true,
-            branched: false,
+            possible_carry_pending: false,
         }
     }
 
@@ -316,9 +316,12 @@ impl Ucode {
 
     fn add_op(&mut self, u: MicroOp, file: &'static str, line: u32) {
 
-        if self.branched {
-            assert_ne!(u.data_bus_load, DataBusLoadEdge::Flags);
+        // checks
+        match u.alu_opcode {
+            AluOpcode::AddHiNoCarry | AluOpcode::AddHiCarry => { self.possible_carry_pending = true; }
+            _ => {}
         }
+
         if self.print {
             let mut file = Cow::Borrowed(file);
             if file.contains('\\') {
@@ -448,6 +451,22 @@ impl Ucode {
         }
     }
 
+    fn enable_interrupts(&mut self, flags: Flags) {
+        add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS | Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
+        add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+        add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
+        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+    }
+
+    fn disable_interrupts(&mut self, flags: Flags) {
+        add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS & !Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
+        add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
+        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
+        add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
+        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+    }
+
     fn build(&mut self) -> (Vec<(u8, &'static str, u32)>,u32) {
         if self.print {
             println!("v2.0 raw");
@@ -463,6 +482,8 @@ impl Ucode {
             None,
         );
 
+        // let mut instruction_lengths = BTreeMap::new();
+
         // let mut uops = Vec::new();
         for encoded_inst in 0u16..(1 << 12) {
             let bytes: &[u8; 2] = &encoded_inst.to_le_bytes();
@@ -473,7 +494,7 @@ impl Ucode {
             self.base_address = encoded_inst as usize * MAX_UOPS * 2;
             self.uop_count = 0;
             self.inc_pc = true;
-            self.branched = false;
+            self.possible_carry_pending = false;
 
             let noop = MicroOp::create(Output::Imm(flags.bits()), Load::Direct(DataBusLoadEdge::Flags));
 
@@ -541,7 +562,6 @@ impl Ucode {
 
                     // load up INTERRUPT_PC address
                     // (or jump back to zero, but with interrupts disabled this time)
-                    self.branched = true;
                     if flags.contains(Flags::ZERO) {
                         for load in Ucode::ADDR_LOADS.iter().take(3) {
                             add!(self, Output::Imm(0), Load::Direct(*load));
@@ -606,18 +626,10 @@ impl Ucode {
                     add!(self, Output::Imm((flags & !Flags::CARRY).bits()), Load::Direct(DataBusLoadEdge::Flags));
                 }
                 Some(Opcode::EnableInterrupts) => {
-                    add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS | Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    self.enable_interrupts(flags);
                 },
                 Some(Opcode::DisableInterrupts) => {
-                    add!(self, Output::Imm((Flags::CHANGE_INTERRUPTS & !Flags::INTERRUPTS_ENABLED).bits() >> 4), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                    add!(self, Output::Imm(flags.bits()), Load::Alu(AluOpcode::Or));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
+                    self.disable_interrupts(flags);
                 },
                 Some(Opcode::ReturnFromInterrupt) => {
 
@@ -1852,6 +1864,18 @@ impl Ucode {
             if self.print {
                 println!("# common exit");
             }
+
+            let has_another_part = match opcode {
+                Some(o) => o.has_another_part(),
+                None => false
+            };
+
+            if has_another_part {
+                add!(self, Output::Imm((flags | Flags::MULTI_OPCODE_INSTRUCTION).bits()), Load::Direct(DataBusLoadEdge::Flags));
+            } else if self.possible_carry_pending {
+                add!(self, Output::Imm((flags & !Flags::MULTI_OPCODE_INSTRUCTION).bits()), Load::Direct(DataBusLoadEdge::Flags));
+            }
+
             if self.inc_pc {
                 pc_inc!(self);
             }
@@ -1862,6 +1886,14 @@ impl Ucode {
 
             let uop_count = self.uop_count;
             assert!(uop_count <= MAX_UOPS, "{} > {} for {:?}", uop_count, MAX_UOPS, &opcode);
+
+            // match instruction_lengths.entry(inst.instruction) {
+            //     std::collections::btree_map::Entry::Vacant(e) => {e.insert((flags, uop_count));},
+            //     std::collections::btree_map::Entry::Occupied(e) => {
+            //         assert_eq!(e.get().1, uop_count, "instruction 0x{:02x} {:?} had length {} for flags {:?}, but has length {} for flags {:?}",
+            //             inst.instruction, opcode, e.get().1, e.get().0, uop_count, flags);
+            //     }
+            // }
 
             let uop_remaining = MAX_UOPS - uop_count;
             if self.print {

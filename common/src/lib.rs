@@ -17,6 +17,7 @@ bitflags! {
         const ZERO = 0b0010;
         const NEG = 0b0100;
         const CARRY_PENDING = 0b1000;
+        const MULTI_OPCODE_INSTRUCTION = 0b1000;
         const ARITHMETIC = 0x0F;
 
         const INTERRUPTS_ENABLED = 0b1_0000;
@@ -291,6 +292,13 @@ impl Opcode {
             Opcode::DisableInterrupts => &[],
             Opcode::ReturnFromInterrupt => &[],
             Opcode::Noop => &[],
+        }
+    }
+
+    pub fn has_another_part(&self) -> bool {
+        match self {
+            Opcode::Store32_1 | Opcode::AddCarry32_1 => true,
+            _ => false,
         }
     }
 }

@@ -321,7 +321,9 @@ impl<'a> Computer<'a> {
         }
 
         let interrupt_pending = !self.tty_in.is_empty();
-        let process_interrupt = interrupt_pending && self.flags.contains(Flags::INTERRUPTS_ENABLED);
+        let process_interrupt = interrupt_pending 
+            && self.flags.contains(Flags::INTERRUPTS_ENABLED)
+            && !self.flags.contains(Flags::MULTI_OPCODE_INSTRUCTION);
 
         let urom_entry = MicroEntry {
             flags: self.flags.bits().into(),

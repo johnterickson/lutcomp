@@ -1251,10 +1251,6 @@ C    0      1     0</dataString>
           <string>Label</string>
           <string>INT_PENDING</string>
         </entry>
-        <entry>
-          <string>InDefault</string>
-          <value v="1" z="false"/>
-        </entry>
       </elementAttributes>
       <pos x="-1120" y="-240"/>
     </visualElement>
@@ -1264,6 +1260,16 @@ C    0      1     0</dataString>
         <entry>
           <string>wideShape</string>
           <boolean>true</boolean>
+        </entry>
+        <entry>
+          <string>inverterConfig</string>
+          <inverterConfig>
+            <string>In_2</string>
+          </inverterConfig>
+        </entry>
+        <entry>
+          <string>Inputs</string>
+          <int>3</int>
         </entry>
       </elementAttributes>
       <pos x="-1060" y="-280"/>
@@ -1679,6 +1685,10 @@ C    0      1     0</dataString>
       <p2 x="1340" y="-300"/>
     </wire>
     <wire>
+      <p1 x="-380" y="-940"/>
+      <p2 x="-180" y="-940"/>
+    </wire>
+    <wire>
       <p1 x="960" y="940"/>
       <p2 x="1020" y="940"/>
     </wire>
@@ -1697,6 +1707,10 @@ C    0      1     0</dataString>
     <wire>
       <p1 x="1140" y="940"/>
       <p2 x="1360" y="940"/>
+    </wire>
+    <wire>
+      <p1 x="-1080" y="-1200"/>
+      <p2 x="-180" y="-1200"/>
     </wire>
     <wire>
       <p1 x="960" y="1200"/>
@@ -2399,6 +2413,14 @@ C    0      1     0</dataString>
       <p2 x="-820" y="-780"/>
     </wire>
     <wire>
+      <p1 x="-180" y="-1200"/>
+      <p2 x="-180" y="-940"/>
+    </wire>
+    <wire>
+      <p1 x="-1080" y="-1200"/>
+      <p2 x="-1080" y="-260"/>
+    </wire>
+    <wire>
       <p1 x="-60" y="760"/>
       <p2 x="-60" y="780"/>
     </wire>
@@ -2637,6 +2659,10 @@ C    0      1     0</dataString>
     <wire>
       <p1 x="760" y="-380"/>
       <p2 x="760" y="-340"/>
+    </wire>
+    <wire>
+      <p1 x="-380" y="-940"/>
+      <p2 x="-380" y="-920"/>
     </wire>
   </wires>
   <measurementOrdering/>
