@@ -138,18 +138,31 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
         };
         
         // add intrinsics
-        ctxt.function_defs.insert(
-            "__mul8_16".to_owned(),
-            FunctionDefinition { 
-                name: "__mul8_16".to_owned(), 
-                attributes: BTreeSet::new(),
-                args: vec![("x".to_owned(), Type::Number(NumberType::U8)),("y".to_owned(), Type::Number(NumberType::U8))],
-                vars: BTreeMap::new(),
-                return_type: Type::Number(NumberType::U16), 
-                body: FunctionImpl::Intrinsic(Intrinsic::Mul8_16),
-            }
-        );
 
+        for intrinsic in Intrinsic::iter() {
+            let name = intrinsic.assembly_name().to_owned();
+            let body = FunctionImpl::Intrinsic(intrinsic);
+            let def = match intrinsic {
+                Intrinsic::Mul8_16 => FunctionDefinition { 
+                    name, 
+                    attributes: BTreeSet::new(),
+                    args: vec![("x".to_owned(), Type::Number(NumberType::U8)),("y".to_owned(), Type::Number(NumberType::U8))],
+                    vars: BTreeMap::new(),
+                    return_type: Type::Number(NumberType::U16), 
+                    body,
+                },
+                Intrinsic::EnableInterrupts | Intrinsic::DisableInterrupts => FunctionDefinition { 
+                    name, 
+                    attributes: BTreeSet::new(),
+                    args: vec![],
+                    vars: BTreeMap::new(),
+                    return_type: Type::Void, 
+                    body,
+                },
+            };
+            ctxt.function_defs.insert(def.name.to_owned(), def);
+        }
+        
         let to_parse = input.clone();
 
         // handle includes

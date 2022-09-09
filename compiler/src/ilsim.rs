@@ -350,6 +350,8 @@ impl IlFunction {
                                 };
                                 Some(IlNumber::U16((src1 as u16)*(src2 as u16)))
                             },
+                            Intrinsic::EnableInterrupts => todo!(),
+                            Intrinsic::DisableInterrupts => todo!(),
                         }
                     } else {
                        f.simulate(ctxt, &args)

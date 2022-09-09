@@ -350,9 +350,22 @@ impl Image {
     }
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Copy, Debug)]
+#[derive(EnumIter)]
 pub enum Intrinsic {
-    Mul8_16
+    Mul8_16,
+    EnableInterrupts,
+    DisableInterrupts
+}
+
+impl Intrinsic {
+    pub fn assembly_name(&self) -> &'static str {
+        match self {
+            Intrinsic::Mul8_16 => "__mul8_16",
+            Intrinsic::EnableInterrupts => "enable_interrupts",
+            Intrinsic::DisableInterrupts => "disable_interrupts",
+        }
+    }
 }
 
 use lazy_static::lazy_static;

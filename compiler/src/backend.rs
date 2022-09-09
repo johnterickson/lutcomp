@@ -309,13 +309,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
             source: format!("store address of ISR {} to ISR slot 0x{:08x} into R10.", isr_function_name.0, INTERRUPT_ISR),
             resolved: None,
         }));
-
-        lines.push(AssemblyInputLine::Instruction(Instruction {
-            opcode: Opcode::EnableInterrupts,
-            args: vec![],
-            source: format!("Enable interrupts"),
-            resolved: None,
-        }));
     }
 
     lines.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.il.entry.0)));
@@ -767,6 +760,24 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     source: format!("{:?}", i),
                                     opcode: Opcode::Mul8_16,
                                     args: vec![Value::Register(src1_reg[0]), Value::Register(src2_reg[0]), Value::Register(dst_reg[0])],
+                                    resolved: None,
+                                }));
+                            }
+                            Intrinsic::EnableInterrupts => {
+                                assert_eq!(0, args.len());
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    source: format!("{:?}", i),
+                                    opcode: Opcode::EnableInterrupts,
+                                    args: vec![],
+                                    resolved: None,
+                                }));
+                            },
+                            Intrinsic::DisableInterrupts => {
+                                assert_eq!(0, args.len());
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    source: format!("{:?}", i),
+                                    opcode: Opcode::DisableInterrupts,
+                                    args: vec![],
                                     resolved: None,
                                 }));
                             }

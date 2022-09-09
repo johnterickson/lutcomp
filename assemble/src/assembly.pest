@@ -48,6 +48,8 @@ addimm32ignorecarry = { "addimm32ignorecarry" ~ register ~ "<-" ~ constant32 }
 or32 = {"or32" ~ register ~ register ~ "->" ~ register }
 and32 = {"and32" ~ register ~ register ~ "->" ~ register }
 mul8_16 = {"__mul8_16" ~ register ~ register ~ "->" ~ register }
+enable_interrupts = { "enable_interrupts" }
+disable_interrupts = { "disable_interrupts" }
 
 halt = {"halt" ~ constant32}
 
@@ -63,6 +65,7 @@ op = _{
     add32nocarryin | add32 | addimm32ignorecarry |
     or32 | and32 |
     mul8_16 |
+    enable_interrupts | disable_interrupts |
     halt
 }
 
