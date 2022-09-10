@@ -18,15 +18,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: check java version
       run: |
-        update-alternatives --list java
         java --version
-    - name: go to java 17
-      run: |
-        sudo apt install openjdk-17-jre openjdk-17-jdk
-        sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
-    - name: check java version
-      run: |
-        update-alternatives --list java
+        sudo update-alternatives --set java $(update-alternatives --list java | grep 17)
         java --version
     - name: Download Digital in a side-by-side directory
       run: |
