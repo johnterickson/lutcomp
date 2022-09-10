@@ -808,7 +808,12 @@
     </visualElement>
     <visualElement>
       <elementName>Terminal</elementName>
-      <elementAttributes/>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>TTYOUT</string>
+        </entry>
+      </elementAttributes>
       <pos x="520" y="1400"/>
     </visualElement>
     <visualElement>
@@ -850,12 +855,12 @@
       <elementName>Rectangle</elementName>
       <elementAttributes>
         <entry>
-          <string>Label</string>
-          <string>PS2 Keyboard</string>
-        </entry>
-        <entry>
           <string>RectHeight</string>
           <int>25</int>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>PS2 Keyboard</string>
         </entry>
         <entry>
           <string>RectWidth</string>
