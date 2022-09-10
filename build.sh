@@ -1,4 +1,4 @@
-set -e
+set -e -o pipefail
 #set -x
 
 cargo test --release
