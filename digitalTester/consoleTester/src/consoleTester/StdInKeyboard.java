@@ -7,31 +7,39 @@ import java.io.IOException;
 import de.neemann.digital.gui.components.terminal.Keyboard.KeyboardInterface;
 
 public class StdInKeyboard extends Thread implements KeyboardInterface {
-	private final Object textLock = new Object();
 	private String text = new String();
+	private boolean hasReceived = false;
 			
 	@Override
-    public int getChar() {
-        synchronized (textLock) {
-            if (text.length() == 0) {
-            	// System.out.println("Reading : {nothing}");
-                return 0;
-            } else {
-            	// System.out.println("Reading :" + text.charAt(0));
-                return text.charAt(0);
-            }
-        }
+    public synchronized int getChar() {
+		if (text.length() == 0) {
+			// System.out.println("Reading : {nothing}");
+			return 0;
+		} else {
+			// System.out.println("Reading :" + text.charAt(0));
+			return text.charAt(0);
+		}
     }
 	
 	@Override
-    public void deleteFirstChar() {
-        synchronized (textLock) {
-            if (text.length() > 0) {
-            	// System.out.println("Dequeing :" + text.charAt(0));
-                text = text.substring(1);
-            }
-        }
+    public synchronized void deleteFirstChar() {
+		if (text.length() > 0) {
+			// System.out.println("Dequeing :" + text.charAt(0));
+			text = text.substring(1);
+		}
     }
+
+	public synchronized void waitForFirstChar() throws InterruptedException {
+		while (!hasReceived) {
+			wait();
+		}
+	}
+
+	private synchronized void putChars(String line) {
+		text = text + line;
+		hasReceived = true;
+		notify();
+	}
 
 	@Override
 	public void run() {
@@ -45,10 +53,7 @@ public class StdInKeyboard extends Thread implements KeyboardInterface {
 					break;
 				}
 				line = line.trim() + '\n';
-				synchronized (textLock) {
-					// System.out.println("Enqueing :" + line);
-					text = text + line;				
-				}
+				putChars(line);
 			} catch (IOException e) {
 				break;
 			}
