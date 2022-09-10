@@ -1,4 +1,6 @@
 set -e
+set -x
+
 cargo test --release
 
 cargo run --release -- alu > circuit/alu.hex
