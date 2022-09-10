@@ -23,7 +23,12 @@ cp circuit/echo.j.hex circuit/rom.hex
 java -classpath ./digitalTester/consoleTester/bin:../Digital/target/Digital.jar consoleTester.ConsoleTester ./circuit/lutcomp.dig < circuit/test.txt
 
 echo "run RPN in simulator"
-echo "6 7 * q" | cargo run --release -- compile programs/rpn.j --sim=true > circuit/rpn.hex
+output=$(echo "6 7 * q" | cargo run --release -- compile programs/rpn.j --sim=true > circuit/rpn.hex)
+expected="$(printf 'RPN\n42')"
+if [ "$expected" != "$output" ]; then
+    echo "$output != $expected"
+    exit 1
+fi
 
 echo "run RPN in Digital ROM"
 cp circuit/rpn.hex circuit/rom.hex
@@ -33,7 +38,6 @@ if [ "$expected" != "$output" ]; then
     echo "$output != $expected"
     exit 1
 fi
-
 
 echo "Upload echo to RAM and run it"
 cargo run --release -- compile programs/hello_ram.j --image_base_address=080400 > circuit/hello_ram.hex

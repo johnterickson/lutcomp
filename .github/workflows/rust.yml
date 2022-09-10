@@ -16,13 +16,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: check java version
+      run: java --version
     - name: Download Digital in a side-by-side directory
       run: |
         cd ..
-        wget https://github.com/hneemann/Digital/releases/download/v0.29/Digital.zip
-        unzip Digital.zip
+        git clone https://github.com/hneemann/Digital.git
+        git checkout 94c44be900c8465fed2597dc545b57f81c7ba102
         cd Digital
-        mkdir target
-        cp Digital.jar target/
+        mvn package -DskipTests
     - name: run build script
       run: ./build.sh
