@@ -34,7 +34,7 @@ pub enum DataBusLoadEdge {
     Alu = 3,
     Mem = 4,
     TtyIn = 5,
-    PS2 = 6,
+    IoXCp = 6,
     Flags = 7,
     W = 8,
     X = 9,
@@ -79,7 +79,7 @@ pub enum DataBusOutputLevel {
     Mem = 4,
     TtyIn = 5,
     PcSPE = 6,
-    Reserved7 = 7,
+    IoXData = 7,
     W = 8,
     X = 9,
     Y = 10,
@@ -87,7 +87,7 @@ pub enum DataBusOutputLevel {
     Addr0 = 12,
     Addr1 = 13,
     Addr2 = 14,
-    PS2 = 15,
+    IoReadyToRead = 15,
 }
 
 impl DataBusOutputLevel {
@@ -666,6 +666,28 @@ impl Ucode {
                     }
 
                     self.load_pc_from_address_regs();
+                }
+                Some(Opcode::InReadyToRead) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::IoReadyToRead), Load::Mem(AddressBusOutputLevel::Addr));
+                }
+                Some(o) if Opcode::In0 <= o && o <= Opcode::In7 => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::IoXData), Load::Mem(AddressBusOutputLevel::Addr));
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::IoXCp));
+                }
+                Some(o) if Opcode::Out0 <= o && o <= Opcode::Out7 => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::IoXCp));
                 }
                 Some(Opcode::JmpImm) => {
                     self.jmp_abs();
@@ -1361,26 +1383,6 @@ impl Ucode {
                         self.add_op(noop, file!(), line!());
                     }
                 }
-                Some(Opcode::ReadPS2) => {
-                    self.start_of_ram();
-                    pc_inc!(self);
-                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-
-                    add!(self, Output::Direct(DataBusOutputLevel::PS2), Load::Direct(DataBusLoadEdge::W));
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Mem(AddressBusOutputLevel::Addr));
-                    add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::In1));
-
-                    // check top bit
-                    add!(self, Output::Imm(0), Load::Alu(AluOpcode::AddHiNoCarry));
-                    add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-
-                    if flags.contains(Flags::NEG) {
-                    // ack it
-                        add!(self, Output::Direct(DataBusOutputLevel::W), Load::Direct(DataBusLoadEdge::PS2));
-                    } else {
-                        self.add_op(noop, file!(), line!());
-                    }
-                }
                 Some(Opcode::TtyOut) => {
                     self.start_of_ram();
                     pc_inc!(self);
@@ -1856,6 +1858,7 @@ impl Ucode {
                     add!(self, Output::Imm(6), Load::Alu(AluOpcode::Or));
                     add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
                 }
+                Some(o) => panic!("{:?} not hanlded", o),
                 None => {
                     self.add_op(halt, file!(), line!());
                 }

@@ -8,6 +8,9 @@
   - [x] leverage CARRY_PENDING?
   - [ ] add test
 - PS2 -> I/O board
+  - [x] I/O mux
+  - [ ] move tty behind I/O mux
+  - [ ] make I/O ports bidirectional?
 - RTC
 - hlt command to wait for an interrupt
 

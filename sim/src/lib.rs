@@ -32,6 +32,8 @@ lazy_static! {
     pub static ref NONBLOCKING_STDIN: Mutex<Receiver<String>> = Mutex::new(spawn_stdin_channel());
 }
 
+const PS2_IO_PORT: u8 = 2;
+
 pub struct Computer<'a> {
     pub image: Cow<'a, Image>,
     ram: Vec<u8>,
@@ -320,7 +322,15 @@ impl<'a> Computer<'a> {
             }
         }
 
-        let interrupt_pending = !self.tty_in.is_empty();
+        let ready_to_read = {
+            let mut ready_to_read = 0;
+            if !self.ps2.is_empty() {
+                ready_to_read |= 1 << PS2_IO_PORT;
+            }
+            ready_to_read
+        };
+
+        let interrupt_pending = !self.tty_in.is_empty() || (ready_to_read != 0);
         let process_interrupt = interrupt_pending 
             && self.flags.contains(Flags::INTERRUPTS_ENABLED)
             && !self.flags.contains(Flags::MULTI_OPCODE_INSTRUCTION);
@@ -400,15 +410,19 @@ impl<'a> Computer<'a> {
                 let peek = self.tty_in.front();
                 Some(peek.map_or(0x00, |c| 0x80 | *c))
             }
-            DataBusOutputLevel::PS2 => {
-                let peek = self.ps2.front();
-                Some(peek.map_or(0x00, |c| 0x80 | *c))
+            DataBusOutputLevel::IoXData => {
+                match self.ir0 & 0x7 {
+                    PS2_IO_PORT => {
+                        Some(self.ps2.front().map(|c| *c).unwrap_or_default())
+                    }
+                    _ => None
+                }
             }
             DataBusOutputLevel::W => Some(self.regs[0]),
             DataBusOutputLevel::X => Some(self.regs[1]),
             DataBusOutputLevel::Y => Some(self.regs[2]),
             DataBusOutputLevel::Z => Some(self.regs[3]),
-            DataBusOutputLevel::Reserved7 => return false,
+            DataBusOutputLevel::IoReadyToRead => Some(ready_to_read),
         };
 
         self.log(data_bus);
@@ -420,8 +434,13 @@ impl<'a> Computer<'a> {
         }
 
         match urom_op.data_bus_load {
-            DataBusLoadEdge::PS2 => {
-                let _ = self.ps2.pop_front();
+            DataBusLoadEdge::IoXCp => {
+                match self.ir0 & 0x7 {
+                    PS2_IO_PORT => {
+                        let _ = self.ps2.pop_front();
+                    }
+                    io => panic!("bad io port: {}", io)
+                }
             },
             DataBusLoadEdge::Addr0 => self.addr[0] = data_bus.unwrap(),
             DataBusLoadEdge::Addr1 => self.addr[1] = data_bus.unwrap(),
@@ -910,7 +929,9 @@ mod tests {
         let mut rom = Vec::new();
         rom.push(Opcode::Init as u8);
         for i in 0..=8 {
-            rom.push(Opcode::ReadPS2 as u8);
+            rom.push(Opcode::InReadyToRead as u8);
+            rom.push(0x80 + i);
+            rom.push(Opcode::In2 as u8);
             rom.push(i);
         }
         rom.push(Opcode::Halt as u8);
@@ -925,7 +946,8 @@ mod tests {
         while c.step() {}
 
         for (i, code) in codes.iter().enumerate() {
-            assert_eq!(0x80 | *code, c.reg_u8(i as u8));
+            assert_eq!(*code, c.reg_u8(i as u8));
+            assert_eq!(1 << PS2_IO_PORT, c.reg_u8(0x80 + i as u8));
         }
         assert_eq!(0, c.reg_u8(8));
     }

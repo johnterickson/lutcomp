@@ -148,7 +148,7 @@ pub struct ShiftCommand {
     pub dir: ShiftDirection,
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, PartialOrd, Ord, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
@@ -165,7 +165,6 @@ pub enum Opcode {
     Push8 = 0x9, // Reg_SP -= 1; RegA -> 8-bit MEM[Reg_SP]
     Pop8 = 0xA, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
     Copy8 = 0xB, // regA -> regB
-    ReadPS2 = 0xC, // PS2 -> RegA
     Noop = 0x0F, // no operands
 
     Mul8_8 = 0x10, // 8-bit LSB RegA * 8-bit LSB RegB -> 8-bit LSB RegC
@@ -176,7 +175,6 @@ pub enum Opcode {
     Cmp8 = 0x15, // 8bit regB - 8bit regA -> FLAGS
     Cmp8IfZero = 0x16, // if Flags & ZERO { 8bit regB - 8bit regA } else { Flags } -> Flags
     Divide8 = 0x17, // carry + 8bit regA / 8bit regB -> 8 bit regC + ZERO
-
     AndImm8 = 0x18, // regA &= [8-bit constant B]
     OrImm8 = 0x19, // regA |= [8-bit constant B]
     XorImm8 = 0x1A, // regA ^= [8-bit constant B]
@@ -201,6 +199,24 @@ pub enum Opcode {
     OrImm32 = 0x42,  // regA |= [32-bit constant BCDE]
     AndImm32 = 0x43, // regA &= [32-bit constant BCDE]
 
+    In0 = 0x60, // inX -> regA
+    In1 = 0x61,
+    In2 = 0x62,
+    In3 = 0x63,
+    In4 = 0x64,
+    In5 = 0x65,
+    In6 = 0x66,
+    In7 = 0x67,
+
+    Out0 = 0x68, // regA -> outX
+    Out1 = 0x69,
+    Out2 = 0x6A,
+    Out3 = 0x6B,
+    Out4 = 0x6C,
+    Out5 = 0x6D,
+    Out6 = 0x6E,
+    Out7 = 0x6F,
+
     JmpImm = 0x70, // pc <- [24-bit constant ABC]
     JcImm = 0x71,  // if Flags & CARRY { pc <- [24-bit constant ABC] }
     JzImm = 0x72,  // if Flags & ZERO { px <- [24-bit constant ABC] }
@@ -210,6 +226,7 @@ pub enum Opcode {
     EnableInterrupts = 0x76,
     DisableInterrupts = 0x77,
     ReturnFromInterrupt = 0x78,
+    InReadyToRead = 0x79, // in available bitmask => regA
     HaltRAM = 0x4C, // (0xCC & 0x7F) imm32 halt code
     GetUcodeInfo = 0x7C, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
     GetAluInfo = 0x7D, // SpecialMicroHelperInfo(regA), 8-bit value regB
@@ -235,7 +252,7 @@ pub enum RegOperation {
 
 impl Opcode {
     pub fn expected_arg_sizes(&self) -> &[u32] {
-        match &self {
+        match self {
             Opcode::LoadImm8 => &[1,1],
             Opcode::Invert8 => &[1],
             Opcode::Negate8 => &[1],
@@ -243,7 +260,6 @@ impl Opcode {
             Opcode::Init => &[],
             Opcode::Load8 => &[1,1],
             Opcode::Store8 => &[1,1],
-            Opcode::ReadPS2 => &[1],
             Opcode::TtyIn => &[1],
             Opcode::TtyOut => &[1],
             Opcode::Push8 => &[1],
@@ -292,6 +308,9 @@ impl Opcode {
             Opcode::DisableInterrupts => &[],
             Opcode::ReturnFromInterrupt => &[],
             Opcode::Noop => &[],
+            Opcode::In0 | Opcode::In1 | Opcode::In2 | Opcode::In3 | Opcode::In4 | Opcode::In5 | Opcode::In6 | Opcode::In7 |
+            Opcode::Out0 | Opcode::Out1 | Opcode::Out2 | Opcode::Out3 | Opcode::Out4 | Opcode::Out5 | Opcode::Out6 | Opcode::Out7 => &[1],
+            Opcode::InReadyToRead => &[1],
         }
     }
 
