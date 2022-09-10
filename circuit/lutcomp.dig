@@ -441,7 +441,7 @@
       <pos x="-1100" y="620"/>
     </visualElement>
     <visualElement>
-      <elementName>io.dig</elementName>
+      <elementName>ttymux.dig</elementName>
       <elementAttributes/>
       <pos x="0" y="1080"/>
     </visualElement>
