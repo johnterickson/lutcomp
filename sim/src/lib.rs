@@ -1,5 +1,5 @@
 extern crate packed_struct;
-use packed_struct::prelude::PackedStruct;
+use packed_struct::{prelude::PackedStruct, PrimitiveEnum};
 
 use strum::IntoEnumIterator;
 
@@ -31,8 +31,6 @@ use lazy_static::lazy_static;
 lazy_static! {
     pub static ref NONBLOCKING_STDIN: Mutex<Receiver<String>> = Mutex::new(spawn_stdin_channel());
 }
-
-const PS2_IO_PORT: u8 = 2;
 
 pub struct Computer<'a> {
     pub image: Cow<'a, Image>,
@@ -69,6 +67,7 @@ impl<'a> Debug for Computer<'a> {
         write!(f, " regs:{:08x}", u32::from_le_bytes(self.regs))?;
         write!(f, " addr:{:05x}", u32::from_le_bytes(self.addr))?;
         write!(f, " ir0:{:02x}", self.ir0)?;
+        write!(f, " op:{:?}", Opcode::from_primitive(self.ir0))?;
         write!(f, " in1:{:02x}", self.in1)?;
         write!(f, " flags:[{:?}]", self.flags)?;
         write!(f, " ticks:{}", self.tick_count)?;
@@ -324,13 +323,18 @@ impl<'a> Computer<'a> {
 
         let ready_to_read = {
             let mut ready_to_read = 0;
+            if !self.tty_in.is_empty() {
+                ready_to_read |= 1 << IoPort::TtyIn as u8;
+            }
             if !self.ps2.is_empty() {
-                ready_to_read |= 1 << PS2_IO_PORT;
+                ready_to_read |= 1 << IoPort::Ps2In as u8;
             }
             ready_to_read
         };
 
-        let interrupt_pending = !self.tty_in.is_empty() || (ready_to_read != 0);
+        let ready_to_write = 1 << IoPort::TtyOut as u8;
+
+        let interrupt_pending = ready_to_read != 0;
         let process_interrupt = interrupt_pending 
             && self.flags.contains(Flags::INTERRUPTS_ENABLED)
             && !self.flags.contains(Flags::MULTI_OPCODE_INSTRUCTION);
@@ -406,23 +410,24 @@ impl<'a> Computer<'a> {
                 //self.pc = self.pcr;
                 None
             }
-            DataBusOutputLevel::TtyIn => {
-                let peek = self.tty_in.front();
-                Some(peek.map_or(0x00, |c| 0x80 | *c))
-            }
             DataBusOutputLevel::IoXData => {
-                match self.ir0 & 0x7 {
-                    PS2_IO_PORT => {
-                        Some(self.ps2.front().map(|c| *c).unwrap_or_default())
-                    }
-                    _ => None
+                match IoPort::from_primitive(self.ir0 & 0x7) {
+                    Some(IoPort::TtyIn) => Some(self.tty_in.pop_front().unwrap()),
+                    Some(IoPort::TtyOut) => todo!(),
+                    Some(IoPort::Ps2In) => Some(self.ps2.pop_front().unwrap()),
+                    None => todo!(),
                 }
             }
+            DataBusOutputLevel::IoReadyToWrite => {
+                Some(ready_to_write)
+            },
             DataBusOutputLevel::W => Some(self.regs[0]),
             DataBusOutputLevel::X => Some(self.regs[1]),
             DataBusOutputLevel::Y => Some(self.regs[2]),
             DataBusOutputLevel::Z => Some(self.regs[3]),
-            DataBusOutputLevel::IoReadyToRead => Some(ready_to_read),
+            DataBusOutputLevel::IoReadyToRead => {
+                Some(ready_to_read)
+            },
         };
 
         self.log(data_bus);
@@ -435,11 +440,13 @@ impl<'a> Computer<'a> {
 
         match urom_op.data_bus_load {
             DataBusLoadEdge::IoXCp => {
-                match self.ir0 & 0x7 {
-                    PS2_IO_PORT => {
-                        let _ = self.ps2.pop_front();
-                    }
-                    io => panic!("bad io port: {}", io)
+                match IoPort::from_primitive(self.ir0 & 0x7).expect("bad io port") {
+                    IoPort::TtyIn => panic!(),
+                    IoPort::TtyOut => {
+                        self.tty_out.push_back(data_bus.unwrap());
+                        eprint!("{}", data_bus.unwrap() as char);
+                    },
+                    IoPort::Ps2In => panic!(),
                 }
             },
             DataBusLoadEdge::Addr0 => self.addr[0] = data_bus.unwrap(),
@@ -489,13 +496,6 @@ impl<'a> Computer<'a> {
                 }).to_le_bytes();
 
                 self.log(data_bus);
-            }
-            DataBusLoadEdge::TtyIn => {
-                let _ = self.tty_in.pop_front();
-            }
-            DataBusLoadEdge::TtyOut => {
-                self.tty_out.push_back(data_bus.unwrap());
-                eprint!("{}", data_bus.unwrap() as char);
             }
             DataBusLoadEdge::W => self.regs[0] = data_bus.unwrap(),
             DataBusLoadEdge::X => self.regs[1] = data_bus.unwrap(),
@@ -888,11 +888,11 @@ mod tests {
         rom.push(0x42);
         rom.push(0x43);
         rom.push(0x0A);
-        rom.push(Opcode::TtyOut as u8);
+        rom.push(IoPort::TtyOut.out_opcode() as u8);
         rom.push(0x00);
-        rom.push(Opcode::TtyOut as u8);
+        rom.push(IoPort::TtyOut.out_opcode() as u8);
         rom.push(0x01);
-        rom.push(Opcode::TtyOut as u8);
+        rom.push(IoPort::TtyOut.out_opcode() as u8);
         rom.push(0x02);
         rom.push(Opcode::Halt as u8);
 
@@ -908,9 +908,9 @@ mod tests {
     fn ttyin() {
         let mut rom = Vec::new();
         rom.push(Opcode::Init as u8);
-        rom.push(Opcode::TtyIn as u8);
+        rom.push(IoPort::TtyIn.in_opcode() as u8);
         rom.push(0);
-        rom.push(Opcode::TtyIn as u8);
+        rom.push(IoPort::TtyIn.in_opcode() as u8);
         rom.push(1);
         rom.push(Opcode::Halt as u8);
 
@@ -930,16 +930,22 @@ mod tests {
         rom.push(Opcode::Init as u8);
         for i in 0..=8 {
             rom.push(Opcode::InReadyToRead as u8);
-            rom.push(0x80 + i);
-            rom.push(Opcode::In2 as u8);
+            rom.push(0x10);
+            rom.extend_from_slice(&[Opcode::AndImm8 as u8, 0x10, 1 << IoPort::Ps2In as u8]);
+            rom.push(Opcode::JzImm as u8);
+            rom.extend_from_slice(&0xF0u32.to_lsb_bytes());
+            rom.push(IoPort::Ps2In.in_opcode() as u8);
             rom.push(i);
         }
-        rom.push(Opcode::Halt as u8);
+        while rom.len() < 0x100 {
+            rom.push(Opcode::Halt as u8);
+        }
 
-        let mut c = Computer::from_raw(rom);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
-        let codes = &ASCII_TO_PS2_SCAN_CODES[('a' as u8) as usize];
-        for code in codes {
+        let codes: Vec<u8> = ASCII_TO_PS2_SCAN_CODES[('a' as u8) as usize]
+            .iter().copied().take_while(|c| *c != 0).collect();
+        for code in &codes {
             c.ps2.push_back(*code);
         }
 
@@ -947,9 +953,7 @@ mod tests {
 
         for (i, code) in codes.iter().enumerate() {
             assert_eq!(*code, c.reg_u8(i as u8));
-            assert_eq!(1 << PS2_IO_PORT, c.reg_u8(0x80 + i as u8));
         }
-        assert_eq!(0, c.reg_u8(8));
     }
 
     fn modify8(op: Opcode, input: u8, output: u8) {
@@ -1686,7 +1690,7 @@ mod tests {
         rom.push(Opcode::HaltNoCode as u8);
         rom.push(Opcode::HaltNoCode as u8);
         let isr_addr = rom.len() as u32;
-        rom.extend_from_slice(&[Opcode::TtyIn as u8, 0x1]);
+        rom.extend_from_slice(&[IoPort::TtyIn.in_opcode() as u8, 0x1]);
         rom.push(Opcode::ReturnFromInterrupt as u8);
         rom.push(Opcode::HaltNoCode as u8);
 

@@ -954,7 +954,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let dest_regs = ctxt.find_registers(dest);
                     assert_eq!(dest_regs.len(), 1);
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                        opcode: Opcode::TtyIn,
+                        opcode: IoPort::TtyIn.in_opcode(),
                         source,
                         args: vec![Value::Register(dest_regs[0])],
                         resolved: None,
@@ -964,7 +964,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let src_regs = ctxt.find_registers(src);
                     assert_eq!(src_regs.len(), 1);
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
-                        opcode: Opcode::TtyOut,
+                        opcode: IoPort::TtyOut.out_opcode(),
                         source,
                         args: vec![Value::Register(src_regs[0])],
                         resolved: None,

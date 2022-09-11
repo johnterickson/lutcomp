@@ -39,20 +39,6 @@
       <pos x="1240" y="660"/>
     </visualElement>
     <visualElement>
-      <elementName>Telnet</elementName>
-      <elementAttributes>
-        <entry>
-          <string>telnetEscape</string>
-          <boolean>false</boolean>
-        </entry>
-        <entry>
-          <string>port</string>
-          <int>45454</int>
-        </entry>
-      </elementAttributes>
-      <pos x="680" y="340"/>
-    </visualElement>
-    <visualElement>
       <elementName>Splitter</elementName>
       <elementAttributes>
         <entry>
@@ -119,6 +105,10 @@
         <entry>
           <string>Label</string>
           <string>TTYIN_OE_</string>
+        </entry>
+        <entry>
+          <string>InDefault</string>
+          <value v="1" z="false"/>
         </entry>
       </elementAttributes>
       <pos x="200" y="320"/>
@@ -368,6 +358,31 @@ Z    0x61  1      1        1         Z        0          1</dataString>
       </elementAttributes>
       <pos x="1440" y="920"/>
     </visualElement>
+    <visualElement>
+      <elementName>Rectangle</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>telnet</string>
+        </entry>
+      </elementAttributes>
+      <pos x="680" y="340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Ground</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Bits</string>
+          <int>8</int>
+        </entry>
+      </elementAttributes>
+      <pos x="720" y="420"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Ground</elementName>
+      <elementAttributes/>
+      <pos x="740" y="420"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -463,7 +478,7 @@ Z    0x61  1      1        1         Z        0          1</dataString>
       <p2 x="680" y="340"/>
     </wire>
     <wire>
-      <p1 x="740" y="340"/>
+      <p1 x="720" y="340"/>
       <p2 x="760" y="340"/>
     </wire>
     <wire>
@@ -667,6 +682,10 @@ Z    0x61  1      1        1         Z        0          1</dataString>
       <p2 x="1040" y="920"/>
     </wire>
     <wire>
+      <p1 x="720" y="340"/>
+      <p2 x="720" y="420"/>
+    </wire>
+    <wire>
       <p1 x="1300" y="200"/>
       <p2 x="1300" y="660"/>
     </wire>
@@ -705,6 +724,10 @@ Z    0x61  1      1        1         Z        0          1</dataString>
     <wire>
       <p1 x="1380" y="520"/>
       <p2 x="1380" y="720"/>
+    </wire>
+    <wire>
+      <p1 x="740" y="360"/>
+      <p2 x="740" y="420"/>
     </wire>
     <wire>
       <p1 x="1000" y="700"/>

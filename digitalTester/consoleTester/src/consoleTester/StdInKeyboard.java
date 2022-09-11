@@ -9,6 +9,7 @@ import de.neemann.digital.gui.components.terminal.Keyboard.KeyboardInterface;
 public class StdInKeyboard extends Thread implements KeyboardInterface {
 	private String text = new String();
 	private boolean hasReceived = false;
+	private int readCount = 0;
 			
 	@Override
     public synchronized int getChar() {
@@ -17,14 +18,16 @@ public class StdInKeyboard extends Thread implements KeyboardInterface {
 			return 0;
 		} else {
 			// System.out.println("Reading :" + text.charAt(0));
+			readCount += 1;
 			return text.charAt(0);
 		}
     }
 	
 	@Override
     public synchronized void deleteFirstChar() {
-		if (text.length() > 0) {
+		if (text.length() > 0 && readCount > 2) { // why 2?? filter out noise in startup
 			// System.out.println("Dequeing :" + text.charAt(0));
+			readCount = 0;
 			text = text.substring(1);
 		}
     }

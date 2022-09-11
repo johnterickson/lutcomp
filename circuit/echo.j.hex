@@ -46,32 +46,32 @@ v2.0 raw
 04 10 48 
 # ttyout <- t0
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }"] }
-# 00025 Instruction { source: "ttyout <- t0\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-08 10 
+# 00025 Instruction { source: "ttyout <- t0\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
+69 10 
 # t1 <- 0n105/0x69u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }", "Number(U8, 105)", "Number(U8, 105)"] }
 # 00027 Instruction { source: "t1 <- 0n105/0x69u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\", \"Number(U8, 105)\", \"Number(U8, 105)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x69=105)], resolved: None }
 04 10 69 
 # ttyout <- t1
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }"] }
-# 0002a Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-08 10 
+# 0002a Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
+69 10 
 # t2 <- 0n33/0x21u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }", "Number(U8, 33)", "Number(U8, 33)"] }
 # 0002c Instruction { source: "t2 <- 0n33/0x21u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\", \"Number(U8, 33)\", \"Number(U8, 33)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x21=33)], resolved: None }
 04 10 21 
 # ttyout <- t2
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }"] }
-# 0002f Instruction { source: "ttyout <- t2\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-08 10 
+# 0002f Instruction { source: "ttyout <- t2\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
+69 10 
 # t3 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 00031 Instruction { source: "t3 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x0a=10)], resolved: None }
 04 10 0a 
 # ttyout <- t3
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 00034 Instruction { source: "ttyout <- t3\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-08 10 
+# 00034 Instruction { source: "ttyout <- t3\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
+69 10 
 # ch <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["Assign { target: Ident(\"ch\"), var_type: Some(Number(U8)), value: Number(U8, 0) }", "Number(U8, 0)"] }
 # 00036 Instruction { source: "ch <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"ch\\\"), var_type: Some(Number(U8)), value: Number(U8, 0) }\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x00=0)], resolved: None }
@@ -104,16 +104,16 @@ v2.0 raw
 04 10 3e 
 # ttyout <- t6
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 62) }"] }
-# 0004d Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 62) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-08 10 
+# 0004d Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 62) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
+69 10 
 # t7 <- 0n58/0x3au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 58) }", "Number(U8, 58)", "Number(U8, 58)"] }
 # 0004f Instruction { source: "t7 <- 0n58/0x3au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 58) }\", \"Number(U8, 58)\", \"Number(U8, 58)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x3a=58)], resolved: None }
 04 10 3a 
 # ttyout <- t7
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 58) }"] }
-# 00052 Instruction { source: "ttyout <- t7\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 58) }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-08 10 
+# 00052 Instruction { source: "ttyout <- t7\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 58) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
+69 10 
 # ch <- 0n0/0x00u8 
 # 	SourceContext { contexts: ["Assign { target: Ident(\"ch\"), var_type: None, value: Number(U8, 0) }", "Number(U8, 0)"] }
 # 00054 Instruction { source: "ch <- 0n0/0x00u8 \n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"ch\\\"), var_type: None, value: Number(U8, 0) }\", \"Number(U8, 0)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x00=0)], resolved: None }
@@ -144,8 +144,8 @@ v2.0 raw
 04 12 00 
 # inline_main_getchar_0_tty <- ttyin
 # 	SourceContext { contexts: ["Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }", "TtyIn"] }
-# 00064 Instruction { source: "inline_main_getchar_0_tty <- ttyin\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }\", \"TtyIn\"] }", opcode: TtyIn, args: [Register(0x12)], resolved: None }
-07 12 
+# 00064 Instruction { source: "inline_main_getchar_0_tty <- ttyin\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }\", \"TtyIn\"] }", opcode: In0, args: [Register(0x12)], resolved: None }
+60 12 
 # :inline_main_getchar_0_getchar_while_predicate_0
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Arithmetic(And, Ident(\"tty\"), Number(U8, 128)), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }] }"] }
 # inline_main_getchar_0_getchar_while_predicate_0
@@ -178,8 +178,8 @@ v2.0 raw
 # inline_main_getchar_0_getchar_while_body_1
 # inline_main_getchar_0_tty <- ttyin
 # 	SourceContext { contexts: ["Assign { target: Ident(\"tty\"), var_type: None, value: TtyIn }", "TtyIn"] }
-# 0007e Instruction { source: "inline_main_getchar_0_tty <- ttyin\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }\", \"TtyIn\"] }", opcode: TtyIn, args: [Register(0x12)], resolved: None }
-07 12 
+# 0007e Instruction { source: "inline_main_getchar_0_tty <- ttyin\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"tty\\\"), var_type: None, value: TtyIn }\", \"TtyIn\"] }", opcode: In0, args: [Register(0x12)], resolved: None }
+60 12 
 # goto inline_main_getchar_0_getchar_while_predicate_0
 # 	SourceContext { contexts: [] }
 # 00080 Instruction { source: "goto inline_main_getchar_0_getchar_while_predicate_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_getchar_0_getchar_while_predicate_0)], resolved: None }
@@ -213,8 +213,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "t10 <- ch U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"ch\\\") }\", \"Ident(\\\"ch\\\")\", \"Ident(\\\"ch\\\")\"] }", opcode: Copy8, args: [Register(0x10), Register(0x10)], resolved: None }
 # ttyout <- t10
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"ch\") }"] }
-# 0008e Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"ch\\\") }\"] }", opcode: TtyOut, args: [Register(0x10)], resolved: None }
-08 10 
+# 0008e Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"ch\\\") }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
+69 10 
 # t11 <- ch U8
 # 	SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }", "Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }", "Ident(\"ch\")", "Ident(\"ch\")"] }
 # optimized away noop copy Instruction { source: "t11 <- ch U8\n\tSourceContext { contexts: [\"IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }\", \"Comparison { op: Equals, left: Ident(\\\"ch\\\"), right: Number(U8, 113) }\", \"Ident(\\\"ch\\\")\", \"Ident(\\\"ch\\\")\"] }", opcode: Copy8, args: [Register(0x10), Register(0x10)], resolved: None }

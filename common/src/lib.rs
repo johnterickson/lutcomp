@@ -27,6 +27,26 @@ bitflags! {
     }
 }
 
+
+#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+pub enum IoPort {
+    TtyIn = 0,
+    TtyOut = 1,
+    Ps2In = 2,
+}
+
+impl IoPort {
+    pub fn in_opcode(&self) -> Opcode {
+        Opcode::from_primitive((Opcode::In0 as u8) +  (*self as u8)).unwrap()
+    }
+
+    pub fn out_opcode(&self) -> Opcode {
+        Opcode::from_primitive((Opcode::Out0 as u8) +  (*self as u8)).unwrap()
+    }
+}
+
 #[derive(Clone, Copy, Display, Debug, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
@@ -160,8 +180,6 @@ pub enum Opcode {
     LoadImm8 = 0x4, // regA <- [8-bit constant B]
     Load8 = 0x5,     // 8-bit MEM[24-bit RegA] -> RegB
     Store8 = 0x6,    // Reg A -> 8-bit MEM[24-bit RegB]
-    TtyIn = 0x7,  // TTY -> RegA
-    TtyOut = 0x8, // RegA -> TTY
     Push8 = 0x9, // Reg_SP -= 1; RegA -> 8-bit MEM[Reg_SP]
     Pop8 = 0xA, // 8-bit MEM[Reg_SP] -> RegA;  Reg_SP += 1;
     Copy8 = 0xB, // regA -> regB
@@ -260,8 +278,6 @@ impl Opcode {
             Opcode::Init => &[],
             Opcode::Load8 => &[1,1],
             Opcode::Store8 => &[1,1],
-            Opcode::TtyIn => &[1],
-            Opcode::TtyOut => &[1],
             Opcode::Push8 => &[1],
             Opcode::Pop8 => &[1],
             Opcode::Copy8 => &[1,1],

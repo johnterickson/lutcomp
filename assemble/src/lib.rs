@@ -178,7 +178,9 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
     let mut args = Vec::new();
 
     let opcode_name = format!("{:?}", instruction.as_rule()); //ew
-    let opcode = match &opcode_name {
+    let opcode = match opcode_name.as_str() {
+        "ttyin" => IoPort::TtyIn.in_opcode(),
+        "ttyout" => IoPort::TtyOut.out_opcode(),
         name => std::str::FromStr::from_str(name)
             .expect(&format!("Could not parse op {}", name)),
     };

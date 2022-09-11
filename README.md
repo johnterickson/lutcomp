@@ -9,7 +9,9 @@
   - [ ] add test
 - PS2 -> I/O board
   - [x] I/O mux
-  - [ ] move tty behind I/O mux
+  - [x] move tty behind I/O mux
+    - [x] software
+    - [x] circuit
   - [ ] make I/O ports bidirectional?
 - RTC
 - hlt command to wait for an interrupt

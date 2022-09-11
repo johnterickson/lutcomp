@@ -13,8 +13,7 @@ cargo run --release -- compile programs/echo.j > circuit/echo.j.hex
 
 echo Run Digital tests
 cp circuit/echo.j.hex circuit/rom.hex
-find circuit/*.dig
-find circuit/*.dig -exec java -cp ../Digital/target/Digital.jar CLI test -verbose -circ {} \;
+find circuit/*.dig | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp ../Digital/target/Digital.jar CLI test -verbose -circ %
 
 export RunTest="java -classpath ./digitalTester/consoleTester/bin:../Digital/target/Digital.jar consoleTester.ConsoleTester ./circuit/lutcomp.dig"
 
