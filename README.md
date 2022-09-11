@@ -12,7 +12,7 @@
   - [x] move tty behind I/O mux
     - [x] software
     - [x] circuit
-  - [ ] make I/O ports bidirectional?
+  - [x] make I/O ports bidirectional
 - RTC
 - hlt command to wait for an interrupt
 
@@ -33,6 +33,7 @@ r3
 bit 0: carry
 bit 1: zero
 bit 2: negative
+bit 3: it's complicated
 ```
 
 # uComputer
@@ -42,27 +43,6 @@ bit 2: negative
 0-7: in2
 8-15: in1
 16-18: opcode
-```
-
-## ALU opcodes:
-```
-0 0 0 addlo: (in1 + in2) & 0xFF
-0 0 1 addlocarry: (1 + in1 + in2) & 0xFF
-0 1 0 addhi: Flags from (in1 + in2)
-0 1 1 addhicarry: Flags from (1 + in1 + in2)
-1 0 0 Or: in1 | in2
-1 0 1 Xor: in1 ^ in2
-1 1 0 And: in1 & in2
-1 1 1 Special: mode:[in2][6..=7]
-      mode 00: shifts/roates
-            shift_mode:[in2][4..=5] amount:[in2][0..=3] as signed int
-                  shift_mode:00 ROTATE(ACC, amount) -> [out]
-                  shift_mode:01 LOGICAL_SHIFT(ACC, amount) -> [out]
-                  shift_mode:10 ARTHIMETIC_SHIFT(ACC, amount) -> [out]
-                  shift_mode:11 reserved (not?)
-      mode 01:
-      mode 10:
-      mode 11:
 ```
 
 ## ucode instruction

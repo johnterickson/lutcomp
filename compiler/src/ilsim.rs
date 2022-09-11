@@ -643,16 +643,16 @@ mod tests {
     #[test]
     fn if_eq() {
         test_inputs(
-            "main",
-            include_str!("../../programs/if_eq.j"),
+            "if_eq",
+            include_str!("../../programs/if.j"),
             &[(6u8,7u8,0u8), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
     }
 
     #[test]
     fn if_gt_unsigned() {
         test_inputs(
-            "main",
-            include_str!("../../programs/if_gt.j"),
+            "if_gt",
+            include_str!("../../programs/if.j"),
             &[
                 (0u8,1u8,0u8),
                 (1,2,0),
@@ -664,16 +664,16 @@ mod tests {
     #[test]
     fn if_gte_unsigned() {
         test_inputs(
-            "main",
-            include_str!("../../programs/if_gte.j"),
+            "if_gte",
+            include_str!("../../programs/if.j"),
             &[(6u8,7u8,0u8), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 1), (7,7,1)]);
     }
 
     #[test]
     fn if_lt_unsigned() {
         test_inputs(
-            "main",
-            include_str!("../../programs/if_lt.j"),
+            "if_lt",
+            include_str!("../../programs/if.j"),
             &[
             (0u8,0u8,0u8),
             (0,1,1),
@@ -683,24 +683,24 @@ mod tests {
     #[test]
     fn if_lte_unsigned() {
         test_inputs(
-            "main",
-            include_str!("../../programs/if_lte.j"),
+            "if_lte",
+            include_str!("../../programs/if.j"),
             &[(6u8,7u8,1u8), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 0), (7,7,1)]);
     }
 
     #[test]
     fn if_ne() {
         test_inputs(
-            "main",
-            include_str!("../../programs/if_ne.j"),
+            "if_ne",
+            include_str!("../../programs/if.j"),
             &[(6u8,7u8,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
     }
 
     #[test]
     fn if_ne_uptr() {
         test_inputs(
-            "main",
-            include_str!("../../programs/if_ne_uptr.j"),
+            "if_ne_uptr",
+            include_str!("../../programs/if.j"),
             &[
                 (6u32,7u32,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0),
                 (0x0,0x100,1),(0x100,0x100,0),(0xAABBCCDD,0xAABBCCDD,0),
