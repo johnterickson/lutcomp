@@ -275,7 +275,7 @@ macro_rules! text {
         for c in $s.chars() {
             if c == '\0' { continue; }
             add!($lines, Opcode::LoadImm8, vec![Value::Register(0xF), Value::Constant8(c as u8)]);
-            add!($lines, IoPort::TtyOut.out_opcode(), vec![Value::Register(0xF)])
+            add!($lines, IoPort::Tty.out_opcode(), vec![Value::Register(0xF)])
         }
     };
 }

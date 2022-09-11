@@ -1137,32 +1137,32 @@ v2.0 raw
 04 1d 45 
 # ttyout <- t20
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 69) }"] }
-# 80586 Instruction { source: "ttyout <- t20\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 69) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 80586 Instruction { source: "ttyout <- t20\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 69) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # t21 <- 0n82/0x52u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }", "Number(U8, 82)", "Number(U8, 82)"] }
 # 80588 Instruction { source: "t21 <- 0n82/0x52u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\", \"Number(U8, 82)\", \"Number(U8, 82)\"] }", opcode: LoadImm8, args: [Register(0x1d), Constant8(0x52=82)], resolved: None }
 04 1d 52 
 # ttyout <- t21
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }"] }
-# 8058b Instruction { source: "ttyout <- t21\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 8058b Instruction { source: "ttyout <- t21\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # t22 <- 0n82/0x52u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }", "Number(U8, 82)", "Number(U8, 82)"] }
 # 8058d Instruction { source: "t22 <- 0n82/0x52u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\", \"Number(U8, 82)\", \"Number(U8, 82)\"] }", opcode: LoadImm8, args: [Register(0x1d), Constant8(0x52=82)], resolved: None }
 04 1d 52 
 # ttyout <- t22
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }"] }
-# 80590 Instruction { source: "ttyout <- t22\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 80590 Instruction { source: "ttyout <- t22\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # t23 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 80592 Instruction { source: "t23 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x1d), Constant8(0x0a=10)], resolved: None }
 04 1d 0a 
 # ttyout <- t23
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 80595 Instruction { source: "ttyout <- t23\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 80595 Instruction { source: "ttyout <- t23\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # t24 <- 0n1/0x01u8 
 # 	SourceContext { contexts: ["Return { value: Some(Number(U8, 1)) }", "Number(U8, 1)", "Number(U8, 1)"] }
 # 80597 Instruction { source: "t24 <- 0n1/0x01u8 \n\tSourceContext { contexts: [\"Return { value: Some(Number(U8, 1)) }\", \"Number(U8, 1)\", \"Number(U8, 1)\"] }", opcode: LoadImm8, args: [Register(0x1d), Constant8(0x01=1)], resolved: None }
@@ -1569,8 +1569,8 @@ v2.0 raw
 04 3c 0a 
 # ttyout <- t37
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 806c1 Instruction { source: "ttyout <- t37\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x3c)], resolved: None }
-69 3c 
+# 806c1 Instruction { source: "ttyout <- t37\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x3c)], resolved: None }
+68 3c 
 # t39 <- stack U32
 # 	SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"sum\")] }) }", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"sum\")] })", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"sum\")] })", "Ident(\"stack\")", "Ident(\"stack\")"] }
 # 806c3 Instruction { source: "t39 <- stack U32\n\tSourceContext { contexts: [\"VoidExpression { expression: Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"sum\\\")] }) }\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"sum\\\")] })\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"sum\\\")] })\", \"Ident(\\\"stack\\\")\", \"Ident(\\\"stack\\\")\"] }", opcode: Copy32, args: [Register(0x40), Register(0x14)], resolved: None }
@@ -1780,8 +1780,8 @@ v2.0 raw
 04 3c 0a 
 # ttyout <- t47
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 80761 Instruction { source: "ttyout <- t47\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x3c)], resolved: None }
-69 3c 
+# 80761 Instruction { source: "ttyout <- t47\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x3c)], resolved: None }
+68 3c 
 # t49 <- stack U32
 # 	SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"diff\")] }) }", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"diff\")] })", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"diff\")] })", "Ident(\"stack\")", "Ident(\"stack\")"] }
 # 80763 Instruction { source: "t49 <- stack U32\n\tSourceContext { contexts: [\"VoidExpression { expression: Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"diff\\\")] }) }\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"diff\\\")] })\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"diff\\\")] })\", \"Ident(\\\"stack\\\")\", \"Ident(\\\"stack\\\")\"] }", opcode: Copy32, args: [Register(0x40), Register(0x14)], resolved: None }
@@ -2730,8 +2730,8 @@ v2.0 raw
 04 3c 0a 
 # ttyout <- t57
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 80a33 Instruction { source: "ttyout <- t57\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x3c)], resolved: None }
-69 3c 
+# 80a33 Instruction { source: "ttyout <- t57\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x3c)], resolved: None }
+68 3c 
 # t59 <- stack U32
 # 	SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"product\")] }) }", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"product\")] })", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"product\")] })", "Ident(\"stack\")", "Ident(\"stack\")"] }
 # 80a35 Instruction { source: "t59 <- stack U32\n\tSourceContext { contexts: [\"VoidExpression { expression: Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"product\\\")] }) }\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"product\\\")] })\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"product\\\")] })\", \"Ident(\\\"stack\\\")\", \"Ident(\\\"stack\\\")\"] }", opcode: Copy32, args: [Register(0x40), Register(0x14)], resolved: None }
@@ -2940,8 +2940,8 @@ v2.0 raw
 04 3c 0a 
 # ttyout <- t67
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 80adb Instruction { source: "ttyout <- t67\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x3c)], resolved: None }
-69 3c 
+# 80adb Instruction { source: "ttyout <- t67\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x3c)], resolved: None }
+68 3c 
 # t69 <- stack U32
 # 	SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"quotient\")] }) }", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"quotient\")] })", "Call(Call { function: \"stack_push\", parameters: [Ident(\"stack\"), Ident(\"quotient\")] })", "Ident(\"stack\")", "Ident(\"stack\")"] }
 # 80add Instruction { source: "t69 <- stack U32\n\tSourceContext { contexts: [\"VoidExpression { expression: Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"quotient\\\")] }) }\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"quotient\\\")] })\", \"Call(Call { function: \\\"stack_push\\\", parameters: [Ident(\\\"stack\\\"), Ident(\\\"quotient\\\")] })\", \"Ident(\\\"stack\\\")\", \"Ident(\\\"stack\\\")\"] }", opcode: Copy32, args: [Register(0x40), Register(0x14)], resolved: None }
@@ -4156,8 +4156,8 @@ v2.0 raw
 04 3c 3a 
 # ttyout <- t100
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 58) }"] }
-# 80e2f Instruction { source: "ttyout <- t100\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 58) }\"] }", opcode: Out1, args: [Register(0x3c)], resolved: None }
-69 3c 
+# 80e2f Instruction { source: "ttyout <- t100\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 58) }\"] }", opcode: Out0, args: [Register(0x3c)], resolved: None }
+68 3c 
 # t103 <- stack U32
 # 	SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"print_dec32\", parameters: [Call(Call { function: \"stack_get\", parameters: [Ident(\"stack\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\"i\") }] })] }) }", "Call(Call { function: \"print_dec32\", parameters: [Call(Call { function: \"stack_get\", parameters: [Ident(\"stack\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\"i\") }] })] })", "Call(Call { function: \"print_dec32\", parameters: [Call(Call { function: \"stack_get\", parameters: [Ident(\"stack\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\"i\") }] })] })", "Call(Call { function: \"stack_get\", parameters: [Ident(\"stack\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\"i\") }] })", "Call(Call { function: \"stack_get\", parameters: [Ident(\"stack\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\"i\") }] })", "Ident(\"stack\")", "Ident(\"stack\")"] }
 # 80e31 Instruction { source: "t103 <- stack U32\n\tSourceContext { contexts: [\"VoidExpression { expression: Call(Call { function: \\\"print_dec32\\\", parameters: [Call(Call { function: \\\"stack_get\\\", parameters: [Ident(\\\"stack\\\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\\\"i\\\") }] })] }) }\", \"Call(Call { function: \\\"print_dec32\\\", parameters: [Call(Call { function: \\\"stack_get\\\", parameters: [Ident(\\\"stack\\\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\\\"i\\\") }] })] })\", \"Call(Call { function: \\\"print_dec32\\\", parameters: [Call(Call { function: \\\"stack_get\\\", parameters: [Ident(\\\"stack\\\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\\\"i\\\") }] })] })\", \"Call(Call { function: \\\"stack_get\\\", parameters: [Ident(\\\"stack\\\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\\\"i\\\") }] })\", \"Call(Call { function: \\\"stack_get\\\", parameters: [Ident(\\\"stack\\\"), Cast { old_type: None, new_type: Number(USIZE), value: Ident(\\\"i\\\") }] })\", \"Ident(\\\"stack\\\")\", \"Ident(\\\"stack\\\")\"] }", opcode: Copy32, args: [Register(0x40), Register(0x14)], resolved: None }
@@ -4249,8 +4249,8 @@ v2.0 raw
 04 3c 0a 
 # ttyout <- t106
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 80e74 Instruction { source: "ttyout <- t106\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x3c)], resolved: None }
-69 3c 
+# 80e74 Instruction { source: "ttyout <- t106\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x3c)], resolved: None }
+68 3c 
 # t107 <- i U8
 # 	SourceContext { contexts: ["Assign { target: Ident(\"i\"), var_type: None, value: Arithmetic(Add, Ident(\"i\"), Number(U8, 1)) }", "Arithmetic(Add, Ident(\"i\"), Number(U8, 1))", "Ident(\"i\")", "Ident(\"i\")"] }
 # optimized away noop copy Instruction { source: "t107 <- i U8\n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"i\\\"), var_type: None, value: Arithmetic(Add, Ident(\\\"i\\\"), Number(U8, 1)) }\", \"Arithmetic(Add, Ident(\\\"i\\\"), Number(U8, 1))\", \"Ident(\\\"i\\\")\", \"Ident(\\\"i\\\")\"] }", opcode: Copy8, args: [Register(0x1d), Register(0x1d)], resolved: None }
@@ -6805,16 +6805,16 @@ v2.0 raw
 04 80 52 
 # ttyout <- t0
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }"] }
-# 8159e Instruction { source: "ttyout <- t0\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out1, args: [Register(0x80)], resolved: None }
-69 80 
+# 8159e Instruction { source: "ttyout <- t0\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out0, args: [Register(0x80)], resolved: None }
+68 80 
 # t1 <- 0n80/0x50u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 80) }", "Number(U8, 80)", "Number(U8, 80)"] }
 # 815a0 Instruction { source: "t1 <- 0n80/0x50u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 80) }\", \"Number(U8, 80)\", \"Number(U8, 80)\"] }", opcode: LoadImm8, args: [Register(0x80), Constant8(0x50=80)], resolved: None }
 04 80 50 
 # ttyout <- t1
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 80) }"] }
-# 815a3 Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 80) }\"] }", opcode: Out1, args: [Register(0x80)], resolved: None }
-69 80 
+# 815a3 Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 80) }\"] }", opcode: Out0, args: [Register(0x80)], resolved: None }
+68 80 
 # t4 <- 0n524552/0x00080108u32 
 # 	SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"RpnCalc_init\", parameters: [AddressOf(Ident(\"calc\"))] }) }", "Call(Call { function: \"RpnCalc_init\", parameters: [AddressOf(Ident(\"calc\"))] })", "Call(Call { function: \"RpnCalc_init\", parameters: [AddressOf(Ident(\"calc\"))] })", "AddressOf(Ident(\"calc\"))", "AddressOf(Ident(\"calc\"))"] }
 # 815a5 Instruction { source: "t4 <- 0n524552/0x00080108u32 \n\tSourceContext { contexts: [\"VoidExpression { expression: Call(Call { function: \\\"RpnCalc_init\\\", parameters: [AddressOf(Ident(\\\"calc\\\"))] }) }\", \"Call(Call { function: \\\"RpnCalc_init\\\", parameters: [AddressOf(Ident(\\\"calc\\\"))] })\", \"Call(Call { function: \\\"RpnCalc_init\\\", parameters: [AddressOf(Ident(\\\"calc\\\"))] })\", \"AddressOf(Ident(\\\"calc\\\"))\", \"AddressOf(Ident(\\\"calc\\\"))\"] }", opcode: LoadImm32, args: [Register(0x84), Constant32(0x00080108=524552)], resolved: None }
@@ -6906,16 +6906,16 @@ v2.0 raw
 04 80 4e 
 # ttyout <- t5
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 78) }"] }
-# 815dd Instruction { source: "ttyout <- t5\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 78) }\"] }", opcode: Out1, args: [Register(0x80)], resolved: None }
-69 80 
+# 815dd Instruction { source: "ttyout <- t5\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 78) }\"] }", opcode: Out0, args: [Register(0x80)], resolved: None }
+68 80 
 # t6 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 815df Instruction { source: "t6 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x80), Constant8(0x0a=10)], resolved: None }
 04 80 0a 
 # ttyout <- t6
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 815e2 Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x80)], resolved: None }
-69 80 
+# 815e2 Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x80)], resolved: None }
+68 80 
 # :main_while_predicate_0
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"ch\"), var_type: Some(Number(U8)), value: Call(Call { function: \"getchar\", parameters: [] }) }, Assign { target: Ident(\"result\"), var_type: Some(Number(U8)), value: Call(Call { function: \"RpnCalc_handle\", parameters: [AddressOf(Ident(\"calc\")), Ident(\"ch\")] }) }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"result\"), right: Number(U8, 0) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }"] }
 # main_while_predicate_0
@@ -9612,8 +9612,8 @@ v2.0 raw
 14 e3 e1 e3 
 # ttyout <- t10
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Index(\"a\", Number(U8, 0)), Number(U8, 48)) }"] }
-# 81d23 Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Index(\\\"a\\\", Number(U8, 0)), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0xe3)], resolved: None }
-69 e3 
+# 81d23 Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Index(\\\"a\\\", Number(U8, 0)), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0xe3)], resolved: None }
+68 e3 
 # return None
 # 	SourceContext { contexts: ["Return { value: None }"] }
 # 81d25 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }
@@ -9749,8 +9749,8 @@ v2.0 raw
 14 ec ed ec 
 # ttyout <- t10
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 81d84 Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0xec)], resolved: None }
-69 ec 
+# 81d84 Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0xec)], resolved: None }
+68 ec 
 # return None
 # 	SourceContext { contexts: ["Return { value: None }"] }
 # 81d86 Instruction { source: "PseudoReturn", opcode: JmpMem, args: [Register(0x0c)], resolved: None }

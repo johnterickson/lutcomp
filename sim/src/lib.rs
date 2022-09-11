@@ -324,7 +324,7 @@ impl<'a> Computer<'a> {
         let ready_to_read = {
             let mut ready_to_read = 0;
             if !self.tty_in.is_empty() {
-                ready_to_read |= 1 << IoPort::TtyIn as u8;
+                ready_to_read |= 1 << IoPort::Tty as u8;
             }
             if !self.ps2.is_empty() {
                 ready_to_read |= 1 << IoPort::Ps2In as u8;
@@ -332,7 +332,7 @@ impl<'a> Computer<'a> {
             ready_to_read
         };
 
-        let ready_to_write = 1 << IoPort::TtyOut as u8;
+        let ready_to_write = 1 << IoPort::Tty as u8;
 
         let interrupt_pending = ready_to_read != 0;
         let process_interrupt = interrupt_pending 
@@ -412,8 +412,7 @@ impl<'a> Computer<'a> {
             }
             DataBusOutputLevel::IoXData => {
                 match IoPort::from_primitive(self.ir0 & 0x7) {
-                    Some(IoPort::TtyIn) => Some(self.tty_in.pop_front().unwrap()),
-                    Some(IoPort::TtyOut) => todo!(),
+                    Some(IoPort::Tty) => Some(self.tty_in.pop_front().unwrap()),
                     Some(IoPort::Ps2In) => Some(self.ps2.pop_front().unwrap()),
                     None => todo!(),
                 }
@@ -441,8 +440,7 @@ impl<'a> Computer<'a> {
         match urom_op.data_bus_load {
             DataBusLoadEdge::IoXCp => {
                 match IoPort::from_primitive(self.ir0 & 0x7).expect("bad io port") {
-                    IoPort::TtyIn => panic!(),
-                    IoPort::TtyOut => {
+                    IoPort::Tty => {
                         self.tty_out.push_back(data_bus.unwrap());
                         eprint!("{}", data_bus.unwrap() as char);
                     },
@@ -888,11 +886,11 @@ mod tests {
         rom.push(0x42);
         rom.push(0x43);
         rom.push(0x0A);
-        rom.push(IoPort::TtyOut.out_opcode() as u8);
+        rom.push(IoPort::Tty.out_opcode() as u8);
         rom.push(0x00);
-        rom.push(IoPort::TtyOut.out_opcode() as u8);
+        rom.push(IoPort::Tty.out_opcode() as u8);
         rom.push(0x01);
-        rom.push(IoPort::TtyOut.out_opcode() as u8);
+        rom.push(IoPort::Tty.out_opcode() as u8);
         rom.push(0x02);
         rom.push(Opcode::Halt as u8);
 
@@ -908,9 +906,9 @@ mod tests {
     fn ttyin() {
         let mut rom = Vec::new();
         rom.push(Opcode::Init as u8);
-        rom.push(IoPort::TtyIn.in_opcode() as u8);
+        rom.push(IoPort::Tty.in_opcode() as u8);
         rom.push(0);
-        rom.push(IoPort::TtyIn.in_opcode() as u8);
+        rom.push(IoPort::Tty.in_opcode() as u8);
         rom.push(1);
         rom.push(Opcode::Halt as u8);
 
@@ -1690,7 +1688,7 @@ mod tests {
         rom.push(Opcode::HaltNoCode as u8);
         rom.push(Opcode::HaltNoCode as u8);
         let isr_addr = rom.len() as u32;
-        rom.extend_from_slice(&[IoPort::TtyIn.in_opcode() as u8, 0x1]);
+        rom.extend_from_slice(&[IoPort::Tty.in_opcode() as u8, 0x1]);
         rom.push(Opcode::ReturnFromInterrupt as u8);
         rom.push(Opcode::HaltNoCode as u8);
 

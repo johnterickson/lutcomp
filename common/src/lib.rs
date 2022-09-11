@@ -32,8 +32,7 @@ bitflags! {
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum IoPort {
-    TtyIn = 0,
-    TtyOut = 1,
+    Tty = 0,
     Ps2In = 2,
 }
 

@@ -196,29 +196,29 @@ v2.0 raw
 1b 00 00 00 
 # 00007 Instruction { source: "loadimm8 r01 <- 'H'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x48=72)], resolved: None }
 04 01 48 
-# 0000a Instruction { source: "ttyout r01", opcode: Out1, args: [Register(0x01)], resolved: None }
-69 01 
+# 0000a Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+68 01 
 # 0000c Instruction { source: "loadimm8 r01 <- 'i'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x69=105)], resolved: None }
 04 01 69 
-# 0000f Instruction { source: "ttyout r01", opcode: Out1, args: [Register(0x01)], resolved: None }
-69 01 
+# 0000f Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+68 01 
 # 00011 Instruction { source: "loadimm8 r01 <- '!'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x21=33)], resolved: None }
 04 01 21 
-# 00014 Instruction { source: "ttyout r01", opcode: Out1, args: [Register(0x01)], resolved: None }
-69 01 
+# 00014 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+68 01 
 # 00016 Instruction { source: "loadimm8 r01 <- $0A", opcode: LoadImm8, args: [Register(0x01), Constant8(0x0a=10)], resolved: None }
 04 01 0a 
-# 00019 Instruction { source: "ttyout r01", opcode: Out1, args: [Register(0x01)], resolved: None }
-69 01 
+# 00019 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+68 01 
 # :prompt
 # 0001b Instruction { source: "loadimm8 r01 <- '>'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3e=62)], resolved: None }
 04 01 3e 
-# 0001e Instruction { source: "ttyout r01", opcode: Out1, args: [Register(0x01)], resolved: None }
-69 01 
+# 0001e Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+68 01 
 # 00020 Instruction { source: "loadimm8 r01 <- ':'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3a=58)], resolved: None }
 04 01 3a 
-# 00023 Instruction { source: "ttyout r01", opcode: Out1, args: [Register(0x01)], resolved: None }
-69 01 
+# 00023 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+68 01 
 # :read
 # 00025 Instruction { source: "ttyin r01", opcode: In0, args: [Register(0x01)], resolved: None }
 60 01 
@@ -230,8 +230,8 @@ v2.0 raw
 72 25 00 00 
 # 00032 Instruction { source: "andimm8 r01 <- $7f", opcode: AndImm8, args: [Register(0x01), Constant8(0x7f=127)], resolved: None }
 18 01 7f 
-# 00035 Instruction { source: "ttyout r01", opcode: Out1, args: [Register(0x01)], resolved: None }
-69 01 
+# 00035 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+68 01 
 # 00037 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
 1b 01 01 02 
 # 0003b Instruction { source: "xorimm8 r02 <- 'q'", opcode: XorImm8, args: [Register(0x02), Constant8(0x71=113)], resolved: None }

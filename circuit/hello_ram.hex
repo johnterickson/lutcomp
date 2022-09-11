@@ -37,104 +37,104 @@ v2.0 raw
 04 10 48 
 # ttyout <- t0
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }"] }
-# 80425 Instruction { source: "ttyout <- t0\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80425 Instruction { source: "ttyout <- t0\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t1 <- 0n105/0x69u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }", "Number(U8, 105)", "Number(U8, 105)"] }
 # 80427 Instruction { source: "t1 <- 0n105/0x69u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\", \"Number(U8, 105)\", \"Number(U8, 105)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x69=105)], resolved: None }
 04 10 69 
 # ttyout <- t1
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 105) }"] }
-# 8042a Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 8042a Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 105) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t2 <- 0n95/0x5fu8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }", "Number(U8, 95)", "Number(U8, 95)"] }
 # 8042c Instruction { source: "t2 <- 0n95/0x5fu8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\", \"Number(U8, 95)\", \"Number(U8, 95)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
 04 10 5f 
 # ttyout <- t2
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }"] }
-# 8042f Instruction { source: "ttyout <- t2\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 8042f Instruction { source: "ttyout <- t2\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t3 <- 0n102/0x66u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 102) }", "Number(U8, 102)", "Number(U8, 102)"] }
 # 80431 Instruction { source: "t3 <- 0n102/0x66u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 102) }\", \"Number(U8, 102)\", \"Number(U8, 102)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x66=102)], resolved: None }
 04 10 66 
 # ttyout <- t3
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 102) }"] }
-# 80434 Instruction { source: "ttyout <- t3\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 102) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80434 Instruction { source: "ttyout <- t3\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 102) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t4 <- 0n114/0x72u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 114) }", "Number(U8, 114)", "Number(U8, 114)"] }
 # 80436 Instruction { source: "t4 <- 0n114/0x72u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\", \"Number(U8, 114)\", \"Number(U8, 114)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x72=114)], resolved: None }
 04 10 72 
 # ttyout <- t4
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 114) }"] }
-# 80439 Instruction { source: "ttyout <- t4\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80439 Instruction { source: "ttyout <- t4\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t5 <- 0n111/0x6fu8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }", "Number(U8, 111)", "Number(U8, 111)"] }
 # 8043b Instruction { source: "t5 <- 0n111/0x6fu8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\", \"Number(U8, 111)\", \"Number(U8, 111)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6f=111)], resolved: None }
 04 10 6f 
 # ttyout <- t5
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }"] }
-# 8043e Instruction { source: "ttyout <- t5\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 8043e Instruction { source: "ttyout <- t5\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t6 <- 0n109/0x6du8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 109) }", "Number(U8, 109)", "Number(U8, 109)"] }
 # 80440 Instruction { source: "t6 <- 0n109/0x6du8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\", \"Number(U8, 109)\", \"Number(U8, 109)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x6d=109)], resolved: None }
 04 10 6d 
 # ttyout <- t6
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 109) }"] }
-# 80443 Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80443 Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t7 <- 0n95/0x5fu8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }", "Number(U8, 95)", "Number(U8, 95)"] }
 # 80445 Instruction { source: "t7 <- 0n95/0x5fu8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\", \"Number(U8, 95)\", \"Number(U8, 95)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x5f=95)], resolved: None }
 04 10 5f 
 # ttyout <- t7
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 95) }"] }
-# 80448 Instruction { source: "ttyout <- t7\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80448 Instruction { source: "ttyout <- t7\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 95) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t8 <- 0n82/0x52u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }", "Number(U8, 82)", "Number(U8, 82)"] }
 # 8044a Instruction { source: "t8 <- 0n82/0x52u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\", \"Number(U8, 82)\", \"Number(U8, 82)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x52=82)], resolved: None }
 04 10 52 
 # ttyout <- t8
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }"] }
-# 8044d Instruction { source: "ttyout <- t8\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 8044d Instruction { source: "ttyout <- t8\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t9 <- 0n65/0x41u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 65) }", "Number(U8, 65)", "Number(U8, 65)"] }
 # 8044f Instruction { source: "t9 <- 0n65/0x41u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\", \"Number(U8, 65)\", \"Number(U8, 65)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x41=65)], resolved: None }
 04 10 41 
 # ttyout <- t9
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 65) }"] }
-# 80452 Instruction { source: "ttyout <- t9\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80452 Instruction { source: "ttyout <- t9\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t10 <- 0n77/0x4du8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 77) }", "Number(U8, 77)", "Number(U8, 77)"] }
 # 80454 Instruction { source: "t10 <- 0n77/0x4du8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 77) }\", \"Number(U8, 77)\", \"Number(U8, 77)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x4d=77)], resolved: None }
 04 10 4d 
 # ttyout <- t10
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 77) }"] }
-# 80457 Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 77) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80457 Instruction { source: "ttyout <- t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 77) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t11 <- 0n33/0x21u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }", "Number(U8, 33)", "Number(U8, 33)"] }
 # 80459 Instruction { source: "t11 <- 0n33/0x21u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\", \"Number(U8, 33)\", \"Number(U8, 33)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x21=33)], resolved: None }
 04 10 21 
 # ttyout <- t11
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 33) }"] }
-# 8045c Instruction { source: "ttyout <- t11\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 8045c Instruction { source: "ttyout <- t11\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 33) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t12 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 8045e Instruction { source: "t12 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x10), Constant8(0x0a=10)], resolved: None }
 04 10 0a 
 # ttyout <- t12
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 80461 Instruction { source: "ttyout <- t12\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x10)], resolved: None }
-69 10 
+# 80461 Instruction { source: "ttyout <- t12\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x10)], resolved: None }
+68 10 
 # t13 <- 0xaabbccddu32 
 # 	SourceContext { contexts: ["Return { value: Some(Number(USIZE, 2864434397)) }", "Number(USIZE, 2864434397)", "Number(USIZE, 2864434397)"] }
 # 80463 Instruction { source: "t13 <- 0xaabbccddu32 \n\tSourceContext { contexts: [\"Return { value: Some(Number(USIZE, 2864434397)) }\", \"Number(USIZE, 2864434397)\", \"Number(USIZE, 2864434397)\"] }", opcode: LoadImm32, args: [Register(0x14), Constant32(0xaabbccdd=2864434397)], resolved: None }

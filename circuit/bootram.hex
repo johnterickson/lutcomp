@@ -449,48 +449,48 @@ v2.0 raw
 04 14 52 
 # ttyout <- t1
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 82) }"] }
-# 00046 Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00046 Instruction { source: "ttyout <- t1\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 82) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t2 <- 0n69/0x45u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 69) }", "Number(U8, 69)", "Number(U8, 69)"] }
 # 00048 Instruction { source: "t2 <- 0n69/0x45u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 69) }\", \"Number(U8, 69)\", \"Number(U8, 69)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x45=69)], resolved: None }
 04 14 45 
 # ttyout <- t2
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 69) }"] }
-# 0004b Instruction { source: "ttyout <- t2\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 69) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 0004b Instruction { source: "ttyout <- t2\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 69) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t3 <- 0n65/0x41u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 65) }", "Number(U8, 65)", "Number(U8, 65)"] }
 # 0004d Instruction { source: "t3 <- 0n65/0x41u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\", \"Number(U8, 65)\", \"Number(U8, 65)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x41=65)], resolved: None }
 04 14 41 
 # ttyout <- t3
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 65) }"] }
-# 00050 Instruction { source: "ttyout <- t3\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00050 Instruction { source: "ttyout <- t3\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 65) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t4 <- 0n68/0x44u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 68) }", "Number(U8, 68)", "Number(U8, 68)"] }
 # 00052 Instruction { source: "t4 <- 0n68/0x44u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 68) }\", \"Number(U8, 68)\", \"Number(U8, 68)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x44=68)], resolved: None }
 04 14 44 
 # ttyout <- t4
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 68) }"] }
-# 00055 Instruction { source: "ttyout <- t4\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 68) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00055 Instruction { source: "ttyout <- t4\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 68) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t5 <- 0n89/0x59u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 89) }", "Number(U8, 89)", "Number(U8, 89)"] }
 # 00057 Instruction { source: "t5 <- 0n89/0x59u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 89) }\", \"Number(U8, 89)\", \"Number(U8, 89)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x59=89)], resolved: None }
 04 14 59 
 # ttyout <- t5
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 89) }"] }
-# 0005a Instruction { source: "ttyout <- t5\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 89) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 0005a Instruction { source: "ttyout <- t5\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 89) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t6 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 0005c Instruction { source: "t6 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x0a=10)], resolved: None }
 04 14 0a 
 # ttyout <- t6
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 0005f Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 0005f Instruction { source: "ttyout <- t6\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # p_byte <- 0n0/0x00000000u32 
 # 	SourceContext { contexts: ["Assign { target: Ident(\"p_byte\"), var_type: Some(Ptr(Number(U8))), value: Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 0) } }", "Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 0) }", "Number(USIZE, 0)"] }
 # 00061 Instruction { source: "p_byte <- 0n0/0x00000000u32 \n\tSourceContext { contexts: [\"Assign { target: Ident(\\\"p_byte\\\"), var_type: Some(Ptr(Number(U8))), value: Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 0) } }\", \"Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 0) }\", \"Number(USIZE, 0)\"] }", opcode: LoadImm32, args: [Register(0x18), Constant32(0x00000000=0)], resolved: None }
@@ -864,8 +864,8 @@ v2.0 raw
 14 1d 1e 1d 
 # ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_5_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 0015b Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 0015b Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # goto inline_main_printHex_7_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 0015d Instruction { source: "goto inline_main_printHex_7_inline_printHex_printHexDigit_5_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_7_inline_printHex_printHexDigit_5_printHexDigit_if_end_0)], resolved: None }
@@ -904,8 +904,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_7_inline_printHex_printHexDigit_5_t9 <- inline_main_printHex_7_inline_printHex_printHexDigit_5_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x1d), Register(0x1d)], resolved: None }
 # ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_5_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 00174 Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 00174 Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # :inline_main_printHex_7_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_7_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
@@ -950,8 +950,8 @@ v2.0 raw
 04 1c 30 
 # ttyout <- inline_main_printHex_7_t10
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 48) }"] }
-# 0018d Instruction { source: "ttyout <- inline_main_printHex_7_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 0018d Instruction { source: "ttyout <- inline_main_printHex_7_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # :inline_main_printHex_7_printHex_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_7_printHex_if_end_0
@@ -991,8 +991,8 @@ v2.0 raw
 14 14 1c 14 
 # ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_6_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 001a0 Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 001a0 Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto inline_main_printHex_7_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 001a2 Instruction { source: "goto inline_main_printHex_7_inline_printHex_printHexDigit_6_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_7_inline_printHex_printHexDigit_6_printHexDigit_if_end_0)], resolved: None }
@@ -1031,8 +1031,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_7_inline_printHex_printHexDigit_6_t9 <- inline_main_printHex_7_inline_printHex_printHexDigit_6_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x14), Register(0x14)], resolved: None }
 # ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_6_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 001b9 Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 001b9 Instruction { source: "ttyout <- inline_main_printHex_7_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # :inline_main_printHex_7_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_7_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
@@ -1054,8 +1054,8 @@ v2.0 raw
 04 14 0a 
 # ttyout <- t23
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 001be Instruction { source: "ttyout <- t23\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 001be Instruction { source: "ttyout <- t23\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto main_if_end_3
 # 	SourceContext { contexts: [] }
 # 001c0 Instruction { source: "goto main_if_end_3\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
@@ -1602,8 +1602,8 @@ v2.0 raw
 14 1d 1e 1d 
 # ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_5_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 0032c Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 0032c Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # goto inline_main_printHex_8_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 0032e Instruction { source: "goto inline_main_printHex_8_inline_printHex_printHexDigit_5_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_8_inline_printHex_printHexDigit_5_printHexDigit_if_end_0)], resolved: None }
@@ -1642,8 +1642,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_8_inline_printHex_printHexDigit_5_t9 <- inline_main_printHex_8_inline_printHex_printHexDigit_5_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x1d), Register(0x1d)], resolved: None }
 # ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_5_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 00345 Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 00345 Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # :inline_main_printHex_8_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_8_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
@@ -1688,8 +1688,8 @@ v2.0 raw
 04 1c 30 
 # ttyout <- inline_main_printHex_8_t10
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 48) }"] }
-# 0035e Instruction { source: "ttyout <- inline_main_printHex_8_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 0035e Instruction { source: "ttyout <- inline_main_printHex_8_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # :inline_main_printHex_8_printHex_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_8_printHex_if_end_0
@@ -1729,8 +1729,8 @@ v2.0 raw
 14 14 1c 14 
 # ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_6_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 00371 Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00371 Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto inline_main_printHex_8_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 00373 Instruction { source: "goto inline_main_printHex_8_inline_printHex_printHexDigit_6_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_8_inline_printHex_printHexDigit_6_printHexDigit_if_end_0)], resolved: None }
@@ -1769,8 +1769,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_8_inline_printHex_printHexDigit_6_t9 <- inline_main_printHex_8_inline_printHex_printHexDigit_6_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x14), Register(0x14)], resolved: None }
 # ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_6_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 0038a Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 0038a Instruction { source: "ttyout <- inline_main_printHex_8_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # :inline_main_printHex_8_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_8_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
@@ -1859,8 +1859,8 @@ v2.0 raw
 14 1d 1e 1d 
 # ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_5_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 003b7 Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 003b7 Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # goto inline_main_printHex_9_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 003b9 Instruction { source: "goto inline_main_printHex_9_inline_printHex_printHexDigit_5_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_9_inline_printHex_printHexDigit_5_printHexDigit_if_end_0)], resolved: None }
@@ -1899,8 +1899,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_9_inline_printHex_printHexDigit_5_t9 <- inline_main_printHex_9_inline_printHex_printHexDigit_5_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x1d), Register(0x1d)], resolved: None }
 # ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_5_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 003d0 Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 003d0 Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # :inline_main_printHex_9_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_9_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
@@ -1945,8 +1945,8 @@ v2.0 raw
 04 1c 30 
 # ttyout <- inline_main_printHex_9_t10
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 48) }"] }
-# 003e9 Instruction { source: "ttyout <- inline_main_printHex_9_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 003e9 Instruction { source: "ttyout <- inline_main_printHex_9_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # :inline_main_printHex_9_printHex_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_9_printHex_if_end_0
@@ -1986,8 +1986,8 @@ v2.0 raw
 14 14 1c 14 
 # ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_6_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 003fc Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 003fc Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto inline_main_printHex_9_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 003fe Instruction { source: "goto inline_main_printHex_9_inline_printHex_printHexDigit_6_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_9_inline_printHex_printHexDigit_6_printHexDigit_if_end_0)], resolved: None }
@@ -2026,8 +2026,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_9_inline_printHex_printHexDigit_6_t9 <- inline_main_printHex_9_inline_printHex_printHexDigit_6_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x14), Register(0x14)], resolved: None }
 # ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_6_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 00415 Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00415 Instruction { source: "ttyout <- inline_main_printHex_9_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # :inline_main_printHex_9_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_9_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
@@ -2116,8 +2116,8 @@ v2.0 raw
 14 1d 1e 1d 
 # ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_5_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 00442 Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 00442 Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # goto inline_main_printHex_10_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 00444 Instruction { source: "goto inline_main_printHex_10_inline_printHex_printHexDigit_5_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_10_inline_printHex_printHexDigit_5_printHexDigit_if_end_0)], resolved: None }
@@ -2156,8 +2156,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_10_inline_printHex_printHexDigit_5_t9 <- inline_main_printHex_10_inline_printHex_printHexDigit_5_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x1d), Register(0x1d)], resolved: None }
 # ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_5_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 0045b Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 0045b Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # :inline_main_printHex_10_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_10_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
@@ -2202,8 +2202,8 @@ v2.0 raw
 04 1c 30 
 # ttyout <- inline_main_printHex_10_t10
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 48) }"] }
-# 00474 Instruction { source: "ttyout <- inline_main_printHex_10_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 00474 Instruction { source: "ttyout <- inline_main_printHex_10_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # :inline_main_printHex_10_printHex_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_10_printHex_if_end_0
@@ -2243,8 +2243,8 @@ v2.0 raw
 14 14 1c 14 
 # ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_6_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 00487 Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00487 Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto inline_main_printHex_10_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 00489 Instruction { source: "goto inline_main_printHex_10_inline_printHex_printHexDigit_6_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_10_inline_printHex_printHexDigit_6_printHexDigit_if_end_0)], resolved: None }
@@ -2283,8 +2283,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_10_inline_printHex_printHexDigit_6_t9 <- inline_main_printHex_10_inline_printHex_printHexDigit_6_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x14), Register(0x14)], resolved: None }
 # ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_6_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 004a0 Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 004a0 Instruction { source: "ttyout <- inline_main_printHex_10_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # :inline_main_printHex_10_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_10_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
@@ -2373,8 +2373,8 @@ v2.0 raw
 14 1d 1e 1d 
 # ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_5_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 004cd Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 004cd Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_5_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # goto inline_main_printHex_11_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 004cf Instruction { source: "goto inline_main_printHex_11_inline_printHex_printHexDigit_5_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_11_inline_printHex_printHexDigit_5_printHexDigit_if_end_0)], resolved: None }
@@ -2413,8 +2413,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_11_inline_printHex_printHexDigit_5_t9 <- inline_main_printHex_11_inline_printHex_printHexDigit_5_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x1d), Register(0x1d)], resolved: None }
 # ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_5_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 004e6 Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x1d)], resolved: None }
-69 1d 
+# 004e6 Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_5_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x1d)], resolved: None }
+68 1d 
 # :inline_main_printHex_11_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_11_inline_printHex_printHexDigit_5_printHexDigit_if_end_0
@@ -2459,8 +2459,8 @@ v2.0 raw
 04 1c 30 
 # ttyout <- inline_main_printHex_11_t10
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 48) }"] }
-# 004ff Instruction { source: "ttyout <- inline_main_printHex_11_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 004ff Instruction { source: "ttyout <- inline_main_printHex_11_t10\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 48) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # :inline_main_printHex_11_printHex_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_11_printHex_if_end_0
@@ -2500,8 +2500,8 @@ v2.0 raw
 14 14 1c 14 
 # ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_6_t2
 # 	SourceContext { contexts: ["TtyOut { value: Arithmetic(Add, Ident(\"a\"), Number(U8, 48)) }"] }
-# 00512 Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00512 Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_6_t2\n\tSourceContext { contexts: [\"TtyOut { value: Arithmetic(Add, Ident(\\\"a\\\"), Number(U8, 48)) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto inline_main_printHex_11_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # 00514 Instruction { source: "goto inline_main_printHex_11_inline_printHex_printHexDigit_6_printHexDigit_if_end_0\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(inline_main_printHex_11_inline_printHex_printHexDigit_6_printHexDigit_if_end_0)], resolved: None }
@@ -2540,8 +2540,8 @@ v2.0 raw
 # optimized away noop copy Instruction { source: "inline_main_printHex_11_inline_printHex_printHexDigit_6_t9 <- inline_main_printHex_11_inline_printHex_printHexDigit_6_a U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\", \"Ident(\\\"a\\\")\", \"Ident(\\\"a\\\")\"] }", opcode: Copy8, args: [Register(0x14), Register(0x14)], resolved: None }
 # ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_6_t9
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"a\") }"] }
-# 0052b Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 0052b Instruction { source: "ttyout <- inline_main_printHex_11_inline_printHex_printHexDigit_6_t9\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"a\\\") }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # :inline_main_printHex_11_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
 # 	SourceContext { contexts: [] }
 # inline_main_printHex_11_inline_printHex_printHexDigit_6_printHexDigit_if_end_0
@@ -2563,8 +2563,8 @@ v2.0 raw
 04 14 0a 
 # ttyout <- t46
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 00530 Instruction { source: "ttyout <- t46\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 00530 Instruction { source: "ttyout <- t46\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto main_if_end_3
 # 	SourceContext { contexts: [] }
 # 00532 Instruction { source: "goto main_if_end_3\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
@@ -3134,64 +3134,64 @@ v2.0 raw
 04 14 42 
 # ttyout <- t70
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 66) }"] }
-# 006bc Instruction { source: "ttyout <- t70\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 66) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006bc Instruction { source: "ttyout <- t70\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 66) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t71 <- 0n111/0x6fu8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }", "Number(U8, 111)", "Number(U8, 111)"] }
 # 006be Instruction { source: "t71 <- 0n111/0x6fu8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\", \"Number(U8, 111)\", \"Number(U8, 111)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x6f=111)], resolved: None }
 04 14 6f 
 # ttyout <- t71
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }"] }
-# 006c1 Instruction { source: "ttyout <- t71\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006c1 Instruction { source: "ttyout <- t71\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t72 <- 0n111/0x6fu8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }", "Number(U8, 111)", "Number(U8, 111)"] }
 # 006c3 Instruction { source: "t72 <- 0n111/0x6fu8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\", \"Number(U8, 111)\", \"Number(U8, 111)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x6f=111)], resolved: None }
 04 14 6f 
 # ttyout <- t72
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 111) }"] }
-# 006c6 Instruction { source: "ttyout <- t72\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006c6 Instruction { source: "ttyout <- t72\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 111) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t73 <- 0n116/0x74u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 116) }", "Number(U8, 116)", "Number(U8, 116)"] }
 # 006c8 Instruction { source: "t73 <- 0n116/0x74u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 116) }\", \"Number(U8, 116)\", \"Number(U8, 116)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x74=116)], resolved: None }
 04 14 74 
 # ttyout <- t73
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 116) }"] }
-# 006cb Instruction { source: "ttyout <- t73\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 116) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006cb Instruction { source: "ttyout <- t73\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 116) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t74 <- 0n114/0x72u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 114) }", "Number(U8, 114)", "Number(U8, 114)"] }
 # 006cd Instruction { source: "t74 <- 0n114/0x72u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\", \"Number(U8, 114)\", \"Number(U8, 114)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x72=114)], resolved: None }
 04 14 72 
 # ttyout <- t74
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 114) }"] }
-# 006d0 Instruction { source: "ttyout <- t74\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006d0 Instruction { source: "ttyout <- t74\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 114) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t75 <- 0n97/0x61u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 97) }", "Number(U8, 97)", "Number(U8, 97)"] }
 # 006d2 Instruction { source: "t75 <- 0n97/0x61u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 97) }\", \"Number(U8, 97)\", \"Number(U8, 97)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x61=97)], resolved: None }
 04 14 61 
 # ttyout <- t75
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 97) }"] }
-# 006d5 Instruction { source: "ttyout <- t75\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 97) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006d5 Instruction { source: "ttyout <- t75\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 97) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t76 <- 0n109/0x6du8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 109) }", "Number(U8, 109)", "Number(U8, 109)"] }
 # 006d7 Instruction { source: "t76 <- 0n109/0x6du8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\", \"Number(U8, 109)\", \"Number(U8, 109)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x6d=109)], resolved: None }
 04 14 6d 
 # ttyout <- t76
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 109) }"] }
-# 006da Instruction { source: "ttyout <- t76\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006da Instruction { source: "ttyout <- t76\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 109) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t77 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 006dc Instruction { source: "t77 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x0a=10)], resolved: None }
 04 14 0a 
 # ttyout <- t77
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 006df Instruction { source: "ttyout <- t77\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006df Instruction { source: "ttyout <- t77\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # goto main_if_end_3
 # 	SourceContext { contexts: [] }
 # 006e1 Instruction { source: "goto main_if_end_3\n\tSourceContext { contexts: [] }", opcode: JmpImm, args: [Label24(main_if_end_3)], resolved: None }
@@ -3205,47 +3205,47 @@ v2.0 raw
 04 1c 48 
 # ttyout <- t78
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 72) }"] }
-# 006e8 Instruction { source: "ttyout <- t78\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 006e8 Instruction { source: "ttyout <- t78\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 72) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # t79 <- 0n117/0x75u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 117) }", "Number(U8, 117)", "Number(U8, 117)"] }
 # 006ea Instruction { source: "t79 <- 0n117/0x75u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 117) }\", \"Number(U8, 117)\", \"Number(U8, 117)\"] }", opcode: LoadImm8, args: [Register(0x1c), Constant8(0x75=117)], resolved: None }
 04 1c 75 
 # ttyout <- t79
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 117) }"] }
-# 006ed Instruction { source: "ttyout <- t79\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 117) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 006ed Instruction { source: "ttyout <- t79\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 117) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # t80 <- 0n104/0x68u8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 104) }", "Number(U8, 104)", "Number(U8, 104)"] }
 # 006ef Instruction { source: "t80 <- 0n104/0x68u8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 104) }\", \"Number(U8, 104)\", \"Number(U8, 104)\"] }", opcode: LoadImm8, args: [Register(0x1c), Constant8(0x68=104)], resolved: None }
 04 1c 68 
 # ttyout <- t80
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 104) }"] }
-# 006f2 Instruction { source: "ttyout <- t80\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 104) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 006f2 Instruction { source: "ttyout <- t80\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 104) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # t81 <- 0n63/0x3fu8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 63) }", "Number(U8, 63)", "Number(U8, 63)"] }
 # 006f4 Instruction { source: "t81 <- 0n63/0x3fu8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 63) }\", \"Number(U8, 63)\", \"Number(U8, 63)\"] }", opcode: LoadImm8, args: [Register(0x1c), Constant8(0x3f=63)], resolved: None }
 04 1c 3f 
 # ttyout <- t81
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 63) }"] }
-# 006f7 Instruction { source: "ttyout <- t81\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 63) }\"] }", opcode: Out1, args: [Register(0x1c)], resolved: None }
-69 1c 
+# 006f7 Instruction { source: "ttyout <- t81\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 63) }\"] }", opcode: Out0, args: [Register(0x1c)], resolved: None }
+68 1c 
 # t82 <- ch U8
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"ch\") }", "Ident(\"ch\")", "Ident(\"ch\")"] }
 # optimized away noop copy Instruction { source: "t82 <- ch U8\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"ch\\\") }\", \"Ident(\\\"ch\\\")\", \"Ident(\\\"ch\\\")\"] }", opcode: Copy8, args: [Register(0x14), Register(0x14)], resolved: None }
 # ttyout <- t82
 # 	SourceContext { contexts: ["TtyOut { value: Ident(\"ch\") }"] }
-# 006f9 Instruction { source: "ttyout <- t82\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"ch\\\") }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006f9 Instruction { source: "ttyout <- t82\n\tSourceContext { contexts: [\"TtyOut { value: Ident(\\\"ch\\\") }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # t83 <- 0n10/0x0au8 
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }", "Number(U8, 10)", "Number(U8, 10)"] }
 # 006fb Instruction { source: "t83 <- 0n10/0x0au8 \n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\", \"Number(U8, 10)\", \"Number(U8, 10)\"] }", opcode: LoadImm8, args: [Register(0x14), Constant8(0x0a=10)], resolved: None }
 04 14 0a 
 # ttyout <- t83
 # 	SourceContext { contexts: ["TtyOut { value: Number(U8, 10) }"] }
-# 006fe Instruction { source: "ttyout <- t83\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out1, args: [Register(0x14)], resolved: None }
-69 14 
+# 006fe Instruction { source: "ttyout <- t83\n\tSourceContext { contexts: [\"TtyOut { value: Number(U8, 10) }\"] }", opcode: Out0, args: [Register(0x14)], resolved: None }
+68 14 
 # :main_if_end_3
 # 	SourceContext { contexts: [] }
 # main_if_end_3
