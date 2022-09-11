@@ -18,7 +18,7 @@ public class ConsoleTester {
 		var keyboardNode = (Keyboard)tester.getNode(n -> n instanceof Keyboard && ((Keyboard)n).getLabel().equals("TTYIN"));
 		keyboardNode.setKeyboard(ttyin);
 		ttyin.start();
-		ttyin.waitForFirstChar();
+		ttyin.join();
 
 		String expected = null;
 		if (args.length > 1) {
