@@ -1366,7 +1366,7 @@ mod tests {
     fn echo_ps2_isr() {
         test_ps2(
             "main",
-            include_str!("../../programs/ps2_isr.j"),
+            include_str!("../../programs/keyboard_isr.j"),
             &[
                 ("abcq\n",0x0,0x0,"abc"),
                 ("aBcq\n",0x0,0x0,"aBc"),
@@ -1377,9 +1377,10 @@ mod tests {
     fn echo_tty_isr() {
         test_tty(
             "main",
-            include_str!("../../programs/echo_isr.j"),
+            include_str!("../../programs/keyboard_isr.j"),
             &[
                 ("abcq\n",0x0,0x0,"abc"),
+                ("aBcq\n",0x0,0x0,"aBc"),
             ]);
     }
 

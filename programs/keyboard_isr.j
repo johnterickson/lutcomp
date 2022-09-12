@@ -19,13 +19,7 @@ fn handle_ps2() {
     
     ch: u8;
     code: u8;
-    rtr: u8;
     index: usize;
-
-    rtr = io_ready_to_read();
-    if ((rtr & 4) == 0) {
-        return;
-    }
 
     code = io_read2();
 
@@ -70,8 +64,22 @@ fn handle_ps2() {
     #ttyout(32);
 }
 
+fn handle_tty() {
+    g = globals();
+
+    queue_push(&g->stdin, (ttyin & 127));
+}
+
 fn isr() {
-    handle_ps2();
+    rtr = io_ready_to_read();
+
+    if ((rtr & 1) != 0) {
+        handle_tty();
+    }
+
+    if ((rtr & 4) != 0) {
+        handle_ps2();
+    }
 }
 
 fn main() -> u8 {
@@ -83,7 +91,6 @@ fn main() -> u8 {
     enable_interrupts();
 
     while (0 == 0) {
-        handle_ps2();
 
         disable_interrupts();
         ch = queue_pop(&g->stdin);
