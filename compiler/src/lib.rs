@@ -1,6 +1,7 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
+use packed_struct::PrimitiveEnum;
 use pest::Parser;
 
 extern crate strum;
@@ -84,7 +85,15 @@ pub fn print_state(c: &Computer) {
         }
         
     }
-    println!(" ir0:{:?}", &op);
+    if let Some(pc) = c.ir0_pc {
+        print!(" ir0:{:?}", &op);
+        if let Some(o) = Opcode::from_primitive(c.ir0) {
+            for (i, _size) in o.expected_arg_sizes().iter().enumerate() {
+                print!(" arg{}:{:x}", i, c.mem_byte(pc + 1 + i as u32));
+            }
+        }
+    }
+    println!();
     // println!(
     //     " r0:{:08x} r4:{:08x} r8:{:08x} r10:{:08x} r14:{:08x} ir0:{:?}",
     //     c.reg_u32(0),
@@ -94,22 +103,6 @@ pub fn print_state(c: &Computer) {
     //     c.reg_u32(0x14),
     //     &op,
     // );
-    // match op {
-    //     Some(Opcode::Store32Part1) | Some(Opcode::Store32Part2) => {
-    //         let value_reg_offset = if op == Some(Opcode::Store32Part1) { 1 } else { 0xFFFFFFFE };
-    //         let value_reg = c.mem_byte(c.ir0_pc.wrapping_add(value_reg_offset));
-    //         let value = c.reg_u32(value_reg);
-    //         let addr_reg_offset = if op == Some(Opcode::Store32Part1) { 2 } else { 0xFFFFFFFF };
-    //         let addr_reg = c.mem_byte(c.ir0_pc.wrapping_add(addr_reg_offset));
-    //         let addr = c.reg_u32(addr_reg);
-    //         let mem_value = c.mem_word(addr);
-    //         println!(" (r{:02x} == {:08x}) ==> (mem[r{:02x}={:08x}] == {:08x})", 
-    //             value_reg, value,
-    //             addr_reg, addr, mem_value
-    //         );
-    //     }
-    //     _ => {}
-    // }
 
     if let Some(symbol) = c.image.symbols.get(&pc) {
         let mut seen = BTreeSet::new();
@@ -135,6 +128,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
             struct_types: BTreeMap::new(),
             statics_base_address: STATICS_START_ADDRESS,
             image_base_address: 0,
+            consts: BTreeMap::new(),
         };
         
         // add intrinsics
@@ -155,6 +149,22 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                     name, 
                     attributes: BTreeSet::new(),
                     args: vec![],
+                    vars: BTreeMap::new(),
+                    return_type: Type::Void, 
+                    body,
+                },
+                Intrinsic::ReadyToRead | Intrinsic::ReadyToWrite | Intrinsic::IoRead0 | Intrinsic::IoRead1 | Intrinsic::IoRead2 => FunctionDefinition { 
+                    name, 
+                    attributes: BTreeSet::new(),
+                    args: vec![],
+                    vars: BTreeMap::new(),
+                    return_type: Type::Number(NumberType::U8), 
+                    body,
+                },
+                Intrinsic::IoWrite0 | Intrinsic::IoWrite1 | Intrinsic::IoWrite2 => FunctionDefinition { 
+                    name, 
+                    attributes: BTreeSet::new(),
+                    args: vec![("data".to_owned(),Type::Number(NumberType::U8))],
                     vars: BTreeMap::new(),
                     return_type: Type::Void, 
                     body,
@@ -242,13 +252,25 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                     let existing = ctxt.function_defs.insert(f.name.clone(), f);
                     assert!(existing.is_none(), "{:?} is already defined.", &existing);
                 },
-                // Rule::global => {
-                //     let mut decl = pair.into_inner();
-                //     let mut decl_tokens = decl.next().unwrap().into_inner();
-                //     let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
-                //     let var_type = Type::parse(decl_tokens.next().unwrap(), true);
-                //     unimplemented!();
-                // }
+                Rule::const_value => {
+                    let mut decl = pair.into_inner();
+                    let mut decl_tokens = decl.next().unwrap().into_inner();
+                    let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
+                    let unresolved_var_type = Type::parse(decl_tokens.next().unwrap(), true);
+
+                    let value = Expression::parse(decl.next().unwrap());
+                    let const_value = value.try_get_const_bytes().unwrap();
+
+                    let var_type = match unresolved_var_type {
+                        Type::Array(et, None) => {
+                            let element_size = et.byte_count(&ctxt);
+                            let element_count = (const_value.len() as u32 + element_size - 1) / element_size;
+                            Type::Array(et, Some(element_count))
+                        }
+                        _ => unresolved_var_type,
+                    };
+                    ctxt.consts.insert(var_name, (var_type, const_value));
+                }
                 Rule::EOI => {},
                 _ => panic!("Unexpected rule: {:?}", pair)
             }

@@ -667,12 +667,19 @@ impl Ucode {
 
                     self.load_pc_from_address_regs();
                 }
-                Some(Opcode::InReadyToRead) => {
+                Some(Opcode::IoReadyToRead) => {
                     self.start_of_ram();
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
 
                     add!(self, Output::Direct(DataBusOutputLevel::IoReadyToRead), Load::Mem(AddressBusOutputLevel::Addr));
+                }
+                Some(Opcode::IoReadyToWrite) => {
+                    self.start_of_ram();
+                    pc_inc!(self);
+                    add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
+
+                    add!(self, Output::Direct(DataBusOutputLevel::IoReadyToWrite), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(o) if Opcode::In0 <= o && o <= Opcode::In7 => {
                     self.start_of_ram();

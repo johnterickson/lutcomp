@@ -1,5 +1,5 @@
 !include 'echoline.j'
-
+#comment test
 fn main() -> u8 {
     ttyout('H');
     ttyout('i');

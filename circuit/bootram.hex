@@ -19,7 +19,7 @@ v2.0 raw
 # Ret Some(U8)
 # Var __frame_pointer (__frame_pointer) Reg(U32) Some([12, 13, 14, 15])
 # Var addr (Local addr Number(USIZE) Reg(U32)) Reg(U32) Some([16, 17, 18, 19])
-# Var buf (Local buf Array(Number(U8), 20) FrameOffset(0)) FrameOffset(0) None
+# Var buf (Local buf Array(Number(U8), Some(20)) FrameOffset(0)) FrameOffset(0) None
 # Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([20])
 # Var i (Local i Number(USIZE) Reg(U32)) Reg(U32) Some([24, 25, 26, 27])
 # Var inline_main_parseHex_3_c (Arg0 c Ptr(Number(U8))) Reg(U32) Some([24, 25, 26, 27])

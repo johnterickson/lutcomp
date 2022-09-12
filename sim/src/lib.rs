@@ -66,7 +66,13 @@ impl<'a> Debug for Computer<'a> {
         write!(f, " pc:{:05x}", u32::from_le_bytes(self.pc))?;
         write!(f, " regs:{:08x}", u32::from_le_bytes(self.regs))?;
         write!(f, " addr:{:05x}", u32::from_le_bytes(self.addr))?;
+        write!(f, " ir0_pc:{:02x}", self.ir0_pc.unwrap_or_default())?;
         write!(f, " ir0:{:02x}", self.ir0)?;
+        if let (Some(pc), Some(o)) = (self.ir0_pc, Opcode::from_primitive(self.ir0)) {
+            for (i, _) in o.expected_arg_sizes().iter().enumerate() {
+                write!(f, " arg{}:{:02x}", i, self.mem_byte(pc + i as u32))?;
+            }
+        }
         write!(f, " op:{:?}", Opcode::from_primitive(self.ir0))?;
         write!(f, " in1:{:02x}", self.in1)?;
         write!(f, " flags:[{:?}]", self.flags)?;
@@ -927,7 +933,7 @@ mod tests {
         let mut rom = Vec::new();
         rom.push(Opcode::Init as u8);
         for i in 0..=8 {
-            rom.push(Opcode::InReadyToRead as u8);
+            rom.push(Opcode::IoReadyToRead as u8);
             rom.push(0x10);
             rom.extend_from_slice(&[Opcode::AndImm8 as u8, 0x10, 1 << IoPort::Ps2In as u8]);
             rom.push(Opcode::JzImm as u8);

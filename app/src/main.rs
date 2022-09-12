@@ -192,9 +192,20 @@ fn main() {
             }
         }
         Some("ps2_to_ascii") => {
+            let style = get_param("style");
+            let is_hex = match style {
+                None | Some("hex") => true,
+                Some("j") => false,
+                Some(other) => panic!("unknown style: {}", other),
+            };
+
+            println!("# Table Format");
+            println!("# ASCII WITH_SHIFT_ASCII IS_SHIFT IS_RELEASE");
+
             for (code, mapping) in PS2_SCAN_CODE_TO_ASCII.iter().enumerate() {
                 let code = code as u8;
                 println!("# PS2 CODE 0x{:02x}", code);
+                println!("# {:?}", mapping);
                 if let Some(key_name) = mapping.key_name {
                     println!("# \"{}\"", key_name);
                 }
@@ -213,7 +224,26 @@ fn main() {
                     println!("# SHIFTED ASCII 0x{:02x} == `{}`", mapping.shift_ascii, mapping.shift_ascii as char);
                 }
 
-                println!("{:02x} {:02x} {:02x} 00", mapping.ascii, mapping.shift_ascii, if mapping.is_shift {1} else {0} );
+                if is_hex {
+                    println!("{:02x} {:02x} {:02x} {:02x}", 
+                        mapping.ascii, mapping.shift_ascii, 
+                        if mapping.is_shift {1} else {0},
+                        if mapping.is_release {1} else {0}  );
+                } else {
+                    println!("# {},{},{},{},", 
+                        mapping.ascii, mapping.shift_ascii, 
+                        if mapping.is_shift {1} else {0},
+                        if mapping.is_release {1} else {0}  );
+                }
+            }
+
+            if !is_hex {
+                print!("const PS2_SCAN_CODE_TO_ASCII: u8[] = [");
+                for (_, mapping) in PS2_SCAN_CODE_TO_ASCII.iter().enumerate() {
+                    print!("{},{},{},{},", mapping.ascii, mapping.shift_ascii, 
+                        if mapping.is_shift {1} else {0}, if mapping.is_release {1} else {0} );
+                }
+                println!("255];");
             }
         }
         Some("program_ram") => {

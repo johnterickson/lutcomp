@@ -40,6 +40,7 @@ pub enum Expression {
     Ident(String),
     Number(NumberType, u32),
     TtyIn(),
+    Array(Vec<Expression>),
     Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
     Comparison(Box<Comparison>),
     Deref(Box<Expression>),
@@ -55,6 +56,39 @@ pub enum Expression {
 impl Expression {
     pub fn frame_pointer() -> Expression {
         Expression::Ident(IlVarId::frame_pointer_str().to_owned())
+    }
+
+    pub fn try_get_const_bytes(&self) -> Option<Vec<u8>> {
+        let mut bytes = Vec::new();
+        if self.try_get_const_bytes_inner(&mut bytes) {
+            Some(bytes)
+        } else {
+            None
+        }
+    }
+
+    fn try_get_const_bytes_inner(&self, bytes: &mut Vec<u8>) -> bool {
+        match self {
+            Expression::Array(vals) => {
+                for val in vals {
+                    if !val.try_get_const_bytes_inner(bytes) {
+                        return false;
+                    }
+                }
+                true
+            }
+            Expression::Number(nt, val) => {
+                match nt {
+                    NumberType::U8 => {
+                        bytes.push((*val).try_into().unwrap());
+                    }
+                    NumberType::U16 => todo!(),
+                    NumberType::USIZE => todo!(),
+                }
+                true
+            }
+            _ => false
+        }
     }
 
     pub fn try_get_const(&self) -> Option<u32> {
@@ -97,7 +131,7 @@ impl Expression {
                 if n == IlVarId::frame_pointer_str() {
                     Some(Type::Number(NumberType::USIZE))
                 } else if let Some(f) = f {
-                    let (_,t) = f.find_arg_or_var(n)
+                    let (_,t) = f.find_arg_or_var(ctxt, n)
                         .expect(&format!("Cannot find {} in {:?}", n, f));
                     Some(t.clone())
                 } else {
@@ -106,7 +140,7 @@ impl Expression {
             }
             Expression::Index(name, _) => {
                 if let Some(f) = f {
-                    let (_,t) = f.find_arg_or_var(name)
+                    let (_,t) = f.find_arg_or_var(ctxt, name)
                         .expect(&format!("Cannot find {} in {:?}", name, f));
                     match t {
                         Type::Array(element_type, _) |
@@ -164,7 +198,7 @@ impl Expression {
             },
             Expression::LocalFieldDeref(n, field) => {
                 if let Some(f) = f {
-                    let (_, struct_type) = f.find_arg_or_var(n)
+                    let (_, struct_type) = f.find_arg_or_var(ctxt, n)
                         .expect(&format!("Cannot find {} in {:?}", n, f));
                     let struct_type = match struct_type { 
                         Type::Struct(struct_type) => {
@@ -180,7 +214,7 @@ impl Expression {
             }
             Expression::PtrFieldDeref(n, field) => {
                 if let Some(f) = f {
-                    let (_, ptr_type) = f.find_arg_or_var(n)
+                    let (_, ptr_type) = f.find_arg_or_var(ctxt, n)
                         .expect(&format!("Cannot find {} in {:?}", n, f));
                     let element_type = ptr_type.get_element_type().unwrap();
                     let struct_type = match element_type { 
@@ -199,6 +233,7 @@ impl Expression {
             Expression::Comparison(_) => todo!(),
             Expression::Cast { old_type:_, new_type, value:_ } => Some(new_type.clone()),
             Expression::Optimized { original:_, optimized } => optimized.try_emit_type(ctxt, f),
+            Expression::Array(_) => todo!(),
         }
     }
 
@@ -375,6 +410,14 @@ impl Expression {
                 let value = Box::new(Expression::parse(pairs.next().unwrap()));
                 let new_type = Type::parse(pairs.next().unwrap(), false);
                 Expression::Cast{ old_type: None, new_type, value }
+            }
+            Rule::array_expression => {
+                let mut pairs = pair.into_inner();
+                let mut vals = Vec::new();
+                while let Some(val) = pairs.next() {
+                    vals.push(Expression::parse(val));
+                }
+                Expression::Array(vals)
             }
             r => {
                 dbg!(r);

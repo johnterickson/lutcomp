@@ -55,6 +55,13 @@ impl IlFunction {
     fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> Option<IlNumber> {
         let mut vars: BTreeMap<&IlVarId, IlNumber> = BTreeMap::new();
 
+        let last_const_addr = ROM_MAX;
+        let const_addrs: BTreeMap<_,_> = ctxt.program.consts.iter().map(|(name,(info, _))| {
+            let addr = last_const_addr - info.byte_size;
+            let addr = addr / 4 * 4;
+            (name.clone(), addr)
+        }).collect();
+
         for (id, info) in self.vars.iter().rev() {
             if let IlLocation::Static(addr) = info.location {
                 assert!(vars.insert(id, IlNumber::U32(addr)).is_none());
@@ -350,8 +357,7 @@ impl IlFunction {
                                 };
                                 Some(IlNumber::U16((src1 as u16)*(src2 as u16)))
                             },
-                            Intrinsic::EnableInterrupts => todo!(),
-                            Intrinsic::DisableInterrupts => todo!(),
+                            _ => todo!(),
                         }
                     } else {
                        f.simulate(ctxt, &args)
@@ -377,10 +383,15 @@ impl IlFunction {
                             }
                         }
                     }
-                    let peek = ctxt.tty_in.pop_front().map_or(0x00, |c| 0x80 | c);
-                    match vars.insert(dest, IlNumber::U8(peek)) {
-                        Some(existing) => assert_eq!(existing.il_type(), IlType::U8),
-                        None => {}
+                    let peek = IlNumber::U8(ctxt.tty_in.pop_front().map_or(0x00, |c| 0x80 | c));
+                    match vars.entry(dest) {
+                        Entry::Vacant(v) => {
+                            v.insert(peek);
+                        }
+                        Entry::Occupied(mut existing) => {
+                            assert_eq!(existing.get().il_type(), IlType::U8);
+                            existing.insert(peek);
+                        },
                     }
                 }
                 IlInstruction::TtyOut { src } => {
@@ -399,6 +410,19 @@ impl IlFunction {
 
                     vars.insert(dest, n);
                 },
+                IlInstruction::GetConstAddress { dest, const_name } => {
+                    let addr = IlNumber::U32(const_addrs[const_name]);
+
+                    match vars.entry(dest) {
+                        Entry::Vacant(v) => {
+                            v.insert(addr);
+                        }
+                        Entry::Occupied(mut existing) => {
+                            assert_eq!(existing.get().il_type(), addr.il_type());
+                            existing.insert(addr);
+                        },
+                    }
+                }
             }
 
             if inc_pc {
@@ -1237,7 +1261,7 @@ mod tests {
             running = c.step();
             let pc = u32::from_le_bytes(c.pc);
             if pc != last_pc {
-                print_state(&c);
+                //print_state(&c);
                 last_pc = pc;
             }
         }
@@ -1297,7 +1321,7 @@ mod tests {
             running = c.step();
 
             if last_ir0 != Some(c.ir0) {
-                print_state(&c);
+                //print_state(&c);
             }
 
             last_ir0 = Some(c.ir0);
@@ -1337,9 +1361,20 @@ mod tests {
         dir.push("programs");
         dir
     }
+    
+    #[test]
+    fn echo_ps2_isr() {
+        test_ps2(
+            "main",
+            include_str!("../../programs/ps2_isr.j"),
+            &[
+                ("abcq\n",0x0,0x0,"abc"),
+                ("aBcq\n",0x0,0x0,"aBc"),
+            ]);
+    }
 
     #[test]
-    fn echo_isr() {
+    fn echo_tty_isr() {
         test_tty(
             "main",
             include_str!("../../programs/echo_isr.j"),
@@ -1379,7 +1414,7 @@ mod tests {
             let mut step_count = 0u64;
             while self.comp.step() {
                 if last_pc != self.comp.ir0_pc {
-                    // print_state(&mut self.comp);
+                    //print_state(&mut self.comp);
                 }
                 last_pc = self.comp.ir0_pc;
                 step_count += 1;
@@ -1609,7 +1644,31 @@ mod tests {
         test_var_inputs(entry, program, cases.as_slice());
     }
 
+    fn test_ps2(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
+        test_io(entry, program, pairs, |c, ttyin| {
+            for ch in ttyin.chars() {
+                for code in ASCII_TO_PS2_SCAN_CODES[ch as usize] {
+                    if code == 0 {
+                        break;
+                    }
+
+                    c.comp.ps2.push_back(code);
+                }
+            }
+        })
+    }
+
     fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
+        test_io(entry, program, pairs, |c, ttyin| {
+            for ch in ttyin.chars() {
+                c.comp.tty_in.push_back(ch as u8);
+            }
+        })
+    }
+    
+    fn test_io<T, F: FnMut(&mut TestComputer, &T)->()>(entry: &str, program: &str, pairs: &[(T,u32,u32,&str)], mut apply: F)
+        where T: std::fmt::Debug
+    {
         eprintln!("Compiling to IL...");
         let (ctxt, il) = emit_il(entry,program, &test_programs_dir());
         // dbg!(&il);
@@ -1621,12 +1680,11 @@ mod tests {
         let rom = assemble::assemble(asm);
 
         eprintln!("Running...");
-        for (ttyin, input1, input2, expected) in pairs {
+        for (arg, input1, input2, expected) in pairs {
             let mut c = TestComputer::from_rom(&rom);
-            dbg!((ttyin, input1, input2, expected));
-            for ch in ttyin.chars() {
-                c.comp.tty_in.push_back(ch as u8);
-            }
+            dbg!((input1, input2, expected));
+            apply(&mut c, arg);
+
             assert_eq!(0, c.run(&[*input1, *input2], 1));
 
             let mut out = String::new();
@@ -1636,7 +1694,7 @@ mod tests {
             }
 
             assert_eq!(out.as_str(), *expected,
-                "Failed for `{}`,{:?},{:?} -> `{}`", ttyin, input1, input2, expected);
+                "Failed for `{:?}`,{:?},{:?} -> `{}`", arg, input1, input2, expected);
         }
     }
 }

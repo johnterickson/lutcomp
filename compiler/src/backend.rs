@@ -319,6 +319,14 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         resolved: None,
     }));
 
+    for (name, (info, bytes)) in &ctxt.il.consts {
+        lines.push(AssemblyInputLine::Label(format!(":{}", &name.0)));
+        lines.push(AssemblyInputLine::Comment(format!("const {:?}", info.var_type)));
+        for b in bytes {
+            lines.push(AssemblyInputLine::Literal8(*b));
+        }
+    }
+
 
     for f in ctxt.il.functions.values() {
 
@@ -412,6 +420,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let dest_regs = ctxt.find_registers(dest);
                     ctxt.emit_num_to_reg(&dest_regs, src, &src.il_type(), source);
                 }
+                
                 IlInstruction::AssignVar { dest, src, size, src_range, dest_range} => {
                     let dest_regs = ctxt.find_registers(dest);
                     let dest_regs = if let Some(dest_range) = dest_range {
@@ -765,6 +774,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             }
                             Intrinsic::EnableInterrupts => {
                                 assert_eq!(0, args.len());
+                                assert_eq!(&None, ret);
                                 ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                     source: format!("{:?}", i),
                                     opcode: Opcode::EnableInterrupts,
@@ -774,6 +784,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             },
                             Intrinsic::DisableInterrupts => {
                                 assert_eq!(0, args.len());
+                                assert_eq!(&None, ret);
                                 ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                     source: format!("{:?}", i),
                                     opcode: Opcode::DisableInterrupts,
@@ -781,6 +792,46 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     resolved: None,
                                 }));
                             }
+                            Intrinsic::ReadyToRead | Intrinsic::ReadyToWrite | Intrinsic::IoRead0 | Intrinsic::IoRead1 | Intrinsic::IoRead2 => {
+                                let opcode = match i {
+                                    Intrinsic::ReadyToRead => Opcode::IoReadyToRead,
+                                    Intrinsic::ReadyToWrite => Opcode::IoReadyToWrite,
+                                    Intrinsic::IoRead0 => Opcode::In0,
+                                    Intrinsic::IoRead1 => Opcode::In1,
+                                    Intrinsic::IoRead2 => Opcode::In2,
+                                    _ => panic!(),
+                                };
+                                assert_eq!(0, args.len());
+                                let dst_reg = ctxt.find_registers(ret.as_ref().unwrap());
+                                assert_eq!(1, dst_reg.len());
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    source: format!("{:?}", i),
+                                    opcode: opcode,
+                                    args: vec![Value::Register(dst_reg[0])],
+                                    resolved: None,
+                                }));
+                            },
+                            Intrinsic::IoWrite0 | Intrinsic::IoWrite1 | Intrinsic::IoWrite2 => {
+                                let opcode = match i {
+                                    Intrinsic::IoWrite0 => Opcode::Out0,
+                                    Intrinsic::IoWrite1 => Opcode::Out1,
+                                    Intrinsic::IoWrite2 => Opcode::Out2,
+                                    _ => panic!(),
+                                };
+
+                                assert_eq!(2, args.len());
+                                let src1_reg = ctxt.find_registers(&args[0]);
+                                assert_eq!(1, src1_reg.len());
+                                assert_eq!(&None, ret);
+                                ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                    source: format!("{:?}", i),
+                                    opcode: opcode,
+                                    args: vec![Value::Register(src1_reg[0])],
+                                    resolved: None,
+                                }));
+
+                                todo!();
+                            },
                         }
 
                         continue;
@@ -967,6 +1018,16 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         opcode: IoPort::Tty.out_opcode(),
                         source,
                         args: vec![Value::Register(src_regs[0])],
+                        resolved: None,
+                    }));
+                },
+                IlInstruction::GetConstAddress { dest, const_name } => {
+                    let dest_regs = ctxt.find_registers(dest);
+                    assert_eq!(dest_regs.len(), 4);
+                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                        opcode: Opcode::LoadImm32,
+                        source,
+                        args: vec![Value::Register(dest_regs[0]), Value::Label32(format!(":{}", const_name))],
                         resolved: None,
                     }));
                 },

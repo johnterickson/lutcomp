@@ -243,7 +243,8 @@ pub enum Opcode {
     EnableInterrupts = 0x76,
     DisableInterrupts = 0x77,
     ReturnFromInterrupt = 0x78,
-    InReadyToRead = 0x79, // in available bitmask => regA
+    IoReadyToRead = 0x79, // in available bitmask => regA
+    IoReadyToWrite = 0x7A, // in available bitmask => regA
     HaltRAM = 0x4C, // (0xCC & 0x7F) imm32 halt code
     GetUcodeInfo = 0x7C, // major byte -> regA, minor byte -> regB, patch -> regC, 32-bit hash regD
     GetAluInfo = 0x7D, // SpecialMicroHelperInfo(regA), 8-bit value regB
@@ -325,7 +326,7 @@ impl Opcode {
             Opcode::Noop => &[],
             Opcode::In0 | Opcode::In1 | Opcode::In2 | Opcode::In3 | Opcode::In4 | Opcode::In5 | Opcode::In6 | Opcode::In7 |
             Opcode::Out0 | Opcode::Out1 | Opcode::Out2 | Opcode::Out3 | Opcode::Out4 | Opcode::Out5 | Opcode::Out6 | Opcode::Out7 => &[1],
-            Opcode::InReadyToRead => &[1],
+            Opcode::IoReadyToRead | Opcode::IoReadyToWrite => &[1],
         }
     }
 
@@ -397,7 +398,15 @@ impl Image {
 pub enum Intrinsic {
     Mul8_16,
     EnableInterrupts,
-    DisableInterrupts
+    DisableInterrupts,
+    ReadyToRead,
+    ReadyToWrite,
+    IoRead0,
+    IoRead1,
+    IoRead2,
+    IoWrite0,
+    IoWrite1,
+    IoWrite2,
 }
 
 impl Intrinsic {
@@ -406,6 +415,14 @@ impl Intrinsic {
             Intrinsic::Mul8_16 => "__mul8_16",
             Intrinsic::EnableInterrupts => "enable_interrupts",
             Intrinsic::DisableInterrupts => "disable_interrupts",
+            Intrinsic::ReadyToRead => "io_ready_to_read",
+            Intrinsic::ReadyToWrite => "io_ready_to_write",
+            Intrinsic::IoRead0 => "io_read0",
+            Intrinsic::IoRead1 => "io_read1",
+            Intrinsic::IoRead2 => "io_read2",
+            Intrinsic::IoWrite0 => "io_write0",
+            Intrinsic::IoWrite1 => "io_write1",
+            Intrinsic::IoWrite2 => "io_write2",
         }
     }
 }
@@ -413,7 +430,7 @@ impl Intrinsic {
 use lazy_static::lazy_static;
 lazy_static! {
     pub static ref ASCII_TO_PS2_SCAN_CODES: [[u8;8]; 128] = map_ascii_to_ps2_scan_codes();
-    pub static ref PS2_SCAN_CODE_TO_ASCII: [ScanCodeMapping; 128] = map_ps2_scan_code_to_ascii();
+    pub static ref PS2_SCAN_CODE_TO_ASCII: [ScanCodeMapping; 256] = map_ps2_scan_code_to_ascii();
 }
 
 fn map_ascii_to_ps2_scan_codes() -> [[u8;8]; 128] {
@@ -427,7 +444,7 @@ fn map_ascii_to_ps2_scan_codes() -> [[u8;8]; 128] {
 
         if shifted_key.len() == 1 {
             let c = shifted_key[0] as char;
-            mappings[c as usize] = [0x12, 0xF0, *code, 0xF0, *code, 0xF0, 0x12, 0];
+            mappings[c as usize] = [0x12, *code, 0xF0, *code, 0xF0, 0x12, 0, 0];
         }
     }
 
@@ -441,20 +458,19 @@ pub struct ScanCodeMapping {
     pub shift_key_name: Option<&'static str>,
     pub shift_ascii: u8,
     pub is_shift: bool,
+    pub is_release: bool,
 }
 
-fn map_ps2_scan_code_to_ascii() -> [ScanCodeMapping; 128] {
-    let mut mappings = [Default::default(); 128];
+fn map_ps2_scan_code_to_ascii() -> [ScanCodeMapping; 256] {
+    let mut mappings = [Default::default(); 256];
 
     for (code, key, shifted_key) in SCAN_CODE_TO_KEY {
-        if *code as usize >= mappings.len() {
-            continue;
-        }
-
         let is_shift = match key {
             &b"Left Shift" | &b"Right Shift" => true,
             _ => false,
         };
+
+        let is_release = *code == 0xF0;
 
         let key_char = if key.len() == 1 { key[0] } else { 0 };
         let shifted_key_char = if shifted_key.len() == 1 { shifted_key[0] } else { 0 };
@@ -468,6 +484,7 @@ fn map_ps2_scan_code_to_ascii() -> [ScanCodeMapping; 128] {
             shift_key_name: if shifted_key.is_empty() { None } else { Some(shifted_key) }, 
             shift_ascii: shifted_key_char,
             is_shift,
+            is_release,
         };
     }
 
@@ -550,7 +567,7 @@ const SCAN_CODE_TO_KEY : &[(u8, &[u8], &[u8])] = &[
     (0x75,b"Keypad 8",b""),
     (0x73,b"Keypad 5",b""),
     (0x72,b"Keypad 2",b""),
-    (0x70,b"Keypad 0",b""), // this conflicts with the F0 release byte when truncated by 0x7F
+    (0x70,b"Keypad 0",b""),
     (0x7E,b"Keypad *",b""),
     (0x7D,b"Keypad 9",b""),
     (0x74,b"Keypad 6",b""),
@@ -576,6 +593,7 @@ const SCAN_CODE_TO_KEY : &[(u8, &[u8], &[u8])] = &[
     (0x5F,b"Scroll Lock",b""),
     (0x62,b"Pause Break",b""),
     (0x5C,b"\\",b"|"),
+    (0xF0,b"Release",b"")
 ];
 
 #[cfg(test)]
@@ -584,30 +602,55 @@ mod tests {
 
     #[test]
     fn ps2_roundtrip() {
-        for code in 0u8..=0x7F {
+        for code in 0u8..=0xFF {
             let mapping = PS2_SCAN_CODE_TO_ASCII[code as usize];
             if mapping.ascii != 0 {
                 assert_eq!(code, ASCII_TO_PS2_SCAN_CODES[mapping.ascii as usize][0]);
             }
             if mapping.shift_ascii != 0 {
                 let codes = &ASCII_TO_PS2_SCAN_CODES[mapping.shift_ascii as usize];
-                assert_eq!(code, codes[2]);
+                assert_eq!(code, codes[1]);
             }
         }
         
         for ascii in 0u8..0x7F {
+
             let mut shift = false;
+            let mut release = false;
+            let mut printed = None;
+
+            if ASCII_TO_PS2_SCAN_CODES[ascii as usize][0] == 0 {
+                continue;
+            }
+
             for code in  &ASCII_TO_PS2_SCAN_CODES[ascii as usize] {
-                if *code == 0 || *code > 0x7F {
-                    continue;
+                if *code == 0 {
+                    break;
                 }
+                
                 let mapping = &PS2_SCAN_CODE_TO_ASCII[*code as usize];
+
                 if mapping.is_shift {
-                    shift ^= true;
+                    if release {
+                        shift = false;
+                    } else {
+                        shift = true;
+                    }
+                }
+                
+                if mapping.is_release {
+                    release = true;
                 } else {
-                    assert_eq!(ascii, if shift { mapping.shift_ascii } else { mapping.ascii });
+                    release = false;
+                }
+
+                let calculated = if shift { mapping.shift_ascii } else { mapping.ascii };
+                if !release && calculated != 0 {
+                    printed = Some(calculated);
                 }
             }
+
+            assert_eq!(Some(ascii), printed, "{:02x}", ascii);
         }
     }
 }

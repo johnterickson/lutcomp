@@ -18,6 +18,7 @@ pub fn emit_il(entry: &str, input: &str, root: &Path) -> (ProgramContext, IlProg
 pub enum IlInstruction {
     Comment(String),
     Label(IlLabelId),
+    GetConstAddress{ dest: IlVarId, const_name: IlVarId },
     AssignNumber{ dest: IlVarId, src: IlNumber },
     AssignVar{ dest: IlVarId, src: IlVarId, size: IlType, src_range: Option<Range<u32>>, dest_range: Option<Range<u32>>},
     AssignUnary{ dest: IlVarId, op: IlUnaryOp, src: IlVarId },
@@ -234,7 +235,27 @@ impl IlFunction {
         addr_var
     }
 
+    // fn alloc_tmp_and_emit_const_address(&mut self, ctxt: &IlContext, name: &str, info: &IlVarInfo) -> IlVarId {
+    //     let const_name = match &info.location {
+    //         IlLocation::Const(name) => name.clone(),
+    //         _ => panic!(),
+    //     };
+    //     let var_type = Type::Ptr(Box::new(info.var_type.clone()));
+    //     let addr_var = self.alloc_tmp(IlVarInfo {
+    //         description: format!("const {:?}", &name),
+    //         location: IlLocation::Reg(IlType::U32),
+    //         byte_size: var_type.byte_count(ctxt.program),
+    //         var_type
+    //     });
+    //     self.add_inst(ctxt, IlInstruction::GetConstAddress {
+    //             dest: addr_var.clone(),
+    //             const_name,
+    //         });
+    //     addr_var
+    // }
+
     fn emit_address(&mut self, ctxt: &mut IlContext, value: &Expression) -> (IlVarId, Option<u32>) {
+        // dbg!(&value);
         match value {
             Expression::Ident(n) => {
                 let info = ctxt.find_arg_or_var(&self, n);
@@ -255,6 +276,9 @@ impl IlFunction {
                         let size = info.var_type.byte_count(ctxt.program).try_into().ok();
                         let id = self.alloc_tmp_and_emit_static_address(ctxt, n, &info);
                         (id, size)
+                    }
+                    IlLocation::Const(name) => {
+                        (name.clone(), Some(ctxt.il.consts[&name].0.byte_size))
                     }
                 }
             }
@@ -293,7 +317,6 @@ impl IlFunction {
                     ))
                 };
 
-
                 let base_addr_num_expression = match info.location {
                     IlLocation::Static(addr) => Expression::Number(NumberType::USIZE, addr),
                     IlLocation::Reg(_) => {
@@ -313,6 +336,18 @@ impl IlFunction {
                                 Box::new(frame),
                                 Box::new(Expression::Number(NumberType::USIZE, offset))
                             )
+                        }
+                    },
+                    IlLocation::Const(_) => {
+                        let ptr_type = match &ptr_type {
+                            Type::Array(et, count) => 
+                                Type::Ptr(Box::new(Type::Array(et.clone(), *count))),
+                            _ => todo!()
+                        };
+                        Expression::Cast {
+                            old_type: Some(ptr_type),
+                            new_type: Type::Number(NumberType::USIZE),
+                            value: Box::new(Expression::Ident(var.clone())),
                         }
                     },
                 };
@@ -358,6 +393,7 @@ impl IlFunction {
                                 Box::new(Expression::Number(NumberType::USIZE, offset)))
                         }
                     },
+                    IlLocation::Const(_) => todo!(),
                 };
 
                 let addr_expression = if byte_offset == 0 {
@@ -407,6 +443,7 @@ impl IlFunction {
                         }
                     },
                     IlLocation::FrameOffset(_) => todo!(),
+                    IlLocation::Const(_) => todo!(),
                 };
 
                 let addr_expression = if byte_offset == 0 {
@@ -454,6 +491,7 @@ impl IlFunction {
                             mem_size: Some(size.unwrap().try_into().unwrap())
                         }
                     },
+                    IlLocation::Const(_) => panic!("cannot write to const"),
                 }
             },
             Expression::Deref(e) => {
@@ -481,7 +519,7 @@ impl IlFunction {
             Expression::Index(n, index) => {
                 let info = ctxt.find_arg_or_var(&self, n);
 
-                match (info.location, info.var_type) {
+                match (&info.location, info.var_type) {
                     (IlLocation::Reg(IlType::U32), Type::Number(NumberType::USIZE)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
@@ -537,6 +575,8 @@ impl IlFunction {
         
         ctxt.src_ctxt.contexts.clear();
         ctxt.src_ctxt.push(s);
+
+        // dbg!(&s);
 
         match s {
             Statement::Declare { .. } => {},
@@ -682,6 +722,7 @@ impl IlFunction {
         match e {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);
+                // dbg!("{:?}", &info);
                 match info.location {
                     IlLocation::Reg(_) => {
                         let src = IlVarId(name.clone());
@@ -698,6 +739,9 @@ impl IlFunction {
                             size: info.byte_size.try_into().unwrap(),
                         })
                     },
+                    IlLocation::Const(name) => {
+                        self.add_inst(ctxt, IlInstruction::GetConstAddress { dest, const_name: name.clone() });
+                    }
                 }
             },
             Expression::Number(num_type, val) => {
@@ -778,7 +822,8 @@ impl IlFunction {
             },
             Expression::Index(n, index) => {
                 let info = ctxt.find_arg_or_var(&self, n);
-                match (info.location, info.var_type) {
+                // dbg!(&info);
+                match (&info.location, info.var_type) {
                     (IlLocation::Reg(IlType::U32), Type::Number(NumberType::USIZE)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
@@ -853,6 +898,7 @@ impl IlFunction {
                 });
             },
             Expression::Optimized { .. } => todo!(),
+            Expression::Array(_) => todo!(),
         
         }
         // println!("END   {:?}", &e);
@@ -875,6 +921,17 @@ impl IlFunction {
             0 => None,
             n => Some(n.try_into().unwrap())
         };
+
+        for (name, (var_type, _)) in &ctxt.program.consts {
+            func.vars.insert(
+                IlVarId(name.to_owned()),
+                IlVarInfo {
+                    description: format!("const {:?}", &name),
+                    location: IlLocation::Const(IlVarId(name.to_owned())),
+                    byte_size: var_type.byte_count(ctxt.program),
+                    var_type: var_type.clone(),
+                });
+        }
         
         for (i, (name, var_type)) in ctxt.func_def.args.iter().enumerate() {
             let byte_size = var_type.byte_count(ctxt.program);
@@ -926,7 +983,7 @@ impl IlFunction {
             func.alloc_named(
                 name.clone(),
                 IlVarInfo {
-                    location: size,
+                    location: size.clone(),
                     description: format!("Local {} {:?} {:?}", name, var_type, size),
                     var_type: var_type.clone(),
                     byte_size: var_type.byte_count(ctxt.program)
@@ -1247,11 +1304,12 @@ impl IlType {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IlLocation {
     Reg(IlType),
     FrameOffset(u32),
     Static(u32),
+    Const(IlVarId),
 }
 
 impl TryFrom<u32> for IlLocation {
@@ -1304,6 +1362,7 @@ impl IlInstruction {
             IlInstruction::TtyIn { dest } => (vec![], Some(dest)),
             IlInstruction::TtyOut { src } => (vec![src], None),
             IlInstruction::Label(_) => (vec![], None),
+            IlInstruction::GetConstAddress { dest, const_name: _} => (vec![], Some(dest)),
         };
 
         IlUsages { srcs, dest }
@@ -1337,6 +1396,7 @@ impl IlInstruction {
             IlInstruction::TtyIn { dest } => (vec![], Some(dest)),
             IlInstruction::TtyOut { src } => (vec![src], None),
             IlInstruction::Label(_) => (vec![], None),
+            IlInstruction::GetConstAddress { dest, const_name: _} => (vec![], Some(dest)),
         };
 
         IlUsagesMut { srcs, dest }
@@ -1381,6 +1441,7 @@ impl Debug for IlInstruction {
             IlInstruction::TtyOut { src } => write!(f, "ttyout <- {}", src.0),
             IlInstruction::Resize { dest, dest_size, src, src_size } => 
                 write!(f, "{} {:?} <- {} {:?}", dest.0, dest_size, src.0, src_size),
+            IlInstruction::GetConstAddress { dest, const_name } => write!(f, "{} <- const &{}", dest, const_name),
         }
     }
 }
@@ -1457,6 +1518,7 @@ pub struct IlProgram {
     pub entry: IlFunctionId,
     pub functions: BTreeMap<IlFunctionId, IlFunction>,
     pub statics: BTreeMap<(Option<IlFunctionId>,IlVarId), IlVarInfo>,
+    pub consts: BTreeMap<IlVarId, (IlVarInfo, Vec<u8>)>,
     pub image_base_address: u32,
     pub statics_addresses: Range<u32>,
 }
@@ -1469,9 +1531,24 @@ impl IlProgram {
             statics: BTreeMap::new(),
             image_base_address: ctxt.image_base_address,
             statics_addresses: 0..0,
+            consts: BTreeMap::new(),
         };
             
         let mut next_static_addr = ctxt.statics_base_address;
+
+        for (name, (var_type, value)) in &ctxt.consts {
+            il.consts.insert(
+                IlVarId(name.clone()),
+                (
+                    IlVarInfo {
+                        description: format!("global constant {:?}", var_type),
+                        location: IlLocation::Const(IlVarId(name.clone())),
+                        var_type: var_type.clone(),
+                        byte_size: var_type.byte_count(ctxt),
+                    },
+                    value.clone())
+            );
+        }
 
         for (_, def) in &ctxt.function_defs {
             let mut il_ctxt = IlContext {
@@ -1604,10 +1681,9 @@ impl IlProgram {
                         }
 
                         let inlined_name = IlVarId(format!("inline_{}_{}_{}_{}", caller.id.0, callee.id.0, inline_iteration, var_id.0));
-                        let inlined_location = match var_info.location {
-                            IlLocation::Reg(r) => IlLocation::Reg(r),
+                        let inlined_location = match &var_info.location {
                             IlLocation::FrameOffset(o) => IlLocation::FrameOffset(caller.vars_stack_size+o),
-                            IlLocation::Static(a) => IlLocation::Static(a),
+                            l => l.clone(),
                         };
                         let mut inlined_var = var_info.clone();
                         inlined_var.location = inlined_location;
@@ -1755,6 +1831,10 @@ impl<'a> IlContext<'a> {
         let static_key = (Some(il_func.id.clone()), n.clone());
         if let Some(var) = self.il.statics.get(&static_key) {
             return var.clone();
+        }
+
+        if let Some((info, _)) = self.il.consts.get(&n) {
+            return info.clone();
         }
 
         panic!("Could not find '{}'", &n.0);

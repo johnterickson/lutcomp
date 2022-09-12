@@ -50,7 +50,7 @@ pub enum Type {
     Number(NumberType),
     Ptr(Box<Type>),
     Struct(String),
-    Array(Box<Type>,u32),
+    Array(Box<Type>,Option<u32>),
 }
 
 impl Type {
@@ -58,6 +58,7 @@ impl Type {
         match self {
             Type::Number(nt) => Some(*nt),
             Type::Ptr(_) => Some(NumberType::USIZE),
+            Type::Array(_,_) => Some(NumberType::USIZE),
             _ => None,
         }
     }
@@ -94,12 +95,16 @@ impl Type {
                 } else {
                     Type::Struct(val_type.to_owned())
                 };
-                let count_exp = Expression::parse(tokens.next().unwrap());
-                let count = count_exp.try_get_const()
-                    .expect(&format!("Could not evaluate array size as a constant value: {:?}", count_exp));
-                let count = count.try_into()
-                    .expect(&format!("Could not fit array size into 32-bit integer {}", count));
-                assert!(tokens.next().is_none());
+
+                let count = tokens.next().map(|count_token| {
+                    let count_exp = Expression::parse(count_token);
+                    let count = count_exp.try_get_const()
+                        .expect(&format!("Could not evaluate array size as a constant value: {:?}", count_exp));
+                    let count = count.try_into()
+                        .expect(&format!("Could not fit array size into 32-bit integer {}", count));
+                    assert!(tokens.next().is_none());
+                    count
+                });
                 Type::Array(Box::new(val_type), count)
             }
             _ => panic!("unexpected {:?}", variable)
@@ -124,7 +129,7 @@ impl ByteSize for Type {
             Type::Struct(struct_name) => ctxt.struct_types.get(struct_name)
                 .expect(&format!("Could not find struct definition for '{}'.", struct_name))
                 .byte_count(ctxt),
-            Type::Array(nt, count) => nt.byte_count(ctxt) * count
+            Type::Array(nt, count) => nt.byte_count(ctxt) * count.unwrap()
         }
     }
 }
@@ -136,7 +141,7 @@ impl TryByteSize for Type {
             Type::Number(nt) => nt.try_byte_count(),
             Type::Ptr(_) => Some(4),
             Type::Struct(_) => None,
-            Type::Array(nt, count) => nt.try_byte_count().map(|s| s * count),
+            Type::Array(nt, count) => nt.try_byte_count().map(|s| s * count.unwrap()),
         }
     }
 }

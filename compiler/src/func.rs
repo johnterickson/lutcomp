@@ -39,8 +39,12 @@ impl FunctionDefinition {
         }
     }
 
-    pub fn find_arg_or_var(&self, name: &str) -> Option<(&Scope, &Type)> {
-        if let Some((s,t)) = self.vars.get(name) {
+    pub fn find_arg_or_var<'b, 's: 'b, 'p: 'b>(&'s self, ctxt: &'p ProgramContext, name: &str) -> Option<(&Scope, &'b Type)>
+    {
+        if let Some((var_type, _)) = ctxt.consts.get(name) {
+            Some((&Scope::Static, var_type))
+        }
+        else if let Some((s,t)) = self.vars.get(name) {
             Some((s,t))
         }
         else if let Some((_,t)) = self.args.iter().filter(|(n,_)| n == name).next() {

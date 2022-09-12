@@ -1,4 +1,4 @@
-struct  request {
+struct request {
     in1: usize;
     in2: usize;
     sum: usize;

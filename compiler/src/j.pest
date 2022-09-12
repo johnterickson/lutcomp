@@ -1,5 +1,8 @@
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
-COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+COMMENT = _{ c_style_comment | hex_style_comment }
+
+c_style_comment = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+hex_style_comment = _{ "#" ~ (!"\n" ~ ANY)* ~ "\n"}
 
 lower = _{ 'a'..'z' }
 alpha = _{ lower | 'A'..'Z' }
@@ -47,23 +50,25 @@ ptr_field_expression = {ident ~ "->" ~ ident}
 call_expression = {ident ~ "(" ~  (expression)? ~ ("," ~ expression)* ~ ")" }
 address_of_expression = {address_of_operator ~ expression}
 index_expression = {ident ~ "[" ~ expression ~ "]" }
+array_expression = {"[" ~ (expression) ~ ("," ~ expression)* ~ "]"}
 expression = {
     RAM_MIN_expression | number | cast_expression | 
     index_expression | local_field_expression | ptr_field_expression | call_expression |
     ttyin | arithmetic_expression | 
     comparison_expression | deref_expression | address_of_expression | 
+    array_expression |
     ident | parentheses_expression
     }
 
 pointer_type = { "&" ~ variable_type }
 number_type = {"u8" | "u16" | "usize" | "char" }
-array_type = { ident ~ "[" ~ expression ~ "]" }
+array_type = { ident ~ "[" ~ expression? ~ "]" }
 variable_type = {array_type | number_type | pointer_type | ident}
 variable_decl = {ident ~ ":" ~ variable_type}
 
-if_clause = {"if" ~ expression ~ "{"~ statement* ~ "}"}
-else_if_clause = {"else if" ~ expression ~ "{"~ statement* ~ "}"}
-else_clause = {"else" ~ "{"~ statement* ~ "}"}
+if_clause = {"if" ~ expression ~ "{" ~ statement* ~ "}"}
+else_if_clause = {"else if" ~ expression ~ "{" ~ statement* ~ "}"}
+else_clause = {"else" ~ "{" ~ statement* ~ "}"}
 if_else_statement = { if_clause ~ else_if_clause* ~ else_clause? }
 declare_statement = { variable_decl ~ ";"}
 continue_statement = { "continue;" }
@@ -98,16 +103,16 @@ field = { variable_decl }
 fields = { (field ~ ";")+ }
 struct_decl = {"struct" ~ ident ~ "{" ~ fields ~ "}"}
 
-global = {"global" ~ variable_decl ~ ";"}
-
 include_path = { (!"'" ~ ANY)+ }
 include = { "!include" ~ "'" ~ include_path ~ "'" }
 
 image_base_address = { "!image_base_address=(" ~ expression ~ ")"}
 statics_base_address = { "!statics_base_address=(" ~ expression ~ ")"}
 
+const_value = { "const" ~ variable_decl  ~ "=" ~ expression ~ ";" }
+
 program = {
     SOI ~
-    (image_base_address | statics_base_address | include | struct_decl | function | global)+   ~
+    (image_base_address | statics_base_address | include | struct_decl | function | const_value)+   ~
     EOI
 }
