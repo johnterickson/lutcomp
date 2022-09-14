@@ -21,11 +21,5 @@ jobs:
         java --version
         sudo update-alternatives --set java $(update-alternatives --list java | grep 17)
         java --version
-    - name: Download Digital in a side-by-side directory
-      run: |
-        cd ..
-        git clone https://github.com/johnterickson/Digital.git
-        cd Digital
-        mvn package -DskipTests
     - name: run build script
       run: ./build.sh
