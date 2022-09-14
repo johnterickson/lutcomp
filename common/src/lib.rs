@@ -28,7 +28,7 @@ bitflags! {
 }
 
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum IoPort {
@@ -46,7 +46,7 @@ impl IoPort {
     }
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum AluOpcode {
@@ -70,7 +70,7 @@ impl AluOpcode {
     }
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
@@ -81,7 +81,7 @@ pub enum RwRegister {
     Z = 3,
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
@@ -101,7 +101,7 @@ pub struct ShiftArgs {
     pub mode: ShiftMode,
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Display, Debug, PartialEq, Eq, PartialOrd)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum SpecialMicroHelper {
@@ -117,7 +117,7 @@ pub enum SpecialMicroHelper {
     Max=0x40,
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Display, Debug, Eq, PartialEq, PartialOrd)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum SpecialMicroHelperInfo {
@@ -130,7 +130,7 @@ pub enum SpecialMicroHelperInfo {
     VersionPatch = 6,
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, Eq, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum SpecialOpcode {
@@ -150,7 +150,7 @@ pub struct SpecialArgs {
 }
 
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, Eq, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 pub enum ShiftDirection {
@@ -252,9 +252,10 @@ pub enum Opcode {
     HaltNoCode = 0x7F, // (0xFF & 0x7F)
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, Eq, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u32)]
+#[repr(u32)]
 pub enum HaltCode {
     Success = 0x0000_0000,
     TestFail = 0x0000_0001,
@@ -331,10 +332,7 @@ impl Opcode {
     }
 
     pub fn has_another_part(&self) -> bool {
-        match self {
-            Opcode::Store32_1 | Opcode::AddCarry32_1 => true,
-            _ => false,
-        }
+        matches!(self, Opcode::Store32_1 | Opcode::AddCarry32_1)
     }
 }
 
@@ -465,10 +463,7 @@ fn map_ps2_scan_code_to_ascii() -> [ScanCodeMapping; 256] {
     let mut mappings = [Default::default(); 256];
 
     for (code, key, shifted_key) in SCAN_CODE_TO_KEY {
-        let is_shift = match key {
-            &b"Left Shift" | &b"Right Shift" => true,
-            _ => false,
-        };
+        let is_shift = matches!(key, &b"Left Shift" | &b"Right Shift");
 
         let is_release = *code == 0xF0;
 

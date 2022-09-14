@@ -1,8 +1,6 @@
 extern crate packed_struct;
 use packed_struct::{prelude::PackedStruct, PrimitiveEnum};
 
-use strum::IntoEnumIterator;
-
 use alu::*;
 use common::*;
 use std::{borrow::Cow, collections::{BTreeSet, BTreeMap, VecDeque}, convert::TryInto, fmt::Debug, io, ops::Range, sync::{Mutex, mpsc::{self, Receiver}}, thread};
@@ -185,7 +183,7 @@ impl<'a> Computer<'a> {
 
         match chip_select {
             0 => {
-                assert!(ROM_MIN <= addr && addr <= ROM_MAX);
+                assert!((ROM_MIN..=ROM_MAX).contains(&addr));
                 if chip_address < self.image.start_addr {
                     None
                 } else {
@@ -198,7 +196,7 @@ impl<'a> Computer<'a> {
                 }
             },
             1 => {
-                assert!(RAM_MIN <= addr && addr <= RAM_MAX);
+                assert!((RAM_MIN..=RAM_MAX).contains(&addr));
                 
                 // allow Push8 because we use it to save registers to the stack
                 if chip_address < 256 && self.ir0 != Opcode::Push8 as u8 {
@@ -232,7 +230,7 @@ impl<'a> Computer<'a> {
         let chip = match chip_select {
             0 => None,
             1 => {
-                assert!(RAM_MIN <= addr && addr <= RAM_MAX);
+                assert!((RAM_MIN..=RAM_MAX).contains(&addr));
                 if chip_address < 256 {
                     for i in 0..len {
                         self.regs_written[(chip_address + i) as usize] = true;
@@ -315,9 +313,9 @@ impl<'a> Computer<'a> {
         if self.stdin_out {
             let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
             let line = if self.block_for_stdin {
-                stdin_channel.recv().map(|l| Some(l)).unwrap_or_default()
+                stdin_channel.recv().map(Some).unwrap_or_default()
             } else {
-                stdin_channel.try_recv().map(|l| Some(l)).unwrap_or_default()
+                stdin_channel.try_recv().map(Some).unwrap_or_default()
             };
 
             if let Some(line) = line {
@@ -353,9 +351,7 @@ impl<'a> Computer<'a> {
         urom_addr <<= 7;
         urom_addr += self.upc as usize;
 
-        let opcode = Opcode::iter()
-            .filter(|o| *o as u8 == urom_entry.instruction)
-            .next();
+        let opcode = Opcode::from_primitive(urom_entry.instruction);
         if self.print {
             println!(
                 "urom_addr {:05x} = {:?} {:?} + {:02x}",
@@ -383,10 +379,8 @@ impl<'a> Computer<'a> {
             AddressBusOutputLevel::Pc => self.pc,
         });
 
-        if self.print {
-            if urom_op.data_bus_out == DataBusOutputLevel::Mem || urom_op.data_bus_out.is_addr() {
-                println!("addr_bus: {:06x}", addr_bus);
-            }
+        if self.print && (urom_op.data_bus_out == DataBusOutputLevel::Mem || urom_op.data_bus_out.is_addr()) {
+            println!("addr_bus: {:06x}", addr_bus);
         }
 
         let data_bus = match urom_op.data_bus_out {
@@ -399,14 +393,9 @@ impl<'a> Computer<'a> {
                 }
                 Some(self.mem_byte(addr_bus))
             }
-            DataBusOutputLevel::Addr0 => {
-                Some(((addr_bus>>0) & 0xFF) as u8)
-            }
-            DataBusOutputLevel::Addr1 => {
-                Some(((addr_bus>>8) & 0xFF) as u8)
-            }
-            DataBusOutputLevel::Addr2 => {
-                Some(((addr_bus>>16) & 0xFF) as u8)
+            DataBusOutputLevel::Addr0 | DataBusOutputLevel::Addr1 | DataBusOutputLevel::Addr2 => {
+                let byte = urom_op.data_bus_out.to_primitive() - DataBusOutputLevel::Addr0.to_primitive();
+                Some(((addr_bus>>(8*byte)) & 0xFF) as u8)
             }
             DataBusOutputLevel::Next => {
                 self.upc = 0;
@@ -535,7 +524,7 @@ impl<'a> Computer<'a> {
                 while sp < RAM_MAX {
                     if let Some(a) = self.try_mem_slice(sp, 4) {
                         let mut addr = [0u8;4];
-                        addr.copy_from_slice(&a);
+                        addr.copy_from_slice(a);
                         let addr = u32::from_le_bytes(addr);
                         if addr != 0 && addr < ROM_MAX {
                             print!(" [sp+0x{:02x}]:{:05x}", sp - orig_sp, addr);

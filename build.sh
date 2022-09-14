@@ -1,10 +1,6 @@
 set -e -o pipefail
 #set -x
 
-pushd digital_tester
-mvn compile
-popd
-
 cargo test --release
 
 cargo run --release -- alu > circuit/alu.hex
@@ -17,11 +13,21 @@ cargo run --release -- assemble programs/echo.asm > circuit/echo.asm.hex
 cargo run --release -- compile programs/echo.j > circuit/echo.j.hex
 cargo run --release -- compile programs/keyboard_isr.j > circuit/keyboard_isr.hex
 
+echo "Build Digital fork"
+pushd deps/Digital
+mvn package -DskipTests > /dev/null
+popd
+
+echo "Build unit tester"
+pushd digital_tester
+mvn compile > /dev/null
+popd
+
 echo Run Digital tests
 cp circuit/echo.j.hex circuit/rom.hex
-find circuit/*.dig | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp ../Digital/target/Digital.jar CLI test -verbose -circ %
+find circuit/*.dig | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %
 
-export RunTest="java -cp digital_tester/target/classes:../Digital/target/Digital.jar com.johnterickson.App circuit/lutcomp.dig"
+export RunTest="java -cp digital_tester/target/classes:deps/Digital/target/Digital.jar com.johnterickson.App circuit/lutcomp.dig"
 
 echo "run echo assembly"
 cp circuit/echo.asm.hex circuit/rom.hex

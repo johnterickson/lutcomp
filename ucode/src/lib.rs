@@ -4,8 +4,6 @@ extern crate strum_macros;
 
 use std::{collections::{hash_map::DefaultHasher}, hash::Hasher, convert::TryInto, borrow::Cow};
 
-use strum::IntoEnumIterator;
-
 extern crate packed_struct;
 extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
@@ -23,7 +21,7 @@ pub const MAJOR_VERSION: u8 = 1;
 pub const MINOR_VERSION: u8 = 2;
 pub const PATCH_VERSION: u8 = 0;
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, Eq, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
@@ -58,7 +56,7 @@ impl DataBusLoadEdge {
     }
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, Eq, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
@@ -67,7 +65,7 @@ pub enum AddressBusOutputLevel {
     Pc = 1,
 }
 
-#[derive(Clone, Copy, Display, Debug, PartialEq)]
+#[derive(Clone, Copy, Display, Debug, Eq, PartialEq)]
 #[derive(EnumCount, EnumIter, EnumString)]
 #[derive(PrimitiveEnum_u8)]
 #[strum(serialize_all = "lowercase")]
@@ -92,10 +90,7 @@ pub enum DataBusOutputLevel {
 
 impl DataBusOutputLevel {
     pub fn is_addr(&self) -> bool {
-        match self {
-            Self::Addr0 | Self::Addr1 | Self::Addr2 => true,
-            _ => false,
-        }
+        matches!(self, Self::Addr0 | Self::Addr1 | Self::Addr2)
     }
 
     pub fn addr(i: usize) -> Self {
@@ -489,7 +484,7 @@ impl Ucode {
             let bytes: &[u8; 2] = &encoded_inst.to_le_bytes();
             let inst = MicroEntry::unpack_lsb(bytes);
             let flags = Flags::from_bits_truncate(*inst.flags);
-            let opcode = Opcode::iter().filter(|o| *o as u8 == inst.instruction).next();
+            let opcode = Opcode::from_primitive(inst.instruction);
 
             self.base_address = encoded_inst as usize * MAX_UOPS * 2;
             self.uop_count = 0;

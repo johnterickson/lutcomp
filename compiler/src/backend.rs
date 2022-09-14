@@ -1,4 +1,5 @@
 use std::ops::Range;
+use std::str::FromStr;
 
 use assemble::AssemblyDirective;
 
@@ -311,7 +312,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         }));
     }
 
-    lines.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.il.entry.0)));
+    lines.push(AssemblyInputLine::from_str(&format!("!call :{}", ctxt.il.entry.0)).unwrap());
     lines.push(AssemblyInputLine::Instruction(Instruction {
         opcode: Opcode::Halt,
         args: vec![Value::Constant32(HaltCode::Success as u32)],
@@ -873,7 +874,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             }));
                     }
 
-                    ctxt.lines.push(AssemblyInputLine::from_str(&format!("!call :{}", target.id.0)));
+                    ctxt.lines.push(AssemblyInputLine::from_str(&format!("!call :{}", target.id.0)).unwrap());
 
                     for r in &regs_to_save {
                         assert!(*r >= 0x10);
@@ -975,7 +976,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     }
 
                     if f.is_isr() {
-
                         // ISR needs to save regs that it touches
                         let my_regs = &ctxt.f_info.registers_directly_used;
                         ctxt.lines.push(AssemblyInputLine::Comment(format!("Registers used by this function: {:?}", my_regs)));
@@ -998,7 +998,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             resolved: None,
                         }));
                     } else {
-                        ctxt.lines.push(AssemblyInputLine::from_str("!return"));
+                        ctxt.lines.push(AssemblyInputLine::from_str("!return").unwrap());
                     }
                 },
                 IlInstruction::TtyIn { dest } => {

@@ -59,13 +59,11 @@ pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {
             (AssemblyInputLine::Instruction(inst), AssemblyInputLine::Label(label)) => {
                 if inst.opcode == Opcode::JmpImm {
                     if let Value::Label24(jmp_label) = &inst.args[0] {
-                        if jmp_label == label {
-                            if label_refs[label].len() == 1 {
-                                assert_eq!(&index1, label_refs[label].iter().next().unwrap());
-                                new_line1 = Some(AssemblyInputLine::Comment(
-                                    format!("Optimized away unconditional jump to the next instruction: {:?}", inst)
-                                ));
-                            }
+                        if jmp_label == label && label_refs[label].len() == 1 {
+                            assert_eq!(&index1, label_refs[label].iter().next().unwrap());
+                            new_line1 = Some(AssemblyInputLine::Comment(
+                                format!("Optimized away unconditional jump to the next instruction: {:?}", inst)
+                            ));
                         }
                     }
                 }

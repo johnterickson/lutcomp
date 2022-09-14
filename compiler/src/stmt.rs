@@ -158,8 +158,7 @@ impl Statement {
                 while let Some(pair) = pairs.next() {
                     match pair.as_rule() {
                         Rule::else_clause => {
-                            let mut pairs = pair.into_inner();
-                            while let Some(pair) = pairs.next() {
+                            for pair in pair.into_inner() {
                                 else_block.push(Statement::parse(pair));
                             }
                         }
@@ -170,7 +169,7 @@ impl Statement {
                                 Expression::Comparison(c) => *c,
                                 _ => panic!()
                             };
-                            while let Some(pair) = pairs.next() {
+                           for pair in pairs {
                                 when_true.push(Statement::parse(pair));
                             }
                             if_blocks.push((predicate, when_true));

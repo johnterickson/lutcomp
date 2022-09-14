@@ -117,7 +117,7 @@ fn main() {
             let rom = assemble::assemble(assembly);
 
             if let Some("true") = get_param("sim") {
-                if sim_args.len() != 0 {
+                if !sim_args.is_empty() {
                     todo!();
                 }
 
@@ -129,7 +129,7 @@ fn main() {
                     c.pc_hit_count = Some(BTreeMap::new());
                 }
                 if let Some(n) = get_param("stack_dump_rate") {
-                    c.stack_dump_rate = u64::from_str_radix(n, 10).unwrap();
+                    c.stack_dump_rate = n.parse::<u64>().unwrap();
                 }
                 if let Some("true") = get_param("block_for_stdin") {
                     c.block_for_stdin = true;
@@ -178,7 +178,7 @@ fn main() {
         Some("ascii_to_ps2") => {
             println!("v2.0 raw");
             for (c, codes) in ASCII_TO_PS2_SCAN_CODES.iter().enumerate() {
-                if 0xA <= c && c <= 0xD {
+                if (0xA..=0xD).contains(&c) {
                     println!("# ASCII 0x{:02x}", c);
                 } else {
                     println!("# ASCII 0x{:02x} == `{}`", c, (c as u8) as char);
@@ -188,7 +188,7 @@ fn main() {
                     print!("{:02x} ", *code);
                 }
 
-                println!("");
+                println!();
             }
         }
         Some("ps2_to_ascii") => {
@@ -269,20 +269,20 @@ fn main() {
             let base_address = base_address.expect("Did not find a base address");
             assert!(base_address >= RAM_MIN);
 
-            print!("s{:08x}\n", base_address);
+            println!("s{:08x}", base_address);
     
             for b in &hex.bytes() {
-                print!("w{:02x}\nn\n", b);
+                println!("w{:02x}\nn", b);
             }
     
             // overwrite the return address
-            print!("s{:08x}\n", INITIAL_STACK-4);
+            println!("s{:08x}", INITIAL_STACK-4);
     
             for b in base_address.to_le_bytes() {
-                print!("w{:02x}\nn\n", b);
+                println!("w{:02x}\nn", b);
             }
     
-            print!("q\n");
+            println!("q");
         }
         Some(unknown) => eprintln!("Unknown arg '{}'", unknown),
         None => eprintln!("no arg provided"),

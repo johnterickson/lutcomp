@@ -8,13 +8,13 @@ extern crate strum;
 extern crate packed_struct;
 
 use common::*;
-use std::{collections::BTreeMap, convert::TryInto, fmt::Debug, io::{Read, BufReader, BufRead}};
+use std::{collections::BTreeMap, convert::TryInto, fmt::Debug, io::{Read, BufReader, BufRead}, str::FromStr};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
 struct AssemblyParser;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub enum Value {
     Constant8(u8),
     Constant24(u32),
@@ -93,7 +93,7 @@ impl Instruction {
                 Value::Constant32(c) => bytes.extend_from_slice(&u32::to_le_bytes(*c)),
                 Value::Register(r) => bytes.push(*r),
                 Value::Label24(label) => {
-                    let address =*labels.get(label).expect(&format!("label not found: {}", label));
+                    let address =*labels.get(label).unwrap_or_else(|| panic!("label not found: {}", label));
                     bytes.extend_from_slice(&u32::to_le_bytes(address)[0..=2]);
                 },
                 Value::Label32(label) => {
@@ -122,7 +122,7 @@ fn parse_signed_hex(hex: Pair<Rule>) -> u32 {
     if chars.next().unwrap() == '-' {
         let positive =
             u32::from_str_radix(hex.as_str().trim_start_matches('-'), 16).unwrap();
-        ((positive as i64) * (-1i64)).try_into().expect("does not fit in u32")
+        (-(positive as i64)).try_into().expect("does not fit in u32")
     } else {
         parse_unsigned_hex(hex.into_inner().next().unwrap())
     }
@@ -182,7 +182,7 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
         "ttyin" => IoPort::Tty.in_opcode(),
         "ttyout" => IoPort::Tty.out_opcode(),
         name => std::str::FromStr::from_str(name)
-            .expect(&format!("Could not parse op {}", name)),
+            .unwrap_or_else(|_| panic!("Could not parse op {}", name)),
     };
 
     let arg_tokens = instruction.into_inner();
@@ -230,12 +230,16 @@ pub enum AssemblyDirective {
     FunctionEnd,
 }
 
-impl AssemblyInputLine {
-    pub fn from_str(input: &str) -> AssemblyInputLine {
-        let mut line = AssemblyParser::parse(Rule::line, &input).unwrap();
-        AssemblyInputLine::parse(line.next().unwrap())
-    }
+impl FromStr for AssemblyInputLine {
+    type Err = ::pest::error::Error<Rule>;
 
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut line = AssemblyParser::parse(Rule::line, s)?;
+        Ok(AssemblyInputLine::parse(line.next().unwrap()))
+    }
+}
+
+impl AssemblyInputLine {
     fn parse(line: Pair<Rule>) -> AssemblyInputLine {
         assert_eq!(line.as_rule(), Rule::line);
         let line = line.into_inner().next().unwrap();

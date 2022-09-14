@@ -114,9 +114,7 @@ pub fn alu(print: bool) -> (Vec<u8>,u32) {
             AluOpcode::Special => {
                 let special_mode = SpecialArgs::unpack(&[entry.in2]).unwrap();
                 match special_mode.op {
-                    SpecialOpcode::MicroHelper => match SpecialMicroHelper::iter()
-                        .filter(|o| *o as u8 == *special_mode.mode_args)
-                        .next()
+                    SpecialOpcode::MicroHelper => match SpecialMicroHelper::iter().find(|o| *o as u8 == *special_mode.mode_args)
                     {
                         Some(helper) => {
                             match helper {
@@ -139,7 +137,7 @@ pub fn alu(print: bool) -> (Vec<u8>,u32) {
                                 }
                                 SpecialMicroHelper::Invert => (entry.in1 ^ 0xFF),
                                 SpecialMicroHelper::GetInfo => {
-                                    let info = SpecialMicroHelperInfo::iter().filter(|o| *o as u8 == entry.in1).next();
+                                    let info = SpecialMicroHelperInfo::iter().find(|o| *o as u8 == entry.in1);
                                     if let Some(info) = info {
                                         match info {
                                             SpecialMicroHelperInfo::Hash0 => {
@@ -181,7 +179,7 @@ pub fn alu(print: bool) -> (Vec<u8>,u32) {
                         let args = ShiftArgs::unpack(&[*special_mode.mode_args]).unwrap();
                         let left_amount = *args.left_amount;
                         let abs_amount = left_amount.abs();
-                        if left_amount < -8 || left_amount > 8 {
+                        if !(-8..=8).contains(&left_amount) {
                             0xFF
                         } else if abs_amount == 0 || abs_amount == 8 {
                             entry.in1

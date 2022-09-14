@@ -1,3 +1,6 @@
 [submodule "arduino/sst39sf040-avr"]
 	path = arduino/sst39sf040-avr
 	url = https://github.com/johnterickson/sst39sf040-avr.git
+[submodule "Digital/Digital"]
+        path = Digital/Digital
+        url = https://github.com/johnterickson/Digital.git
