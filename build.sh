@@ -70,3 +70,6 @@ fi
 echo "Upload echo to Digital RAM and run it"
 cp circuit/bootram.hex circuit/rom.hex
 (cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex) | $RunTest "$(printf 'READY\nHi_from_RAM!')"
+
+echo "copying rpn to ROM for tinkering"
+cp circuit/rpn.hex circuit/rom.hex

@@ -36,15 +36,22 @@ public class App {
 
 		final String keyboard_name = keyboard;
 
-		var ttyin = new StdInKeyboard();
+		
 		var keyboardNode = (Keyboard)tester.getNode(n -> n instanceof Keyboard && ((Keyboard)n).getLabel().equals(keyboard_name));
+		var ttyin = new StdInKeyboard(keyboardNode);
 		keyboardNode.setKeyboard(ttyin);
-		ttyin.start();
-		ttyin.join();
 
 		var ttyout = new InMemoryTerminal(expected == null);
 		var terminalNode = (Terminal)tester.getNode(n -> n instanceof Terminal && ((Terminal)n).getLabel().equals("TTYOUT"));
 		terminalNode.setTerminalInterface(ttyout);
+
+		// run a few cycles to stabilize things
+		// System.err.println("Initialize.");
+		tester.getModel().doStep();
+
+		// System.err.println("Run.");
+		ttyin.start();
+		ttyin.join();
 
 		tester.runToBreak();
 		
