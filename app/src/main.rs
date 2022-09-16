@@ -305,7 +305,7 @@ fn main() {
             let zero_pix_bottom = 190.0;
             let zero_pix_rows = 7.0;
 
-            const CHAR_ROWS: usize = 10;
+            const CHAR_ROWS: usize = 8;
             const CHAR_COLS: usize = 5;
 
             let pix_cols_per_square = (zero_pix_right - zero_pix_left) / (zero_pix_cols - 1.0);
@@ -322,9 +322,10 @@ fn main() {
 
             let origin_pix_left = zero_pix_left - (zero_hi_nibble as f64 * pix_cols_per_box);
             let origin_pix_top = zero_pix_top - (zero_lo_nibble as f64 * pix_cols_per_box);
-            
+            let mut addr = 0;
+
             for c in 0x0..=0xFFu8 {
-                print!("# ASCII 0x{:02x}", c);
+                print!("# @0x{:04x} ASCII 0x{:02x}", addr, c);
 
                 let lo_nibble = c & 0xF;
                 let hi_nibble = (c>>4) & 0xF;
@@ -333,7 +334,6 @@ fn main() {
 
                 if hi_nibble == 0 {
                     println!();
-
                 } else {
                     println!(" `{}`", c as char);
 
@@ -367,8 +367,9 @@ fn main() {
                     }
                 }
 
-                for row in rows {
-                    print!("{:02x} ", row);
+                for row_byte in rows {
+                    print!("{:02x} ", row_byte);
+                    addr += 1;
                 }
                 println!();
             }
