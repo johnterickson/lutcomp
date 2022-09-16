@@ -47,6 +47,14 @@
           <data>49*0,e040404040c04,1f08040201110e,333*0,e,11,13,15,19,11,e,0,4
 ,c,4*4,e</data>
         </entry>
+        <entry>
+          <string>lastDataFile</string>
+          <file>cgrom.hex</file>
+        </entry>
+        <entry>
+          <string>autoReload</string>
+          <boolean>true</boolean>
+        </entry>
       </elementAttributes>
       <pos x="380" y="160"/>
     </visualElement>

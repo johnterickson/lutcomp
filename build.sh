@@ -1,13 +1,15 @@
 set -e -o pipefail
 #set -x
 
-cargo test --release
 
 cargo run --release -- alu > circuit/alu.hex
 cargo run --release -- ucode > circuit/ucode.hex
 cargo run --release -- ascii_to_ps2 > circuit/ascii_to_ps2.hex
 cargo run --release -- ps2_to_ascii > circuit/ps2_to_ascii.hex
+cargo run --release -- cgrom > circuit/cgrom.hex
 cargo run --release -- ps2_to_ascii --style=j > programs/ps2.j
+
+cargo test --release
 
 cargo run --release -- assemble programs/echo.asm > circuit/echo.asm.hex
 cargo run --release -- compile programs/echo.j > circuit/echo.j.hex
@@ -25,7 +27,7 @@ popd
 
 echo Run Digital tests
 cp circuit/echo.j.hex circuit/rom.hex
-find circuit/*.dig | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %
+find circuit/*.dig | grep -v lcd | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %
 
 export RunTest="java -cp digital_tester/target/classes:deps/Digital/target/Digital.jar com.johnterickson.App circuit/lutcomp.dig"
 
