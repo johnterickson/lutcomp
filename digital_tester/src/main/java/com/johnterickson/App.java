@@ -45,9 +45,11 @@ public class App {
 		var terminalNode = (Terminal)tester.getNode(n -> n instanceof Terminal && ((Terminal)n).getLabel().equals("TTYOUT"));
 		terminalNode.setTerminalInterface(ttyout);
 
-		// run a few cycles to stabilize things
+		// run some cycles to stabilize things
 		// System.err.println("Initialize.");
-		tester.getModel().doStep();
+		for (int i = 0; i < 100; i++) {
+			tester.getModel().doStep();
+		}
 
 		// System.err.println("Run.");
 		ttyin.start();

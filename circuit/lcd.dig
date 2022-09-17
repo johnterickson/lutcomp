@@ -703,6 +703,17 @@
       </elementAttributes>
       <pos x="-680" y="-460"/>
     </visualElement>
+    <visualElement>
+      <elementName>Text</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>HD44780U
+AMC2004A</string>
+        </entry>
+      </elementAttributes>
+      <pos x="-580" y="-640"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>

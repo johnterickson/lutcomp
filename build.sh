@@ -26,8 +26,8 @@ popd
 
 echo Run Digital tests
 cp circuit/echo.j.hex circuit/rom.hex
-(find circuit/*.dig | grep -v lcd | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %) || \
-  (find circuit/*.dig | grep -v lcd | xargs --verbose -P 1 -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %)
+(find circuit/*.dig | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %) || \
+  (find circuit/*.dig | xargs --verbose -P 1 -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %)
 
 export RunTest="java -cp digital_tester/target/classes:deps/Digital/target/Digital.jar com.johnterickson.App circuit/lutcomp.dig"
 
