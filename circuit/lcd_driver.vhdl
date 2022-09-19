@@ -25,7 +25,7 @@ architecture rtl of lcd_driver is
     constant CHAR_PIX_ROWS : integer := 10;
     constant CGROM_PIX_ROWS : integer := 8;
     constant CHAR_PIX_COLS : integer := 6;
-    constant DISPLAY_CHAR_ROWS : integer := 4;
+    constant DISPLAY_CHAR_ROWS : integer := 2;
     constant DISPLAY_CHAR_COLS : integer := 20;
     constant DISPLAY_PIX_ROWS : integer := DISPLAY_CHAR_ROWS * CHAR_PIX_ROWS;
     constant DISPLAY_PIX_COLS : integer := DISPLAY_CHAR_COLS * CHAR_PIX_COLS;
@@ -49,11 +49,6 @@ architecture rtl of lcd_driver is
 begin
     process(clk, state, pix_state, en, PixRow, PixCol, pix_clk, AC, DDRAM, CharRow, CharCol)
     begin
-        probe_PixCol <= std_logic_vector(PixCol);
-        probe_PixRow <= std_logic_vector(PixRow);
-        probe_CharRow <= std_logic_vector(CharRow);
-        probe_CharCol <= std_logic_vector(CharCol);
-        probe_AC <= std_logic_vector(AC);
         if (clk'event or en'event) then
             case state is
                 when idle =>        probe_state <= "00"; 
@@ -70,8 +65,6 @@ begin
                     if (en'event and en = '1') then
                         if rs = '1' then
                             if rw = '0' then
-                                CharCol <=  unsigned(AC(4 downto 0));
-                                CharRow <= unsigned(AC(6 downto 5));
                                 DDRAM(to_integer(unsigned(AC))) <= unsigned(db_in);
                                 PixCol <= X"0";
                                 PixRow <= X"0";
@@ -97,7 +90,7 @@ begin
                         when start =>               cgrom_addr <= std_logic_vector(resize(DDRAM(to_integer(unsigned(AC))) * CGROM_PIX_ROWS + PixRow, 11));
                                                     pix_addr <= std_logic_vector(
                                                           resize((resize(CharRow,13) * CHAR_PIX_ROWS + resize(PixRow,13))*DISPLAY_PIX_COLS, 13)
-                                                        + resize(resize(CharCol,13) * CHAR_PIX_COLS + resize(PixCol, 13), 13)
+                                                        + resize(resize(CharCol,13) * CHAR_PIX_COLS + resize(PixCol,13), 13)
                                                         );
                                                     pix_state <= read_cgrom;
                         when read_cgrom =>          pix_val <= shift_right(unsigned(cgrom_data), to_integer(CHAR_PIX_COLS - 1 - PixCol))(0);
@@ -109,7 +102,15 @@ begin
                                                     if PixCol = CHAR_PIX_COLS - 1 then
                                                         PixCol <= X"0";
                                                         if PixRow = CGROM_PIX_ROWS - 1 then
-                                                            AC <= AC + 1;
+                                                            if AC mod 64 = DISPLAY_CHAR_COLS - 1 then
+                                                                if AC / 64  = DISPLAY_CHAR_ROWS - 1 then
+                                                                    AC <= to_unsigned(0, 7);
+                                                                else
+                                                                    AC <=  AC - (DISPLAY_CHAR_COLS - 1) + 64;
+                                                                end if;
+                                                            else
+                                                                AC <= AC + 1;
+                                                            end if;
                                                             PixRow <= X"0";
                                                             state <= idle;
                                                             busy <= '0';
@@ -123,5 +124,13 @@ begin
                     end case;
             end case;
         end if;
+        probe_PixCol <= std_logic_vector(PixCol);
+        probe_PixRow <= std_logic_vector(PixRow);
+        probe_CharRow <= std_logic_vector(CharRow);
+        probe_CharCol <= std_logic_vector(CharCol);
+        probe_AC <= std_logic_vector(AC);
+        CharCol <=  unsigned(AC(4 downto 0));
+        CharRow(0) <= AC(6);
+        CharRow(1) <= '0';
     end process;
 end architecture rtl;

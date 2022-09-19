@@ -31,7 +31,7 @@ AMC2004A</string>
         </entry>
         <entry>
           <string>externalOutputs</string>
-          <string>db_out:8,cgrom_addr:11,pix_addr:13,pix_val,pix_clk,probe_state:2,probe_pix_state:2,probe_PixRow:4,probe_PixCol:4,probe_AC:7,probe_CharCol:5,proble_CharRow:2</string>
+          <string>db_out:8,cgrom_addr:11,pix_addr:13,pix_val,pix_clk,probe_state:2,probe_pix_state:2,probe_PixRow:4,probe_PixCol:4,probe_AC:7,probe_CharCol:5,probe_CharRow:2</string>
         </entry>
         <entry>
           <string>Width</string>
@@ -149,7 +149,7 @@ AMC2004A</string>
       <elementAttributes>
         <entry>
           <string>Frequency</string>
-          <int>2</int>
+          <int>10000</int>
         </entry>
         <entry>
           <string>runRealTime</string>
