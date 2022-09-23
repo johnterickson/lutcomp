@@ -32,7 +32,7 @@ AMC2004AR-B-B6WTDW</string>
         </entry>
         <entry>
           <string>externalOutputs</string>
-          <string>cgrom_addr:11:unsigned,pix_addr:13:unsigned,pix_val,pix_clk,CharRow:2:unsigned,CharCol:5:unsigned,PixRow:4:unsigned,PixCol:4:unsigned,AC:7:unsigned,StatePeek:2,PixStatePeek:2,SerialData:8:unsigned,ValidSerialBits:4:unsigned</string>
+          <string>cgrom_addr:11:unsigned,pix_addr:14:unsigned,pix_val,pix_clk,CharRow:2:unsigned,CharCol:5:unsigned,PixRow:4:unsigned,PixCol:4:unsigned,AC:7:unsigned,StatePeek:2,PixStatePeek:2,SerialData:8:unsigned,ValidSerialBits:4:unsigned</string>
         </entry>
         <entry>
           <string>Width</string>
@@ -126,7 +126,7 @@ AMC2004AR-B-B6WTDW</string>
       <elementAttributes>
         <entry>
           <string>graphicHeight</string>
-          <int>32</int>
+          <int>40</int>
         </entry>
         <entry>
           <string>graphicWidth</string>

@@ -8,7 +8,7 @@ entity AC780S is
         cgrom_data: in std_logic_vector(4 downto 0);
         pix_val, pix_clk: out std_logic;
         cgrom_addr: out unsigned(10 downto 0);
-        pix_addr: out unsigned(12 downto 0);
+        pix_addr: out unsigned(13 downto 0);
         CharRow: out unsigned( 1 downto 0 );
         CharCol: out unsigned( 4 downto 0 );
         PixRow: out unsigned( 3 downto 0 );
@@ -84,7 +84,7 @@ begin
                                             pix_addr <= to_unsigned(
                                                 (to_integer(CharRow) * CHAR_PIX_ROWS + to_integer(PixRow)) * DISPLAY_PIX_COLS
                                                 + to_integer(CharCol) * CHAR_PIX_COLS + to_integer(PixCol),
-                                                13);
+                                                14);
                                             pix_state <= read_cgrom;
                 when read_cgrom =>          pix_val <= shift_right(unsigned(cgrom_data), to_integer(CHAR_PIX_COLS - 1 - PixCol))(0);
                                             pix_state <= clk_on;
