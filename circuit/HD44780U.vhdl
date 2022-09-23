@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
-entity lcd_driver is
+entity HD44780U is
     port(	
         clk, en, rw, rs: in std_logic;
 		db_in: in std_logic_vector( 7 downto 0 );
@@ -19,9 +19,9 @@ entity lcd_driver is
         probe_state: out std_logic_vector( 1 downto 0 );
         probe_pix_state: out std_logic_vector( 1 downto 0 )
     );
-end lcd_driver;
+end HD44780U;
 
-architecture rtl of lcd_driver is
+architecture rtl of HD44780U is
     constant CHAR_PIX_ROWS : integer := 10;
     constant CGROM_PIX_ROWS : integer := 8;
     constant CHAR_PIX_COLS : integer := 6;
@@ -29,7 +29,6 @@ architecture rtl of lcd_driver is
     constant DISPLAY_CHAR_COLS : integer := 20;
     constant DISPLAY_PIX_ROWS : integer := DISPLAY_CHAR_ROWS * CHAR_PIX_ROWS;
     constant DISPLAY_PIX_COLS : integer := DISPLAY_CHAR_COLS * CHAR_PIX_COLS;
-    constant LCD_WIDTH: integer := 120;
 
     type ddram_type is array (0 to 255) of unsigned(7 downto 0);
 
@@ -102,6 +101,7 @@ begin
                                                     if PixCol = CHAR_PIX_COLS - 1 then
                                                         PixCol <= X"0";
                                                         if PixRow = CGROM_PIX_ROWS - 1 then
+                                                            -- done writing char, now "increment" AC
                                                             if AC mod 64 = DISPLAY_CHAR_COLS - 1 then
                                                                 if AC / 64  = DISPLAY_CHAR_ROWS - 1 then
                                                                     AC <= to_unsigned(0, 7);

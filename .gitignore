@@ -3,3 +3,4 @@ target/*
 !circuit/*.hex
 lcov.info
 flamegraph.svg
+*.cf
