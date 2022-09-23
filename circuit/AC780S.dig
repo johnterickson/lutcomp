@@ -32,7 +32,7 @@ AMC2004AR-B-B6WTDW</string>
         </entry>
         <entry>
           <string>externalOutputs</string>
-          <string>cgrom_addr:11,pix_addr:13,pix_val,pix_clk,probe_CharRow:2,probe_CharCol:5,probe_PixRow:4,probe_PixCol:4,probe_AC:7,probe_state:2,probe_pix_state:2,probe_SerialData:8,probe_ValidSerialBits:4</string>
+          <string>cgrom_addr:11:unsigned,pix_addr:13:unsigned,pix_val,pix_clk,CharRow:2:unsigned,CharCol:5:unsigned,PixRow:4:unsigned,PixCol:4:unsigned,AC:7:unsigned,StatePeek:2,PixStatePeek:2,SerialData:8:unsigned,ValidSerialBits:4:unsigned</string>
         </entry>
         <entry>
           <string>Width</string>

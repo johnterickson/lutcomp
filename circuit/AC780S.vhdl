@@ -6,18 +6,18 @@ entity AC780S is
     port(	
         clk, csb, rs, sclk, sd: in std_logic;
         cgrom_data: in std_logic_vector(4 downto 0);
-		cgrom_addr: out std_logic_vector(10 downto 0);
-		pix_addr: out std_logic_vector(12 downto 0);
-		pix_val, pix_clk: out std_logic;
-        probe_CharRow: out std_logic_vector( 1 downto 0 );
-        probe_CharCol: out std_logic_vector( 4 downto 0 );
-        probe_PixRow: out std_logic_vector( 3 downto 0 );
-        probe_PixCol: out std_logic_vector( 3 downto 0 );
-        probe_AC: out std_logic_vector( 6 downto 0 );
-        probe_state: out std_logic_vector( 1 downto 0 );
-        probe_pix_state: out std_logic_vector( 1 downto 0 );
-        probe_SerialData: out std_logic_vector( 7 downto 0 );
-        probe_ValidSerialBits: out std_logic_vector( 3 downto 0 )
+        pix_val, pix_clk: out std_logic;
+		cgrom_addr: out unsigned(10 downto 0);
+		pix_addr: out unsigned(12 downto 0);
+        CharRow: out unsigned( 1 downto 0 );
+        CharCol: out unsigned( 4 downto 0 );
+        PixRow: out unsigned( 3 downto 0 );
+        PixCol: out unsigned( 3 downto 0 );
+        AC: out unsigned( 6 downto 0 );
+        StatePeek: out std_logic_vector( 1 downto 0 );
+        PixStatePeek: out std_logic_vector( 1 downto 0 );
+        SerialData: out unsigned( 7 downto 0 );
+        ValidSerialBits: out unsigned( 3 downto 0 )
     );
 end AC780S;
 
@@ -36,13 +36,6 @@ architecture rtl of AC780S is
 
     type ddram_type is array (0 to 255) of unsigned(7 downto 0);
 
-    signal CharRow : unsigned(1 downto 0) := B"00";
-    signal CharCol : unsigned(4 downto 0) := B"00000";
-    signal PixRow : unsigned(3 downto 0) := B"0000";
-    signal PixCol : unsigned(3 downto 0) := B"0000";
-    signal AC: unsigned(6 downto 0) := B"0000000";
-    signal SerialData: unsigned(7 downto 0) := X"00";
-    signal ValidSerialBits: unsigned(3 downto 0) := X"0";
     signal DDRAM: ddram_type;
 
     type states is (idle, read_serial, write_char);
@@ -83,8 +76,8 @@ begin
             end if;
         elsif (clk'event and clk = '1' and state = write_char) then
             case pix_state is
-                when start =>               cgrom_addr <= std_logic_vector(resize(DDRAM(to_integer(unsigned(AC))) * CGROM_PIX_ROWS + PixRow, 11));
-                                            pix_addr <= std_logic_vector(
+                when start =>               cgrom_addr <= (resize(DDRAM(to_integer(unsigned(AC))) * CGROM_PIX_ROWS + PixRow, 11));
+                                            pix_addr <= (
                                                     resize((resize(CharRow,13) * CHAR_PIX_ROWS + resize(PixRow,13))*DISPLAY_PIX_COLS, 13)
                                                 + resize(resize(CharCol,13) * CHAR_PIX_COLS + resize(PixCol,13), 13)
                                                 );
@@ -130,19 +123,12 @@ begin
                     B"01" when AC < ROW_3_ADDR else
                     B"11";
         CharCol <= resize(AC - CharRow * DISPLAY_CHAR_COLS,5);
-        probe_state <=  B"00" when state = idle else 
+        StatePeek <=    B"00" when state = idle else 
                         B"01" when state = read_serial else
                         B"10";
-        probe_pix_state <= B"00" when pix_state = start else
-                           B"01" when pix_state = read_cgrom else
-                           B"10" when pix_state = clk_on else
-                           B"11";
-        probe_PixCol <= std_logic_vector(PixCol);
-        probe_PixRow <= std_logic_vector(PixRow);
-        probe_CharRow <= std_logic_vector(CharRow);
-        probe_CharCol <= std_logic_vector(CharCol);
-        probe_AC <= std_logic_vector(AC);
-        probe_SerialData <= std_logic_vector(SerialData);
-        probe_ValidSerialBits <= std_logic_vector(ValidSerialBits);
+        PixStatePeek <= B"00" when pix_state = start else
+                        B"01" when pix_state = read_cgrom else
+                        B"10" when pix_state = clk_on else
+                        B"11";
     end process;
 end architecture rtl;
