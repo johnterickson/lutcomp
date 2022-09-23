@@ -7,8 +7,8 @@ entity AC780S is
         clk, csb, rs, sclk, sd: in std_logic;
         cgrom_data: in std_logic_vector(4 downto 0);
         pix_val, pix_clk: out std_logic;
-		cgrom_addr: out unsigned(10 downto 0);
-		pix_addr: out unsigned(12 downto 0);
+        cgrom_addr: out unsigned(10 downto 0);
+        pix_addr: out unsigned(12 downto 0);
         CharRow: out unsigned( 1 downto 0 );
         CharCol: out unsigned( 4 downto 0 );
         PixRow: out unsigned( 3 downto 0 );
@@ -55,32 +55,36 @@ begin
                 SerialData <= X"00";
             end if;
         elsif (state = read_serial and sclk'event and sclk = '1') then
-            if (state = read_serial) then
-                if (ValidSerialBits = X"7") then
-                    if rs = '1' then
-                        DDRAM(to_integer(unsigned(AC))) <= unsigned(SerialData(6 downto 0) & sd);
-                        PixCol <= X"0";
-                        PixRow <= X"0";
-                        pix_state <= start;
-                        state <= write_char;
-                    else -- rs = '0'
-                        if SerialData(6) = '1' then
-                            AC <= unsigned(SerialData(6 downto 0) & sd);
-                        end if;
-                        state <= idle;
+            if (ValidSerialBits = X"7") then
+                if rs = '1' then
+                    DDRAM(to_integer(unsigned(AC))) <= unsigned(SerialData(6 downto 0) & sd);
+                    PixCol <= X"0";
+                    PixRow <= X"0";
+                    pix_state <= start;
+                    state <= write_char;
+                else -- rs = '0'
+                    if SerialData(6) = '1' then
+                        AC <= unsigned(SerialData(5 downto 0) & sd);
                     end if;
-                else
-                    SerialData <= SerialData(6 downto 0) & sd;
-                    ValidSerialBits <= ValidSerialBits + X"1";
+                    state <= idle;
                 end if;
+                ValidSerialBits <= X"0";
+            else
+                SerialData <= SerialData(6 downto 0) & sd;
+                ValidSerialBits <= ValidSerialBits + X"1";
             end if;
         elsif (clk'event and clk = '1' and state = write_char) then
+            CharRow <=  B"00" when AC < ROW_2_ADDR else
+                        B"10" when AC < ROW_1_ADDR else
+                        B"01" when AC < ROW_3_ADDR else
+                        B"11";
+            CharCol <= resize(AC - CharRow * DISPLAY_CHAR_COLS,5);
             case pix_state is
                 when start =>               cgrom_addr <= (resize(DDRAM(to_integer(unsigned(AC))) * CGROM_PIX_ROWS + PixRow, 11));
-                                            pix_addr <= (
-                                                    resize((resize(CharRow,13) * CHAR_PIX_ROWS + resize(PixRow,13))*DISPLAY_PIX_COLS, 13)
-                                                + resize(resize(CharCol,13) * CHAR_PIX_COLS + resize(PixCol,13), 13)
-                                                );
+                                            pix_addr <= to_unsigned(
+                                                (to_integer(CharRow) * CHAR_PIX_ROWS + to_integer(PixRow)) * DISPLAY_PIX_COLS
+                                                + to_integer(CharCol) * CHAR_PIX_COLS + to_integer(PixCol),
+                                                13);
                                             pix_state <= read_cgrom;
                 when read_cgrom =>          pix_val <= shift_right(unsigned(cgrom_data), to_integer(CHAR_PIX_COLS - 1 - PixCol))(0);
                                             pix_state <= clk_on;
@@ -118,11 +122,6 @@ begin
                                             pix_state <= start;
             end case;
         end if;
-        CharRow <=  B"00" when AC < ROW_2_ADDR else
-                    B"10" when AC < ROW_1_ADDR else
-                    B"01" when AC < ROW_3_ADDR else
-                    B"11";
-        CharCol <= resize(AC - CharRow * DISPLAY_CHAR_COLS,5);
         StatePeek <=    B"00" when state = idle else 
                         B"01" when state = read_serial else
                         B"10";

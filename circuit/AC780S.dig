@@ -154,7 +154,7 @@ AMC2004AR-B-B6WTDW</string>
         </entry>
         <entry>
           <string>Frequency</string>
-          <int>10000</int>
+          <int>5</int>
         </entry>
       </elementAttributes>
       <pos x="-1320" y="-520"/>
@@ -233,10 +233,10 @@ AMC2004AR-B-B6WTDW</string>
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>probe_state</string>
+          <string>State</string>
         </entry>
       </elementAttributes>
-      <pos x="-940" y="-340"/>
+      <pos x="-900" y="-340"/>
     </visualElement>
     <visualElement>
       <elementName>Probe</elementName>
@@ -264,12 +264,46 @@ AMC2004AR-B-B6WTDW</string>
         <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>CSB probe_state
+            <dataString>CSB State
 1   0</dataString>
           </testData>
         </entry>
       </elementAttributes>
       <pos x="-1680" y="-700"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Splitter</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Input Splitting</string>
+          <string>11</string>
+        </entry>
+        <entry>
+          <string>Output Splitting</string>
+          <string>3,8</string>
+        </entry>
+      </elementAttributes>
+      <pos x="-920" y="-180"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Probe</elementName>
+      <elementAttributes>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>hex</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="-840" y="-180"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Probe</elementName>
+      <elementAttributes>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>hex</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="-840" y="-160"/>
     </visualElement>
   </visualElements>
   <wires>
@@ -347,7 +381,15 @@ AMC2004AR-B-B6WTDW</string>
     </wire>
     <wire>
       <p1 x="-1000" y="-340"/>
-      <p2 x="-940" y="-340"/>
+      <p2 x="-900" y="-340"/>
+    </wire>
+    <wire>
+      <p1 x="-960" y="-180"/>
+      <p2 x="-920" y="-180"/>
+    </wire>
+    <wire>
+      <p1 x="-900" y="-180"/>
+      <p2 x="-840" y="-180"/>
     </wire>
     <wire>
       <p1 x="-1000" y="-440"/>
@@ -398,6 +440,10 @@ AMC2004AR-B-B6WTDW</string>
       <p2 x="-940" y="-320"/>
     </wire>
     <wire>
+      <p1 x="-900" y="-160"/>
+      <p2 x="-840" y="-160"/>
+    </wire>
+    <wire>
       <p1 x="-580" y="-440"/>
       <p2 x="-580" y="-420"/>
     </wire>
@@ -439,6 +485,10 @@ AMC2004AR-B-B6WTDW</string>
     </wire>
     <wire>
       <p1 x="-960" y="-520"/>
+      <p2 x="-960" y="-180"/>
+    </wire>
+    <wire>
+      <p1 x="-960" y="-180"/>
       <p2 x="-960" y="-60"/>
     </wire>
   </wires>
