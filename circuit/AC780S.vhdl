@@ -38,8 +38,8 @@ architecture rtl of AC780S is
 
     signal DDRAM: ddram_type;
 
-    type states is (idle, read_serial, write_char);
-    signal state: states := idle;
+    type states is (inactive, read_serial, write_char);
+    signal state: states := inactive;
 
     type pix_states is (start, read_cgrom, clk_on, clk_off);
     signal pix_state: pix_states := start;
@@ -48,7 +48,7 @@ begin
     begin
         if (csb'event) then
             if (csb = '1') then
-                state <= idle;
+                state <= inactive;
             else
                 state <= read_serial;
                 ValidSerialBits <= X"0";
@@ -66,7 +66,7 @@ begin
                     if SerialData(6) = '1' then
                         AC <= unsigned(SerialData(5 downto 0) & sd);
                     end if;
-                    state <= idle;
+                    state <= read_serial;
                 end if;
                 ValidSerialBits <= X"0";
             else
@@ -112,7 +112,7 @@ begin
                                                         AC <= AC + 1;
                                                     end if;
                                                     PixRow <= X"0";
-                                                    state <= idle;
+                                                    state <= read_serial;
                                                 else
                                                     PixRow <= PixRow + 1;
                                                 end if;
@@ -122,7 +122,7 @@ begin
                                             pix_state <= start;
             end case;
         end if;
-        StatePeek <=    B"00" when state = idle else 
+        StatePeek <=    B"00" when state = inactive else 
                         B"01" when state = read_serial else
                         B"10";
         PixStatePeek <= B"00" when pix_state = start else
