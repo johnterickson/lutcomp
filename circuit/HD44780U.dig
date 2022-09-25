@@ -338,8 +338,12 @@ C   0 0  0  0x81 3     0            2       0x81  1</dataString>
       <elementName>Clock</elementName>
       <elementAttributes>
         <entry>
+          <string>runRealTime</string>
+          <boolean>true</boolean>
+        </entry>
+        <entry>
           <string>Frequency</string>
-          <int>10</int>
+          <int>10000</int>
         </entry>
       </elementAttributes>
       <pos x="-1400" y="-580"/>
