@@ -14,15 +14,15 @@
           <string>Testdata</string>
           <testData>
             <dataString>            CLK PS2_CLK TTYIN_CP PS2_READY TTYIN_OE_ DATA_out
-            C   1       0        0         1         Z
-repeat(100) C   X       0        X         1         Z
-repeat(100) C   0       0        1         1         Z
-repeat(100) C   0       0        1         1         Z
+            C   1       1        0         1         Z
+repeat(100) C   X       1        X         1         Z
+repeat(100) C   0       1        1         1         Z
+repeat(100) C   0       1        1         1         Z
 loop(a,300)
-            C   1       C        0         1         Z
-            C   1       0        0         1         Z
-repeat(40)  C   X       0        X         1         Z
-repeat(40)  C   0       0        1         0         (0x80|(a+2))
+            0   0       0        1         1         Z
+            C   1       1        0         1         Z
+repeat(40)  C   X       1        X         1         Z
+repeat(40)  C   0       1        1         0         (a+2)
 end loop</dataString>
           </testData>
         </entry>
@@ -127,7 +127,7 @@ end loop</dataString>
           <boolean>true</boolean>
         </entry>
       </elementAttributes>
-      <pos x="560" y="-240"/>
+      <pos x="520" y="-240"/>
     </visualElement>
     <visualElement>
       <elementName>In</elementName>
@@ -151,7 +151,7 @@ end loop</dataString>
           <string>PS2_READY</string>
         </entry>
       </elementAttributes>
-      <pos x="1140" y="-220"/>
+      <pos x="1140" y="-260"/>
     </visualElement>
     <visualElement>
       <elementName>Probe</elementName>
@@ -178,6 +178,16 @@ end loop</dataString>
       </elementAttributes>
       <pos x="300" y="-420"/>
     </visualElement>
+    <visualElement>
+      <elementName>Ground</elementName>
+      <elementAttributes/>
+      <pos x="800" y="-140"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Probe</elementName>
+      <elementAttributes/>
+      <pos x="1100" y="-240"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -191,6 +201,10 @@ end loop</dataString>
     <wire>
       <p1 x="680" y="-260"/>
       <p2 x="820" y="-260"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="-260"/>
+      <p2 x="1140" y="-260"/>
     </wire>
     <wire>
       <p1 x="-120" y="-100"/>
@@ -229,8 +243,12 @@ end loop</dataString>
       <p2 x="-120" y="-240"/>
     </wire>
     <wire>
-      <p1 x="560" y="-240"/>
+      <p1 x="520" y="-240"/>
       <p2 x="820" y="-240"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="-240"/>
+      <p2 x="1100" y="-240"/>
     </wire>
     <wire>
       <p1 x="-40" y="-20"/>
@@ -261,10 +279,6 @@ end loop</dataString>
       <p2 x="820" y="-220"/>
     </wire>
     <wire>
-      <p1 x="1060" y="-220"/>
-      <p2 x="1140" y="-220"/>
-    </wire>
-    <wire>
       <p1 x="360" y="-60"/>
       <p2 x="380" y="-60"/>
     </wire>
@@ -281,12 +295,12 @@ end loop</dataString>
       <p2 x="680" y="-320"/>
     </wire>
     <wire>
-      <p1 x="720" y="-200"/>
-      <p2 x="720" y="60"/>
+      <p1 x="800" y="-160"/>
+      <p2 x="820" y="-160"/>
     </wire>
     <wire>
-      <p1 x="-180" y="-360"/>
-      <p2 x="-180" y="-240"/>
+      <p1 x="800" y="-160"/>
+      <p2 x="800" y="-140"/>
     </wire>
     <wire>
       <p1 x="100" y="-300"/>
@@ -305,10 +319,6 @@ end loop</dataString>
       <p2 x="-40" y="120"/>
     </wire>
     <wire>
-      <p1 x="120" y="-40"/>
-      <p2 x="120" y="60"/>
-    </wire>
-    <wire>
       <p1 x="680" y="-320"/>
       <p2 x="680" y="-260"/>
     </wire>
@@ -321,20 +331,32 @@ end loop</dataString>
       <p2 x="-140" y="-180"/>
     </wire>
     <wire>
-      <p1 x="-60" y="-40"/>
-      <p2 x="-60" y="60"/>
-    </wire>
-    <wire>
       <p1 x="140" y="-20"/>
       <p2 x="140" y="120"/>
     </wire>
     <wire>
-      <p1 x="380" y="-360"/>
-      <p2 x="380" y="-60"/>
-    </wire>
-    <wire>
       <p1 x="300" y="-420"/>
       <p2 x="300" y="-360"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="-200"/>
+      <p2 x="720" y="60"/>
+    </wire>
+    <wire>
+      <p1 x="-180" y="-360"/>
+      <p2 x="-180" y="-240"/>
+    </wire>
+    <wire>
+      <p1 x="120" y="-40"/>
+      <p2 x="120" y="60"/>
+    </wire>
+    <wire>
+      <p1 x="-60" y="-40"/>
+      <p2 x="-60" y="60"/>
+    </wire>
+    <wire>
+      <p1 x="380" y="-360"/>
+      <p2 x="380" y="-60"/>
     </wire>
   </wires>
   <measurementOrdering/>

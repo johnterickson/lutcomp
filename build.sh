@@ -16,12 +16,12 @@ cargo run --release -- compile programs/test/keyboard_isr.j > circuit/keyboard_i
 
 echo "Build Digital fork"
 pushd deps/Digital
-mvn package -DskipTests
+mvn package -DskipTests > /dev/null
 popd
 
 echo "Build unit tester"
 pushd digital_tester
-mvn compile
+mvn compile  > /dev/null
 popd
 
 echo Run Digital tests
@@ -33,11 +33,11 @@ export RunTest="java -cp digital_tester/target/classes:deps/Digital/target/Digit
 
 echo "run echo assembly"
 cp circuit/echo.asm.hex circuit/rom.hex
-$RunTest "$(printf 'Hi!\n>:Yo!\n>:q')" <circuit/test.txt
+$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" <circuit/test.txt
 
 echo "run echo compiled"
 cp circuit/echo.j.hex circuit/rom.hex
-$RunTest "$(printf 'Hi!\n>:Yo!\n>:q')" <circuit/test.txt
+$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" <circuit/test.txt
 
 echo "run RPN in simulator"
 output=$(echo "6 7 * q" | cargo run --release --quiet -- compile programs/app/rpn.j --sim=true 2>&1 1>circuit/rpn.hex)
@@ -49,7 +49,13 @@ fi
 
 echo "run RPN in Digital ROM"
 cp circuit/rpn.hex circuit/rom.hex
-echo "6 7 * q" | $RunTest "$(printf 'RPN\n42\n')"
+echo "6 7 * q" | $RunTest "expected=$(printf 'RPN\n42\n')"
+
+echo "test ttyin interrupts"
+echo abcq | $RunTest keyboard=TTYIN expected=abc
+
+echo "test PS2 interrupts"
+echo abcq | $RunTest keyboard=PS2-Keyboard expected=abc
 
 echo "Upload echo to RAM and run it"
 cargo run -q --release -- compile programs/test/hello_ram.j --image_base_address=080400 > circuit/hello_ram.hex
@@ -71,7 +77,7 @@ fi
 
 echo "Upload echo to Digital RAM and run it"
 cp circuit/bootram.hex circuit/rom.hex
-(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex) | $RunTest "$(printf 'READY\nHi_from_RAM!')"
+(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex) | $RunTest "expected=$(printf 'READY\nHi_from_RAM!')"
 
 echo "copying rpn to ROM for tinkering"
 cp circuit/rpn.hex circuit/rom.hex

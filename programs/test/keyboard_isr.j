@@ -82,6 +82,14 @@ fn isr() {
     }
 }
 
+fn [inline] getc() -> u8 {
+    g = globals();
+    disable_interrupts();
+    ch: u8 = queue_pop(&g->stdin);
+    enable_interrupts();
+    return ch;
+}
+
 fn main() -> u8 {
     g = globals();
     g->shift_held = 0;
@@ -90,11 +98,14 @@ fn main() -> u8 {
 
     enable_interrupts();
 
+    while ('a' != getc()) {
+    }
+
+    ttyout('a');
+
     while (0 == 0) {
 
-        disable_interrupts();
-        ch = queue_pop(&g->stdin);
-        enable_interrupts();
+        ch = getc();
 
         if (ch != 0) {
             if (ch == 'q') {
