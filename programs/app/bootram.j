@@ -1,4 +1,4 @@
-!include 'echoline.j'
+!include 'stdio.j'
 !include 'print_hex.j'
 
 fn main() -> u8 {

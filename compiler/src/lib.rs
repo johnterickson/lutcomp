@@ -121,6 +121,15 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
 
     let mut includes = BTreeSet::new();
 
+    let mut roots = vec![root.into()];
+    if let Some(parent) = root.parent() {
+        let mut parent: PathBuf = parent.into();
+        parent.push("lib");
+        if let Ok(lib) = parent.canonicalize() {
+            roots.push(lib);
+        }
+    }
+
     'reparse: loop {
         let mut ctxt = ProgramContext {
             entry: entry.to_owned(),
@@ -189,12 +198,33 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                     let original_byte_count = original_stmt.len(); //Returns the length of this String, in bytes
                     let mut pairs = pair.into_inner();
                     let relative_include_path = pairs.next().unwrap().as_str();
-                    let mut path : PathBuf = root.into();
-                    path.push(relative_include_path);
-                    let path = path.canonicalize().unwrap();
+
+                    let mut paths_checked = Vec::new();
+                    let mut file = None;
+                    for root in &roots {
+                        let mut path : PathBuf = root.into();
+                        path.push(relative_include_path);
+                        if let Ok(path) = path.canonicalize() {
+                            if let Ok(f) = File::open(&path) {
+                                file = Some((f, path));
+                                break;
+                            } else {
+                                paths_checked.push(path);
+                            }
+                        } else {
+                            paths_checked.push(path);
+                        }
+                    }
+                    let (mut file, path) = file.unwrap_or_else(|| {
+                        use std::fmt::Write;
+                        let mut msg = format!("Could not find `{:?}`. Searched [", &relative_include_path);
+                        for p in paths_checked {
+                            write!(msg, "{:?}", &p).unwrap();
+                        }
+                        panic!("{}", msg);
+                    });
                     if includes.insert(path.to_owned()) {
                         // dbg!(&path);
-                        let mut file = File::open(&path).expect(&format!("Could not open '{:?}'", &path));
                         let mut contents = String::new();
                         contents += &format!("\n/* BEGIN INCLUDE '{:?}' */\n", &path);
                         file.read_to_string(&mut contents).unwrap();

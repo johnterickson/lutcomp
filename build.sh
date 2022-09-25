@@ -5,14 +5,14 @@ cargo run --release -- alu > circuit/alu.hex
 cargo run --release -- ucode > circuit/ucode.hex
 cargo run --release -- ascii_to_ps2 > circuit/ascii_to_ps2.hex
 cargo run --release -- ps2_to_ascii > circuit/ps2_to_ascii.hex
-cargo run --release -- ps2_to_ascii --style=j > programs/ps2.j
+cargo run --release -- ps2_to_ascii --style=j > programs/lib/ps2.j
 cargo run --release -- cgrom > circuit/cgrom.hex
 
 cargo test --release
 
-cargo run --release -- assemble programs/echo.asm > circuit/echo.asm.hex
-cargo run --release -- compile programs/echo.j > circuit/echo.j.hex
-cargo run --release -- compile programs/keyboard_isr.j > circuit/keyboard_isr.hex
+cargo run --release -- assemble programs/test/echo.asm > circuit/echo.asm.hex
+cargo run --release -- compile programs/test/echo.j > circuit/echo.j.hex
+cargo run --release -- compile programs/test/keyboard_isr.j > circuit/keyboard_isr.hex
 
 echo "Build Digital fork"
 pushd deps/Digital
@@ -40,7 +40,7 @@ cp circuit/echo.j.hex circuit/rom.hex
 $RunTest "$(printf 'Hi!\n>:Yo!\n>:q')" <circuit/test.txt
 
 echo "run RPN in simulator"
-output=$(echo "6 7 * q" | cargo run --release --quiet -- compile programs/rpn.j --sim=true 2>&1 1>circuit/rpn.hex)
+output=$(echo "6 7 * q" | cargo run --release --quiet -- compile programs/app/rpn.j --sim=true 2>&1 1>circuit/rpn.hex)
 expected="$(printf 'RPN\n42')"
 if [ "'$expected'" != "'$output'" ]; then
     echo "'$output' != '$expected'"
@@ -52,8 +52,8 @@ cp circuit/rpn.hex circuit/rom.hex
 echo "6 7 * q" | $RunTest "$(printf 'RPN\n42\n')"
 
 echo "Upload echo to RAM and run it"
-cargo run -q --release -- compile programs/hello_ram.j --image_base_address=080400 > circuit/hello_ram.hex
-output=$(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex | cargo run -q --release -- compile programs/bootram.j --sim=true --block_for_stdin=true 2>&1 1>circuit/bootram.hex)
+cargo run -q --release -- compile programs/test/hello_ram.j --image_base_address=080400 > circuit/hello_ram.hex
+output=$(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex | cargo run -q --release -- compile programs/app/bootram.j --sim=true --block_for_stdin=true 2>&1 1>circuit/bootram.hex)
 expected="$(printf 'READY\nHi_from_RAM!')"
 if [ "$expected" != "$output" ]; then
     echo "$output != $expected"
@@ -61,8 +61,8 @@ if [ "$expected" != "$output" ]; then
 fi
 
 echo "Upload RPN to RAM and run it"
-cargo run -q --release -- compile programs/rpn.j --image_base_address=080400 > circuit/rpn_ram.hex
-output=$((cargo run -q --release -- program_ram --hex_path=./circuit/rpn_ram.hex && echo "6 7 * q") | cargo run -q --release -- compile programs/bootram.j --sim=true --block_for_stdin=true 2>&1 1>circuit/bootram.hex)
+cargo run -q --release -- compile programs/app/rpn.j --image_base_address=080400 > circuit/rpn_ram.hex
+output=$((cargo run -q --release -- program_ram --hex_path=./circuit/rpn_ram.hex && echo "6 7 * q") | cargo run -q --release -- compile programs/app/bootram.j --sim=true --block_for_stdin=true 2>&1 1>circuit/bootram.hex)
 expected="$(printf 'READY\nRPN\n42')"
 if [ "$expected" != "$output" ]; then
     echo "$output != $expected"

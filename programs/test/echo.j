@@ -1,4 +1,4 @@
-!include 'echoline.j'
+!include 'stdio.j'
 #comment test
 fn main() -> u8 {
     ttyout('H');

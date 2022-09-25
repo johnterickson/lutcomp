@@ -446,7 +446,7 @@ mod tests {
     fn halt() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/halt.j"),
+            include_str!("../../programs/test/halt.j"),
             &[(vec![],1u8.into())]);
     }
 
@@ -454,7 +454,7 @@ mod tests {
     fn halt_base_address() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/halt_base_address.j"),
+            include_str!("../../programs/test/halt_base_address.j"),
             &[(vec![],1u8.into())]);
     }
 
@@ -462,7 +462,7 @@ mod tests {
     fn halt_base_ram() {
         let (_ctxt, _il, ram_image) = assemble(
             "main",
-            include_str!("../../programs/halt_ram.j"));
+            include_str!("../../programs/test/halt_ram.j"));
 
 
         let mut loader = Vec::new();
@@ -484,7 +484,7 @@ mod tests {
     fn add_u8() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/add_u8.j"),
+            include_str!("../../programs/test/add_u8.j"),
             &[(vec![],7u8.into())]);
     }
 
@@ -492,7 +492,7 @@ mod tests {
     fn mul8() {
         test_var_inputs(
             "mul8",
-            include_str!("../../programs/mul.j"),
+            include_str!("../../programs/lib/mul.j"),
             &[
                 (vec![0u8.into(), 0u8.into()],0u8.into()),
                 (vec![128u8.into(), 0u8.into()],0u8.into()),
@@ -507,7 +507,7 @@ mod tests {
     fn mul8_16() {
         test_var_inputs(
             "mul8_16",
-            include_str!("../../programs/mul.j"),
+            include_str!("../../programs/lib/mul.j"),
             &[
                 (vec![16u8.into(), 16u8.into()],IlNumber::U16(256).into()),
                 (vec![0u8.into(), 0u8.into()],0u16.into()),
@@ -522,7 +522,7 @@ mod tests {
     fn mul16_32() {
         test_var_inputs(
             "mul16_32",
-            include_str!("../../programs/mul.j"),
+            include_str!("../../programs/lib/mul.j"),
             &[
                 (vec![0u32.into(), 0u32.into()], 0u32.into()),
                 (vec![16u32.into(), 16u32.into()], 256u32.into()),
@@ -536,7 +536,7 @@ mod tests {
     fn mul32_32() {
         test_var_inputs(
             "mul32_32",
-            include_str!("../../programs/mul.j"),
+            include_str!("../../programs/lib/mul.j"),
             &[
                 (vec![0u32.into(), 0u32.into()], 0u32.into()),
                 (vec![16u32.into(), 16u32.into()], 256u32.into()),
@@ -552,7 +552,7 @@ mod tests {
     fn mul32_64() {
         test_var_inputs(
             "test_mul32_64",
-            include_str!("../../programs/mul.j"),
+            include_str!("../../programs/lib/mul.j"),
             &[
                 (vec![0u32.into(), 0u32.into()], 0u64.into()),
                 (vec![16u32.into(), 16u32.into()], 256u64.into()),
@@ -571,7 +571,7 @@ mod tests {
     fn add_u64() {
         test_var_inputs(
             "test_add_U64",
-            include_str!("../../programs/U64.j"),
+            include_str!("../../programs/lib/U64.j"),
             &[
                 (vec![0u64.into(), 0u64.into()], 0u64.into()),
                 (vec![0xFFFF_FFFFu64.into(), 0x1u64.into()], 0x1_0000_0000u64.into()),
@@ -583,7 +583,7 @@ mod tests {
     fn shiftright1() {
         test_var_inputs(
             "shiftright1",
-            include_str!("../../programs/div.j"),
+            include_str!("../../programs/lib/div.j"),
             &[
                 (vec![1u32.into()],0u32.into()),
                 (vec![0x100u32.into()],0x80u32.into()),
@@ -603,7 +603,7 @@ mod tests {
 
         test_var_inputs(
             "shiftright3",
-            include_str!("../../programs/div.j"),
+            include_str!("../../programs/lib/div.j"),
             &cases);
     }
 
@@ -611,7 +611,7 @@ mod tests {
     fn div16() {
         test_var_inputs(
             "div16",
-            include_str!("../../programs/div.j"),
+            include_str!("../../programs/lib/div.j"),
             &[
                 (vec![0xFFFFu32.into(), 0xFFu32.into()], (0xFFFFu32/0xFF).into()),
                 (vec![0xFFFFu32.into(), 0x1u32.into()], 0xFFFFu32.into()),
@@ -625,7 +625,7 @@ mod tests {
     fn div32() {
         test_var_inputs(
             "div32",
-            include_str!("../../programs/div.j"),
+            include_str!("../../programs/lib/div.j"),
             &[
                 (vec![13u32.into(), 4u32.into()], 3u32.into()),
                 (vec![0xFFFFu32.into(), 0xFFu32.into()], (0xFFFFu32/0xFF).into()),
@@ -644,7 +644,7 @@ mod tests {
             .collect();
         test_var_inputs(
             "div32_by10",
-            include_str!("../../programs/div.j"),
+            include_str!("../../programs/lib/div.j"),
             cases.as_slice());
     }
 
@@ -652,7 +652,7 @@ mod tests {
     fn call_parameterless() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/call_parameterless.j"),
+            include_str!("../../programs/test/call_parameterless.j"),
             &[(vec![],7u8.into())]);
     }
 
@@ -660,7 +660,7 @@ mod tests {
     fn idfn() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/idfn.j"),
+            include_str!("../../programs/test/idfn.j"),
             &[(vec![],TestVar::Num(IlNumber::U8(7u8)))]);
     }
 
@@ -668,7 +668,7 @@ mod tests {
     fn if_eq() {
         test_inputs(
             "if_eq",
-            include_str!("../../programs/if.j"),
+            include_str!("../../programs/test/if.j"),
             &[(6u8,7u8,0u8), (8,7,0), (0,7,0), (0xFF,7,0), (7,7,1)]);
     }
 
@@ -676,7 +676,7 @@ mod tests {
     fn if_gt_unsigned() {
         test_inputs(
             "if_gt",
-            include_str!("../../programs/if.j"),
+            include_str!("../../programs/test/if.j"),
             &[
                 (0u8,1u8,0u8),
                 (1,2,0),
@@ -689,7 +689,7 @@ mod tests {
     fn if_gte_unsigned() {
         test_inputs(
             "if_gte",
-            include_str!("../../programs/if.j"),
+            include_str!("../../programs/test/if.j"),
             &[(6u8,7u8,0u8), (8,7,1), (0,7,0), (0x7F,7,1), (0xFF, 7, 1), (7,7,1)]);
     }
 
@@ -697,7 +697,7 @@ mod tests {
     fn if_lt_unsigned() {
         test_inputs(
             "if_lt",
-            include_str!("../../programs/if.j"),
+            include_str!("../../programs/test/if.j"),
             &[
             (0u8,0u8,0u8),
             (0,1,1),
@@ -708,7 +708,7 @@ mod tests {
     fn if_lte_unsigned() {
         test_inputs(
             "if_lte",
-            include_str!("../../programs/if.j"),
+            include_str!("../../programs/test/if.j"),
             &[(6u8,7u8,1u8), (8,7,0), (0,7,1), (0x7F,7,0), (0xFF, 7, 0), (7,7,1)]);
     }
 
@@ -716,7 +716,7 @@ mod tests {
     fn if_ne() {
         test_inputs(
             "if_ne",
-            include_str!("../../programs/if.j"),
+            include_str!("../../programs/test/if.j"),
             &[(6u8,7u8,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0)]);
     }
 
@@ -724,7 +724,7 @@ mod tests {
     fn if_ne_uptr() {
         test_inputs(
             "if_ne_uptr",
-            include_str!("../../programs/if.j"),
+            include_str!("../../programs/test/if.j"),
             &[
                 (6u32,7u32,1u8),(8,7,1),(0,7,1),(0xFF,7,1), (7,7,0),
                 (0x0,0x100,1),(0x100,0x100,0),(0xAABBCCDD,0xAABBCCDD,0),
@@ -736,7 +736,7 @@ mod tests {
     fn plusone() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/plusone.j"),
+            include_str!("../../programs/test/plusone.j"),
             &[(vec![],7u8.into())]);
 
     }
@@ -745,7 +745,7 @@ mod tests {
     fn fac_rec() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/fac_rec.j"),
+            include_str!("../../programs/test/fac_rec.j"),
             &[
                 (vec![0x0u8.into()],1u8.into()),
                 (vec![0x1u8.into()],1u8.into()),
@@ -758,7 +758,7 @@ mod tests {
     fn fac_iter() {
         test_var_inputs(
             "fac",
-            include_str!("../../programs/fac_iter.j"),
+            include_str!("../../programs/test/fac_iter.j"),
             &[
                 (vec![0u8.into()],1u8.into()),
                 (vec![1u8.into()],1u8.into()),
@@ -771,7 +771,7 @@ mod tests {
     fn fib() {
         test_var_inputs(
             "fib",
-            include_str!("../../programs/fib.j"),
+            include_str!("../../programs/test/fib.j"),
             &[
                 (vec![0u8.into()],0u8.into()),
                 (vec![1u8.into()],1u8.into()),
@@ -785,7 +785,7 @@ mod tests {
     fn fib_memo() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/fib_memo.j"),
+            include_str!("../../programs/test/fib_memo.j"),
             &[
                 (vec![0u8.into()],0u8.into()),
                 (vec![1u8.into()],1u8.into()),
@@ -800,7 +800,7 @@ mod tests {
     fn statics() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/static.j"),
+            include_str!("../../programs/test/static.j"),
             &[
                 (vec![1u8.into()],2u8.into()),
                 (vec![2u8.into()],4u8.into()),
@@ -811,7 +811,7 @@ mod tests {
     fn add_uptr() {
         test_inputs(
             "main",
-            include_str!("../../programs/add_uptr.j"),
+            include_str!("../../programs/test/add_uptr.j"),
             &[
                 (0x0u32,0x0u32,0x0u32),
                 (0x0,0x1,0x1),
@@ -828,7 +828,7 @@ mod tests {
     fn cmp_usize() {
         test_inputs(
             "cmp_usize",
-            include_str!("../../programs/cmp_usize.j"),
+            include_str!("../../programs/test/cmp_usize.j"),
             &[
                 (0x0u32,0x0u32,0x0u8),
                 (0x0,0x1,0xFF),
@@ -847,7 +847,7 @@ mod tests {
     fn ptr() {
         test_var_inputs(
             "main",
-            include_str!("../../programs/ptr.j"),
+            include_str!("../../programs/test/ptr.j"),
             &[
                 (vec![0u32.to_le_bytes().into(), 0u32.to_le_bytes().into()], 0u32.into()),
                 (vec![0u32.to_le_bytes().into(), 1u32.to_le_bytes().into()], 1u32.into()),
@@ -862,7 +862,7 @@ mod tests {
     fn struct_pass_by_ref() {
         test_inputs(
             "test_add",
-            include_str!("../../programs/struct.j"),
+            include_str!("../../programs/test/struct.j"),
             &[
                 (0x0u32,0x0u32,0x0u32),
                 (0x0,0x1,0x1),
@@ -879,7 +879,7 @@ mod tests {
     fn struct_array() {
         test_inputs(
             "test_add2",
-            include_str!("../../programs/struct.j"),
+            include_str!("../../programs/test/struct.j"),
             &[
                 (0x0u32,0x0u32,0x0u32),
                 (0x0,0x1,0x1),
@@ -896,7 +896,7 @@ mod tests {
     fn struct_return_by_ref() {
         test_inputs(
             "test_ret_static",
-            include_str!("../../programs/struct_ret.j"),
+            include_str!("../../programs/test/struct_ret.j"),
             &[
                 (0xAABBCCDDu32, 0x11111111u32, 0xBBCCDDEEu32)
                 ]);
@@ -906,7 +906,7 @@ mod tests {
     fn heap_nofree() {
         test_var_inputs(
             "get_heap",
-            include_str!("../../programs/heap_nofree.j"),
+            include_str!("../../programs/test/heap_nofree.j"),
             &[
                 (vec![], STATICS_START_ADDRESS.into())
             ]
@@ -918,7 +918,7 @@ mod tests {
     fn heap_nofree_alloc() {
         test_var_inputs(
             "test1",
-            include_str!("../../programs/heap_nofree.j"),
+            include_str!("../../programs/test/heap_nofree.j"),
             &[
                 (vec![], 0u32.into())
             ]
@@ -927,11 +927,11 @@ mod tests {
 
     #[test]
     fn heap_init() {
-        let (ctxt, il, rom) = assemble("heap_init", include_str!("../../programs/heap.j"));
+        let (ctxt, il, rom) = assemble("heap_init", include_str!("../../programs/lib/heap.j"));
         let (_, heap_start) = run_var_input(&ctxt, &il, &rom, &vec![], IlType::U32);
         assert_eq!(heap_start, IlNumber::U32(STATICS_START_ADDRESS));
 
-        let (ctxt, il, rom) = assemble("test_get_heap_head", include_str!("../../programs/heap.j"));
+        let (ctxt, il, rom) = assemble("test_get_heap_head", include_str!("../../programs/lib/heap.j"));
         let (c, heap_entry) = run_var_input(&ctxt, &il, &rom, &vec![], IlType::U32);
         assert_eq!(heap_entry, IlNumber::U32(STATICS_START_ADDRESS+4));
 
@@ -957,7 +957,7 @@ mod tests {
 
     #[test]
     fn heap_is_entry_bad() {
-        let (ctxt, il, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/heap.j"));
+        let (ctxt, il, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/lib/heap.j"));
         let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1u32.into()], IlType::U8);
         assert_eq!(is_bad.as_u32(), 0);
 
@@ -968,7 +968,7 @@ mod tests {
     #[test]
     fn heap_alloc() {
         let alloc_size = 4u32;
-        let (ctxt, il, rom) = assemble("test_heap_alloc", include_str!("../../programs/heap.j"));
+        let (ctxt, il, rom) = assemble("test_heap_alloc", include_str!("../../programs/lib/heap.j"));
         let (c, allocated_addr) = run_var_input(&ctxt, &il, &rom, &vec![alloc_size.into()], IlType::U32);
         let allocated_addr = allocated_addr.as_u32();
 
@@ -997,7 +997,7 @@ mod tests {
     fn print_hex() {
         test_tty(
             "printHexTest",
-            include_str!("../../programs/print_hex.j"),
+            include_str!("../../programs/lib/print_hex.j"),
             &[
                 ("",0x0,0x0,"00\n"),
                 ("",0x1,0x0,"01\n"),
@@ -1018,7 +1018,7 @@ mod tests {
     fn echo() {
         test_tty(
             "main",
-            include_str!("../../programs/echo.j"),
+            include_str!("../../programs/test/echo.j"),
             &[
                 ("0\nq",0x0,0x0,"Hi!\n>:0\n>:q"),
                 ("01\nq",0x0,0x0,"Hi!\n>:01\n>:q"),
@@ -1029,7 +1029,7 @@ mod tests {
     fn echoline() {
         test_tty(
             "test_echoline",
-            include_str!("../../programs/echoline.j"),
+            include_str!("../../programs/lib/stdio.j"),
             &[
                 ("0\n",0x0,0x0,"0"),
                 ("01\n",0x0,0x0,"01"),
@@ -1041,7 +1041,7 @@ mod tests {
     fn print_dec8() {
         test_tty(
             "print_dec8_test",
-            include_str!("../../programs/rpn.j"),
+            include_str!("../../programs/app/rpn.j"),
             &[
                 ("",0,0,"0"),
                 ("",9,0,"9"),
@@ -1056,7 +1056,7 @@ mod tests {
     fn print_dec32() {
         test_tty(
             "print_dec32_test",
-            include_str!("../../programs/rpn.j"),
+            include_str!("../../programs/app/rpn.j"),
             &[
                 ("",0,0,"0"),
                 ("",9,0,"9"),
@@ -1071,7 +1071,7 @@ mod tests {
     fn rpn() {
         test_tty(
             "main",
-            include_str!("../../programs/rpn.j"),
+            include_str!("../../programs/app/rpn.j"),
             &[
                 ("0\nq",0x0,0x0,"RPN\n"),
                 ("1 2 3 d\nq",0x0,0x0,"RPN\n0:1\n1:2\n2:3\n"),
@@ -1090,7 +1090,7 @@ mod tests {
     fn local_array() {
         let (_ctxt, il) = emit_il(
             "main",
-            include_str!("../../programs/local_array.j"),
+            include_str!("../../programs/test/local_array.j"),
             &test_programs_dir());
 
         assert_eq!(il.simulate(&[0u8.into(), 0u8.into()]), 0u8.into());
@@ -1104,7 +1104,7 @@ mod tests {
         // unsafe { backtrace_on_stack_overflow::enable() };
         test_inputs(
             "main",
-            include_str!("../../programs/array_to_ptr.j"),
+            include_str!("../../programs/test/array_to_ptr.j"),
             &[
                 (0x0u8,0x0u8,0x0u8),
                 (0x0,0x1,0x1),
@@ -1117,7 +1117,7 @@ mod tests {
     fn array_loop() {
         test_inputs(
             "main",
-            include_str!("../../programs/array_loop.j"),
+            include_str!("../../programs/test/array_loop.j"),
             &[
                 (0x0u8,0x0u8,0x0u8),
                 (0x0,0x1,0x1),
@@ -1134,7 +1134,7 @@ mod tests {
 
         test_var_inputs(
             "strlen",
-            include_str!("../../programs/strlen.j"),
+            include_str!("../../programs/lib/strlen.j"),
             &[
                 (vec![TestVar::Ascii(b"\0")], TestVar::Num(IlNumber::U32(0))),
                 (vec![TestVar::Ascii(b"hello\0")], TestVar::Num(IlNumber::U32(5))),
@@ -1155,7 +1155,7 @@ mod tests {
 
         test_var_inputs(
             "strncmp",
-            include_str!("../../programs/strncmp.j"),
+            include_str!("../../programs/lib/strncmp.j"),
             &[
                 (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(0))], TestVar::Num(IlNumber::U8(0))),
                 (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(1))], TestVar::Num(IlNumber::U8(0))),
@@ -1175,7 +1175,7 @@ mod tests {
     fn strstr() {
         test_var_inputs(
             "strstr",
-            include_str!("../../programs/strstr.j"),
+            include_str!("../../programs/lib/strstr.j"),
             &[
                 (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], TestVar::Num(IlNumber::U32(0))),
                 (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], TestVar::Num(IlNumber::U32(0))),
@@ -1205,7 +1205,7 @@ mod tests {
 
         test_var_inputs(
             "parseHexNibble",
-            include_str!("../../programs/print_hex.j"),
+            include_str!("../../programs/lib/print_hex.j"),
             &[
                 (vec![TestVar::Num(IlNumber::U8('9' as u8))], TestVar::Num(IlNumber::U8(0x9))),
                 (vec![TestVar::Num(IlNumber::U8('a' as u8))], TestVar::Num(IlNumber::U8(0xA))),
@@ -1222,7 +1222,7 @@ mod tests {
         }
         test_var_inputs(
             "parseHex",
-            include_str!("../../programs/print_hex.j"),
+            include_str!("../../programs/lib/print_hex.j"),
             &cases
         );
     }
@@ -1232,7 +1232,7 @@ mod tests {
         let a = RAM_MIN + 1024;
         let (_loader_ctxt, _loader_il, loader_image) = assemble(
             "main",
-            include_str!("../../programs/bootram.j"));
+            include_str!("../../programs/app/bootram.j"));
 
         let mut c = Computer::from_image(Cow::Owned(loader_image), true);
 
@@ -1280,11 +1280,11 @@ mod tests {
     fn bootram() {
         let (_ctxt, _ram_il, ram_image) = assemble(
             "main",
-            include_str!("../../programs/hello_ram.j"));
+            include_str!("../../programs/test/hello_ram.j"));
 
         let (_loader_ctxt, _loader_il, loader_image) = assemble(
             "main",
-            include_str!("../../programs/bootram.j"));
+            include_str!("../../programs/app/bootram.j"));
 
         let mut c = Computer::from_image(Cow::Owned(loader_image), false);
 
@@ -1342,7 +1342,7 @@ mod tests {
     fn else_if() {
         test_var_inputs(
             "else_if",
-            include_str!("../../programs/else_if.j"),
+            include_str!("../../programs/test/else_if.j"),
             &[
                 (vec![0u8.into()], 0u8.into()),
                 (vec![1u8.into()], 1u8.into()),
@@ -1359,6 +1359,7 @@ mod tests {
         dir.pop();
         dir.pop();
         dir.push("programs");
+        dir.push("test");
         dir
     }
     
@@ -1366,7 +1367,7 @@ mod tests {
     fn echo_ps2_isr() {
         test_ps2(
             "main",
-            include_str!("../../programs/keyboard_isr.j"),
+            include_str!("../../programs/test/keyboard_isr.j"),
             &[
                 ("abcq\n",0x0,0x0,"abc"),
                 ("aBcq\n",0x0,0x0,"aBc"),
@@ -1377,7 +1378,7 @@ mod tests {
     fn echo_tty_isr() {
         test_tty(
             "main",
-            include_str!("../../programs/keyboard_isr.j"),
+            include_str!("../../programs/test/keyboard_isr.j"),
             &[
                 ("abcq\n",0x0,0x0,"abc"),
                 ("aBcq\n",0x0,0x0,"aBc"),
