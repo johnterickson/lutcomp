@@ -16,8 +16,11 @@ entity HD44780U is
         PixRow: out unsigned( 3 downto 0 );
         PixCol: out unsigned( 3 downto 0 );
         AC: out unsigned( 6 downto 0 );
-        StatePeek: out std_logic_vector( 1 downto 0 );
-        PixStatePeek: out std_logic_vector( 1 downto 0 )
+        StatePeek: out std_logic_vector( 2 downto 0 );
+        PixStatePeek: out std_logic_vector( 1 downto 0 );
+        BitModePeek: out std_logic_vector( 1 downto 0 );
+        CmdReadStatePeek: out std_logic;
+        Cmd: out std_logic_vector( 7 downto 0 )
     );
 end HD44780U;
 
@@ -39,40 +42,92 @@ architecture rtl of HD44780U is
     signal clearing: std_logic := '0';
     signal DDRAM: ddram_type;
 
-    type states is (idle, write_char);
-    signal state: states := idle;
+    type bitmode_states is (UNKNOWN, BITMODE_4, BITMODE_8);
+    signal bitmode: bitmode_states := UNKNOWN;
+
+    type states is (init0, init1, init2, idle, run_cmd, write_char);
+    signal state: states := init0;
+
+    type cmd_read_states is (zero_nibble_read, first_nibble_read);
+    signal cmd_read_state: cmd_read_states := zero_nibble_read;
 
     type pix_states is (start, read_cgrom, clk_on, clk_off);
     signal pix_state: pix_states := start;
 begin
     process(clk, state, pix_state, en, PixRow, PixCol, pix_clk, AC, DDRAM, CharRow, CharCol, busy, clearing)
     begin
-        if (en'event and en = '1' and rs = '0' and rw = '1') then
+        if (en'event and en = '1' and bitmode = BITMODE_4 and state = idle and cmd_read_state = zero_nibble_read) then
+            Cmd <= db_in(7 downto 4) & X"0";
+            cmd_read_state <= first_nibble_read;
+        elsif (en'event and en = '1' and state = init0 and rs = '0' and rw = '0' and db_in(7 downto 4) = B"0011") then
+            state <= init1;
+        elsif (en'event and en = '1' and state = init1 and cmd_read_state = zero_nibble_read and rs = '0' and rw = '0' and db_in(7 downto 5) = B"001") then
+            if db_in(4) = '1' then
+                assert db_in(3) = '1' report "1 row not implemented" severity error;
+                assert db_in(2) = '0' report "5 x 11 not implemented" severity error;
+                bitmode <= BITMODE_8;
+                state <= idle;
+            else
+                bitmode <= BITMODE_4;
+                cmd_read_state <=  first_nibble_read;
+                Cmd <= X"20";
+            end if;
+        elsif (en'event and en = '1' and state = init1 and cmd_read_state = first_nibble_read and rs = '0' and rw = '0') then
+            assert bitmode = BITMODE_4 report "should be in 4 bit mode" severity error;
+            Cmd <= Cmd or (X"0" & db_in(7 downto 4));
+            assert Cmd(3) = '1' report "1 row not implemented" severity error;
+            assert Cmd(2) = '0' report "5 x 11 not implemented" severity error;
+            cmd_read_state <= zero_nibble_read;
+            state <= init2;
+        elsif (en'event and en = '1' and state = init2 and cmd_read_state = zero_nibble_read and rs = '0' and rw = '0' and db_in(7 downto 4) = B"0010") then
+            assert bitmode = BITMODE_4 report "should be in 4 bit mode" severity error;
+            cmd_read_state <=  first_nibble_read;
+            Cmd <= X"20";
+        elsif (en'event and en = '1' and state = init2 and cmd_read_state = first_nibble_read and rs = '0' and rw = '0') then
+            assert bitmode = BITMODE_4 report "should be in 4 bit mode" severity error;
+            cmd_read_state <= zero_nibble_read;
+            state <= idle;
+        elsif (en'event and en = '1' and rs = '0' and rw = '1') then
             db_out(6 downto 0) <= std_logic_vector(AC);
             db_out(7) <= busy;
         elsif (en'event and en = '1' and state = idle) then
+            if bitmode = BITMODE_4 then
+                assert cmd_read_state = first_nibble_read report "should be in first_nibble_read" severity error;
+                cmd_read_state <= zero_nibble_read;
+                Cmd <= Cmd or (X"0" & db_in(7 downto 4));
+            else
+                Cmd <= db_in;
+            end if;
+            state <= run_cmd;
+            busy <= '1';
+        elsif (clk'event and clk = '1' and state = run_cmd) then
+            state <= idle;
             if rs = '0' and rw = '0' then
-                if db_in(7) = '1' then
-                    AC <= unsigned(db_in(6 downto 0));
-                elsif db_in(6) = '1' then
+                if Cmd(7) = '1' then
+                    AC <= unsigned(Cmd(6 downto 0));
+                elsif Cmd(6) = '1' then
                     -- set CGRAM
-                    assert db_in(6) = '0' report "set CGRAM not implemented" severity error;
-                elsif db_in(5) = '1' then
-                    assert db_in(4) = '1' report "4-bit mode not implemented" severity error;
-                    assert db_in(3) = '1' report "1 row not implemented" severity error;
-                    assert db_in(2) = '0' report "5 x 11 not implemented" severity error;
-                elsif db_in(4) = '1' then
-                    assert db_in(3) = '0' and db_in(2) = '1' report "only `shift cursor to the right, AC is increased by 1` implemented" severity error;
-                elsif db_in(3) = '1' then
-                    assert db_in(2) = '1' report "'display off' not implemented" severity error;
-                    assert db_in(1) = '0' report "cursor not implemented" severity error;
-                    assert db_in(0) = '0' report "blink not implemented" severity error;
-                elsif db_in(2) = '1' then
-                    assert db_in(1) = '1' report "only LTR implemented" severity error;
-                    assert db_in(0) = '0' report "shift not implemented" severity error;
-                elsif db_in(1) = '1' then
+                    assert Cmd(6) = '0' report "set CGRAM not implemented" severity error;
+                elsif Cmd(5) = '1' then
+                    if Cmd(4) = '1' then
+                        bitmode <= BITMODE_8;
+                    else
+                        bitmode <= BITMODE_4;
+                    end if;
+                    assert Cmd(3) = '1' report "1 row not implemented" severity error;
+                    assert Cmd(2) = '0' report "5 x 11 not implemented" severity error;
+                elsif Cmd(4) = '1' then
+                    assert Cmd(3) = '0' and Cmd(2) = '1' report "only `shift cursor to the right, AC is increased by 1` implemented" severity error;
+                elsif Cmd(3) = '1' then
+                    assert Cmd(2) = '1' report "'display off' not implemented" severity error;
+                    assert Cmd(1) = '0' report "cursor not implemented" severity error;
+                    assert Cmd(0) = '0' report "blink not implemented" severity error;
+                elsif Cmd(2) = '1' then
+                    assert Cmd(1) = '1' report "only LTR implemented" severity error;
+                    assert Cmd(0) = '0' report "shift not implemented" severity error;
+                elsif Cmd(1) = '1' then
                     AC <= to_unsigned(0, AC'length);
-                elsif db_in(0) = '1' then
+                elsif Cmd(0) = '1' then
                     for i in 0 to DDRAM'length - 1 loop
                         DDRAM(i) <= X"20";
                     end loop;
@@ -88,7 +143,7 @@ begin
                 db_out(6 downto 0) <= std_logic_vector(AC);
                 db_out(7) <= busy;
             elsif rs = '1' and rw = '0' then
-                DDRAM(to_integer(unsigned(AC))) <= unsigned(db_in);
+                DDRAM(to_integer(unsigned(AC))) <= unsigned(Cmd);
                 PixCol <= X"0";
                 PixRow <= X"0";
                 pix_state <= start;
@@ -106,7 +161,8 @@ begin
             CharCol <=  to_unsigned(to_integer(AC) - ROW_0_ADDR,5) when ROW_0_ADDR <= AC and AC < ROW_0_ADDR + DISPLAY_CHAR_COLS  else
                         to_unsigned(to_integer(AC) - ROW_1_ADDR,5) when ROW_1_ADDR <= AC and AC < ROW_1_ADDR + DISPLAY_CHAR_COLS  else
                         to_unsigned(to_integer(AC) - ROW_2_ADDR,5) when ROW_2_ADDR <= AC and AC < ROW_2_ADDR + DISPLAY_CHAR_COLS  else
-                        to_unsigned(to_integer(AC) - ROW_3_ADDR,5);
+                        to_unsigned(to_integer(AC) - ROW_3_ADDR,5) when ROW_3_ADDR <= AC and AC < ROW_3_ADDR + DISPLAY_CHAR_COLS  else
+                        B"11111";
             case pix_state is
                 when start =>               cgrom_addr <= (resize(DDRAM(to_integer(unsigned(AC))) * CGROM_PIX_ROWS + PixRow, 11));
                                             pix_addr <= to_unsigned(
@@ -157,11 +213,20 @@ begin
                                             pix_state <= start;
             end case;
         end if;
-        StatePeek <=    B"00" when state = idle else 
-                        B"01";
+        StatePeek <=    B"000" when state = init0 else
+                        B"001" when state = init1 else
+                        B"010" when state = init2 else
+                        B"011" when state = idle else
+                        B"100" when state = run_cmd else
+                        B"101";
         PixStatePeek <= B"00" when pix_state = start else
                         B"01" when pix_state = read_cgrom else
                         B"10" when pix_state = clk_on else
                         B"11";
+        CmdReadStatePeek <= '0' when cmd_read_state = zero_nibble_read else
+                            '1';
+        BitModePeek <=  B"00" when bitmode = UNKNOWN else
+                        B"01" when bitmode = BITMODE_4 else
+                        B"10";
     end process;
 end architecture rtl;
