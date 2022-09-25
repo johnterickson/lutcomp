@@ -18,10 +18,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: 'recursive'
-    - name: check java version
+    - name: check versions
       run: |
         java --version
         sudo update-alternatives --set java $(update-alternatives --list java | grep 17)
         java --version
+        mvn --version
     - name: run build script
       run: ./build.sh
