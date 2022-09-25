@@ -20,11 +20,11 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.sample</groupId>
-      <artifactId>sample</artifactId>
+      <groupId>de.neemann.digital</groupId>
+      <artifactId>digital</artifactId>
       <version>1.0</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/../../Digital/target/Digital.jar</systemPath>
+      <systemPath>${project.basedir}/../deps/Digital/target/Digital.jar</systemPath>
     </dependency>
   </dependencies>
 

@@ -16,12 +16,12 @@ cargo run --release -- compile programs/keyboard_isr.j > circuit/keyboard_isr.he
 
 echo "Build Digital fork"
 pushd deps/Digital
-mvn package -DskipTests > /dev/null
+mvn package -DskipTests
 popd
 
 echo "Build unit tester"
 pushd digital_tester
-mvn compile > /dev/null
+mvn compile
 popd
 
 echo Run Digital tests

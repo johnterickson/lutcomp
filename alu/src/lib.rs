@@ -135,7 +135,7 @@ pub fn alu(print: bool) -> (Vec<u8>,u32) {
                                 SpecialMicroHelper::Pow2Mask => {
                                     ((1u64 << (entry.in1 & 0x1F)) - 1) as u8
                                 }
-                                SpecialMicroHelper::Invert => (entry.in1 ^ 0xFF),
+                                SpecialMicroHelper::Invert => entry.in1 ^ 0xFF,
                                 SpecialMicroHelper::GetInfo => {
                                     let info = SpecialMicroHelperInfo::iter().find(|o| *o as u8 == entry.in1);
                                     if let Some(info) = info {
