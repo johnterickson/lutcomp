@@ -401,7 +401,7 @@ end loop</dataString>
           </testData>
         </entry>
       </elementAttributes>
-      <pos x="-380" y="660"/>
+      <pos x="-280" y="-480"/>
     </visualElement>
     <visualElement>
       <elementName>In</elementName>

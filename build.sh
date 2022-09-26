@@ -52,9 +52,11 @@ cp circuit/rpn.hex circuit/rom.hex
 echo "6 7 * q" | $RunTest "expected=$(printf 'RPN\n42\n')"
 
 echo "test ttyin interrupts"
+cp circuit/keyboard_isr.hex circuit/rom.hex
 echo abcq | $RunTest keyboard=TTYIN expected=abc
 
 echo "test PS2 interrupts"
+cp circuit/keyboard_isr.hex circuit/rom.hex
 echo abcq | $RunTest keyboard=PS2-Keyboard expected=abc
 
 echo "Upload echo to RAM and run it"

@@ -194,7 +194,7 @@
           </testData>
         </entry>
       </elementAttributes>
-      <pos x="-60" y="560"/>
+      <pos x="600" y="620"/>
     </visualElement>
     <visualElement>
       <elementName>Splitter</elementName>
