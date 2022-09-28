@@ -56,17 +56,23 @@ architecture rtl of HD44780U is
 begin
     process(clk, state, pix_state, en, PixRow, PixCol, pix_clk, AC, DDRAM, CharRow, CharCol, busy, clearing)
     begin
-        if (en'event and en = '1' and bitmode = BITMODE_4 and state = idle and cmd_read_state = zero_nibble_read) then
+        db_out <= B"ZZZZZZZZ";
+        if (en = '1' and rs = '0' and rw = '1') then
+            db_out(6 downto 0) <= std_logic_vector(AC);
+            db_out(7) <= busy;
+        elsif (en'event and en = '1' and bitmode = BITMODE_4 and state = idle and cmd_read_state = zero_nibble_read) then
             Cmd <= db_in(7 downto 4) & X"0";
             cmd_read_state <= first_nibble_read;
         elsif (en'event and en = '1' and state = init0 and rs = '0' and rw = '0' and db_in(7 downto 4) = B"0011") then
             state <= init1;
+            busy <= '0';
         elsif (en'event and en = '1' and state = init1 and cmd_read_state = zero_nibble_read and rs = '0' and rw = '0' and db_in(7 downto 5) = B"001") then
             if db_in(4) = '1' then
                 assert db_in(3) = '1' report "1 row not implemented" severity error;
                 assert db_in(2) = '0' report "5 x 11 not implemented" severity error;
                 bitmode <= BITMODE_8;
                 state <= idle;
+                busy <= '0';
             else
                 bitmode <= BITMODE_4;
                 cmd_read_state <=  first_nibble_read;
@@ -79,6 +85,7 @@ begin
             assert Cmd(2) = '0' report "5 x 11 not implemented" severity error;
             cmd_read_state <= zero_nibble_read;
             state <= init2;
+            busy <= '0';
         elsif (en'event and en = '1' and state = init2 and cmd_read_state = zero_nibble_read and rs = '0' and rw = '0' and db_in(7 downto 4) = B"0010") then
             assert bitmode = BITMODE_4 report "should be in 4 bit mode" severity error;
             cmd_read_state <=  first_nibble_read;
@@ -87,12 +94,9 @@ begin
             assert bitmode = BITMODE_4 report "should be in 4 bit mode" severity error;
             cmd_read_state <= zero_nibble_read;
             state <= idle;
-        elsif (en'event and en = '1' and rs = '0' and rw = '1') then
-            db_out(6 downto 0) <= std_logic_vector(AC);
-            db_out(7) <= busy;
-        elsif (en'event and en = '1' and state = idle) then
+            busy <= '0';
+        elsif (en'event and en = '1' and state = idle and (bitmode = BITMODE_8 or (bitmode = BITMODE_4 and cmd_read_state = first_nibble_read))) then
             if bitmode = BITMODE_4 then
-                assert cmd_read_state = first_nibble_read report "should be in first_nibble_read" severity error;
                 cmd_read_state <= zero_nibble_read;
                 Cmd <= Cmd or (X"0" & db_in(7 downto 4));
             else
@@ -102,6 +106,8 @@ begin
             busy <= '1';
         elsif (clk'event and clk = '1' and state = run_cmd) then
             state <= idle;
+            busy <= '0';
+            cmd_read_state <= zero_nibble_read;
             if rs = '0' and rw = '0' then
                 if Cmd(7) = '1' then
                     AC <= unsigned(Cmd(6 downto 0));
@@ -135,8 +141,8 @@ begin
                     PixCol <= X"0";
                     PixRow <= X"0";
                     pix_state <= start;
-                    busy <= '1';
                     state <= write_char;
+                    busy <= '1';
                     clearing <= '1';
                 end if;
             elsif rs = '0' and rw = '1' then 
@@ -147,12 +153,13 @@ begin
                 PixCol <= X"0";
                 PixRow <= X"0";
                 pix_state <= start;
-                busy <= '1';
                 state <= write_char;
+                busy <= '1';
                 clearing <= '0';
             else
                 db_out <= std_logic_vector(DDRAM(to_integer(AC)));
             end if;
+            Cmd <= X"00";
         elsif (clk'event and clk = '1' and state = write_char) then
             CharRow <=  B"00" when ROW_0_ADDR <= AC and AC < ROW_0_ADDR + DISPLAY_CHAR_COLS  else
                         B"01" when ROW_1_ADDR <= AC and AC < ROW_1_ADDR + DISPLAY_CHAR_COLS  else
@@ -186,6 +193,8 @@ begin
                                                         state <= idle;
                                                         busy <= '0';
                                                         clearing <= '0';
+                                                        Cmd <= X"00";
+                                                        cmd_read_state <= zero_nibble_read;
                                                     end if;
 
                                                     -- done writing char, now "increment" AC

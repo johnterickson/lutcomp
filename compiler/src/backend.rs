@@ -820,7 +820,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     _ => panic!(),
                                 };
 
-                                assert_eq!(2, args.len());
+                                assert_eq!(1, args.len());
                                 let src1_reg = ctxt.find_registers(&args[0]);
                                 assert_eq!(1, src1_reg.len());
                                 assert_eq!(&None, ret);
@@ -830,8 +830,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     args: vec![Value::Register(src1_reg[0])],
                                     resolved: None,
                                 }));
-
-                                todo!();
                             },
                         }
 

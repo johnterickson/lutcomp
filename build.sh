@@ -13,6 +13,7 @@ cargo test --release
 cargo run --release -- assemble programs/test/echo.asm > circuit/echo.asm.hex
 cargo run --release -- compile programs/test/echo.j > circuit/echo.j.hex
 cargo run --release -- compile programs/test/keyboard_isr.j > circuit/keyboard_isr.hex
+cargo run --release -- compile programs/test/echo_lcd.j > circuit/echo_lcd.hex
 
 echo "Build Digital fork"
 pushd deps/Digital
