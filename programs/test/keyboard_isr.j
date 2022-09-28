@@ -24,7 +24,6 @@ fn handle_ps2() {
     code = io_read2();
 
     #printHex(code);
-    #ttyout(32);
 
     index = (0x4 * code);
     if (g->shift_held != 0) {
@@ -34,40 +33,42 @@ fn handle_ps2() {
     }
 
     if ((g->release_in_progress) == 0) {
-        if (ch != 0) {
+        #if (ch != 0) {
             queue_push(&g->stdin, ch);
+            #ttyout('-');
             #ttyout(ch);
-            #ttyout(32);
-        }
+        #}
     }
 
     if (0 != PS2_SCAN_CODE_TO_ASCII[(index + 0x2)]) {
         if (g->release_in_progress != 0) {
+            #ttyout('-');
             #ttyout('s');
             g->shift_held = 0;
         } else {
+            #ttyout('-');
             #ttyout('S');
             g->shift_held = 1;
         }
     }
 
     if (0 != PS2_SCAN_CODE_TO_ASCII[(index + 0x3)]) {
+        #ttyout('-');
         #ttyout('R');
         g->release_in_progress = 1;
     } else {
+        #ttyout('-');
         #ttyout('r');
         g->release_in_progress = 0;
     }
 
-    #ttyout(32);
-    #ttyout('-');
     #ttyout(32);
 }
 
 fn handle_tty() {
     g = globals();
 
-    queue_push(&g->stdin, (ttyin & 127));
+    queue_push(&g->stdin, ttyin);
 }
 
 fn isr() {

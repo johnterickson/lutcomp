@@ -205,7 +205,12 @@ AMC2004AR-B-B6WTDW</string>
     </visualElement>
     <visualElement>
       <elementName>Break</elementName>
-      <elementAttributes/>
+      <elementAttributes>
+        <entry>
+          <string>Cycles</string>
+          <int>10000000</int>
+        </entry>
+      </elementAttributes>
       <pos x="-680" y="-600"/>
     </visualElement>
     <visualElement>

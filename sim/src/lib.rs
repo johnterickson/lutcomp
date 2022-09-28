@@ -901,10 +901,12 @@ mod tests {
     fn ttyin() {
         let mut rom = Vec::new();
         rom.push(Opcode::Init as u8);
-        rom.push(IoPort::Tty.in_opcode() as u8);
+        rom.push(Opcode::IoReadyToRead as u8);
         rom.push(0);
         rom.push(IoPort::Tty.in_opcode() as u8);
         rom.push(1);
+        rom.push(Opcode::IoReadyToRead as u8);
+        rom.push(2);
         rom.push(Opcode::Halt as u8);
 
         let mut c = Computer::from_raw(rom);
@@ -913,8 +915,10 @@ mod tests {
 
         while c.step() {}
 
-        assert_eq!(0x80 | ('A' as u8), c.reg_u8(0));
-        assert_eq!(0, c.reg_u8(1));
+        assert_eq!(1, c.reg_u8(0) & 0x1);
+        assert_eq!('A' as u8, c.reg_u8(1));
+        assert_eq!(0, c.reg_u8(2) & 0x1);
+
     }
 
     #[test]
@@ -1700,6 +1704,6 @@ mod tests {
         assert_eq!(c.mem_byte(INTERRUPT_PREVIOUS_FLAGS), (Flags::CARRY | Flags::INTERRUPTS_ENABLED | Flags::CHANGE_INTERRUPTS).bits());
         assert_eq!(c.flags, Flags::CARRY | Flags::INTERRUPTS_ENABLED);
         assert_eq!(c.pc_u32(), completion_pc);
-        assert_eq!(c.reg_u8(1), b'!' | 0x80);
+        assert_eq!(c.reg_u8(1), b'!');
     }
 }

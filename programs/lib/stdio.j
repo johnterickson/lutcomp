@@ -1,11 +1,8 @@
 
 fn [inline] getchar() -> u8 {
-    tty: u8 = 0;
-    tty = ttyin;
-    while ((tty & 128) == 0) {
-        tty = ttyin;
+    while ((io_ready_to_read() & 1) == 0) {
     }
-    return (tty & 127);
+    return ttyin;
 }
 
 fn [inline] readline(buf:&u8) {

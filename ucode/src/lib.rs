@@ -680,36 +680,12 @@ impl Ucode {
                     self.start_of_ram();
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-
-                    let io = o as u8 - Opcode::In0 as u8;
-
-                    if io == 0 {
-                        add!(self, Output::Direct(DataBusOutputLevel::IoReadyToRead), Load::Direct(DataBusLoadEdge::In1));
-                        assert_eq!(Flags::CARRY.bits(), 1 << io);
-                        add!(self, Output::Imm(Flags::CARRY.bits()), Load::Alu(AluOpcode::And));
-                        add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
-
-                        if flags.contains(Flags::CARRY) {
-                            add!(self, Output::Direct(DataBusOutputLevel::IoXData), Load::Direct(DataBusLoadEdge::In1));
-                            add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
-                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                            add!(self, Output::Imm(0x8), Load::Alu(AluOpcode::Or));
-                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::In1));
-                            add!(self, Output::Imm(SpecialMicroHelper::SwapNibbles as u8), Load::Alu(AluOpcode::Special));
-                            add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Mem(AddressBusOutputLevel::Addr));
-                        } else {
-                            add!(self, Output::Imm(0), Load::Mem(AddressBusOutputLevel::Addr));
-                        }
-                    } else {
-                        add!(self, Output::Direct(DataBusOutputLevel::IoXData), Load::Mem(AddressBusOutputLevel::Addr));
-                    }
-                    
+                    add!(self, Output::Direct(DataBusOutputLevel::IoXData), Load::Mem(AddressBusOutputLevel::Addr));
                 }
                 Some(o) if Opcode::Out0 <= o && o <= Opcode::Out7 => {
                     self.start_of_ram();
                     pc_inc!(self);
                     add!(self, Output::Mem(AddressBusOutputLevel::Pc), Load::Direct(DataBusLoadEdge::Addr0));
-
                     add!(self, Output::Mem(AddressBusOutputLevel::Addr), Load::Direct(DataBusLoadEdge::IoXCp));
                 }
                 Some(Opcode::JmpImm) => {

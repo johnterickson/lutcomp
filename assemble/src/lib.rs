@@ -1,6 +1,7 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
+use packed_struct::PrimitiveEnum;
 use pest::{iterators::Pair, Parser};
 
 extern crate strum;
@@ -178,12 +179,6 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
     let mut args = Vec::new();
 
     let opcode_name = format!("{:?}", instruction.as_rule()); //ew
-    let opcode = match opcode_name.as_str() {
-        "ttyin" => IoPort::Tty.in_opcode(),
-        "ttyout" => IoPort::Tty.out_opcode(),
-        name => std::str::FromStr::from_str(name)
-            .unwrap_or_else(|_| panic!("Could not parse op {}", name)),
-    };
 
     let arg_tokens = instruction.into_inner();
 
@@ -201,7 +196,32 @@ fn parse_instruction(line: Pair<Rule>) -> Instruction {
 
         args.push(value);
     }
-    
+
+    let opcode = match opcode_name.as_str() {
+        "ttyin" => IoPort::Tty.in_opcode(),
+        "ttyout" => IoPort::Tty.out_opcode(),
+        "io_ready_to_read" => Opcode::IoReadyToRead,
+        "io_ready_to_write" => Opcode::IoReadyToWrite,
+        "io_in" => {
+            assert_eq!(2, args.len());
+            let io = match args.remove(0) {
+                Value::Constant8(io) => io,
+                _ => panic!(),
+            };
+            Opcode::from_primitive(Opcode::In0 as u8 + io).unwrap()
+        }
+        "io_out" => {
+            assert_eq!(2, args.len());
+            let io = match args.remove(0) {
+                Value::Constant8(io) => io,
+                _ => panic!(),
+            };
+            Opcode::from_primitive(Opcode::Out0 as u8 + io).unwrap()
+        }
+        name => std::str::FromStr::from_str(name)
+            .unwrap_or_else(|_| panic!("Could not parse op {}", name)),
+    };
+
     Instruction {
         source,
         opcode,

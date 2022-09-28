@@ -14,11 +14,10 @@ ttyout r01
 loadimm8 r01 <- ':'
 ttyout r01
 :read
-ttyin r01
-and8 r01 r01 -> r02
-andimm8 r02 <- $80
+io_ready_to_read r02
+andimm8 r02 <- $01
 jzimm :read
-andimm8 r01 <- $7f
+ttyin r01
 ttyout r01
 and8 r01 r01 -> r02
 xorimm8 r02 <- 'q'

@@ -50,10 +50,10 @@ and32 = {"and32" ~ register ~ register ~ "->" ~ register }
 mul8_16 = {"__mul8_16" ~ register ~ register ~ "->" ~ register }
 enable_interrupts = { "enable_interrupts" }
 disable_interrupts = { "disable_interrupts" }
-io_ready_to_read = { "io_ready_to_read" }
-io_ready_to_write = { "io_ready_to_write" }
-io_read = { "io_read" }
-io_write = { "io_write" }
+io_ready_to_read = { "io_ready_to_read" ~ register }
+io_ready_to_write = { "io_ready_to_write" ~ register }
+io_in = { "io_in" ~ unsigned_hex_constant ~ register }
+io_out = { "io_out" ~ unsigned_hex_constant ~ register }
 
 halt = {"halt" ~ constant32}
 
@@ -70,7 +70,7 @@ op = _{
     or32 | and32 |
     mul8_16 |
     enable_interrupts | disable_interrupts |
-    io_ready_to_read | io_ready_to_write | io_read | io_write |
+    io_ready_to_read | io_ready_to_write | io_in | io_out |
     halt
 }
 
