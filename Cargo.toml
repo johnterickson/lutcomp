@@ -5,6 +5,7 @@ members = [
     "assemble",
     "common",
     "compiler",
+    "ghdl-rs",
     "sim",
     "ucode",
     ]

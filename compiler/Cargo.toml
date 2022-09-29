@@ -12,6 +12,6 @@ common = { path = "../common" }
 sim = { path = "../sim" }
 pest = "*"
 pest_derive = "*"
-strum = "0.18.0"
+strum = "0.24.1"
 packed_struct = "0.10.0"
 topological-sort = "0.2.2"
