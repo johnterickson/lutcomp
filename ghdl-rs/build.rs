@@ -24,7 +24,7 @@ fn main() {
         if Some(0) != output.status.code() {
             eprintln!("{}", String::from_utf8(output.stdout).unwrap());
             eprintln!("{}", String::from_utf8(output.stderr).unwrap());
-            panic!();
+            panic!("{:?}", cmd);
         } else {
             String::from_utf8(output.stdout).unwrap()
         }
@@ -38,8 +38,6 @@ fn main() {
     std::fs::rename(&elaborated_o_pwd, &elaborated_o_out).unwrap();
     let elaborated_lst_pwd = format!("e~{}.lst", device);
     let elaborated_lst_out = out_path.clone().join(&elaborated_lst_pwd);
-    std::fs::rename(&elaborated_lst_pwd, &elaborated_lst_out).unwrap();
-    
 
     let link_args = ghdl(&["--list-link", "--std=08", &format!("--workdir={}", out_path.display()), device]);
     for line in link_args.as_str().lines() {
@@ -49,6 +47,8 @@ fn main() {
             println!("cargo:rustc-link-arg={}", line);
         }
     }
+
+    let _ = std::fs::rename(&elaborated_lst_pwd, &elaborated_lst_out);
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
