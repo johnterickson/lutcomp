@@ -1237,23 +1237,23 @@ mod tests {
         let mut c = Computer::from_image(Cow::Owned(loader_image), true);
 
         for ch in (format!("s{:08x}\n", a)).chars() {
-            c.tty_in.push_back(ch as u8);
+            c.tty.tty_in.push_back(ch as u8);
         }
 
-        c.tty_in.push_back('a' as u8);
-        c.tty_in.push_back('\n' as u8);
+        c.tty.tty_in.push_back('a' as u8);
+        c.tty.tty_in.push_back('\n' as u8);
 
         for b in &[0xEF,0xBE, 0xAD,0xDE] {
             for ch in (format!("w{:02x}\nn\n", b)).chars() {
-                c.tty_in.push_back(ch as u8);
+                c.tty.tty_in.push_back(ch as u8);
             }
         }
 
-        c.tty_in.push_back('q' as u8);
-        c.tty_in.push_back('\n' as u8);
+        c.tty.tty_in.push_back('q' as u8);
+        c.tty.tty_in.push_back('\n' as u8);
 
-        println!("{}", std::str::from_utf8(c.tty_in.as_slices().0).unwrap());
-        println!("{}", std::str::from_utf8(c.tty_in.as_slices().1).unwrap());
+        println!("{}", std::str::from_utf8(c.tty.tty_in.as_slices().0).unwrap());
+        println!("{}", std::str::from_utf8(c.tty.tty_in.as_slices().1).unwrap());
 
         let mut last_pc = u32::from_le_bytes(c.pc);
         let mut running: bool = true;
@@ -1267,7 +1267,7 @@ mod tests {
         }
 
         let mut out = String::new();
-        for c in &c.tty_out {
+        for c in &c.tty.tty_out {
             out.push(*c as char);
         }
 
@@ -1289,31 +1289,31 @@ mod tests {
         let mut c = Computer::from_image(Cow::Owned(loader_image), false);
 
         for ch in (format!("s{:08x}\n", ram_image.start_addr)).chars() {
-            c.tty_in.push_back(ch as u8);
+            c.tty.tty_in.push_back(ch as u8);
         }
 
         for b in &ram_image.bytes {
             for ch in (format!("w{:02x}\nn\n", b)).chars() {
-                c.tty_in.push_back(ch as u8);
+                c.tty.tty_in.push_back(ch as u8);
             }
         }
 
         // overwrite the return address
         for ch in (format!("s{:08x}\n", INITIAL_STACK-4)).chars() {
-            c.tty_in.push_back(ch as u8);
+            c.tty.tty_in.push_back(ch as u8);
         }
 
         for b in ram_image.start_addr.to_le_bytes() {
             for ch in (format!("w{:02x}\nn\n", b)).chars() {
-                c.tty_in.push_back(ch as u8);
+                c.tty.tty_in.push_back(ch as u8);
             }
         }
 
-        c.tty_in.push_back('q' as u8);
-        c.tty_in.push_back('\n' as u8);
+        c.tty.tty_in.push_back('q' as u8);
+        c.tty.tty_in.push_back('\n' as u8);
 
-        println!("{}", std::str::from_utf8(c.tty_in.as_slices().0).unwrap());
-        println!("{}", std::str::from_utf8(c.tty_in.as_slices().1).unwrap());
+        println!("{}", std::str::from_utf8(c.tty.tty_in.as_slices().0).unwrap());
+        println!("{}", std::str::from_utf8(c.tty.tty_in.as_slices().1).unwrap());
 
         let mut last_ir0 = None;
         let mut running: bool = true;
@@ -1328,7 +1328,7 @@ mod tests {
         }
 
         let mut out = String::new();
-        for c in &c.tty_out {
+        for c in &c.tty.tty_out {
             out.push(*c as char);
         }
 
@@ -1654,7 +1654,7 @@ mod tests {
                         break;
                     }
 
-                    c.comp.ps2.push_back(code);
+                    c.comp.ps2.queue.push_back(code);
                 }
             }
         })
@@ -1663,7 +1663,7 @@ mod tests {
     fn test_tty(entry: &str, program: &str, pairs: &[(&str,u32,u32,&str)]) {
         test_io(entry, program, pairs, |c, ttyin| {
             for ch in ttyin.chars() {
-                c.comp.tty_in.push_back(ch as u8);
+                c.comp.tty.tty_in.push_back(ch as u8);
             }
         })
     }
@@ -1690,7 +1690,7 @@ mod tests {
             assert_eq!(0, c.run(&[*input1, *input2], 1));
 
             let mut out = String::new();
-            for c in &c.comp.tty_out {
+            for c in &c.comp.tty.tty_out {
                 let c = *c as char;
                 out.push(c);
             }

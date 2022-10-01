@@ -30,12 +30,30 @@ lazy_static! {
     pub static ref NONBLOCKING_STDIN: Mutex<Receiver<String>> = Mutex::new(spawn_stdin_channel());
 }
 
+trait Device {
+    fn process(&mut self);
+    fn ready_to_write(&self) -> bool;
+    fn ready_to_read(&self) -> bool;
+    fn read(&mut self) -> u8;
+    fn write(&mut self, b: u8);
+}
+
+mod tty;
+use tty::*;
+
+mod ps2;
+use ps2::*;
+
+mod lcd;
+use lcd::*;
+
+
 pub struct Computer<'a> {
     pub image: Cow<'a, Image>,
     ram: Vec<u8>,
-    pub ps2: VecDeque<u8>,
-    pub tty_in: VecDeque<u8>,
-    pub tty_out: VecDeque<u8>,
+    pub tty: Tty,
+    pub ps2: Ps2Keyboard,
+    pub lcd: Lcd,
     alu_lut: &'a [u8],
     ucode_rom: &'a [(u8, &'static str, u32)],
     regs: [u8; 4],
@@ -48,13 +66,11 @@ pub struct Computer<'a> {
     pub ir0_pc: Option<u32>,
     in1: u8,
     print: bool,
-    pub stdin_out: bool,
     trap_addrs: BTreeSet<u32>,
     pub tick_count: u64,
     pub pc_hit_count: Option<BTreeMap<u32, u64>>,
     pub stack_dump_rate: u64,
     prev_log: Option<(u32, Option<u8>)>,
-    pub block_for_stdin: bool,
     pub regs_written: [bool;256],
 }
 
@@ -105,9 +121,11 @@ impl<'a> Computer<'a> {
         let c = Computer {
             image,
             ram: vec![0xCC; RAM_SIZE as usize],
-            ps2: VecDeque::new(),
-            tty_in: VecDeque::new(),
-            tty_out: VecDeque::new(),
+            ps2: Ps2Keyboard {
+                queue: VecDeque::new(),
+            },
+            lcd: Lcd::new(),
+            tty: Tty::new(false, false),
             alu_lut: &alu::ALU,
             ucode_rom: &ucode::UCODE,
             regs: [0xFFu8; 4],
@@ -120,13 +138,11 @@ impl<'a> Computer<'a> {
             ir0_pc: None,
             in1: 0xFF,
             print,
-            stdin_out: false,
             trap_addrs: BTreeSet::new(),
             pc_hit_count: None,
             tick_count: 0,
             prev_log: None,
             stack_dump_rate: 0,
-            block_for_stdin: false,
             regs_written: [false; 256],
         };
 
@@ -310,33 +326,37 @@ impl<'a> Computer<'a> {
 
         
         // process devices
-        if self.stdin_out {
-            let stdin_channel = NONBLOCKING_STDIN.lock().unwrap();
-            let line = if self.block_for_stdin {
-                stdin_channel.recv().map(Some).unwrap_or_default()
-            } else {
-                stdin_channel.try_recv().map(Some).unwrap_or_default()
-            };
-
-            if let Some(line) = line {
-                for c in line.chars() {
-                    self.tty_in.push_back(c as u8);
-                }
-            }
-        }
+        self.tty.process();
+        self.ps2.process();
+        self.lcd.process();
 
         let ready_to_read = {
             let mut ready_to_read = 0;
-            if !self.tty_in.is_empty() {
+            if self.tty.ready_to_read() {
                 ready_to_read |= 1 << IoPort::Tty as u8;
             }
-            if !self.ps2.is_empty() {
+            if self.lcd.ready_to_read() {
+                ready_to_read |= 1 << IoPort::Lcd as u8;
+            }
+            if self.ps2.ready_to_read() {
                 ready_to_read |= 1 << IoPort::Ps2In as u8;
             }
             ready_to_read
         };
 
-        let ready_to_write = 1 << IoPort::Tty as u8;
+        let ready_to_write = {
+            let mut ready_to_write = 0;
+            if self.tty.ready_to_write() {
+                ready_to_write |= 1 << IoPort::Tty as u8;
+            }
+            if self.lcd.ready_to_write() {
+                ready_to_write |= 1 << IoPort::Lcd as u8;
+            }
+            if self.ps2.ready_to_write() {
+                ready_to_write |= 1 << IoPort::Ps2In as u8;
+            }
+            ready_to_write
+        };
 
         let interrupt_pending = ready_to_read != 0;
         let process_interrupt = interrupt_pending 
@@ -406,10 +426,10 @@ impl<'a> Computer<'a> {
                 None
             }
             DataBusOutputLevel::IoXData => {
-                match IoPort::from_primitive(self.ir0 & 0x7) {
-                    Some(IoPort::Tty) => Some(self.tty_in.pop_front().unwrap()),
-                    Some(IoPort::Ps2In) => Some(self.ps2.pop_front().unwrap()),
-                    None => todo!(),
+                match IoPort::from_primitive(self.ir0 & 0x7).expect("bad io port") {
+                    IoPort::Tty => Some(self.tty.read()),
+                    IoPort::Lcd => Some(self.lcd.read()),
+                    IoPort::Ps2In => Some(self.ps2.read()),
                 }
             }
             DataBusOutputLevel::IoReadyToWrite => {
@@ -435,11 +455,9 @@ impl<'a> Computer<'a> {
         match urom_op.data_bus_load {
             DataBusLoadEdge::IoXCp => {
                 match IoPort::from_primitive(self.ir0 & 0x7).expect("bad io port") {
-                    IoPort::Tty => {
-                        self.tty_out.push_back(data_bus.unwrap());
-                        eprint!("{}", data_bus.unwrap() as char);
-                    },
-                    IoPort::Ps2In => panic!(),
+                    IoPort::Tty => self.tty.write(data_bus.unwrap()),
+                    IoPort::Lcd => self.lcd.write(data_bus.unwrap()),
+                    IoPort::Ps2In => self.ps2.write(data_bus.unwrap()),
                 }
             },
             DataBusLoadEdge::Addr0 => self.addr[0] = data_bus.unwrap(),
@@ -893,7 +911,7 @@ mod tests {
 
         while c.step() {}
 
-        let chars = c.tty_out.iter().copied().collect();
+        let chars = c.tty.tty_out.iter().copied().collect();
         assert_eq!("ABC", String::from_utf8(chars).unwrap().as_str());
     }
 
@@ -911,7 +929,7 @@ mod tests {
 
         let mut c = Computer::from_raw(rom);
 
-        c.tty_in.push_back('A' as u8);
+        c.tty.tty_in.push_back('A' as u8);
 
         while c.step() {}
 
@@ -943,7 +961,7 @@ mod tests {
         let codes: Vec<u8> = ASCII_TO_PS2_SCAN_CODES[('a' as u8) as usize]
             .iter().copied().take_while(|c| *c != 0).collect();
         for code in &codes {
-            c.ps2.push_back(*code);
+            c.ps2.queue.push_back(*code);
         }
 
         while c.step() {}
@@ -1604,7 +1622,7 @@ mod tests {
 
         let mut c = Computer::from_raw_with_print(rom, false);
         c.flags = Flags::INTERRUPTS_ENABLED;
-        c.tty_in.push_back(b'!');
+        c.tty.tty_in.push_back(b'!');
 
         while c.step() { }
 
@@ -1663,7 +1681,7 @@ mod tests {
             if !fire_interrupt {
                 assert_eq!(c.mem_word(INTERRUPT_PREVIOUS_PC), 0xCCCC_CCCC);
                 if c.pc_u32() == interrupt_pc {
-                    c.tty_in.push_back(b'!');
+                    c.tty.tty_in.push_back(b'!');
                     fire_interrupt = true;
                 }
             }
@@ -1695,7 +1713,7 @@ mod tests {
 
         *c.mem_word_mut(INTERRUPT_ISR) = isr_addr.to_le_bytes();
 
-        c.tty_in.push_back(b'!');
+        c.tty.tty_in.push_back(b'!');
 
         dbg!(enable_interrupts_pc, completion_pc, isr_addr);
         while c.step() { }

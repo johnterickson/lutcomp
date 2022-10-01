@@ -60,7 +60,7 @@ fn main() {
             let rom = assemble_from_str(&input);
             if let Some("true") = get_param("sim") {
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
-                c.stdin_out = true;
+                c.tty.read_stdin = true;
                 while c.step() { }
             }
         }
@@ -135,9 +135,9 @@ fn main() {
                     c.stack_dump_rate = n.parse::<u64>().unwrap();
                 }
                 if let Some("true") = get_param("block_for_stdin") {
-                    c.block_for_stdin = true;
+                    c.tty.block_for_stdin = true;
                 }
-                c.stdin_out = true;
+                c.tty.read_stdin = true;
 
                 let mut last_ir0_pc = None;
                 while c.step() { 
@@ -174,7 +174,7 @@ fn main() {
             let rom = make_test();
             if let Some("true") = get_param("sim") {
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
-                c.stdin_out = true;
+                c.tty.read_stdin = true;
                 while c.step() { }
             }
         }

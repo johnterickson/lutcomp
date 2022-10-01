@@ -1,12 +1,4 @@
-fn [inline] lcd_flush() {
-    while ((io_read1() & 8) != 0) { }
-}
-
-fn lcd_write_char(c: u8) {
-    lcd_flush();
-    io_write1((128 | (c >> 4)));
-    io_write1((128 | (c & 15)));
-}
+!include 'lcd.j'
 
 fn main() -> u8 {
     io_write1(3);

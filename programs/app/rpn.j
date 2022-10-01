@@ -52,10 +52,10 @@ fn [inline] RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
     stack_count: u8 = stack_count_usize[0];
 
     if (stack_needed > stack_count) {
-        ttyout('E');
-        ttyout('R');
-        ttyout('R');
-        ttyout(10);
+        putc('E');
+        putc('R');
+        putc('R');
+        putc(10);
         return 1;
     }
 
@@ -69,22 +69,22 @@ fn [inline] RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
     if (ch == '+') {
         sum: usize = (b+a);
         print_dec32(sum);
-        ttyout(10);
+        putc(10);
         stack_push(stack, sum);
     } else if (ch == '-') {
         diff: usize = (b-a);
         print_dec32(diff);
-        ttyout(10);
+        putc(10);
         stack_push(stack, diff);
     } else if (ch == '*') {
         product: usize = mul32_32(b,a);
         print_dec32(product);
-        ttyout(10);
+        putc(10);
         stack_push(stack, product);
     } else if (ch == '/') {
         quotient: usize = div32(b,a);
         print_dec32(quotient);
-        ttyout(10);
+        putc(10);
         stack_push(stack, quotient);
     } else if (ch == 's') {
         stack_push(stack, a);
@@ -101,9 +101,9 @@ fn [inline] RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
         i: u8 = 0;
         while (i < stack_count) {
             print_dec8(i);
-            ttyout(':');
+            putc(':');
             print_dec32(stack_get(stack, ((i) AS usize)));
-            ttyout(10);
+            putc(10);
             i = (i + 1);
         }
     } else if (ch <= '9') {
@@ -118,16 +118,16 @@ fn [inline] RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
 }
 
 fn main() -> u8 {
-    ttyout('R');
+    putc('R');
 
     static calc: RpnCalc;
 
-    ttyout('P');
+    putc('P');
     
     RpnCalc_init(&calc);
 
-    ttyout('N');
-    ttyout(10);
+    putc('N');
+    putc(10);
 
     while (0 == 0) {
         ch: u8 = getchar();
@@ -142,11 +142,11 @@ fn main() -> u8 {
 
 fn [inline] print_digit(a:u8) {
     if (a < 10) {
-        ttyout((a + '0'));
+        putc((a + '0'));
     } else {
         a = (a - 10);
         a = (a + 'A');
-        ttyout(a);
+        putc(a);
     }
 }
 
@@ -160,7 +160,7 @@ fn [inline] print_dec32(a:usize) {
     print_dec32(b);
     a = (a - mul32_by10(b));
 
-    ttyout((a[0] + '0'));
+    putc((a[0] + '0'));
 }
 
 fn [inline] print_dec8(a:u8) {
@@ -170,7 +170,7 @@ fn [inline] print_dec8(a:u8) {
         a = (a - (b * 10));
     }
 
-    ttyout((a + '0'));
+    putc((a + '0'));
 }
 
 fn print_dec8_test(a:u8, b:u8) -> u8 {

@@ -33,6 +33,7 @@ bitflags! {
 #[derive(PrimitiveEnum_u8)]
 pub enum IoPort {
     Tty = 0,
+    Lcd = 1,
     Ps2In = 2,
 }
 

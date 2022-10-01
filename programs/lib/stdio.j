@@ -5,6 +5,10 @@ fn [inline] getchar() -> u8 {
     return ttyin;
 }
 
+fn [inline] putc(c: u8) {
+    io_write0(c);
+}
+
 fn [inline] readline(buf:&u8) {
     while (0 == 0) {
         ch: u8 = getchar();
@@ -23,7 +27,7 @@ fn [inline] readline(buf:&u8) {
 fn [inline] println(buf: &u8) {
     ch: u8 = *buf;
     while (ch != 0) {
-        ttyout(ch);
+        putc(ch);
         buf = (buf + 0x1);
         ch = *buf;
     }

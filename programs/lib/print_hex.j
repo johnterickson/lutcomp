@@ -1,10 +1,12 @@
+!include 'stdio.j'
+
 fn [inline] printHexDigit(a:u8) {
     if (a < 10) {
-        ttyout((a + '0'));
+        putc((a + '0'));
     } else {
         a = (a - 10);
         a = (a + 'A');
-        ttyout(a);
+        putc(a);
     }
 }
 
@@ -14,7 +16,7 @@ fn [inline] printHex(a:u8) {
         printHexDigit(b);
         a = (a - (b*16));
     } else {
-        ttyout('0');
+        putc('0');
     }
 
     printHexDigit(a);
@@ -22,7 +24,7 @@ fn [inline] printHex(a:u8) {
 
 fn printHexTest(a:u8, b:u8) -> u8 {
     printHex(a);
-    ttyout(10);
+    putc(10);
     return 0;
 }
 
