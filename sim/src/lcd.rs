@@ -9,6 +9,7 @@ enum Protocol { Bits4, Bits8 }
 pub struct Lcd {
     bottom_nibble: Option<u8>,
     protocol: Protocol,
+    busy: bool,
     pub queue: VecDeque<u8>,
 
 }
@@ -16,6 +17,7 @@ pub struct Lcd {
 impl Lcd {
     pub fn new() -> Self {
         Lcd {
+            busy: false,
             queue: VecDeque::new(),
             protocol: Protocol::Bits8,
             bottom_nibble: None,
@@ -37,7 +39,7 @@ impl Device for Lcd {
     }
 
     fn read(&mut self) -> u8 {
-        todo!()
+        if self.busy { 0x80 } else { 0x00 }
     }
 
     fn write(&mut self, b: u8) {

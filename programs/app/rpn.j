@@ -2,6 +2,7 @@
 !include 'Stack.j'
 !include 'mul.j'
 !include 'div.j'
+!include 'lcd.j'
 
 struct RpnCalc {
     stack: Stack;
@@ -118,6 +119,8 @@ fn [inline] RpnCalc_handle(c: &RpnCalc, ch: u8) -> u8 {
 }
 
 fn main() -> u8 {
+    lcd_init();
+
     putc('R');
 
     static calc: RpnCalc;

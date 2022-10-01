@@ -176,7 +176,7 @@ impl IlFunction {
     fn alloc_tmp_for_expression(&mut self, ctxt: &IlContext, e: &Expression) -> (IlVarId, IlVarInfo) {
         let id = IlVarId(format!("t{}", self.next_temp_num));
         let t = e.try_emit_type(ctxt.program, Some(ctxt.func_def))
-            .expect(&format!("Could not determine type for '{:?}'.", e));
+            .unwrap_or_else(|| panic!("Could not determine type for '{:?}'.", e));
         let il_type: IlType = match t.byte_count(ctxt.program) {
             0 => IlType::U8,
             n => n.try_into().unwrap()
