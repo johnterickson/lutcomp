@@ -7,3 +7,6 @@ version = "0.1.0"
 [build-dependencies]
 bindgen = "*"
 execute = "*"
+
+[dependencies]
+dlopen = "0.1.8"
