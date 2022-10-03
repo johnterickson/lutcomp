@@ -61,7 +61,8 @@ fn main() {
     ]);
 
     // e.g. ghdl -e -Wl,test.c -Wl,-shared -Wl,-Wl,--version-script=./test.ver -Wl,-Wl,-u,ghdl_main -o tb.lib tb
-    ghdl(&["-e", "--std=08", 
+    run("ghdl-llvm",
+        &["-e", "--std=08", 
     // &format!("--workdir={}", out_path.display()),
         &format!("-Wl,{}.vpi", device),
         "-Wl,-shared",
@@ -71,9 +72,17 @@ fn main() {
         device]);
 
     let bindings = bindgen::Builder::default()
+        .clang_arg("-I.")
         .header("wrapper.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .blocklist_item("vlog_startup_routines") 
+        // rust won't cast to u8 as part of const expr...
+        .blocklist_type("std_logic_states")
+        //u128
+        .blocklist_function("max_align_t")
+        .blocklist_function("strtold")
+        .blocklist_function("q.cvt")
+        .blocklist_function("q.cvt_r")
+        .blocklist_type("_Float64x")
         .generate()
         .expect("Unable to generate bindings");
 

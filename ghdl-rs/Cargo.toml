@@ -10,3 +10,7 @@ execute = "*"
 
 [dependencies]
 dlopen = "0.1.8"
+strum = "0.24.1"
+strum_macros = "0.24.3"
+packed_struct = "0.10.0"
+packed_struct_codegen = "0.10.0"

@@ -6,6 +6,76 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 extern crate dlopen;
 
+extern crate strum;
+#[macro_use]
+extern crate strum_macros;
+
+extern crate packed_struct;
+extern crate packed_struct_codegen;
+
+use std::convert::TryFrom;
+
+use packed_struct::prelude::*;
+
+pub const std_logic_states_HDL_U: isize = 0;
+pub const std_logic_states_HDL_X: std_logic_states = 1;
+pub const std_logic_states_HDL_0: std_logic_states = 2;
+pub const std_logic_states_HDL_1: std_logic_states = 3;
+pub const std_logic_states_HDL_Z: std_logic_states = 4;
+pub const std_logic_states_HDL_W: std_logic_states = 5;
+pub const std_logic_states_HDL_L: std_logic_states = 6;
+pub const std_logic_states_HDL_H: std_logic_states = 7;
+pub const std_logic_states_HDL_D: std_logic_states = 8;
+pub type std_logic_states = isize;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(EnumCount, EnumIter, EnumString)]
+#[derive(PrimitiveEnum_u8)]
+pub enum StdLogic {
+    HDL_U = 0,
+    HDL_X = 1,
+    HDL_0 = 2,
+    HDL_1 = 3,
+    HDL_Z = 4,
+    HDL_W = 5,
+    HDL_L = 6,
+    HDL_H = 7,
+    HDL_D = 8,
+}
+
+const STD_LOGIC_CHARS: &[char] = &['U', 'X', '0', '1', 'Z', 'W', 'L', 'H', '-'];
+
+impl std::fmt::Display for StdLogic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", STD_LOGIC_CHARS[*self as usize])
+    }
+}
+
+impl TryFrom<u8> for StdLogic {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        if let Some(l) = StdLogic::from_primitive(value as u8) {
+            Ok(l)
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl TryFrom<char> for StdLogic {
+    type Error = ();
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        for (i, c) in STD_LOGIC_CHARS.iter().enumerate() {
+            if *c == value {
+                return Ok(StdLogic::from_primitive(i as u8).unwrap());
+            }
+        }
+
+        Err(())
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -16,6 +86,7 @@ mod tests {
 
     use super::*;
 
+    #[allow(unused_variables)]
     #[test]
     fn vhdl_iter() {
         let progname = std::env::args().next().unwrap();
@@ -26,13 +97,9 @@ mod tests {
             let vhdl_lib_path = "/home/john/lutcomp/ghdl-rs/hd44780u.lib";
             let lib = Library::open(vhdl_lib_path).unwrap();
             dbg!(&lib);
-            let ghdl_main: ghdl_mainPtr = lib.symbol("ghdl_main").unwrap();
-            let ghdl_main = ghdl_main.unwrap();
-            dbg!(ghdl_main);
-
-            // dbg!(lib.symbol::<*const c_void>("vlog_startup_routines"));
 
             let mut thunk: vpi_thunk = std::mem::zeroed();
+            
             thunk.vpi_get_vlog_info = lib.symbol("vpi_get_vlog_info").unwrap();
             let vpi_get_vlog_info = thunk.vpi_get_vlog_info.unwrap();
             thunk.vpi_register_cb = lib.symbol("vpi_register_cb").unwrap();
@@ -51,6 +118,9 @@ mod tests {
             let vpi_handle = thunk.vpi_handle.unwrap();
             thunk.vpi_get_value = lib.symbol("vpi_get_value").unwrap();
             let vpi_get_value = thunk.vpi_get_value.unwrap();
+            thunk.vpi_put_value = lib.symbol("vpi_put_value").unwrap();
+            let vpi_put_value = thunk.vpi_put_value.unwrap();
+            
             THUNK = Some(thunk);
 
             let mut info: s_vpi_vlog_info = std::mem::zeroed();
@@ -195,7 +265,15 @@ mod tests {
                 }
             }
 
-            for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
+            for (name, (kind, width, net)) in &inputs {
+                let mut val: t_vpi_value = std::mem::zeroed();
+                val.format = vpiIntVal as i32;//vpiBinStrVal as i32;
+                val.value.integer = 0;
+
+                vpi_put_value(*net, &mut val, std::ptr::null_mut(), 0);
+            }
+
+            for (name, (kind, width, net)) in &outputs {
                 let mut cb: t_cb_data = std::mem::zeroed();
                 cb.reason = cbValueChange as i32;
                 cb.cb_rtn = Some(ValueChange);
@@ -207,12 +285,24 @@ mod tests {
             let mut step_result;
             loop {
 
+                {
+                    let (_,_,net) = &inputs["clk"];
+                    let mut val: s_vpi_value = std::mem::zeroed();
+                    val.format = vpiIntVal as i32;
+                    vpi_get_value(*net, &mut val);
+                    dbg!(&val.value.integer);
+
+                    val.value.integer = 1 - val.value.integer;
+
+                    vpi_put_value(*net, &mut val, std::ptr::null_mut(), 0);
+                }
+
                 step_result = __ghdl_simulation_step();
 
                 for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
-                    let mut str_val: s_vpi_value = std::mem::zeroed();
-                    str_val.format = vpiBinStrVal as i32;
-                    vpi_get_value(*net, &mut str_val);
+                    if name != "clk" {
+                        continue;
+                    }
 
                     let mut str_val: s_vpi_value = std::mem::zeroed();
                     str_val.format = vpiBinStrVal as i32;

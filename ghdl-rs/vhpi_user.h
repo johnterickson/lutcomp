@@ -1,42 +1,43 @@
 /* --------------------------------------------------------------------
- *
- * Copyright 2019 IEEE P1076 WG Authors
- *
- * See the LICENSE file distributed with this work for copyright and
- * licensing information and the AUTHORS file.
- *
- * This file to you under the Apache License, Version 2.0 (the "License").
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied.  See the License for the specific language governing
- * permissions and limitations under the License.
- *
- *
- *   Title     :  vhpi_user.h
- *             :
- *   Developers:  IEEE P1076 Working Group, VHPI Task Force
- *             :
- *   Purpose   :  This header file describes the procedural interface
- *             :  to access VHDL compiled, instantiated and run-time
- *             :  data.It is derived from the UML model. For conformance
- *             :  with the VHPI standard, a VHPI application or program
- *             :  shall reference this header file.
- *             :
- *   Note      :  The contents of this file may be modified in an
- *             :  implementation to provide implementation-defined
- *             :  functionality, as described in B.3.
- *             :
- * --------------------------------------------------------------------
- * modification history :
- * --------------------------------------------------------------------
- * $Revision: 1315 $
- * $Date: 2008-07-13 10:11:53 +0930 (Sun, 13 Jul 2008) $
- * --------------------------------------------------------------------
+/* https://opensource.ieee.org/vasg/Packages/-/blob/release/code/vhpi_user.h
+/*
+/* Copyright 2019 IEEE P1076 WG Authors
+/*
+/* See the LICENSE file distributed with this work for copyright and
+/* licensing information and the AUTHORS file.
+/*
+/* This file to you under the Apache License, Version 2.0 (the "License").
+/* You may obtain a copy of the License at
+/*
+/*     http://www.apache.org/licenses/LICENSE-2.0
+/*
+/* Unless required by applicable law or agreed to in writing, software
+/* distributed under the License is distributed on an "AS IS" BASIS,
+/* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+/* implied.  See the License for the specific language governing
+/* permissions and limitations under the License.
+/*
+/*
+/*   Title     :  vhpi_user.h
+/*             :
+/*   Developers:  IEEE P1076 Working Group, VHPI Task Force
+/*             :
+/*   Purpose   :  This header file describes the procedural interface
+/*             :  to access VHDL compiled, instantiated and run-time
+/*             :  data.It is derived from the UML model. For conformance
+/*             :  with the VHPI standard, a VHPI application or program
+/*             :  shall reference this header file.
+/*             :
+/*   Note      :  The contents of this file may be modified in an
+/*             :  implementation to provide implementation-defined
+/*             :  functionality, as described in B.3.
+/*             :
+/* --------------------------------------------------------------------
+/* modification history :
+/* --------------------------------------------------------------------
+/* $Revision: 1315 $
+/* $Date: 2008-07-13 10:11:53 +0930 (Sun, 13 Jul 2008) $
+/* --------------------------------------------------------------------
  */
 
 
@@ -54,7 +55,7 @@ typedef signed __int32 int32_t;
 typedef signed __int8 int8_t;
 #elif defined(__MINGW32__)
 #include <stdint.h>
-#elif defined(__linux) || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(__linux)
 #include <inttypes.h>
 #else
 #include <sys/types.h>
