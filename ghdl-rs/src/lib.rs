@@ -6,8 +6,11 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 extern crate dlopen;
 
+
 #[cfg(test)]
 mod tests {
+    static mut THUNK: Option<vpi_thunk> = None;
+
     use std::ffi::CString;
     use dlopen::raw::Library;
 
@@ -46,7 +49,9 @@ mod tests {
             let vpi_get_str = thunk.vpi_get_str.unwrap();
             thunk.vpi_handle = lib.symbol("vpi_handle").unwrap();
             let vpi_handle = thunk.vpi_handle.unwrap();
-
+            thunk.vpi_get_value = lib.symbol("vpi_get_value").unwrap();
+            let vpi_get_value = thunk.vpi_get_value.unwrap();
+            THUNK = Some(thunk);
 
             let mut info: s_vpi_vlog_info = std::mem::zeroed();
             vpi_get_vlog_info(&mut info);
@@ -63,57 +68,33 @@ mod tests {
 
             #[no_mangle]
             pub unsafe extern "C" fn Compiled(user_data: *mut t_cb_data) -> i32 {
-                println!("Hello!");
+                println!("Compiled!");
                 dbg!(user_data);
                 0
             }
 
             #[no_mangle]
             pub unsafe extern "C" fn StartOfSimulation(user_data: *mut t_cb_data) -> i32 {
-                println!("Hello!");
+                println!("Start!");
                 dbg!(user_data);
                 0
             }
 
             #[no_mangle]
             pub unsafe extern "C" fn EndOfSimulation(user_data: *mut t_cb_data) -> i32 {
-                println!("Goodbye!");
+                println!("End!");
                 dbg!(user_data);
                 0
             }
 
-            // #[no_mangle]
-            // pub unsafe extern "C" fn Startup() 
-            {
-                {
-                    let mut cb: t_cb_data = std::mem::zeroed();
-                    cb.reason = cbEndOfCompile as i32;
-                    cb.cb_rtn = Some(Compiled);
-                    cb.user_data = std::ptr::null_mut();
-
-                    let registration = vpi_register_cb(&mut cb);
-                    dbg!(&registration);
-                }
-
-                {
-                    let mut cb: t_cb_data = std::mem::zeroed();
-                    cb.reason = cbStartOfSimulation as i32;
-                    cb.cb_rtn = Some(StartOfSimulation);
-                    cb.user_data = std::ptr::null_mut();
-
-                    let registration = vpi_register_cb(&mut cb);
-                    dbg!(&registration);
-                }
-
-                {
-                    let mut cb: t_cb_data = std::mem::zeroed();
-                    cb.reason = cbEndOfSimulation as i32;
-                    cb.cb_rtn = Some(EndOfSimulation);
-                    cb.user_data = std::ptr::null_mut();
-
-                    let registration = vpi_register_cb(&mut cb);
-                    dbg!(&registration);
-                }
+            #[no_mangle]
+            pub unsafe extern "C" fn ValueChange(user_data: *mut t_cb_data) -> i32 {
+                let user_data = &*user_data as &t_cb_data;
+                let net_name = CStr::from_ptr(THUNK.unwrap().vpi_get_str.unwrap()(vpiName as i32, user_data.obj))
+                        .to_str().unwrap();
+                println!("Value changed: {}", net_name);
+                dbg!(user_data);
+                0
             }
 
             // let trace_arg = CString::new("--vpi-trace").unwrap();
@@ -128,6 +109,33 @@ mod tests {
             grt_init();
             dbg!(grt_main_options(progname.as_ptr(), args.len() as i32, args.as_ptr()));
             dbg!(grt_main_elab());
+
+            {
+                let mut cb: t_cb_data = std::mem::zeroed();
+                cb.reason = cbEndOfCompile as i32;
+                cb.cb_rtn = Some(Compiled);
+                cb.user_data = std::ptr::null_mut();
+
+                let registration = vpi_register_cb(&mut cb);
+            }
+
+            {
+                let mut cb: t_cb_data = std::mem::zeroed();
+                cb.reason = cbStartOfSimulation as i32;
+                cb.cb_rtn = Some(StartOfSimulation);
+                cb.user_data = std::ptr::null_mut();
+
+                let registration = vpi_register_cb(&mut cb);
+            }
+
+            {
+                let mut cb: t_cb_data = std::mem::zeroed();
+                cb.reason = cbEndOfSimulation as i32;
+                cb.cb_rtn = Some(EndOfSimulation);
+                cb.user_data = std::ptr::null_mut();
+
+                let registration = vpi_register_cb(&mut cb);
+            }
 
             __ghdl_simulation_init();
 
@@ -187,9 +195,35 @@ mod tests {
                 }
             }
 
+            for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
+                let mut cb: t_cb_data = std::mem::zeroed();
+                cb.reason = cbValueChange as i32;
+                cb.cb_rtn = Some(ValueChange);
+                cb.obj = *net;
+
+                let registration = vpi_register_cb(&mut cb);
+            }
+
             let mut step_result;
             loop {
+
                 step_result = __ghdl_simulation_step();
+
+                for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
+                    let mut str_val: s_vpi_value = std::mem::zeroed();
+                    str_val.format = vpiBinStrVal as i32;
+                    vpi_get_value(*net, &mut str_val);
+
+                    let mut str_val: s_vpi_value = std::mem::zeroed();
+                    str_val.format = vpiBinStrVal as i32;
+                    vpi_get_value(*net, &mut str_val);
+
+                    let vals = str_val.value.str_ as *const u8;
+                    let vals = std::slice::from_raw_parts(vals, *width as usize);
+                    let vals = std::str::from_utf8(vals).unwrap();
+                    println!("{name} {kind} {width} {}", vals);
+                }
+                
                 dbg!(step_result);
                 if step_result >= 3 {
                     break;
