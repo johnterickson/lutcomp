@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 common = { path = "../common" }
 sim = { path = "../sim" }
-strum = "0.18.0"
+strum = "0.24.1"
 pest = "*"
 pest_derive = "*"
 packed_struct = "0.10.0"

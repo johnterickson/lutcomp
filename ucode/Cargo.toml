@@ -8,8 +8,8 @@ edition = "2018"
 
 [dependencies]
 common = { path = "../common" }
-strum = "0.18.0"
-strum_macros = "0.18.0"
+strum = "0.24.1"
+strum_macros = "0.24.3"
 packed_struct = "0.10.0"
 packed_struct_codegen = "0.10.0"
 lazy_static = "1.4.0"
