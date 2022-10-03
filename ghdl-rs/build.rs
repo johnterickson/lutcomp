@@ -36,10 +36,6 @@ fn main() {
         }
     }
 
-    // fn gcc<T: AsRef<std::ffi::OsStr>>(args: &[T]) -> String {
-    //     run("gcc", args)
-    // }
-
     fn ghdl<T: AsRef<std::ffi::OsStr>>(args: &[T]) -> String {
         run("ghdl", args)
     }
@@ -54,60 +50,25 @@ fn main() {
         "gcc",
         "-c",
         "entry.c",
-        // "-Wl,-shared",
-        // "-Wl,--version-script=./vhpi.ver",
-        // "-o", "entry.o"
     ]);
 
     ghdl(&[
         "--vpi-link",
         "-v",
         "gcc",
-        "-o", "entry.vpi",
+        "-o", &format!("{}.vpi", device),
         "entry.o",
     ]);
 
     // e.g. ghdl -e -Wl,test.c -Wl,-shared -Wl,-Wl,--version-script=./test.ver -Wl,-Wl,-u,ghdl_main -o tb.lib tb
     ghdl(&["-e", "--std=08", 
     // &format!("--workdir={}", out_path.display()),
-        "-Wl,entry.vpi",
+        &format!("-Wl,{}.vpi", device),
         "-Wl,-shared",
         "-Wl,-Wl,--version-script=./vhpi.ver",
         "-Wl,-Wl,-u,ghdl_main",
         "-o", &format!("{}.lib", device),
         device]);
-
-    // println!("cargo:rustc-link-arg={}", "/usr/local/lib/ghdl/libgrt.a");
-    // // println!("cargo:rustc-link-arg={}", "/usr/local/lib/libghdlvpi.so");
-    // println!("cargo:rustc-link-arg={}", "-ldl");
-    // println!("cargo:rustc-link-arg={}", "-lm");
-    // println!("cargo:rustc-link-arg={}", "-lz");
-
-    // let elaborated_o_pwd = format!("e~{}.o", device);
-    // let elaborated_o_out = out_path.clone().join(&elaborated_o_pwd);
-    // std::fs::rename(&elaborated_o_pwd, &elaborated_o_out).unwrap();
-    // let elaborated_lst_pwd = format!("e~{}.lst", device);
-    // let elaborated_lst_out = out_path.clone().join(&elaborated_lst_pwd);
-
-
-    // ghdl(&["--bind", "--std=08", 
-    //     "-Wl,-shared",
-    //     // &format!("--workdir={}", out_path.display()), 
-    //     device]);
-
-    // let link_args = ghdl(&["--list-link", "--std=08", 
-    // // &format!("--workdir={}", out_path.display()), 
-    // device]);
-    // for line in link_args.as_str().lines() {
-    //     if line.contains(device) || line.contains(vhdl_file) {
-    //         let path = std::env::current_dir().unwrap().join(line);
-    //         println!("cargo:rustc-link-arg={}", path.display());
-    //     } else {
-    //         println!("cargo:rustc-link-arg={}", line);
-    //     }
-    // }
-
-    // let _ = std::fs::rename(&elaborated_lst_pwd, &elaborated_lst_out);
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
