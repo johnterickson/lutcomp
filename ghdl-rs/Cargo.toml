@@ -1,12 +1,11 @@
 [package]
 authors = ["John Erickson <john.t.erickson@gmail.com"]
 build = "build.rs"
-name = "ghdl-rs"
+name = "ghdl_rs"
 version = "0.1.0"
 
 [build-dependencies]
 bindgen = "*"
-execute = "*"
 
 [dependencies]
 dlopen = "0.1.8"
@@ -14,3 +13,4 @@ strum = "0.24.1"
 strum_macros = "0.24.3"
 packed_struct = "0.10.0"
 packed_struct_codegen = "0.10.0"
+execute = "*"

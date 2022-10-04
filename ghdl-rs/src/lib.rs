@@ -3,9 +3,14 @@
 #![allow(non_snake_case)]
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-include!(concat!(env!("OUT_DIR"), "/hd44780u.rs"));
+
+extern crate execute;
+use std::env;
+use std::process::{Command, Stdio};
+use execute::Execute;
 
 extern crate dlopen;
+use dlopen::raw::Library;
 
 extern crate strum;
 #[macro_use]
@@ -13,10 +18,12 @@ extern crate strum_macros;
 
 extern crate packed_struct;
 extern crate packed_struct_codegen;
+use packed_struct::prelude::*;
 
 use std::convert::TryFrom;
-
-use packed_struct::prelude::*;
+use std::path::PathBuf;
+use std::ffi::CStr;
+use std::ffi::CString;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
@@ -67,9 +74,97 @@ impl TryFrom<char> for StdLogic {
     }
 }
 
-use dlopen::raw::Library;
-use std::ffi::CStr;
-use std::ffi::CString;
+pub fn build_vhdl(vhdl_path: &str, device: &str) {
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
+    println!("cargo:rerun-if-changed={vhdl_path}");
+
+    fn run<T: AsRef<std::ffi::OsStr>>(program: &str, args: &[T]) -> String {
+        let mut cmd = Command::new(program);
+        for arg in args {
+            cmd.arg(arg);
+        }
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
+        let output = cmd.execute_output().unwrap();
+        if Some(0) != output.status.code() {
+            eprintln!("{}", String::from_utf8(output.stdout).unwrap());
+            eprintln!("{}", String::from_utf8(output.stderr).unwrap());
+            panic!("{:?} {:?}", cmd.get_program(), cmd.get_args());
+        } else {
+            String::from_utf8(output.stdout).unwrap()
+        }
+    }
+
+    fn ghdl<T: AsRef<std::ffi::OsStr>>(args: &[T]) -> String {
+        run("ghdl", args)
+    }
+
+    ghdl(&["-a", "--std=08", 
+        &format!("--workdir={}", out_path.display()),
+        &vhdl_path]);
+
+    let entry_c = out_path.join("entry.c").display().to_string();
+    std::fs::write(&entry_c, "void (*vlog_startup_routines[]) () = { 0 };").unwrap();
+
+    let entry_o = out_path.join("entry.o").display().to_string();
+    ghdl(&[
+        "--vpi-compile",
+        "-v",
+        "gcc",
+        "-c", &entry_c,
+        "-o", &entry_o,
+    ]);
+
+
+    let device_vpi = out_path.join(format!("{}.vpi", device)).display().to_string();
+    ghdl(&[
+        "--vpi-link",
+        "-v",
+        "gcc",
+        "-o", &device_vpi,
+        &entry_o,
+    ]);
+
+    // e.g. ghdl -e -Wl,test.c -Wl,-shared -Wl,-Wl,--version-script=./test.ver -Wl,-Wl,-u,ghdl_main -o tb.lib tb
+    let vhpi_ver = out_path.join("entry.c").display().to_string();
+    std::fs::write(&vhpi_ver, "
+    VHPIDIRECT {
+        global:
+      ghdl_main;
+      grt_init;
+      grt_main_options;
+      grt_main_elab;
+      __ghdl_simulation_init;
+      __ghdl_simulation_step;
+        local:
+              *;
+      };
+    ").unwrap();
+    let device_lib = out_path.join(format!("{}.lib", device)).display().to_string();
+    run("ghdl-llvm",
+        &["-e", "--std=08", 
+        &format!("--workdir={}", out_path.display()),
+        &format!("-Wl,{}", &device_vpi),
+        "-Wl,-shared",
+        &format!("-Wl,-Wl,--version-script={}", &vhpi_ver),
+        "-Wl,-Wl,-u,ghdl_main",
+        "-o", &device_lib,
+        device]);
+
+    let device_rs = out_path.join(format!("{}.rs", device)).display().to_string();
+    std::fs::write(device_rs, format!("
+        #[allow(dead_code)]
+        #[allow(non_upper_case_globals)]
+        const {}_LIB_PATH: &'static str = \"{}\";
+        #[allow(dead_code)]
+        #[allow(non_upper_case_globals)]
+        const {}_VPI_PATH: &'static str = \"{}\";",
+        device, &device_lib,
+        device, &device_vpi
+    )).unwrap();
+}
+
 
 pub struct GhdlDevice {
     _lib: Library,
@@ -214,132 +309,5 @@ impl GhdlDevice {
         flags: PLI_INT32,
     ) -> vpiHandle {
         unsafe { self.thunk.vpi_put_value.unwrap()(object, value_p, time_p, flags) }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    #[allow(unused_variables)]
-    #[test]
-    fn vhdl_iter() {
-        let mut hd44780u = GhdlDevice::new(hd44780u_lib_path, hd44780u_vpi_path);
-
-        // #[no_mangle]
-        // pub unsafe extern "C" fn ValueChange(user_data: *mut t_cb_data) -> i32 {
-        //     let user_data = &*user_data as &t_cb_data;
-        //     let net_name = CStr::from_ptr(THUNK.unwrap().vpi_get_str.unwrap()(vpiName as i32, user_data.obj))
-        //             .to_str().unwrap();
-        //     println!("Value changed: {}", net_name);
-        //     dbg!(user_data);
-        //     0
-        // }
-
-        use std::collections::BTreeMap;
-        use std::ptr;
-
-        // see https://gitlab.ensta-bretagne.fr/bollenth/ghdl-vpi-virtual-board/-/blob/master/src/vpi.cc
-        // for VPI example
-
-        let mut iter = hd44780u.iterate(vpiModule as i32, ptr::null_mut());
-        let module = hd44780u.scan(iter);
-        hd44780u.free_object(iter);
-
-        let module_name = hd44780u.get_str(vpiName as i32, module);
-        dbg!(module_name);
-
-        let scope = hd44780u.handle(vpiScope as i32, module);
-        dbg!(scope);
-
-        let mut inputs = BTreeMap::new();
-        let mut outputs = BTreeMap::new();
-
-        for kind in [vpiNet] {
-            iter = hd44780u.iterate(kind as i32, scope);
-            let mut net: vpiHandle = ptr::null_mut();
-            while ptr::null_mut() != iter
-                && ptr::null_mut() != {
-                    net = hd44780u.scan(iter);
-                    net
-                }
-            {
-                let net_name = hd44780u.get_str(vpiName as i32, net).to_owned();
-                eprint!("{} {}", kind, &net_name);
-                let net_width = hd44780u.get(vpiSize as i32, net);
-                let net_dir = hd44780u.get(vpiDirection as i32, net);
-                eprintln!(
-                    " {}:{}",
-                    match net_dir as u32 {
-                        vpiInput => "in",
-                        vpiOutput => "out",
-                        vpiInout => "inout",
-                        vpiNoDirection => "no direction",
-                        _ => panic!("unknown dir {}", net_dir),
-                    },
-                    net_width
-                );
-                match net_dir as u32 {
-                    vpiInput => {
-                        inputs.insert(net_name, (kind, net_width, net));
-                    }
-                    vpiOutput => {
-                        outputs.insert(net_name, (kind, net_width, net));
-                    }
-                    _ => {
-                        hd44780u.free_object(net);
-                    }
-                }
-            }
-        }
-
-        for (name, (kind, width, net)) in &inputs {
-            hd44780u.put_value_int(*net, 0);
-        }
-
-        // for (name, (kind, width, net)) in &outputs {
-        //     let mut cb: t_cb_data = std::mem::zeroed();
-        //     cb.reason = cbValueChange as i32;
-        //     cb.cb_rtn = Some(ValueChange);
-        //     cb.obj = *net;
-
-        //     let registration = hd44780u.register_cb(&mut cb);
-        // }
-
-        let mut step_count = 0;
-
-        let mut step_result;
-        loop {
-            if step_count < 10 {
-                let (_, _, net) = &inputs["clk"];
-                let clk_val = hd44780u.get_value_BinStr(*net);
-                let clk_val= clk_val.chars().next().unwrap();
-
-                let new_val = match StdLogic::try_from(clk_val).unwrap() {
-                    StdLogic::HDL_0 => Some(1),
-                    StdLogic::HDL_1 => Some(0),
-                    _ => None,
-                };
-
-                if let Some(new_val) = new_val {
-                    hd44780u.put_value_int(*net, new_val);
-                }
-            }
-
-            step_result = hd44780u.simulation_step();
-            dbg!(step_result);
-
-            for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
-                let str_val = hd44780u.get_value_BinStr(*net);
-                println!(" {name} {kind} {width} {}", str_val);
-            }
-
-            if step_result >= 3 {
-                break;
-            }
-
-            step_count += 1;
-        }
     }
 }

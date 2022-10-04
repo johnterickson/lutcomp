@@ -476,7 +476,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ghdl-rs"
+name = "ghdl_rs"
 version = "0.1.0"
 dependencies = [
  "bindgen",
@@ -987,6 +987,7 @@ version = "0.1.0"
 dependencies = [
  "alu",
  "common",
+ "ghdl_rs",
  "itertools",
  "lazy_static",
  "packed_struct",
