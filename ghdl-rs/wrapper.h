@@ -1,11 +1,4 @@
 #include "vpi_thunk.h"
-// #include "vffi_user.h"
-// #include "vhpi_user.h"
-// #include "grt.h"
-// #include "grt-cdynload.h"
-
-typedef int (*loadVpiModulePtr)(const char* modulename);
-
 
 typedef void (*grt_initPtr) (void);
 typedef int (*grt_main_optionsPtr) (const char *progname, int argc, const char * const argv[]);

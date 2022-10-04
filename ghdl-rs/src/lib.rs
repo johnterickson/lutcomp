@@ -3,6 +3,7 @@
 #![allow(non_snake_case)]
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+include!(concat!(env!("OUT_DIR"), "/hd44780u.rs"));
 
 extern crate dlopen;
 
@@ -16,17 +17,6 @@ extern crate packed_struct_codegen;
 use std::convert::TryFrom;
 
 use packed_struct::prelude::*;
-
-pub const std_logic_states_HDL_U: isize = 0;
-pub const std_logic_states_HDL_X: std_logic_states = 1;
-pub const std_logic_states_HDL_0: std_logic_states = 2;
-pub const std_logic_states_HDL_1: std_logic_states = 3;
-pub const std_logic_states_HDL_Z: std_logic_states = 4;
-pub const std_logic_states_HDL_W: std_logic_states = 5;
-pub const std_logic_states_HDL_L: std_logic_states = 6;
-pub const std_logic_states_HDL_H: std_logic_states = 7;
-pub const std_logic_states_HDL_D: std_logic_states = 8;
-pub type std_logic_states = isize;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
@@ -77,98 +67,61 @@ impl TryFrom<char> for StdLogic {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    static mut THUNK: Option<vpi_thunk> = None;
+use dlopen::raw::Library;
+use std::ffi::CStr;
+use std::ffi::CString;
 
-    use std::ffi::CString;
-    use dlopen::raw::Library;
+pub struct GhdlDevice {
+    _lib: Library,
+    thunk: vpi_thunk,
+    __ghdl_simulation_step: __ghdl_simulation_stepPtr,
+}
 
-    use super::*;
+impl GhdlDevice {
+    pub fn new(lib_path: &str, vpi_path: &str) -> GhdlDevice {
+        let lib = Library::open(lib_path).unwrap();
 
-    #[allow(unused_variables)]
-    #[test]
-    fn vhdl_iter() {
-        let progname = std::env::args().next().unwrap();
-        // dbg!(&progname);
-        let progname = CString::new(progname).unwrap();
+        let thunk = unsafe {
+            let mut thunk: vpi_thunk = std::mem::zeroed();
+            thunk.vpi_get_vlog_info = lib.symbol("vpi_get_vlog_info").unwrap();
+            thunk.vpi_register_cb = lib.symbol("vpi_register_cb").unwrap();
+            thunk.vpi_iterate = lib.symbol("vpi_iterate").unwrap();
+            thunk.vpi_scan = lib.symbol("vpi_scan").unwrap();
+            thunk.vpi_free_object = lib.symbol("vpi_free_object").unwrap();
+            thunk.vpi_get = lib.symbol("vpi_get").unwrap();
+            thunk.vpi_get_str = lib.symbol("vpi_get_str").unwrap();
+            thunk.vpi_handle = lib.symbol("vpi_handle").unwrap();
+            thunk.vpi_get_value = lib.symbol("vpi_get_value").unwrap();
+            thunk.vpi_put_value = lib.symbol("vpi_put_value").unwrap();
+
+            thunk
+        };
 
         unsafe {
-            let vhdl_lib_path = "/home/john/lutcomp/ghdl-rs/hd44780u.lib";
-            let lib = Library::open(vhdl_lib_path).unwrap();
-            dbg!(&lib);
-
-            let mut thunk: vpi_thunk = std::mem::zeroed();
-            
-            thunk.vpi_get_vlog_info = lib.symbol("vpi_get_vlog_info").unwrap();
-            let vpi_get_vlog_info = thunk.vpi_get_vlog_info.unwrap();
-            thunk.vpi_register_cb = lib.symbol("vpi_register_cb").unwrap();
-            let vpi_register_cb = thunk.vpi_register_cb.unwrap();
-            thunk.vpi_iterate = lib.symbol("vpi_iterate").unwrap();
-            let vpi_iterate = thunk.vpi_iterate.unwrap();
-            thunk.vpi_scan = lib.symbol("vpi_scan").unwrap();
-            let vpi_scan = thunk.vpi_scan.unwrap();
-            thunk.vpi_free_object = lib.symbol("vpi_free_object").unwrap();
-            let vpi_free_object = thunk.vpi_free_object.unwrap();
-            thunk.vpi_get = lib.symbol("vpi_get").unwrap();
-            let vpi_get = thunk.vpi_get.unwrap();
-            thunk.vpi_get_str = lib.symbol("vpi_get_str").unwrap();
-            let vpi_get_str = thunk.vpi_get_str.unwrap();
-            thunk.vpi_handle = lib.symbol("vpi_handle").unwrap();
-            let vpi_handle = thunk.vpi_handle.unwrap();
-            thunk.vpi_get_value = lib.symbol("vpi_get_value").unwrap();
-            let vpi_get_value = thunk.vpi_get_value.unwrap();
-            thunk.vpi_put_value = lib.symbol("vpi_put_value").unwrap();
-            let vpi_put_value = thunk.vpi_put_value.unwrap();
-            
-            THUNK = Some(thunk);
-
             let mut info: s_vpi_vlog_info = std::mem::zeroed();
-            vpi_get_vlog_info(&mut info);
+            thunk.vpi_get_vlog_info.unwrap()(&mut info);
             let product = std::ffi::CStr::from_ptr(info.product);
             let version = std::ffi::CStr::from_ptr(info.version);
             dbg!(product);
             dbg!(version);
+        }
 
-            let grt_init: grt_initPtr = lib.symbol("grt_init").unwrap(); let grt_init = grt_init.unwrap();
-            let grt_main_options: grt_main_optionsPtr = lib.symbol("grt_main_options").unwrap(); let grt_main_options = grt_main_options.unwrap();
-            let grt_main_elab: grt_main_elabPtr = lib.symbol("grt_main_elab").unwrap(); let grt_main_elab = grt_main_elab.unwrap(); 
-            let __ghdl_simulation_init: __ghdl_simulation_initPtr = lib.symbol("__ghdl_simulation_init").unwrap(); let __ghdl_simulation_init = __ghdl_simulation_init.unwrap(); 
-            let __ghdl_simulation_step: __ghdl_simulation_stepPtr = lib.symbol("__ghdl_simulation_step").unwrap(); let __ghdl_simulation_step = __ghdl_simulation_step.unwrap();
+        unsafe {
+            let grt_init: grt_initPtr = lib.symbol("grt_init").unwrap();
+            let grt_init = grt_init.unwrap();
+            let grt_main_options: grt_main_optionsPtr = lib.symbol("grt_main_options").unwrap();
+            let grt_main_options = grt_main_options.unwrap();
+            let grt_main_elab: grt_main_elabPtr = lib.symbol("grt_main_elab").unwrap();
+            let grt_main_elab = grt_main_elab.unwrap();
+            let __ghdl_simulation_init: __ghdl_simulation_initPtr =
+                lib.symbol("__ghdl_simulation_init").unwrap();
+            let __ghdl_simulation_init = __ghdl_simulation_init.unwrap();
 
-            #[no_mangle]
-            pub unsafe extern "C" fn Compiled(user_data: *mut t_cb_data) -> i32 {
-                println!("Compiled!");
-                dbg!(user_data);
-                0
-            }
-
-            #[no_mangle]
-            pub unsafe extern "C" fn StartOfSimulation(user_data: *mut t_cb_data) -> i32 {
-                println!("Start!");
-                dbg!(user_data);
-                0
-            }
-
-            #[no_mangle]
-            pub unsafe extern "C" fn EndOfSimulation(user_data: *mut t_cb_data) -> i32 {
-                println!("End!");
-                dbg!(user_data);
-                0
-            }
-
-            #[no_mangle]
-            pub unsafe extern "C" fn ValueChange(user_data: *mut t_cb_data) -> i32 {
-                let user_data = &*user_data as &t_cb_data;
-                let net_name = CStr::from_ptr(THUNK.unwrap().vpi_get_str.unwrap()(vpiName as i32, user_data.obj))
-                        .to_str().unwrap();
-                println!("Value changed: {}", net_name);
-                dbg!(user_data);
-                0
-            }
+            grt_init();
+            let progname = CString::new("ghdl").unwrap();
 
             // let trace_arg = CString::new("--vpi-trace").unwrap();
-            let vpi_arg = CString::new(format!("--vpi=/home/john/lutcomp/ghdl-rs/hd44780u.vpi")).unwrap();
+            let vpi_arg = CString::new(format!("--vpi={}", vpi_path)).unwrap();
 
             let args = [
                 progname.as_ptr(),
@@ -176,149 +129,217 @@ mod tests {
                 vpi_arg.as_ptr(),
             ];
 
-            grt_init();
-            dbg!(grt_main_options(progname.as_ptr(), args.len() as i32, args.as_ptr()));
-            dbg!(grt_main_elab());
-
-            {
-                let mut cb: t_cb_data = std::mem::zeroed();
-                cb.reason = cbEndOfCompile as i32;
-                cb.cb_rtn = Some(Compiled);
-                cb.user_data = std::ptr::null_mut();
-
-                let registration = vpi_register_cb(&mut cb);
-            }
-
-            {
-                let mut cb: t_cb_data = std::mem::zeroed();
-                cb.reason = cbStartOfSimulation as i32;
-                cb.cb_rtn = Some(StartOfSimulation);
-                cb.user_data = std::ptr::null_mut();
-
-                let registration = vpi_register_cb(&mut cb);
-            }
-
-            {
-                let mut cb: t_cb_data = std::mem::zeroed();
-                cb.reason = cbEndOfSimulation as i32;
-                cb.cb_rtn = Some(EndOfSimulation);
-                cb.user_data = std::ptr::null_mut();
-
-                let registration = vpi_register_cb(&mut cb);
-            }
+            grt_main_options(progname.as_ptr(), args.len() as i32, args.as_ptr());
+            grt_main_elab();
 
             __ghdl_simulation_init();
+        }
 
-            use std::ffi::CStr;
-            use std::ptr;
-            use std::collections::BTreeMap;
+        let __ghdl_simulation_step = unsafe { lib.symbol("__ghdl_simulation_step").unwrap() };
 
-            // see https://gitlab.ensta-bretagne.fr/bollenth/ghdl-vpi-virtual-board/-/blob/master/src/vpi.cc 
-            // for VPI example
+        GhdlDevice {
+            _lib: lib,
+            thunk,
+            __ghdl_simulation_step,
+        }
+    }
 
-            let mut iter = vpi_iterate(vpiModule as i32, ptr::null_mut());
-            let module = vpi_scan(iter);
-             vpi_free_object(iter);
+    pub fn simulation_step(&mut self) -> ::std::os::raw::c_int {
+        unsafe { self.__ghdl_simulation_step.unwrap()() }
+    }
 
-            let module_name = CStr::from_ptr(vpi_get_str(vpiName as i32, module));
-            dbg!(module_name);
+    pub fn get_vlog_info(&self, vlog_info_p: p_vpi_vlog_info) -> PLI_INT32 {
+        unsafe { self.thunk.vpi_get_vlog_info.unwrap()(vlog_info_p) }
+    }
 
-            let scope = vpi_handle(vpiScope as i32, module);
-            dbg!(scope);
+    pub fn register_cb(&mut self, cb_data_p: p_cb_data) -> vpiHandle {
+        unsafe { self.thunk.vpi_register_cb.unwrap()(cb_data_p) }
+    }
 
-            let mut inputs = BTreeMap::new();
-            let mut outputs = BTreeMap::new();
+    pub fn iterate(&self, type_: PLI_INT32, refHandle: vpiHandle) -> vpiHandle {
+        unsafe { self.thunk.vpi_iterate.unwrap()(type_, refHandle) }
+    }
 
-            for kind in [vpiNet] { //[vpiModule, vpiPort, vpiNet, vpiNetArray] {
-                iter = vpi_iterate(kind as i32, scope);
-                let mut net: vpiHandle = ptr::null_mut();
-                while ptr::null_mut() != iter && ptr::null_mut() != {net = vpi_scan(iter); net} {
-                    let net_name = CStr::from_ptr(vpi_get_str(vpiName as i32, net))
-                        .to_str().unwrap().to_owned();
-                    eprint!("{} {}", kind, &net_name);
-                    let net_width = vpi_get(vpiSize as i32, net);
-                    let net_dir = vpi_get(vpiDirection as i32, net);
-                    eprintln!(" {}:{}",
-                        match net_dir as u32 {
-                            vpiInput => "in",
-                            vpiOutput => "out",
-                            vpiInout => "inout",
-                            vpiNoDirection => "no direction",
-                            _ => panic!("unknown dir {}", net_dir),
-                        },
-                        net_width);
+    pub fn scan(&self, iterator: vpiHandle) -> vpiHandle {
+        unsafe { self.thunk.vpi_scan.unwrap()(iterator) }
+    }
+
+    pub fn free_object(&self, object: vpiHandle) -> PLI_INT32 {
+        unsafe { self.thunk.vpi_free_object.unwrap()(object) }
+    }
+
+    pub fn get(&self, property: PLI_INT32, object: vpiHandle) -> PLI_INT32 {
+        unsafe { self.thunk.vpi_get.unwrap()(property, object) }
+    }
+
+    pub fn get_str(&mut self, property: PLI_INT32, object: vpiHandle) -> &str {
+        unsafe { 
+            CStr::from_ptr(self.thunk.vpi_get_str.unwrap()(property, object)).to_str().unwrap()
+        }
+    }
+
+    pub fn handle(&self, type_: PLI_INT32, refHandle: vpiHandle) -> vpiHandle {
+        unsafe { self.thunk.vpi_handle.unwrap()(type_, refHandle) }
+    }
+
+    pub fn get_value(&self, expr: vpiHandle, value_p: p_vpi_value) {
+        unsafe { self.thunk.vpi_get_value.unwrap()(expr, value_p) }
+    }
+
+    pub fn get_value_BinStr(&mut self, expr: vpiHandle) -> &str {
+        unsafe { 
+            let mut str_val: s_vpi_value = std::mem::zeroed();
+            str_val.format = vpiBinStrVal as i32;
+            self.thunk.vpi_get_value.unwrap()(expr, &mut str_val);
+
+            let vals = CStr::from_ptr(str_val.value.str_);
+            vals.to_str().unwrap()
+        }
+    }
+
+    pub fn put_value_int(&mut self, expr: vpiHandle, new_val: i32) {
+        unsafe { 
+            let mut val: s_vpi_value = std::mem::zeroed();
+            val.format = vpiIntVal as i32;
+            val.value.integer = new_val;
+            self.put_value(expr, &mut val, std::ptr::null_mut(), 0);
+        }
+    }
+
+    pub fn put_value(
+        &mut self,
+        object: vpiHandle,
+        value_p: p_vpi_value,
+        time_p: p_vpi_time,
+        flags: PLI_INT32,
+    ) -> vpiHandle {
+        unsafe { self.thunk.vpi_put_value.unwrap()(object, value_p, time_p, flags) }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[allow(unused_variables)]
+    #[test]
+    fn vhdl_iter() {
+        let mut hd44780u = GhdlDevice::new(hd44780u_lib_path, hd44780u_vpi_path);
+
+        // #[no_mangle]
+        // pub unsafe extern "C" fn ValueChange(user_data: *mut t_cb_data) -> i32 {
+        //     let user_data = &*user_data as &t_cb_data;
+        //     let net_name = CStr::from_ptr(THUNK.unwrap().vpi_get_str.unwrap()(vpiName as i32, user_data.obj))
+        //             .to_str().unwrap();
+        //     println!("Value changed: {}", net_name);
+        //     dbg!(user_data);
+        //     0
+        // }
+
+        use std::collections::BTreeMap;
+        use std::ptr;
+
+        // see https://gitlab.ensta-bretagne.fr/bollenth/ghdl-vpi-virtual-board/-/blob/master/src/vpi.cc
+        // for VPI example
+
+        let mut iter = hd44780u.iterate(vpiModule as i32, ptr::null_mut());
+        let module = hd44780u.scan(iter);
+        hd44780u.free_object(iter);
+
+        let module_name = hd44780u.get_str(vpiName as i32, module);
+        dbg!(module_name);
+
+        let scope = hd44780u.handle(vpiScope as i32, module);
+        dbg!(scope);
+
+        let mut inputs = BTreeMap::new();
+        let mut outputs = BTreeMap::new();
+
+        for kind in [vpiNet] {
+            iter = hd44780u.iterate(kind as i32, scope);
+            let mut net: vpiHandle = ptr::null_mut();
+            while ptr::null_mut() != iter
+                && ptr::null_mut() != {
+                    net = hd44780u.scan(iter);
+                    net
+                }
+            {
+                let net_name = hd44780u.get_str(vpiName as i32, net).to_owned();
+                eprint!("{} {}", kind, &net_name);
+                let net_width = hd44780u.get(vpiSize as i32, net);
+                let net_dir = hd44780u.get(vpiDirection as i32, net);
+                eprintln!(
+                    " {}:{}",
                     match net_dir as u32 {
-                        vpiInput => {
-                            inputs.insert(
-                                net_name,
-                                (kind, net_width, net));
-                        },
-                        vpiOutput => {
-                            outputs.insert(
-                                net_name,
-                                (kind, net_width, net));
-                        },
-                        _ => {
-                            vpi_free_object(net);
-                        }
+                        vpiInput => "in",
+                        vpiOutput => "out",
+                        vpiInout => "inout",
+                        vpiNoDirection => "no direction",
+                        _ => panic!("unknown dir {}", net_dir),
+                    },
+                    net_width
+                );
+                match net_dir as u32 {
+                    vpiInput => {
+                        inputs.insert(net_name, (kind, net_width, net));
+                    }
+                    vpiOutput => {
+                        outputs.insert(net_name, (kind, net_width, net));
+                    }
+                    _ => {
+                        hd44780u.free_object(net);
                     }
                 }
             }
+        }
 
-            for (name, (kind, width, net)) in &inputs {
-                let mut val: t_vpi_value = std::mem::zeroed();
-                val.format = vpiIntVal as i32;//vpiBinStrVal as i32;
-                val.value.integer = 0;
+        for (name, (kind, width, net)) in &inputs {
+            hd44780u.put_value_int(*net, 0);
+        }
 
-                vpi_put_value(*net, &mut val, std::ptr::null_mut(), 0);
-            }
+        // for (name, (kind, width, net)) in &outputs {
+        //     let mut cb: t_cb_data = std::mem::zeroed();
+        //     cb.reason = cbValueChange as i32;
+        //     cb.cb_rtn = Some(ValueChange);
+        //     cb.obj = *net;
 
-            for (name, (kind, width, net)) in &outputs {
-                let mut cb: t_cb_data = std::mem::zeroed();
-                cb.reason = cbValueChange as i32;
-                cb.cb_rtn = Some(ValueChange);
-                cb.obj = *net;
+        //     let registration = hd44780u.register_cb(&mut cb);
+        // }
 
-                let registration = vpi_register_cb(&mut cb);
-            }
+        let mut step_count = 0;
 
-            let mut step_result;
-            loop {
+        let mut step_result;
+        loop {
+            if step_count < 10 {
+                let (_, _, net) = &inputs["clk"];
+                let clk_val = hd44780u.get_value_BinStr(*net);
+                let clk_val= clk_val.chars().next().unwrap();
 
-                {
-                    let (_,_,net) = &inputs["clk"];
-                    let mut val: s_vpi_value = std::mem::zeroed();
-                    val.format = vpiIntVal as i32;
-                    vpi_get_value(*net, &mut val);
-                    dbg!(&val.value.integer);
+                let new_val = match StdLogic::try_from(clk_val).unwrap() {
+                    StdLogic::HDL_0 => Some(1),
+                    StdLogic::HDL_1 => Some(0),
+                    _ => None,
+                };
 
-                    val.value.integer = 1 - val.value.integer;
-
-                    vpi_put_value(*net, &mut val, std::ptr::null_mut(), 0);
-                }
-
-                step_result = __ghdl_simulation_step();
-
-                for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
-                    if name != "clk" {
-                        continue;
-                    }
-
-                    let mut str_val: s_vpi_value = std::mem::zeroed();
-                    str_val.format = vpiBinStrVal as i32;
-                    vpi_get_value(*net, &mut str_val);
-
-                    let vals = str_val.value.str_ as *const u8;
-                    let vals = std::slice::from_raw_parts(vals, *width as usize);
-                    let vals = std::str::from_utf8(vals).unwrap();
-                    println!("{name} {kind} {width} {}", vals);
-                }
-                
-                dbg!(step_result);
-                if step_result >= 3 {
-                    break;
+                if let Some(new_val) = new_val {
+                    hd44780u.put_value_int(*net, new_val);
                 }
             }
+
+            step_result = hd44780u.simulation_step();
+            dbg!(step_result);
+
+            for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
+                let str_val = hd44780u.get_value_BinStr(*net);
+                println!(" {name} {kind} {width} {}", str_val);
+            }
+
+            if step_result >= 3 {
+                break;
+            }
+
+            step_count += 1;
         }
     }
 }

@@ -7,16 +7,11 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use execute::Execute;
 
-fn main() {
+fn build_vhdl(vhdl_path: &str, device: &str) {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-    let vhdl_file = "HD44780U";
-    let vhdl_path = format!("../circuit/{}.vhdl", vhdl_file);
-    let device = "hd44780u";
 
     println!("cargo:rerun-if-changed={vhdl_path}");
     println!("cargo:rerun-if-changed=vhpi.ver");
-    println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=entry.c");
 
     fn run<T: AsRef<std::ffi::OsStr>>(program: &str, args: &[T]) -> String {
@@ -41,35 +36,58 @@ fn main() {
     }
 
     ghdl(&["-a", "--std=08", 
-        // &format!("--workdir={}", out_path.display()),
+        &format!("--workdir={}", out_path.display()),
         &vhdl_path]);
 
+    let entry_o = out_path.join("entry.o").display().to_string();
     ghdl(&[
         "--vpi-compile",
         "-v",
         "gcc",
-        "-c",
-        "entry.c",
+        "-c", "entry.c",
+        "-o", &entry_o,
     ]);
 
+
+    let device_vpi = out_path.join(format!("{}.vpi", device)).display().to_string();
     ghdl(&[
         "--vpi-link",
         "-v",
         "gcc",
-        "-o", &format!("{}.vpi", device),
-        "entry.o",
+        "-o", &device_vpi,
+        &entry_o,
     ]);
 
     // e.g. ghdl -e -Wl,test.c -Wl,-shared -Wl,-Wl,--version-script=./test.ver -Wl,-Wl,-u,ghdl_main -o tb.lib tb
+    let device_lib = out_path.join(format!("{}.lib", device)).display().to_string();
     run("ghdl-llvm",
         &["-e", "--std=08", 
-    // &format!("--workdir={}", out_path.display()),
-        &format!("-Wl,{}.vpi", device),
+        &format!("--workdir={}", out_path.display()),
+        &format!("-Wl,{}", &device_vpi),
         "-Wl,-shared",
         "-Wl,-Wl,--version-script=./vhpi.ver",
         "-Wl,-Wl,-u,ghdl_main",
-        "-o", &format!("{}.lib", device),
+        "-o", &device_lib,
         device]);
+
+    let device_rs = out_path.join(format!("{}.rs", device)).display().to_string();
+    let mut rs = String::new();
+
+    use std::fmt::Write;
+
+    writeln!(&mut rs, "#[allow(dead_code)]").unwrap();
+    writeln!(&mut rs, "const {}_lib_path: &'static str = \"{}\";", device, &device_lib).unwrap();
+    writeln!(&mut rs, "#[allow(dead_code)]").unwrap();
+    writeln!(&mut rs, "const {}_vpi_path: &'static str = \"{}\";", device, &device_vpi).unwrap();
+
+    std::fs::write(device_rs, rs).unwrap();
+}
+
+
+fn main() {
+    build_vhdl("../circuit/HD44780U.vhdl", "hd44780u");
+
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let bindings = bindgen::Builder::default()
         .clang_arg("-I.")
