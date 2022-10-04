@@ -1,6 +1,8 @@
 #![allow(non_upper_case_globals)]
 
-use std::collections::VecDeque;
+use std::{collections::VecDeque, ptr, convert::TryFrom};
+
+use ghdl_rs::*;
 
 use crate::*;
 
@@ -13,23 +15,27 @@ pub struct Lcd {
     protocol: Protocol,
     busy: bool,
     pub queue: VecDeque<u8>,
+    // controller: HD44780U,
 
 }
 
 impl Lcd {
     pub fn new() -> Self {
+        // let mut controller = HD44780U::new();
+        // controller.init();
         Lcd {
             busy: false,
             queue: VecDeque::new(),
             protocol: Protocol::Bits8,
             bottom_nibble: None,
+            // controller: controller,
         }
     }
 }
 
 impl Device for Lcd {
     fn process(&mut self) {
-        
+        // self.controller.toggle_clk_and_step(1);
     }
 
     fn ready_to_write(&self) -> bool {
@@ -52,132 +58,225 @@ impl Device for Lcd {
 include!(concat!(env!("OUT_DIR"), "/hd44780u.rs"));
 
 
-#[cfg(test)]
-mod tests {
+pub struct HD44780U {
+    pub ghdl: GhdlDevice,
+    pub nets: BTreeMap<String,Net>,
+}
 
-    use std::convert::TryFrom;
-
-    use ghdl_rs::*;
-
-    use super::*;
-
-    #[test]
-    fn vhdl_iter() {
-        let mut hd44780u = GhdlDevice::new(hd44780u_LIB_PATH, hd44780u_VPI_PATH);
-
-        // #[no_mangle]
-        // pub unsafe extern "C" fn ValueChange(user_data: *mut t_cb_data) -> i32 {
-        //     let user_data = &*user_data as &t_cb_data;
-        //     let net_name = CStr::from_ptr(THUNK.unwrap().vpi_get_str.unwrap()(vpiName as i32, user_data.obj))
-        //             .to_str().unwrap();
-        //     println!("Value changed: {}", net_name);
-        //     dbg!(user_data);
-        //     0
-        // }
-
-        use std::collections::BTreeMap;
-        use std::ptr;
-
+impl HD44780U {
+    pub fn new() -> Self {
         // see https://gitlab.ensta-bretagne.fr/bollenth/ghdl-vpi-virtual-board/-/blob/master/src/vpi.cc
         // for VPI example
 
-        let mut iter = hd44780u.iterate(vpiModule as i32, ptr::null_mut());
-        let module = hd44780u.scan(iter);
-        hd44780u.free_object(iter);
+        let mut ghdl = GhdlDevice::new(hd44780u_LIB_PATH, hd44780u_VPI_PATH);
 
-        let module_name = hd44780u.get_str(vpiName as i32, module);
-        dbg!(module_name);
+        let module = {
+            let iter = ghdl.iterate(vpiModule as i32, ptr::null_mut());
+            let module = ghdl.scan(iter);
+            ghdl.free_object(iter);
+            module
+        };
 
-        let scope = hd44780u.handle(vpiScope as i32, module);
-        dbg!(scope);
+        // let module_name = ghdl.get_str(vpiName as i32, module);
+        // dbg!(module_name);
 
-        let mut inputs = BTreeMap::new();
-        let mut outputs = BTreeMap::new();
+        let scope = ghdl.handle(vpiScope as i32, module);
+        // dbg!(scope);
 
-        for kind in [vpiNet] {
-            iter = hd44780u.iterate(kind as i32, scope);
-            let mut net: vpiHandle = ptr::null_mut();
-            while ptr::null_mut() != iter
-                && ptr::null_mut() != {
-                    net = hd44780u.scan(iter);
-                    net
-                }
-            {
-                let net_name = hd44780u.get_str(vpiName as i32, net).to_owned();
-                eprint!("{} {}", kind, &net_name);
-                let net_width = hd44780u.get(vpiSize as i32, net);
-                let net_dir = hd44780u.get(vpiDirection as i32, net);
-                eprintln!(
-                    " {}:{}",
-                    match net_dir as u32 {
-                        vpiInput => "in",
-                        vpiOutput => "out",
-                        vpiInout => "inout",
-                        vpiNoDirection => "no direction",
-                        _ => panic!("unknown dir {}", net_dir),
-                    },
-                    net_width
-                );
-                match net_dir as u32 {
-                    vpiInput => {
-                        inputs.insert(net_name, (kind, net_width, net));
-                    }
-                    vpiOutput => {
-                        outputs.insert(net_name, (kind, net_width, net));
-                    }
-                    _ => {
-                        hd44780u.free_object(net);
-                    }
-                }
+        let mut nets = BTreeMap::new();
+
+        let iter = ghdl.iterate(vpiNet as i32, scope);
+        let mut net: vpiHandle = ptr::null_mut();
+        while ptr::null_mut() != iter
+            && ptr::null_mut() != {
+                net = ghdl.scan(iter);
+                net
             }
+        {
+            let net = Net::from_net(net, &mut ghdl);
+            nets.insert(net.name(&mut ghdl).to_owned(), net);
         }
 
-        for (_name, (_kind, _width, net)) in &inputs {
-            hd44780u.put_value_int(*net, 0);
+        HD44780U {
+            ghdl,
+            nets
         }
+    }
 
-        // for (name, (kind, width, net)) in &outputs {
-        //     let mut cb: t_cb_data = std::mem::zeroed();
-        //     cb.reason = cbValueChange as i32;
-        //     cb.cb_rtn = Some(ValueChange);
-        //     cb.obj = *net;
+    pub fn toggle_clk_and_step(&mut self, steps: usize) -> u32 {
+        let mut result = u32::MAX;
+        for _ in 0..steps {
+            let net = &self.nets["clk"];
+            let clk_val = self.ghdl.get_value_BinStr(net.handle);
+            let clk_val= clk_val.chars().next().unwrap();
 
-        //     let registration = hd44780u.register_cb(&mut cb);
-        // }
+            let new_val = match StdLogic::try_from(clk_val).unwrap() {
+                StdLogic::HDL_0 => Some(1),
+                StdLogic::HDL_1 => Some(0),
+                _ => None,
+            };
 
-        let mut step_count = 0;
-
-        let mut step_result;
-        loop {
-            if step_count < 10 {
-                let (_, _, net) = &inputs["clk"];
-                let clk_val = hd44780u.get_value_BinStr(*net);
-                let clk_val= clk_val.chars().next().unwrap();
-
-                let new_val = match StdLogic::try_from(clk_val).unwrap() {
-                    StdLogic::HDL_0 => Some(1),
-                    StdLogic::HDL_1 => Some(0),
-                    _ => None,
-                };
-
-                if let Some(new_val) = new_val {
-                    hd44780u.put_value_int(*net, new_val);
-                }
+            if let Some(new_val) = new_val {
+                self.ghdl.put_value_int(net.handle, new_val);
             }
 
-            step_result = hd44780u.simulation_step();
-            dbg!(step_result);
-
-            for (name, (kind, width, net)) in inputs.iter().chain(outputs.iter()) {
-                let str_val = hd44780u.get_value_BinStr(*net);
-                println!(" {name} {kind} {width} {}", str_val);
-            }
-
-            if step_result >= 3 {
+            result = self.ghdl.simulation_step();
+            if result >= 3 {
                 break;
             }
-
-            step_count += 1;
         }
+        result
+    }
+
+    pub fn dump_nets(&mut self) {
+        for (name, net) in &self.nets {
+            let str_val = self.ghdl.get_value_BinStr(net.handle);
+            println!(" {name}: {}[{}] = {}", net.kind, net.width, str_val);
+        }
+    }
+
+    pub fn init(&mut self) {
+        for net in self.nets.values().filter(|n| n.dir == vpiInput) {
+            self.ghdl.put_value_int(net.handle, 0);
+        }
+        self.toggle_clk_and_step(4);
+        // self.dump_nets();
+
+        assert_eq!("00000000", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+
+        self.ghdl.put_value_int(self.nets["db_in"].handle, 0x38);
+        
+        self.toggle_clk_and_step(4);
+        // self.dump_nets();
+
+        assert_eq!("00000000", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+
+        self.ghdl.put_value_int(self.nets["en"].handle, 1);
+        self.toggle_clk_and_step(4);
+        // self.dump_nets();
+
+        assert_eq!("00000001", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+
+        self.ghdl.put_value_int(self.nets["en"].handle, 0);
+        self.toggle_clk_and_step(4);
+        self.ghdl.put_value_int(self.nets["en"].handle, 1);
+        self.toggle_clk_and_step(4);
+        // self.dump_nets();
+
+        assert_eq!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+
+        self.ghdl.put_value_int(self.nets["en"].handle, 0);
+        self.ghdl.put_value_int(self.nets["db_in"].handle, 0x81);
+        self.toggle_clk_and_step(4);
+        // self.dump_nets();
+
+        self.ghdl.put_value_int(self.nets["en"].handle, 1);
+        self.toggle_clk_and_step(4);
+        // self.dump_nets();
+
+        assert_eq!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hd44780u_init() {
+        let mut _hd44780u = HD44780U::new();
+    }
+}
+
+const CHAR_ROWS: usize = 8;
+pub const CHAR_COLS: usize = 5;
+
+fn generate_cgrom() -> [[u8;CHAR_ROWS];256] {
+    use image::io::Reader as ImageReader;
+    use az::CheckedCast;
+
+    let mut chars = [[0u8;CHAR_ROWS];256];
+
+    let img = concat!(env!("CARGO_MANIFEST_DIR"), "/../circuit/lcd_chars_b_w.png");
+    dbg!(img);
+
+    let img = ImageReader::open(img).unwrap()
+        .decode().unwrap();
+    let samples = img.as_rgb8().unwrap();
+
+    let zero_pix_left = 238.0;
+    let zero_pix_right = 259.0;
+    let zero_pix_cols = 5.0;
+    let zero_pix_top = 153.0;
+    let zero_pix_bottom = 190.0;
+    let zero_pix_rows = 7.0;
+
+    let pix_cols_per_square = (zero_pix_right - zero_pix_left) / (zero_pix_cols - 1.0);
+    let pix_rows_per_square = (zero_pix_bottom - zero_pix_top) / (zero_pix_rows - 1.0);
+
+    let zero_lo_nibble = 0;
+    let zero_hi_nibble = 3;
+
+    let ff_pix_left = 742.0;
+    let ff_pix_top = 1086.0;
+
+    let pix_cols_per_box = (ff_pix_left - zero_pix_left) / ((0xF - zero_hi_nibble) as f64);
+    let pix_rows_per_box = (ff_pix_top - zero_pix_top) / ((0xF - zero_lo_nibble) as f64);
+
+    let origin_pix_left = zero_pix_left - (zero_hi_nibble as f64 * pix_cols_per_box);
+    let origin_pix_top = zero_pix_top - (zero_lo_nibble as f64 * pix_cols_per_box);
+
+    for c in 0x0..=0xFFu8 {
+        let lo_nibble = c & 0xF;
+        let hi_nibble = (c>>4) & 0xF;
+
+        let rows = &mut chars[c as usize];
+
+        if hi_nibble != 0 {
+            let left = origin_pix_left + (hi_nibble as f64) * pix_cols_per_box;
+            let top = origin_pix_top + (lo_nibble as f64) * pix_rows_per_box;
+
+            for row in 0..CHAR_ROWS {
+                let row_byte = &mut rows[row as usize];
+                let pix_row: u32 = (top + (row as f64) * pix_rows_per_square).round().checked_cast().unwrap();
+                for col in 0..CHAR_COLS {
+                    let pix_col: u32 = (left + ((4-col) as f64) * pix_cols_per_square).round().checked_cast().unwrap();
+                    let pixel = samples.get_pixel(pix_col, pix_row);
+                    let pixel: u32 = pixel.0.iter().map(|i| *i as u32).sum::<u32>();
+                    let pixel = pixel / (3*128);
+                    assert!((0..=1).contains(&pixel));
+                    let pixel = 1 - pixel;
+                    *row_byte |= (pixel << col) as u8;
+                }
+            }
+        }
+    }
+
+    chars
+}
+
+use lazy_static::lazy_static;
+lazy_static! {
+    pub static ref CG_ROM: [[u8;CHAR_ROWS];256] = generate_cgrom();
+}
+
+
+#[cfg(test)]
+mod cgrom_tests {
+    use super::*;
+
+    #[test]
+    fn cgrom_generate() {
+        let cgrom = &CG_ROM;
+        let a = cgrom['A' as u8 as usize];
+        assert_eq!("01110", &format!("{:05b}", a[0]));
+        assert_eq!("10001", &format!("{:05b}", a[1]));
+        assert_eq!("10001", &format!("{:05b}", a[2]));
+        assert_eq!("10001", &format!("{:05b}", a[3]));
+        assert_eq!("11111", &format!("{:05b}", a[4]));
+        assert_eq!("10001", &format!("{:05b}", a[5]));
+        assert_eq!("10001", &format!("{:05b}", a[6]));
+        assert_eq!("00000", &format!("{:05b}", a[7]));
     }
 }

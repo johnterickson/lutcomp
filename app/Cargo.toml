@@ -8,8 +8,6 @@ edition = "2018"
 
 [dependencies]
 strum = "0.24.1"
-image = "*"
-az = "1.2"
 alu = { path = "../alu" }
 assemble = { path = "../assemble" }
 common = { path = "../common" }

@@ -44,7 +44,7 @@ use tty::*;
 mod ps2;
 use ps2::*;
 
-mod lcd;
+pub mod lcd;
 use lcd::*;
 
 

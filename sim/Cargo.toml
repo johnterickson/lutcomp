@@ -11,6 +11,8 @@ strum = "0.24.1"
 packed_struct = "0.10.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
+image = "*"
+az = "1.2"
 alu = { path = "../alu" }
 common = { path = "../common" }
 ucode = { path = "../ucode" }

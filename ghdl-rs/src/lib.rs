@@ -74,6 +74,33 @@ impl TryFrom<char> for StdLogic {
     }
 }
 
+pub struct Net {
+    pub handle: vpiHandle,
+    pub width: u32,
+    pub dir: u32,
+    pub kind: u32,
+}
+
+impl Net {
+    pub fn from_net(handle: vpiHandle, ghdl: &mut GhdlDevice) -> Self {
+        let width = ghdl.get(vpiSize as i32, handle) as u32;
+        let dir = ghdl.get(vpiDirection as i32, handle) as u32;
+        let kind = ghdl.get(vpiType as i32, handle) as u32;
+
+        Net {
+            handle,
+            width,
+            dir,
+            kind
+        }
+    }
+
+    pub fn name<'a>(&'a self, ghdl: &'a mut GhdlDevice) -> &'a str {
+        ghdl.get_str(vpiName as i32, self.handle)
+    }
+}
+
+
 pub fn build_vhdl(vhdl_path: &str, device: &str) {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
@@ -239,8 +266,8 @@ impl GhdlDevice {
         }
     }
 
-    pub fn simulation_step(&mut self) -> ::std::os::raw::c_int {
-        unsafe { self.__ghdl_simulation_step.unwrap()() }
+    pub fn simulation_step(&mut self) -> u32 {
+        unsafe { self.__ghdl_simulation_step.unwrap()() as u32}
     }
 
     pub fn get_vlog_info(&self, vlog_info_p: p_vpi_vlog_info) -> PLI_INT32 {
@@ -297,6 +324,16 @@ impl GhdlDevice {
             let mut val: s_vpi_value = std::mem::zeroed();
             val.format = vpiIntVal as i32;
             val.value.integer = new_val;
+            self.put_value(expr, &mut val, std::ptr::null_mut(), 0);
+        }
+    }
+
+    pub fn put_value_BinStr(&mut self, expr: vpiHandle, new_val: &str) {
+        unsafe { 
+            let mut val: s_vpi_value = std::mem::zeroed();
+            val.format = vpiBinStrVal as i32;
+            let new_val = CString::new(new_val).unwrap();
+            val.value.str_ = new_val.as_ptr() as *mut i8;
             self.put_value(expr, &mut val, std::ptr::null_mut(), 0);
         }
     }

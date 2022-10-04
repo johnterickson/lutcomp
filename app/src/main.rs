@@ -8,9 +8,6 @@ use sim::*;
 use ucode::*;
 use std::{borrow::Cow, collections::BTreeMap, fs::File, io::Read, path::Path, convert::TryInto};
 
-use az::CheckedCast;
-use image::io::Reader as ImageReader;
-
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     let arg1 = args.get(1).map(|s| s.as_str());
@@ -292,71 +289,33 @@ fn main() {
             println!("q");
         }
         Some("cgrom") => {
+
+            let cgrom = &sim::lcd::CG_ROM;
+
             println!("v2.0 raw");
-
-            let img = ImageReader::open("circuit/lcd_chars_b_w.png").unwrap()
-                .decode().unwrap();
-            let samples = img.as_rgb8().unwrap();
-
-            let zero_pix_left = 238.0;
-            let zero_pix_right = 259.0;
-            let zero_pix_cols = 5.0;
-            let zero_pix_top = 153.0;
-            let zero_pix_bottom = 190.0;
-            let zero_pix_rows = 7.0;
-
-            const CHAR_ROWS: usize = 8;
-            const CHAR_COLS: usize = 5;
-
-            let pix_cols_per_square = (zero_pix_right - zero_pix_left) / (zero_pix_cols - 1.0);
-            let pix_rows_per_square = (zero_pix_bottom - zero_pix_top) / (zero_pix_rows - 1.0);
-
-            let zero_lo_nibble = 0;
-            let zero_hi_nibble = 3;
-
-            let ff_pix_left = 742.0;
-            let ff_pix_top = 1086.0;
-
-            let pix_cols_per_box = (ff_pix_left - zero_pix_left) / ((0xF - zero_hi_nibble) as f64);
-            let pix_rows_per_box = (ff_pix_top - zero_pix_top) / ((0xF - zero_lo_nibble) as f64);
-
-            let origin_pix_left = zero_pix_left - (zero_hi_nibble as f64 * pix_cols_per_box);
-            let origin_pix_top = zero_pix_top - (zero_lo_nibble as f64 * pix_cols_per_box);
             let mut addr = 0;
-
             for c in 0x0..=0xFFu8 {
                 print!("# @0x{:04x} ASCII 0x{:02x}", addr, c);
-
-                let lo_nibble = c & 0xF;
+        
                 let hi_nibble = (c>>4) & 0xF;
-
-                let mut rows = [0u8; CHAR_ROWS];
-
+        
+                let rows = &cgrom[c as usize];
+        
                 if hi_nibble == 0 {
                     println!();
                 } else {
                     println!(" `{}`", c as char);
-
-                    let left = origin_pix_left + (hi_nibble as f64) * pix_cols_per_box;
-                    let top = origin_pix_top + (lo_nibble as f64) * pix_rows_per_box;
-
-                    for row in 0..CHAR_ROWS {
-                        let pix_row: u32 = (top + (row as f64) * pix_rows_per_square).round().checked_cast().unwrap();
-                        let row_byte = &mut rows[row as usize];
-                        for col in 0..CHAR_COLS {
-                            let pix_col: u32 = (left + ((4-col) as f64) * pix_cols_per_square).round().checked_cast().unwrap();
-                            let pixel = samples.get_pixel(pix_col, pix_row);
-                            let pixel: u32 = pixel.0.iter().map(|i| *i as u32).sum::<u32>();
-                            let pixel = pixel / (3*128);
-                            assert!((0..=1).contains(&pixel));
-                            let pixel = 1 - pixel;
-                            // println!("# {},{} -> {},{} = {}", col, row, pix_col, pix_row, pixel);
-                            *row_byte |= (pixel << col) as u8;
-                        }
+        
+                    for row_index in 0..rows.len() {
+                        let row_byte = rows[row_index];
+                        // for col in 0..sim::lcd::CHAR_COLS {
+                        //     let pixel = (row_byte >> col) & 0x1;
+                        //     // println!("# {},{} -> {}", col, row, pixel);
+                        // }
                         print!("# ");
-                        for col in 0..CHAR_COLS {
+                        for col in 0..sim::lcd::CHAR_COLS {
                             let bit: u8 = (4 - col).try_into().unwrap();
-                            if (*row_byte >> bit) & 1 == 0 {
+                            if (row_byte >> bit) & 1 == 0 {
                                 print!(" ");
                             } else {
                                 print!("*");
@@ -366,7 +325,7 @@ fn main() {
                         println!();
                     }
                 }
-
+        
                 for row_byte in rows {
                     print!("{:02x} ", row_byte);
                     addr += 1;
