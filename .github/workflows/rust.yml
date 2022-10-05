@@ -20,8 +20,10 @@ jobs:
         submodules: 'recursive'
     - name: install deps
       run: |
-        sudo apt install ghdl
+        sudo apt install ghdl*
         ghdl --version
+        ghdl-llvm --version
+        sudo apt install libclang-dev
     - name: check versions
       run: |
         java --version
