@@ -1709,7 +1709,7 @@ mod tests {
         rom.push(Opcode::ReturnFromInterrupt as u8);
         rom.push(Opcode::HaltNoCode as u8);
 
-        let mut c = Computer::from_raw_with_print(rom, true);
+        let mut c = Computer::from_raw_with_print(rom, false);
 
         *c.mem_word_mut(INTERRUPT_ISR) = isr_addr.to_le_bytes();
 

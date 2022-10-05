@@ -308,10 +308,6 @@ fn main() {
         
                     for row_index in 0..rows.len() {
                         let row_byte = rows[row_index];
-                        // for col in 0..sim::lcd::CHAR_COLS {
-                        //     let pixel = (row_byte >> col) & 0x1;
-                        //     // println!("# {},{} -> {}", col, row, pixel);
-                        // }
                         print!("# ");
                         for col in 0..sim::lcd::CHAR_COLS {
                             let bit: u8 = (4 - col).try_into().unwrap();

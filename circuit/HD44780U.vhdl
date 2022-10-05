@@ -54,9 +54,11 @@ architecture rtl of HD44780U is
     type pix_states is (start, read_cgrom, clk_on, clk_off);
     signal pix_state: pix_states := start;
 begin
-    process(clk, state, pix_state, en, PixRow, PixCol, pix_clk, AC, DDRAM, CharRow, CharCol, busy, clearing)
+    process(clk, en)
     begin
         db_out <= B"ZZZZZZZZ";
+        cgrom_addr <= B"00000000000";
+        
         if (en = '1' and rs = '0' and rw = '1') then
             db_out(6 downto 0) <= std_logic_vector(AC);
             db_out(7) <= busy;

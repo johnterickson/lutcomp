@@ -6,7 +6,9 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 extern crate execute;
 use std::env;
+use std::marker::PhantomPinned;
 use std::process::{Command, Stdio};
+use std::ptr::null_mut;
 use execute::Execute;
 
 extern crate dlopen;
@@ -74,7 +76,28 @@ impl TryFrom<char> for StdLogic {
     }
 }
 
+impl StdLogic {
+    pub fn from_str(s: &str) -> Option<usize> {
+        let mut val = 0;
+        for c in s.chars() {
+            if let Ok(l) = StdLogic::try_from(c) {
+                val |= match l {
+                    StdLogic::HDL_0 => 0,
+                    StdLogic::HDL_1 => 1,
+                    _ => return None,
+                };
+                val <<= 1;
+            } else {
+                return None;
+            }
+        }
+        Some(val)
+    }
+}
+
+#[derive(Clone)]
 pub struct Net {
+    pub name: String,
     pub handle: vpiHandle,
     pub width: u32,
     pub dir: u32,
@@ -83,20 +106,18 @@ pub struct Net {
 
 impl Net {
     pub fn from_net(handle: vpiHandle, ghdl: &mut GhdlDevice) -> Self {
+        let name = ghdl.get_str(vpiName as i32, handle).to_owned();
         let width = ghdl.get(vpiSize as i32, handle) as u32;
         let dir = ghdl.get(vpiDirection as i32, handle) as u32;
         let kind = ghdl.get(vpiType as i32, handle) as u32;
 
         Net {
+            name,
             handle,
             width,
             dir,
             kind
         }
-    }
-
-    pub fn name<'a>(&'a self, ghdl: &'a mut GhdlDevice) -> &'a str {
-        ghdl.get_str(vpiName as i32, self.handle)
     }
 }
 
@@ -197,6 +218,8 @@ pub struct GhdlDevice {
     _lib: Library,
     thunk: vpi_thunk,
     __ghdl_simulation_step: __ghdl_simulation_stepPtr,
+    _pin: PhantomPinned,
+    cb: Option<Box<dyn FnMut(&t_cb_data)->i32 + 'static>>,
 }
 
 impl GhdlDevice {
@@ -216,6 +239,7 @@ impl GhdlDevice {
             thunk.vpi_get_value = lib.symbol("vpi_get_value").unwrap();
             thunk.vpi_put_value = lib.symbol("vpi_put_value").unwrap();
 
+            dbg!(thunk.vpi_get);
             thunk
         };
 
@@ -263,6 +287,8 @@ impl GhdlDevice {
             _lib: lib,
             thunk,
             __ghdl_simulation_step,
+            _pin: PhantomPinned {},
+            cb: None,
         }
     }
 
@@ -274,8 +300,38 @@ impl GhdlDevice {
         unsafe { self.thunk.vpi_get_vlog_info.unwrap()(vlog_info_p) }
     }
 
-    pub fn register_cb(&mut self, cb_data_p: p_cb_data) -> vpiHandle {
-        unsafe { self.thunk.vpi_register_cb.unwrap()(cb_data_p) }
+    unsafe extern "C" fn static_call_back(cb_data: *mut t_cb_data) -> i32 {
+        let ghdl = (*cb_data).user_data as *mut GhdlDevice;
+        let ghdl = &mut *ghdl;
+        ghdl.call_back(&mut *cb_data)
+    }
+
+    fn call_back(&mut self, cb_data: &mut t_cb_data) -> i32 {
+        if let Some(cb) = self.cb.as_mut() {
+            cb(cb_data)
+        } else {
+            0
+        }
+    }
+
+    pub fn set_callback(&mut self, cb: impl FnMut(&t_cb_data)->i32 + 'static) {
+        self.cb = Some(Box::new(cb));
+    }
+
+    pub fn register_cb(&mut self, reason: i32, obj: *mut u32) -> vpiHandle{
+        unsafe {
+            let mut cb = t_cb_data {
+                reason, 
+                cb_rtn: Some(Self::static_call_back), 
+                obj, 
+                time: null_mut(),
+                value: null_mut(),
+                index: 0,
+                user_data: self as *mut GhdlDevice as *mut i8
+            };
+            // dbg!(cb.user_data as *mut c_void);
+            self.thunk.vpi_register_cb.unwrap()(&mut cb)
+        }
     }
 
     pub fn iterate(&self, type_: PLI_INT32, refHandle: vpiHandle) -> vpiHandle {
@@ -347,4 +403,10 @@ impl GhdlDevice {
     ) -> vpiHandle {
         unsafe { self.thunk.vpi_put_value.unwrap()(object, value_p, time_p, flags) }
     }
+
+
 }
+
+// impl IndexMut<&str> for GhdlDevice {
+
+// }

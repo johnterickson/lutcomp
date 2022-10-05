@@ -1,44 +1,66 @@
 #![allow(non_upper_case_globals)]
+#![allow(dead_code)]
 
-use std::{collections::VecDeque, ptr, convert::TryFrom};
+use std::{ptr::{self}, convert::TryFrom, marker::PhantomPinned};
 
 use ghdl_rs::*;
 
 use crate::*;
 
-#[allow(dead_code)]
 enum Protocol { Bits4, Bits8 }
 
-#[allow(dead_code)]
-pub struct Lcd {
-    bottom_nibble: Option<u8>,
-    protocol: Protocol,
-    busy: bool,
-    pub queue: VecDeque<u8>,
-    // controller: HD44780U,
+const CHAR_PIX_ROWS: usize = 10;
+const CGROM_PIX_ROWS: usize = 8;
+const CHAR_PIX_COLS: usize = 6;
+const DISPLAY_CHAR_ROWS: usize = 2;
+const DISPLAY_CHAR_COLS: usize = 20;
+const DISPLAY_PIX_ROWS: usize = DISPLAY_CHAR_ROWS * CHAR_PIX_ROWS;
+const DISPLAY_PIX_COLS: usize = DISPLAY_CHAR_COLS * CHAR_PIX_COLS;
 
+const CHAR_ROWS: usize = 8;
+pub const CHAR_COLS: usize = 5;
+
+pub struct Lcd {
+    protocol: Protocol,
+    lazy_controller: Option<Box<HD44780U>>,
 }
 
 impl Lcd {
     pub fn new() -> Self {
-        // let mut controller = HD44780U::new();
-        // controller.init();
         Lcd {
-            busy: false,
-            queue: VecDeque::new(),
             protocol: Protocol::Bits8,
-            bottom_nibble: None,
-            // controller: controller,
+            lazy_controller: None,
         }
+    }
+
+    fn controller(&mut self) -> &mut HD44780U {
+        if self.lazy_controller.is_none() {
+            self.lazy_controller = Some(HD44780U::new());
+            self.lazy_controller.as_mut().unwrap().init();
+        }
+
+        self.lazy_controller.as_mut().unwrap()
     }
 }
 
 impl Device for Lcd {
     fn process(&mut self) {
-        // self.controller.toggle_clk_and_step(1);
+        if let Some(c) = &mut self.lazy_controller {
+            let addr = c.ghdl.get_value_BinStr(c.nets["cgrom_addr"].handle);
+            if let Some(addr) = StdLogic::from_str(addr) {
+                let char = addr / CHAR_ROWS;
+                assert!((0..=255).contains(&char));
+                let row = addr % CHAR_ROWS;
+                assert!((0..CHAR_ROWS).contains(&row));
+
+                c.ghdl.put_value_int(c.nets["pix_val"].handle, CG_ROM[char][row] as i32);
+            }
+            c.toggle_clk_and_step(1);
+        }
     }
 
     fn ready_to_write(&self) -> bool {
+        // todo check busy
         true
     }
 
@@ -47,28 +69,65 @@ impl Device for Lcd {
     }
 
     fn read(&mut self) -> u8 {
-        if self.busy { 0x80 } else { 0x00 }
+        0 // todo busy
     }
 
-    fn write(&mut self, b: u8) {
-        self.queue.push_back(b);
+    fn write(&mut self, _b: u8) {
+        // do nothing for now
     }
 }
 
 include!(concat!(env!("OUT_DIR"), "/hd44780u.rs"));
 
+// pub struct HD44780U {
+//     inner: Box<HD44780U_inner>
+// }
+
+// impl HD44780U {
+//     pub fn new() -> Self {
+//         HD44780U { inner: Box::new(HD44780U_inner::new()) }
+//     }
+
+//     extern "C" fn static_call_back(cb_data: *mut t_cb_data) -> i32 {
+//         unsafe {
+//             let hd = (*cb_data).user_data as *mut HD44780U_inner;
+//             let hd = &mut *hd;
+//             let cb_data = &*cb_data;
+//             hd.call_back(cb_data)
+//         }
+//     }
+// }
 
 pub struct HD44780U {
-    pub ghdl: GhdlDevice,
+    pub ghdl: Box<GhdlDevice>,
     pub nets: BTreeMap<String,Net>,
+    pub by_handle: BTreeMap<vpiHandle,Net>,
+    _pin: PhantomPinned,
 }
 
 impl HD44780U {
-    pub fn new() -> Self {
+    fn call_back(&mut self, cb_data: &t_cb_data) -> i32 {
+        assert_eq!(cb_data.reason, cbValueChange as i32);
+        let net = &self.by_handle[&cb_data.obj];
+        let name = &net.name;
+        let str_val = self.ghdl.get_value_BinStr(net.handle);
+        println!("cbValueChange {name} = {str_val}");
+
+        match (name.as_str(), str_val) {
+            ("pix_clk", "1") => {
+
+            }
+            _ => {}
+        }
+        0
+    }
+
+    pub fn new() -> Box<Self> {
         // see https://gitlab.ensta-bretagne.fr/bollenth/ghdl-vpi-virtual-board/-/blob/master/src/vpi.cc
         // for VPI example
 
-        let mut ghdl = GhdlDevice::new(hd44780u_LIB_PATH, hd44780u_VPI_PATH);
+        let ghdl = GhdlDevice::new(hd44780u_LIB_PATH, hd44780u_VPI_PATH);
+        let mut ghdl = Box::new(ghdl);
 
         let module = {
             let iter = ghdl.iterate(vpiModule as i32, ptr::null_mut());
@@ -84,6 +143,7 @@ impl HD44780U {
         // dbg!(scope);
 
         let mut nets = BTreeMap::new();
+        let mut by_handle = BTreeMap::new();
 
         let iter = ghdl.iterate(vpiNet as i32, scope);
         let mut net: vpiHandle = ptr::null_mut();
@@ -94,13 +154,38 @@ impl HD44780U {
             }
         {
             let net = Net::from_net(net, &mut ghdl);
-            nets.insert(net.name(&mut ghdl).to_owned(), net);
+            nets.insert(net.name.to_owned(), net.clone());
+            by_handle.insert(net.handle, net);
         }
 
-        HD44780U {
-            ghdl,
-            nets
+        for net in nets.values() {
+            if net.dir == vpiInput {
+                continue;
+            }
+            ghdl.register_cb(
+                cbValueChange as i32, 
+                net.handle);
         }
+
+        // ghdl.set_callback(|cb_data| {
+        // });
+
+        let mut boxed = Box::new(HD44780U {
+            ghdl,
+            nets,
+            by_handle,
+            _pin: PhantomPinned {}
+        });
+
+        unsafe {
+            let boxed_ptr = boxed.as_mut() as *mut HD44780U;
+            boxed.ghdl.set_callback(move |cb_data| {
+                let boxed = &mut *boxed_ptr;
+                boxed.call_back(cb_data)
+            });
+        }
+
+        boxed
     }
 
     pub fn toggle_clk_and_step(&mut self, steps: usize) -> u32 {
@@ -131,7 +216,7 @@ impl HD44780U {
     pub fn dump_nets(&mut self) {
         for (name, net) in &self.nets {
             let str_val = self.ghdl.get_value_BinStr(net.handle);
-            println!(" {name}: {}[{}] = {}", net.kind, net.width, str_val);
+            println!(" {name}: {} {}[{}] = {}", net.dir, net.kind, net.width, str_val);
         }
     }
 
@@ -176,6 +261,27 @@ impl HD44780U {
 
         assert_eq!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
     }
+
+    pub fn clear(&mut self) {
+        self.ghdl.put_value_int(self.nets["rs"].handle, 0);
+        self.ghdl.put_value_int(self.nets["rw"].handle, 0);
+        self.ghdl.put_value_int(self.nets["en"].handle, 0);
+        self.ghdl.put_value_int(self.nets["db_in"].handle, 0x1); // clear command
+        self.toggle_clk_and_step(4);
+        self.ghdl.put_value_int(self.nets["en"].handle, 1);
+        self.toggle_clk_and_step(4);
+        assert_eq!("00000101", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+
+        while self.ghdl.get_value_BinStr(self.nets["state"].handle) != "00000011" {
+            let step_result = self.toggle_clk_and_step(1);
+            if step_result >=3 {
+                dbg!(step_result);
+                break;
+            }
+        }
+
+        assert_eq!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+    }
 }
 
 
@@ -185,12 +291,21 @@ mod tests {
 
     #[test]
     fn hd44780u_init() {
-        let mut _hd44780u = HD44780U::new();
+        let mut hd44780u = HD44780U::new();
+        hd44780u.init();
+        hd44780u.dump_nets();
     }
-}
 
-const CHAR_ROWS: usize = 8;
-pub const CHAR_COLS: usize = 5;
+    // #[test]
+    // fn hd44780u_clear() {
+    //     let mut hd44780u = HD44780U::new();
+    //     hd44780u.init();
+    //     hd44780u.dump_nets();
+
+    //     hd44780u.clear();
+    //     hd44780u.dump_nets();
+    // }
+}
 
 fn generate_cgrom() -> [[u8;CHAR_ROWS];256] {
     use image::io::Reader as ImageReader;
@@ -199,7 +314,6 @@ fn generate_cgrom() -> [[u8;CHAR_ROWS];256] {
     let mut chars = [[0u8;CHAR_ROWS];256];
 
     let img = concat!(env!("CARGO_MANIFEST_DIR"), "/../circuit/lcd_chars_b_w.png");
-    dbg!(img);
 
     let img = ImageReader::open(img).unwrap()
         .decode().unwrap();
