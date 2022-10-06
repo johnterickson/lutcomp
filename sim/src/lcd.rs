@@ -12,7 +12,7 @@ enum Protocol { Bits4, Bits8 }
 const CHAR_PIX_ROWS: usize = 10;
 const CGROM_PIX_ROWS: usize = 8;
 const CHAR_PIX_COLS: usize = 6;
-const DISPLAY_CHAR_ROWS: usize = 2;
+const DISPLAY_CHAR_ROWS: usize = 4;
 const DISPLAY_CHAR_COLS: usize = 20;
 const DISPLAY_PIX_ROWS: usize = DISPLAY_CHAR_ROWS * CHAR_PIX_ROWS;
 const DISPLAY_PIX_COLS: usize = DISPLAY_CHAR_COLS * CHAR_PIX_COLS;
@@ -79,46 +79,42 @@ impl Device for Lcd {
 
 include!(concat!(env!("OUT_DIR"), "/hd44780u.rs"));
 
-// pub struct HD44780U {
-//     inner: Box<HD44780U_inner>
-// }
-
-// impl HD44780U {
-//     pub fn new() -> Self {
-//         HD44780U { inner: Box::new(HD44780U_inner::new()) }
-//     }
-
-//     extern "C" fn static_call_back(cb_data: *mut t_cb_data) -> i32 {
-//         unsafe {
-//             let hd = (*cb_data).user_data as *mut HD44780U_inner;
-//             let hd = &mut *hd;
-//             let cb_data = &*cb_data;
-//             hd.call_back(cb_data)
-//         }
-//     }
-// }
-
 pub struct HD44780U {
     pub ghdl: Box<GhdlDevice>,
     pub nets: BTreeMap<String,Net>,
     pub by_handle: BTreeMap<vpiHandle,Net>,
+    pub buffer: [[u8;DISPLAY_PIX_COLS];DISPLAY_PIX_ROWS],
     _pin: PhantomPinned,
 }
 
 impl HD44780U {
     fn call_back(&mut self, cb_data: &t_cb_data) -> i32 {
         assert_eq!(cb_data.reason, cbValueChange as i32);
-        // let net = &self.by_handle[&cb_data.obj];
-        // let name = &net.name;
-        // let str_val = self.ghdl.get_value_BinStr(net.handle);
+        let net = &self.by_handle[&cb_data.obj];
+        let name = &net.name;
+        let str_val = self.ghdl.get_value_BinStr(net.handle);
         // println!("cbValueChange {name} = {str_val}");
 
-        // match (name.as_str(), str_val) {
-        //     ("pix_clk", "1") => {
-
-        //     }
-        //     _ => {}
-        // }
+        match (name.as_str(), str_val) {
+            ("pix_clk", "1") => {
+                let pix_addr = usize::from_str_radix(self.ghdl.get_value_BinStr(self.nets["pix_addr"].handle), 2).unwrap();
+                let pix_row = pix_addr / DISPLAY_PIX_COLS;
+                let pix_col = pix_addr % DISPLAY_PIX_COLS;
+                let pix_val = usize::from_str_radix(self.ghdl.get_value_BinStr(self.nets["pix_val"].handle), 2).unwrap();
+                // println!("[{},{}]={}", pix_row, pix_col, pix_val);
+                self.buffer[pix_row][pix_col] = pix_val.try_into().unwrap();
+            }
+            ("cgrom_addr", addr) => {
+                let addr_val = usize::from_str_radix(addr, 2).unwrap();
+                let char = addr_val / CHAR_ROWS;
+                let row = addr_val % CHAR_ROWS;
+                let data = CG_ROM[char][row];
+                // println!("cgrom_addr={}=0b{:b} ==> char=0x{}='{}',row={},data=0b{:06b}",
+                //     addr, addr_val, char as u8, char as u8 as char, row, data);
+                self.ghdl.put_value_int(self.nets["cgrom_data"].handle, data.into());
+            }
+            _ => {}
+        }
         0
     }
 
@@ -167,14 +163,12 @@ impl HD44780U {
                 net.handle);
         }
 
-        // ghdl.set_callback(|cb_data| {
-        // });
-
         let mut boxed = Box::new(HD44780U {
             ghdl,
             nets,
             by_handle,
-            _pin: PhantomPinned {}
+            buffer: [[0u8;DISPLAY_PIX_COLS];DISPLAY_PIX_ROWS],
+            _pin: PhantomPinned {},
         });
 
         unsafe {
@@ -188,9 +182,9 @@ impl HD44780U {
         boxed
     }
 
-    pub fn toggle_clk_and_step(&mut self, steps: usize) -> i32 {
-        let mut result = i32::MIN;
-        for _ in 0..steps {
+    pub fn toggle_clk_and_step(&mut self, clk_steps: usize) -> i32 {
+        let mut result = None;
+        for _ in 0..clk_steps {
             let net = &self.nets["clk"];
             let clk_val = self.ghdl.get_value_BinStr(net.handle);
             let clk_val= clk_val.chars().next().unwrap();
@@ -205,14 +199,20 @@ impl HD44780U {
                 self.ghdl.put_value_int(net.handle, new_val);
             }
 
-            while GHDL_STEP_RESULT_DELTA == {result = self.ghdl.simulation_step(); result} {
-                // dbg!(result);
-            }
-            if result >= 3 {
-                break;
+            loop {
+                let step_result = self.ghdl.simulation_step();
+                // dbg!(step_result);
+                // self.dump_nets();
+                result = Some(step_result);
+                // if step_result > GHDL_STEP_RESULT_NON_DELTA {
+                //     return step_result;
+                // }
+                if step_result != GHDL_STEP_RESULT_DELTA {
+                    break;
+                }
             }
         }
-        result
+        result.unwrap()
     }
 
     pub fn dump_nets(&mut self) {
@@ -261,18 +261,55 @@ impl HD44780U {
         self.toggle_clk_and_step(4);
         self.ghdl.put_value_int(self.nets["en"].handle, 1);
         self.toggle_clk_and_step(4);
-        assert_ne!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+    }
 
+    fn step_until_idle_with_cb<F: FnMut(&mut Self)>(&mut self, mut cb: F) {
         while self.ghdl.get_value_BinStr(self.nets["state"].handle) != "00000011" {
+            cb(self);
             let step_result = self.toggle_clk_and_step(1);
             // dbg!(step_result);
             if step_result >= 4 {
-                
+
                 break;
             }
         }
+    }
 
-        assert_eq!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+    fn step_until_idle(&mut self) {
+        self.step_until_idle_with_cb(|_|{});
+    }
+
+    pub fn set_pos(&mut self, i: u8) {
+        self.ghdl.put_value_int(self.nets["rs"].handle, 0);
+        self.ghdl.put_value_int(self.nets["rw"].handle, 0);
+        self.ghdl.put_value_int(self.nets["en"].handle, 0);
+        self.ghdl.put_value_int(self.nets["db_in"].handle, 0x80 | i as i32);
+        self.toggle_clk_and_step(1);
+
+        self.ghdl.put_value_int(self.nets["en"].handle, 1);
+        self.toggle_clk_and_step(1);
+        self.ghdl.put_value_int(self.nets["en"].handle, 0);
+    }
+
+    pub fn write(&mut self, ch: char) {
+        self.ghdl.put_value_int(self.nets["rs"].handle, 1);
+        self.ghdl.put_value_int(self.nets["rw"].handle, 0);
+        self.ghdl.put_value_int(self.nets["en"].handle, 0);
+        self.ghdl.put_value_int(self.nets["db_in"].handle, ch as u8 as i32);
+        self.toggle_clk_and_step(1);
+
+        self.ghdl.put_value_int(self.nets["en"].handle, 1);
+        self.toggle_clk_and_step(1);
+        self.ghdl.put_value_int(self.nets["en"].handle, 0);
+    }
+
+    pub fn dump_display(&mut self) {
+        for row in &self.buffer {
+            for pix in row {
+                print!("{}", if *pix == 0 { '.' } else { '*' });
+            }
+            println!();
+        }
     }
 }
 
@@ -285,17 +322,65 @@ mod tests {
     fn hd44780u_init() {
         let mut hd44780u = HD44780U::new();
         hd44780u.init();
+        hd44780u.step_until_idle();
         hd44780u.dump_nets();
+    }
+
+    #[test]
+    fn hd44780u_set_pos() {
+        let mut hd44780u = HD44780U::new();
+        hd44780u.init();
+        hd44780u.step_until_idle();
+
+        hd44780u.set_pos(2);
+        hd44780u.step_until_idle();
+        assert_eq!(
+            "0000010",
+            hd44780u.ghdl.get_value_BinStr(hd44780u.nets["ac"].handle));
+    }
+
+    #[test]
+    fn hd44780u_write_char() {
+        let mut hd44780u = HD44780U::new();
+        hd44780u.init();
+        hd44780u.step_until_idle();
+
+        hd44780u.set_pos(0);
+        hd44780u.step_until_idle();
+
+        hd44780u.write('F');
+        hd44780u.step_until_idle();
+
+        let base_pix_row = 0;
+        let base_pix_col = 0;
+
+        let expected_rows = CG_ROM['F' as u8 as usize];
+        for y in 0..CHAR_ROWS {
+            for x in 0..CHAR_COLS {
+                let expected = (expected_rows[y] >> (CHAR_COLS-x)) & 0x1;
+                let actual = hd44780u.buffer[base_pix_row+y][base_pix_col+x];
+                assert_eq!(expected, actual, "Mismatch at {},{}", x, y);
+            }
+        }
     }
 
     #[test]
     fn hd44780u_clear() {
         let mut hd44780u = HD44780U::new();
         hd44780u.init();
-        hd44780u.dump_nets();
+        hd44780u.step_until_idle();
 
         hd44780u.clear();
-        hd44780u.dump_nets();
+        let mut seen = BTreeSet::new();
+        hd44780u.step_until_idle_with_cb(|hd| {
+            seen.insert(hd.ghdl.get_value_BinStr(hd.nets["ac"].handle).to_owned());
+        });
+
+        assert_eq!(seen.len(), DISPLAY_CHAR_ROWS * DISPLAY_CHAR_COLS);
+
+        assert_eq!(
+            "0000000",
+            hd44780u.ghdl.get_value_BinStr(hd44780u.nets["ac"].handle));
     }
 }
 

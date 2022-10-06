@@ -5,12 +5,12 @@ use IEEE.numeric_std.all;
 entity HD44780U is
     port(	
         clk, en, rw, rs: in std_logic;
-		db_in: in std_logic_vector( 7 downto 0 );
-		db_out: out std_logic_vector( 7 downto 0 );
-		cgrom_addr: out unsigned(10 downto 0);
+        db_in: in std_logic_vector( 7 downto 0 );
+        db_out: out std_logic_vector( 7 downto 0 );
+        cgrom_addr: out unsigned(10 downto 0);
         cgrom_data: in std_logic_vector(4 downto 0);
-		pix_addr: out unsigned(13 downto 0);
-		pix_val, pix_clk, busy: out std_logic;
+        pix_addr: out unsigned(13 downto 0);
+        pix_val, pix_clk, busy: out std_logic;
         CharRow: out unsigned( 1 downto 0 );
         CharCol: out unsigned( 4 downto 0 );
         PixRow: out unsigned( 3 downto 0 );
@@ -54,11 +54,9 @@ architecture rtl of HD44780U is
     type pix_states is (start, read_cgrom, clk_on, clk_off);
     signal pix_state: pix_states := start;
 begin
-    process(clk, en)
+    process(clk, state, pix_state, en, PixRow, PixCol, pix_clk, AC, DDRAM, CharRow, CharCol, busy, clearing, cgrom_data, db_in, rs, rw)
     begin
         db_out <= B"ZZZZZZZZ";
-        cgrom_addr <= B"00000000000";
-        
         if (en = '1' and rs = '0' and rw = '1') then
             db_out(6 downto 0) <= std_logic_vector(AC);
             db_out(7) <= busy;

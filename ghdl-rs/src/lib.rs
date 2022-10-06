@@ -241,8 +241,6 @@ impl GhdlDevice {
             thunk.vpi_get_value = lib.symbol("vpi_get_value").unwrap();
             thunk.vpi_put_value = lib.symbol("vpi_put_value").unwrap();
             thunk.vpi_get_time = lib.symbol("vpi_get_time").unwrap();
-
-            dbg!(thunk.vpi_get);
             thunk
         };
 
