@@ -5,10 +5,9 @@ typedef int (*grt_main_optionsPtr) (const char *progname, int argc, const char *
 typedef int (*grt_main_elabPtr) (void);
 typedef void (*__ghdl_simulation_initPtr) (void);
 typedef int (*__ghdl_simulation_stepPtr) (void);
-//  Return value:
-//  0: delta cycle
-//  1: non-delta cycle
-//  2: stop
-//  3: finished
-//  4: stop-time reached
-//  5: stop-delta reached
+const int GHDL_STEP_RESULT_DELTA = 0;
+const int GHDL_STEP_RESULT_NON_DELTA = 1;
+const int GHDL_STEP_RESULT_STOP = 2;
+const int GHDL_STEP_RESULT_FINISHED = 3;
+const int GHDL_STEP_RESULT_STOP_TIME_REACHED = 4;
+const int GHDL_STEP_RESULT_STOP_DELTA_REACHED = 5;
