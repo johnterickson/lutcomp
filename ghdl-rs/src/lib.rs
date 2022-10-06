@@ -144,11 +144,8 @@ pub fn build_vhdl(vhdl_path: &str, device: &str) {
         }
     }
 
-    fn ghdl<T: AsRef<std::ffi::OsStr>>(args: &[T]) -> String {
-        run("ghdl", args)
-    }
-
-    ghdl(&["-a", "--std=08", 
+    run("ghdl-llvm", &[
+        "-a", "--std=08", 
         &format!("--workdir={}", out_path.display()),
         &vhdl_path]);
 
@@ -156,7 +153,7 @@ pub fn build_vhdl(vhdl_path: &str, device: &str) {
     std::fs::write(&entry_c, "void (*vlog_startup_routines[]) () = { 0 };").unwrap();
 
     let entry_o = out_path.join("entry.o").display().to_string();
-    ghdl(&[
+    run("ghdl-llvm", &[
         "--vpi-compile",
         "-v",
         "gcc",
@@ -166,7 +163,7 @@ pub fn build_vhdl(vhdl_path: &str, device: &str) {
 
 
     let device_vpi = out_path.join(format!("{}.vpi", device)).display().to_string();
-    ghdl(&[
+    run("ghdl-llvm", &[
         "--vpi-link",
         "-v",
         "gcc",
@@ -238,6 +235,7 @@ impl GhdlDevice {
             thunk.vpi_handle = lib.symbol("vpi_handle").unwrap();
             thunk.vpi_get_value = lib.symbol("vpi_get_value").unwrap();
             thunk.vpi_put_value = lib.symbol("vpi_put_value").unwrap();
+            thunk.vpi_get_time = lib.symbol("vpi_get_time").unwrap();
 
             dbg!(thunk.vpi_get);
             thunk
@@ -292,8 +290,8 @@ impl GhdlDevice {
         }
     }
 
-    pub fn simulation_step(&mut self) -> u32 {
-        unsafe { self.__ghdl_simulation_step.unwrap()() as u32}
+    pub fn simulation_step(&mut self) -> i32 {
+        unsafe { self.__ghdl_simulation_step.unwrap()()}
     }
 
     pub fn get_vlog_info(&self, vlog_info_p: p_vpi_vlog_info) -> PLI_INT32 {
@@ -380,7 +378,13 @@ impl GhdlDevice {
             let mut val: s_vpi_value = std::mem::zeroed();
             val.format = vpiIntVal as i32;
             val.value.integer = new_val;
-            self.put_value(expr, &mut val, std::ptr::null_mut(), 0);
+            let mut time = t_vpi_time {
+                type_: vpiSimTime as i32,
+                high: 0,
+                low: 1,
+                real: 0.0
+            };
+            self.put_value(expr, &mut val, &mut time, vpiNoDelay as i32);
         }
     }
 
@@ -390,7 +394,13 @@ impl GhdlDevice {
             val.format = vpiBinStrVal as i32;
             let new_val = CString::new(new_val).unwrap();
             val.value.str_ = new_val.as_ptr() as *mut i8;
-            self.put_value(expr, &mut val, std::ptr::null_mut(), 0);
+            let mut time = t_vpi_time {
+                type_: vpiSimTime as i32,
+                high: 0,
+                low: 1,
+                real: 0.0
+            };
+            self.put_value(expr, &mut val, &mut time, vpiNoDelay as i32);
         }
     }
 
@@ -404,6 +414,14 @@ impl GhdlDevice {
         unsafe { self.thunk.vpi_put_value.unwrap()(object, value_p, time_p, flags) }
     }
 
+    pub fn get_time(&mut self, object: vpiHandle) -> u64 {
+        unsafe { 
+            let mut time: t_vpi_time = std::mem::zeroed();
+            time.type_ = vpiSimTime as i32;
+            self.thunk.vpi_get_time.unwrap()(object, &mut time);
+            (time.high as u64) << 32 | (time.low as u64)
+        }
+    }
 
 }
 
