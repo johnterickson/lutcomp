@@ -108,17 +108,17 @@ pub struct HD44780U {
 impl HD44780U {
     fn call_back(&mut self, cb_data: &t_cb_data) -> i32 {
         assert_eq!(cb_data.reason, cbValueChange as i32);
-        let net = &self.by_handle[&cb_data.obj];
-        let name = &net.name;
-        let str_val = self.ghdl.get_value_BinStr(net.handle);
-        println!("cbValueChange {name} = {str_val}");
+        // let net = &self.by_handle[&cb_data.obj];
+        // let name = &net.name;
+        // let str_val = self.ghdl.get_value_BinStr(net.handle);
+        // println!("cbValueChange {name} = {str_val}");
 
-        match (name.as_str(), str_val) {
-            ("pix_clk", "1") => {
+        // match (name.as_str(), str_val) {
+        //     ("pix_clk", "1") => {
 
-            }
-            _ => {}
-        }
+        //     }
+        //     _ => {}
+        // }
         0
     }
 
@@ -163,7 +163,7 @@ impl HD44780U {
                 continue;
             }
             ghdl.register_cb(
-                cbValueChange as i32, 
+                cbValueChange as i32,
                 net.handle);
         }
 
@@ -188,8 +188,8 @@ impl HD44780U {
         boxed
     }
 
-    pub fn toggle_clk_and_step(&mut self, steps: usize) -> u32 {
-        let mut result = u32::MAX;
+    pub fn toggle_clk_and_step(&mut self, steps: usize) -> i32 {
+        let mut result = i32::MIN;
         for _ in 0..steps {
             let net = &self.nets["clk"];
             let clk_val = self.ghdl.get_value_BinStr(net.handle);
@@ -205,7 +205,9 @@ impl HD44780U {
                 self.ghdl.put_value_int(net.handle, new_val);
             }
 
-            result = self.ghdl.simulation_step();
+            while GHDL_STEP_RESULT_DELTA == {result = self.ghdl.simulation_step(); result} {
+                // dbg!(result);
+            }
             if result >= 3 {
                 break;
             }
@@ -230,7 +232,7 @@ impl HD44780U {
         assert_eq!("00000000", self.ghdl.get_value_BinStr(self.nets["state"].handle));
 
         self.ghdl.put_value_int(self.nets["db_in"].handle, 0x38);
-        
+
         self.toggle_clk_and_step(4);
         // self.dump_nets();
 
@@ -249,17 +251,6 @@ impl HD44780U {
         // self.dump_nets();
 
         assert_eq!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
-
-        self.ghdl.put_value_int(self.nets["en"].handle, 0);
-        self.ghdl.put_value_int(self.nets["db_in"].handle, 0x81);
-        self.toggle_clk_and_step(4);
-        // self.dump_nets();
-
-        self.ghdl.put_value_int(self.nets["en"].handle, 1);
-        self.toggle_clk_and_step(4);
-        // self.dump_nets();
-
-        assert_eq!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
     }
 
     pub fn clear(&mut self) {
@@ -270,12 +261,13 @@ impl HD44780U {
         self.toggle_clk_and_step(4);
         self.ghdl.put_value_int(self.nets["en"].handle, 1);
         self.toggle_clk_and_step(4);
-        assert_eq!("00000101", self.ghdl.get_value_BinStr(self.nets["state"].handle));
+        assert_ne!("00000011", self.ghdl.get_value_BinStr(self.nets["state"].handle));
 
         while self.ghdl.get_value_BinStr(self.nets["state"].handle) != "00000011" {
             let step_result = self.toggle_clk_and_step(1);
-            if step_result >=3 {
-                dbg!(step_result);
+            // dbg!(step_result);
+            if step_result >= 4 {
+                
                 break;
             }
         }
@@ -296,15 +288,15 @@ mod tests {
         hd44780u.dump_nets();
     }
 
-    // #[test]
-    // fn hd44780u_clear() {
-    //     let mut hd44780u = HD44780U::new();
-    //     hd44780u.init();
-    //     hd44780u.dump_nets();
+    #[test]
+    fn hd44780u_clear() {
+        let mut hd44780u = HD44780U::new();
+        hd44780u.init();
+        hd44780u.dump_nets();
 
-    //     hd44780u.clear();
-    //     hd44780u.dump_nets();
-    // }
+        hd44780u.clear();
+        hd44780u.dump_nets();
+    }
 }
 
 fn generate_cgrom() -> [[u8;CHAR_ROWS];256] {

@@ -9,6 +9,7 @@ use std::env;
 use std::marker::PhantomPinned;
 use std::process::{Command, Stdio};
 use std::ptr::null_mut;
+use std::sync::{Mutex, MutexGuard};
 use execute::Execute;
 
 extern crate dlopen;
@@ -210,6 +211,7 @@ pub fn build_vhdl(vhdl_path: &str, device: &str) {
     )).unwrap();
 }
 
+static lock: Mutex<()> = Mutex::new(());
 
 pub struct GhdlDevice {
     _lib: Library,
@@ -217,10 +219,13 @@ pub struct GhdlDevice {
     __ghdl_simulation_step: __ghdl_simulation_stepPtr,
     _pin: PhantomPinned,
     cb: Option<Box<dyn FnMut(&t_cb_data)->i32 + 'static>>,
+    _lock_guard: MutexGuard<'static, ()>,
 }
 
 impl GhdlDevice {
     pub fn new(lib_path: &str, vpi_path: &str) -> GhdlDevice {
+        let _lock_guard = lock.lock().unwrap();
+
         let lib = Library::open(lib_path).unwrap();
 
         let thunk = unsafe {
@@ -266,10 +271,12 @@ impl GhdlDevice {
 
             // let trace_arg = CString::new("--vpi-trace").unwrap();
             let vpi_arg = CString::new(format!("--vpi={}", vpi_path)).unwrap();
+            let stop_delta_arg = CString::new("--stop-delta=1000000").unwrap();
 
             let args = [
                 progname.as_ptr(),
                 // trace_arg.as_ptr(),
+                stop_delta_arg.as_ptr(),
                 vpi_arg.as_ptr(),
             ];
 
@@ -287,6 +294,7 @@ impl GhdlDevice {
             __ghdl_simulation_step,
             _pin: PhantomPinned {},
             cb: None,
+            _lock_guard
         }
     }
 
