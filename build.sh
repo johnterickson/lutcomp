@@ -34,11 +34,11 @@ export RunTest="java -cp digital_tester/target/classes:deps/Digital/target/Digit
 
 echo "run echo assembly"
 cp circuit/echo.asm.hex circuit/rom.hex
-$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" <circuit/test.txt
+$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" "input=$(printf 'Yo!\nq\n')"
 
 echo "run echo compiled"
 cp circuit/echo.j.hex circuit/rom.hex
-$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" <circuit/test.txt
+$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" "input=$(printf 'Yo!\nq\n')"
 
 echo "run RPN in simulator"
 output=$(echo "6 7 * q" | cargo run --release --quiet -- compile programs/app/rpn.j --sim=true 2>&1 1>circuit/rpn.hex)
@@ -50,15 +50,15 @@ fi
 
 echo "run RPN in Digital ROM"
 cp circuit/rpn.hex circuit/rom.hex
-echo "6 7 * q" | $RunTest "expected=$(printf 'RPN\n42\n')"
+$RunTest "expected=$(printf 'RPN\n42\n')" "input=6 7 * q"
 
 echo "test ttyin interrupts"
 cp circuit/keyboard_isr.hex circuit/rom.hex
-echo abcq | $RunTest keyboard=TTYIN expected=abc
+$RunTest keyboard=TTYIN expected=abc input=abcq
 
 echo "test PS2 interrupts"
 cp circuit/keyboard_isr.hex circuit/rom.hex
-echo abcq | $RunTest keyboard=PS2-Keyboard expected=abc
+$RunTest keyboard=PS2-Keyboard expected=abc input=abcq
 
 echo "Upload echo to RAM and run it"
 cargo run -q --release -- compile programs/test/hello_ram.j --image_base_address=080400 > circuit/hello_ram.hex

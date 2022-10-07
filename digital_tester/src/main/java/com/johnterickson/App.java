@@ -14,6 +14,7 @@ public class App {
 
 		String expected = null;
 		String keyboardLabel = "TTYIN";
+		String keyboardInput = null;
 		for (int i = 1; i < args.length; i++) {
 			String arg = args[i];
 			int equals = arg.indexOf('=');
@@ -27,6 +28,11 @@ public class App {
 					case "keyboard":
 						keyboardLabel = value;
 						break;
+					case "input":
+						keyboardInput = value;
+						break;
+					default:
+						throw new RuntimeException("don't know " + name);
 				}
 			}
 		}
@@ -39,8 +45,15 @@ public class App {
 		final String keyboard_name = keyboardLabel;
 
 		var keyboardNode = (Keyboard)tester.getNode(n -> n instanceof Keyboard && ((Keyboard)n).getLabel().equals(keyboard_name));
-		var keyboard = new StdInKeyboard(keyboardNode);
-		keyboardNode.setKeyboard(keyboard);
+		StdInKeyboard stdinKeyboard = null;
+		FixedKeyboard fixedKeyboard = null;
+		if (keyboardInput == null) {
+			stdinKeyboard = new StdInKeyboard(keyboardNode);
+			keyboardNode.setKeyboard(stdinKeyboard);
+		} else {
+			fixedKeyboard = new FixedKeyboard(keyboardNode);
+			keyboardNode.setKeyboard(fixedKeyboard);
+		}
 
 		var terminal = new InMemoryTerminal(expected == null);
 		var terminalNode = (Terminal)tester.getNode(n -> n instanceof Terminal && ((Terminal)n).getLabel().equals("TTYOUT"));
@@ -53,12 +66,19 @@ public class App {
 		}
 
 		// System.err.println("Run.");
-		keyboard.start();
-		keyboard.join();
+		if (stdinKeyboard != null) {
+			stdinKeyboard.start();
+			stdinKeyboard.join();
+		}
+
+		if (fixedKeyboard != null) {
+			fixedKeyboard.putChars(keyboardInput);
+		}
 
 		tester.runToBreak();
 		
 		if (expected != null) {
+			expected = expected.trim();
 			String actual = terminal.getText().trim();
 			if (!expected.equals(actual)) {
 				System.err.println("Expected output: `" + expected + "`");
