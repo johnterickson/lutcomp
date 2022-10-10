@@ -7,7 +7,19 @@ const int
  D6 = 10,
  D7 = 11;
 
-static byte ac = 0;
+const byte ROWS = 4;
+const byte COLS = 20;
+const byte ROW_START[ROWS] = { 0x0, 0x40, 0x14, 0x54 };
+
+//static byte ac = 0;
+static byte current = 0;
+static byte screen[ROWS*COLS] = {0};
+
+byte logicalToPhysical(byte i) {
+  byte row = i / COLS;
+  byte col = i % COLS;
+  return ROW_START[row] + col;
+}
 
 void dataIn() {
   for(int i = 0; i<4; i++) {
@@ -124,43 +136,43 @@ void waitWhileBusy() {
   }
 }
 
+void scrollUp() {
+  current -= COLS;
+
+  byte i;
+  for (i=0; i<(ROWS-1)*COLS; i++) {
+    screen[i] = screen[i+COLS];
+    waitWhileBusy();
+    writeByte(0, 0x80 | logicalToPhysical(i));
+    waitWhileBusy();
+    writeByte(1, screen[i]);
+  }
+  for (; i<ROWS*COLS; i++) {
+    waitWhileBusy();
+    writeByte(0, 0x80 | logicalToPhysical(i));
+    waitWhileBusy();
+    writeByte(1, ' ');
+  }
+}
+
 void writeChar(char c) {
   if (c == '\n') {
-    if (ac < 0x14) {
-      ac = 0x40;
-    } else if (ac < 0x40) {
-      ac = 0x54;
-    } else if (ac < 0x54) {
-      ac = 0x14;
-    } else {
-      ac = 0;
+    byte next = ((current/COLS) + 1)*COLS;
+    while (current < next) {
+      screen[current] = ' ';
+      current += 1;
     }
-    waitWhileBusy();
-    writeByte(0,0x80 | ac);
   } else {
+    screen[current] = c;
+    waitWhileBusy();
+    writeByte(0, 0x80 | logicalToPhysical(current));
     waitWhileBusy();
     writeByte(1,c);
-    waitWhileBusy();
+    current += 1;
+  }
   
-    ac += 1;
-    
-    if (ac == 0x00 + 20) {
-      ac = 0x40;
-      waitWhileBusy();
-      writeByte(0,0x80 | ac);
-    } else if (ac == 0x40 + 20) {
-      ac = 0x14;
-      waitWhileBusy();
-      writeByte(0,0x80 | ac);
-    } else if (ac == 0x14 + 20) {
-      ac = 0x54;
-      waitWhileBusy();
-      writeByte(0,0x80 | ac);
-    } else if (ac == 0x54 + 20) {
-      ac = 0x00;
-      waitWhileBusy();
-      writeByte(0,0x80 | ac);
-    }
+  if (current >= ROWS*COLS) {
+    scrollUp();
   }
 }
 
@@ -176,7 +188,8 @@ void clear() {
   waitWhileBusy();
   writeByte(0,0x1);
   waitWhileBusy();
-  ac = 0;
+  current = 0;
+  for(byte i=0; i<ROWS*COLS; i++) screen[i] = 0;
 }
 
 void setup() {
@@ -223,7 +236,7 @@ static byte ch = ' ';
 
 void loop() {
   writeChar(ch);
-  if (ch == '~') {
+  if (ch == 0x7F) {
     ch = '\n';
   } else if (ch == '\n') {
     ch = ' ';
