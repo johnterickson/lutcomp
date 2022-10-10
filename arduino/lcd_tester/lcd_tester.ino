@@ -9,8 +9,6 @@ const int
 
 static byte ac = 0;
 
-#define HI HIGH
-
 void dataIn() {
   for(int i = 0; i<4; i++) {
     pinMode(D4+i, INPUT);
@@ -54,7 +52,7 @@ void riseClock() {
 
 void fallClock() {
   digitalWrite(E, LOW);
-  delayMicroseconds(1);
+  //delayMicroseconds(100);
 }
 
 void toggleE() {
@@ -115,10 +113,11 @@ void waitWhileBusy() {
     busy |= digitalRead(D4) != LOW ? 0x1 : 0x0;
     fallClock();
     dataOut(0);
+    Serial.println(busy, HEX);
     if ((busy & 0x80) == 0) {
       break;
     } else {
-      Serial.println(busy, HEX);
+      //Serial.println(busy, HEX);
     }
     //Serial.print(busy, HEX);
     delayMicroseconds(1);
@@ -182,29 +181,37 @@ void clear() {
 
 void setup() {
   Serial.begin(1000000);
+  
   Serial.println("init pins");
   initPins();
  
-
   delay(50);
 
   Serial.println("0x3X");
   writeHalfByte(0,3);
-  delay(1);
+  delayMicroseconds(4500);
 
-  Serial.println("0x28");
-  writeByte(0,0x28);
-  delay(1);
+  Serial.println("0x3X");
+  writeHalfByte(0,3);
+  delayMicroseconds(4500);
 
+  Serial.println("0x3X");
+  writeHalfByte(0,3);
+  delayMicroseconds(4500);
+
+  Serial.println("0x2");
+  writeHalfByte(0,2);
+  
   Serial.println("0x28");
   writeByte(0,0x28);
   delay(1);
 
   Serial.println("0x0F");
   waitWhileBusy();
-  writeByte(0,0xF);
+  writeByte(0,0x08 | 0x4);
 
   Serial.println("0x01");
+  waitWhileBusy();
   clear();
 
   Serial.println("0x06");
@@ -215,16 +222,16 @@ void setup() {
 static byte ch = ' ';
 
 void loop() {
-//  writeChar(ch);
-//  if (ch == '~') {
-//    ch = '\n';
-//  } else if (ch == '\n') {
-//    ch = ' ';
-//  } else {
-//    ch += 1;
-//  }
+  writeChar(ch);
+  if (ch == '~') {
+    ch = '\n';
+  } else if (ch == '\n') {
+    ch = ' ';
+  } else {
+    ch += 1;
+  }
 
-  writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.");
+  //writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.");
   delay(100);
-  clear();
+  //clear();
 }
