@@ -206,7 +206,7 @@ void setup() {
   writeByte(0,0x28);
   delay(1);
 
-  Serial.println("0x0F");
+  Serial.println("0x0C");
   waitWhileBusy();
   writeByte(0,0x08 | 0x4);
 
