@@ -17,6 +17,8 @@ const DISPLAY_CHAR_COLS: usize = 20;
 const DISPLAY_PIX_ROWS: usize = DISPLAY_CHAR_ROWS * CHAR_PIX_ROWS;
 const DISPLAY_PIX_COLS: usize = DISPLAY_CHAR_COLS * CHAR_PIX_COLS;
 
+const ROW_START: [u8;DISPLAY_CHAR_ROWS] = [ 0x0, 0x40, 0x14, 0x54  ];
+
 const CHAR_ROWS: usize = 8;
 pub const CHAR_COLS: usize = 5;
 
@@ -376,7 +378,12 @@ mod tests {
             seen.insert(hd.ghdl.get_value_BinStr(hd.nets["ac"].handle).to_owned());
         });
 
-        assert_eq!(seen.len(), DISPLAY_CHAR_ROWS * DISPLAY_CHAR_COLS);
+        for row in &ROW_START {
+            for col in 0..DISPLAY_CHAR_COLS {
+                let binary = format!("{:07b}", *row as usize + col);
+                assert!(seen.contains(&binary));
+            }
+        }
 
         assert_eq!(
             "0000000",

@@ -197,14 +197,8 @@ begin
                                                         cmd_read_state <= zero_nibble_read;
                                                     end if;
 
-                                                    -- done writing char, now "increment" AC
-                                                    if AC = ROW_0_ADDR + DISPLAY_CHAR_COLS - 1 then
-                                                        AC <= to_unsigned(ROW_1_ADDR,7);
-                                                    elsif AC = ROW_1_ADDR + DISPLAY_CHAR_COLS - 1 then
-                                                        AC <= to_unsigned(ROW_2_ADDR,7);
-                                                    elsif AC = ROW_2_ADDR + DISPLAY_CHAR_COLS - 1 then
-                                                        AC <= to_unsigned(ROW_3_ADDR,7);
-                                                    elsif AC = ROW_3_ADDR + DISPLAY_CHAR_COLS - 1 then
+                                                    -- done writing char, now increment AC
+                                                    if AC = ROW_3_ADDR + DISPLAY_CHAR_COLS - 1 then
                                                         AC <= to_unsigned(ROW_0_ADDR,7);
                                                     else
                                                         -- move to next character in the row

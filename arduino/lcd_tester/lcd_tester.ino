@@ -235,16 +235,17 @@ void setup() {
 static byte ch = ' ';
 
 void loop() {
-  writeChar(ch);
-  if (ch == 0x7F) {
-    ch = '\n';
-  } else if (ch == '\n') {
-    ch = ' ';
-  } else {
-    ch += 1;
-  }
+//  writeChar(ch);
+//  if (ch == 0x7F) {
+//    ch = '\n';
+//  } else if (ch == '\n') {
+//    ch = ' ';
+//  } else {
+//    ch += 1;
+//  }
 
-  //writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.");
+  writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.\n");
+  writeStr("\n");
   delay(100);
   //clear();
 }
