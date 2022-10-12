@@ -58,9 +58,7 @@ void initPins() {
 
 void riseClock() {
   digitalWrite(CP, HIGH);
-  //delayMicroseconds(1);
   digitalWrite(CP, LOW);
-  //delayMicroseconds(1);
 }
 
 void writeHalfByte(byte rs, byte d) {
@@ -80,8 +78,9 @@ void writeByte(byte rs, byte d) {
 }
 
 void waitWhileBusy() {
-  // ST7066U pg 27 notes that there must be 
-  // a 80+ us delay before checking the busy flag
+  // https://www.orientdisplay.com/wp-content/uploads/2019/10/ST7066Uv22.pdf pg 27 
+  // notes that there must be a 80+ us delay *before* checking the busy flag
+  // even though all operations except "CLEAR" take less than 80us...
   delayMicroseconds(100);
   while(1) {
     byte busy = 0;
