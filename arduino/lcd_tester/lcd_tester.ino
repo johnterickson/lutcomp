@@ -25,7 +25,6 @@ void dataIn() {
   for(int i = 0; i<4; i++) {
     pinMode(DATA0+i, INPUT);
   }
-  pinMode(DATA7, OUTPUT);
 
   digitalWrite(OE_, LOW);
 }
@@ -42,7 +41,6 @@ void dataOut(byte d) {
   for(int i = 0; i<4; i++) {
     pinMode(DATA0+i, OUTPUT);
   }
-  //delayMicroseconds(1);
 }
 
 void initPins() {
@@ -60,16 +58,15 @@ void initPins() {
 
 void riseClock() {
   digitalWrite(CP, HIGH);
-  delayMicroseconds(1);
+  //delayMicroseconds(1);
   digitalWrite(CP, LOW);
-  delayMicroseconds(1);
+  //delayMicroseconds(1);
 }
 
 void writeHalfByte(byte rs, byte d) {
   rs = rs != 0 ? 0x80 : 0x00;
   dataOut(rs | d);
   riseClock();
-  //dataIn();
 }
 
 void writeByte(byte rs, byte d) {
@@ -80,41 +77,33 @@ void writeByte(byte rs, byte d) {
 
   dataOut(rs | (d & 0xF));
   riseClock();
-
-  //dataIn();
 }
 
 void waitWhileBusy() {
-  delay(5);
-//  while(1) {
-//    byte busy = 0;
-//    dataIn();    
-//    busy |= digitalRead(DATA3) != LOW ? 0x80 : 0x0;
-//    busy |= digitalRead(DATA2) != LOW ? 0x40 : 0x0;
-//    busy |= digitalRead(DATA1) != LOW ? 0x20 : 0x0;
-//    busy |= digitalRead(DATA0) != LOW ? 0x10 : 0x0;  
-//    //dataOut(0);
-//    digitalWrite(OE_, HIGH);
-//    delayMicroseconds(10);
-//    //dataIn();
-//    digitalWrite(OE_, LOW);
-//    delayMicroseconds(10);
-//    
-//    busy |= digitalRead(DATA3) != LOW ? 0x8 : 0x0;
-//    busy |= digitalRead(DATA2) != LOW ? 0x4 : 0x0;
-//    busy |= digitalRead(DATA1) != LOW ? 0x2 : 0x0;
-//    busy |= digitalRead(DATA0) != LOW ? 0x1 : 0x0;
-//    dataOut(0);
-//    
-//    Serial.println(busy, HEX);
-//    if ((busy & 0x80) == 0) {
-//      break;
-//    } else {
-//      //Serial.println(busy, HEX);
-//    }
-//    //Serial.print(busy, HEX);
-//    delayMicroseconds(1);
-//  }
+  // ST7066U pg 27 notes that there must be 
+  // a 80+ us delay before checking the busy flag
+  delayMicroseconds(100);
+  while(1) {
+    byte busy = 0;
+    dataIn();    
+    busy |= digitalRead(DATA3) != LOW ? 0x80 : 0x0;
+    busy |= digitalRead(DATA2) != LOW ? 0x40 : 0x0;
+    busy |= digitalRead(DATA1) != LOW ? 0x20 : 0x0;
+    busy |= digitalRead(DATA0) != LOW ? 0x10 : 0x0;  
+    dataOut(0);
+    dataIn();
+    busy |= digitalRead(DATA3) != LOW ? 0x8 : 0x0;
+    busy |= digitalRead(DATA2) != LOW ? 0x4 : 0x0;
+    busy |= digitalRead(DATA1) != LOW ? 0x2 : 0x0;
+    busy |= digitalRead(DATA0) != LOW ? 0x1 : 0x0;
+    dataOut(0);
+    
+    if ((busy & 0x80) == 0) {
+      break;
+    }
+    
+    delayMicroseconds(10);
+  }
 }
 
 void scrollUp() {
@@ -161,7 +150,7 @@ void writeStr(const char *c) {
   while (*c != '\0') {
     writeChar(*c);
     c++;
-    delay(100);
+    delay(50);
   }
 }
 
@@ -170,47 +159,6 @@ void clear() {
   writeByte(0,0x1);
   current = 0;
   for(byte i=0; i<ROWS*COLS; i++) screen[i] = 0;
-}
-
-void setup() {
-  Serial.begin(1000000);
-  
-  Serial.println("init pins");
-  initPins();
- 
-  delay(50);
-
-  Serial.println("0x3X");
-  writeHalfByte(0,3);
-  delayMicroseconds(4500);
-
-  Serial.println("0x3X");
-  writeHalfByte(0,3);
-  delayMicroseconds(4500);
-
-  Serial.println("0x3X");
-  writeHalfByte(0,3);
-  delayMicroseconds(4500);
-
-  Serial.println("0x2");
-  writeHalfByte(0,2);
-  //delay(1);
-  
-  Serial.println("0x28");
-  writeByte(0,0x28);
-  delay(1);
-
-  Serial.println("0x0C");
-  waitWhileBusy();
-  writeByte(0,0x08 | 0x4);
-
-  Serial.println("0x01");
-  waitWhileBusy();
-  clear();
-
-  Serial.println("0x06");
-  waitWhileBusy();
-  writeByte(0,0x6);
 }
 
 static byte ch = ' ';
@@ -226,10 +174,56 @@ void writeNext() {
   }
 }
 
-void loop() {
+void setup() {
+//  Serial.begin(1000000);
+  
+//  Serial.println("init pins");
+  initPins();
+ 
+  delay(50);
+
+//  Serial.println("0x3X");
+  writeHalfByte(0,3);
+  delayMicroseconds(4500);
+
+//  Serial.println("0x3X");
+  writeHalfByte(0,3);
+  delayMicroseconds(4500);
+
+//  Serial.println("0x3X");
+  writeHalfByte(0,3);
+  delayMicroseconds(4500);
+
+//  Serial.println("0x2");
+  writeHalfByte(0,2);
+  delay(1);
+  
+//  Serial.println("0x28");
+  writeByte(0,0x28);
+  delay(1);
+
+//  Serial.println("0x0C");
+  waitWhileBusy();
+  writeByte(0,0x08 | 0x4);
+
+//  Serial.println("0x01");
+  waitWhileBusy();
+  clear();
+
+//  Serial.println("0x06");
+  waitWhileBusy();
+  writeByte(0,0x6);
+
   writeNext();
-  //writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.\n");
-  //writeStr("\n");
-  //delay(1000);
-  //clear();
+}
+
+
+
+void loop() {
+  //writeNext();
+  writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.\n");
+  writeStr("\n");
+  writeStr(" - Benny Erickson");
+  delay(100);
+  clear();
 }
