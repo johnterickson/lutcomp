@@ -1,11 +1,11 @@
 const int
- RS = 5,
- RW = 6,
- E = 7,
- D4 = 8,
- D5 = 9,
- D6 = 10,
- D7 = 11;
+ DATA0 = 4,
+ DATA1 = 5,
+ DATA2 = 6,
+ DATA3 = 7,
+ DATA7 = 8,
+ OE_   = 9,
+ CP    = 10;
 
 const byte ROWS = 4;
 const byte COLS = 20;
@@ -23,117 +23,98 @@ byte logicalToPhysical(byte i) {
 
 void dataIn() {
   for(int i = 0; i<4; i++) {
-    pinMode(D4+i, INPUT);
+    pinMode(DATA0+i, INPUT);
   }
+  pinMode(DATA7, OUTPUT);
 
-  digitalWrite(RW, HIGH);
+  digitalWrite(OE_, LOW);
 }
 
 void dataOut(byte d) {
-  digitalWrite(RW, LOW);
-  
-  digitalWrite(D7, (d & 0x8) != 0 ? HIGH : LOW);
-  digitalWrite(D6, (d & 0x4) != 0 ? HIGH : LOW);
-  digitalWrite(D5, (d & 0x2) != 0 ? HIGH : LOW);
-  digitalWrite(D4, (d & 0x1) != 0 ? HIGH : LOW);
+  digitalWrite(OE_, HIGH);
+
+  digitalWrite(DATA7, (d & 0x80) != 0 ? HIGH : LOW);
+  digitalWrite(DATA3, (d & 0x08) != 0 ? HIGH : LOW);
+  digitalWrite(DATA2, (d & 0x04) != 0 ? HIGH : LOW);
+  digitalWrite(DATA1, (d & 0x02) != 0 ? HIGH : LOW);
+  digitalWrite(DATA0, (d & 0x01) != 0 ? HIGH : LOW);
   
   for(int i = 0; i<4; i++) {
-    pinMode(D4+i, OUTPUT);
+    pinMode(DATA0+i, OUTPUT);
   }
+  //delayMicroseconds(1);
 }
 
 void initPins() {
-  digitalWrite(E, LOW);
-  pinMode(E, OUTPUT);
+  digitalWrite(CP, LOW);
+  pinMode(CP, OUTPUT);
   
-  digitalWrite(RS, LOW);
-  pinMode(RS, OUTPUT);
-  
-  digitalWrite(RW, HIGH);
-  pinMode(RW, OUTPUT);
-  
-  dataIn();
+  digitalWrite(OE_, HIGH);
+  pinMode(OE_, OUTPUT);
+
+  digitalWrite(DATA7, LOW);
+  pinMode(DATA7, OUTPUT);
+ 
+  dataOut(0xFF);
 }
 
 void riseClock() {
-  digitalWrite(E, LOW);
+  digitalWrite(CP, HIGH);
   delayMicroseconds(1);
-  digitalWrite(E, HIGH);
+  digitalWrite(CP, LOW);
   delayMicroseconds(1);
-}
-
-void fallClock() {
-  digitalWrite(E, LOW);
-  //delayMicroseconds(100);
-}
-
-void toggleE() {
-  riseClock();
-  fallClock();
 }
 
 void writeHalfByte(byte rs, byte d) {
-
-  digitalWrite(RS, rs);
-
-  dataOut(d);
-
-  toggleE();
-
-  dataIn();
+  rs = rs != 0 ? 0x80 : 0x00;
+  dataOut(rs | d);
+  riseClock();
+  //dataIn();
 }
 
 void writeByte(byte rs, byte d) {
-
-  digitalWrite(RS, rs);
+  rs = rs != 0 ? 0x80 : 0x00;
   
-  dataOut(d >> 4);
+  dataOut(rs | ((d >> 4) & 0xF));
+  riseClock();
 
-  toggleE();
+  dataOut(rs | (d & 0xF));
+  riseClock();
 
-  dataOut(d & 0xF);
-
-  toggleE();
-
-  dataIn();
-  
+  //dataIn();
 }
 
 void waitWhileBusy() {
-  dataIn();
-  digitalWrite(RS, LOW);
-
-  while(1) {
-    dataIn();
-    byte busy = 0;
-    //delayMicroseconds(1);
-    riseClock();
-    //delayMicroseconds(1);
-    busy |= digitalRead(D7) != LOW ? 0x80 : 0x0;
-    busy |= digitalRead(D6) != LOW ? 0x40 : 0x0;
-    busy |= digitalRead(D5) != LOW ? 0x20 : 0x0;
-    busy |= digitalRead(D4) != LOW ? 0x10 : 0x0;  
-    fallClock();
-    dataOut(0);
-    //delayMicroseconds(1);
-    dataIn();
-    riseClock();
-    //delayMicroseconds(1);
-    busy |= digitalRead(D7) != LOW ? 0x8 : 0x0;
-    busy |= digitalRead(D6) != LOW ? 0x4 : 0x0;
-    busy |= digitalRead(D5) != LOW ? 0x2 : 0x0;
-    busy |= digitalRead(D4) != LOW ? 0x1 : 0x0;
-    fallClock();
-    dataOut(0);
-    Serial.println(busy, HEX);
-    if ((busy & 0x80) == 0) {
-      break;
-    } else {
-      //Serial.println(busy, HEX);
-    }
-    //Serial.print(busy, HEX);
-    delayMicroseconds(1);
-  }
+  delay(5);
+//  while(1) {
+//    byte busy = 0;
+//    dataIn();    
+//    busy |= digitalRead(DATA3) != LOW ? 0x80 : 0x0;
+//    busy |= digitalRead(DATA2) != LOW ? 0x40 : 0x0;
+//    busy |= digitalRead(DATA1) != LOW ? 0x20 : 0x0;
+//    busy |= digitalRead(DATA0) != LOW ? 0x10 : 0x0;  
+//    //dataOut(0);
+//    digitalWrite(OE_, HIGH);
+//    delayMicroseconds(10);
+//    //dataIn();
+//    digitalWrite(OE_, LOW);
+//    delayMicroseconds(10);
+//    
+//    busy |= digitalRead(DATA3) != LOW ? 0x8 : 0x0;
+//    busy |= digitalRead(DATA2) != LOW ? 0x4 : 0x0;
+//    busy |= digitalRead(DATA1) != LOW ? 0x2 : 0x0;
+//    busy |= digitalRead(DATA0) != LOW ? 0x1 : 0x0;
+//    dataOut(0);
+//    
+//    Serial.println(busy, HEX);
+//    if ((busy & 0x80) == 0) {
+//      break;
+//    } else {
+//      //Serial.println(busy, HEX);
+//    }
+//    //Serial.print(busy, HEX);
+//    delayMicroseconds(1);
+//  }
 }
 
 void scrollUp() {
@@ -187,7 +168,6 @@ void writeStr(const char *c) {
 void clear() {
   waitWhileBusy();
   writeByte(0,0x1);
-  waitWhileBusy();
   current = 0;
   for(byte i=0; i<ROWS*COLS; i++) screen[i] = 0;
 }
@@ -214,6 +194,7 @@ void setup() {
 
   Serial.println("0x2");
   writeHalfByte(0,2);
+  //delay(1);
   
   Serial.println("0x28");
   writeByte(0,0x28);
@@ -234,18 +215,21 @@ void setup() {
 
 static byte ch = ' ';
 
-void loop() {
-//  writeChar(ch);
-//  if (ch == 0x7F) {
-//    ch = '\n';
-//  } else if (ch == '\n') {
-//    ch = ' ';
-//  } else {
-//    ch += 1;
-//  }
+void writeNext() {
+  writeChar(ch);
+  if (ch == 0x7F) {
+    ch = '\n';
+  } else if (ch == '\n') {
+    ch = ' ';
+  } else {
+    ch += 1;
+  }
+}
 
-  writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.\n");
-  writeStr("\n");
-  delay(100);
+void loop() {
+  writeNext();
+  //writeStr("I am johnny and I likes potatoes. And I can beat you in R.P.S. I'll prove it.\n");
+  //writeStr("\n");
+  //delay(1000);
   //clear();
 }
