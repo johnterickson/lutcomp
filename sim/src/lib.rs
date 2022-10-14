@@ -44,6 +44,10 @@ use tty::*;
 mod ps2;
 use ps2::*;
 
+
+//#[cfg(unix)]
+mod HD44780U;
+
 pub mod lcd;
 use lcd::*;
 

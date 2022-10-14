@@ -9,6 +9,16 @@ members = [
     "sim",
     "ucode",
     ]
+default-members = [
+    "alu",
+    "app",
+    "assemble",
+    "common",
+    "compiler",
+    "sim",
+    "ucode",
+    ]
+    
 exclude = [
     "arduino/sst39sf040-avr/flasher",
     ]
