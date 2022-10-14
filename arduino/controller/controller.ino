@@ -9,7 +9,6 @@ const int
   CLK = 3,
   HALT = 4,
   TTYOUT_CP = 5, //PD5, PCINT21
-  TTYIN_CP = 6,  //PD6, PCINT22
   TTYIN_OE_ = 7, //PD7, PCINT23
   LED = 13;
 
@@ -33,8 +32,8 @@ const int
   RESET_ = 7,
   CLK = 8,
   HALT = 9,
+  TTYIN_RTR = 33,
   TTYOUT_CP = 10, //PB4, PCINT4
-  TTYIN_CP = 11,  //PB5, PCINT5
   TTYIN_OE_ = 12, //PB6, PCINT6
   LED = 13;
 
@@ -76,7 +75,7 @@ unsigned long tickCount = 0;
 //long dataBreakPoint = 0x23;
 bool paused = false;
 bool halted = false;
-bool debug = false;
+bool debug = true;
 #define DELAY_US  2
 #define INNER_TICKS (4*8)
 
@@ -98,14 +97,17 @@ void setDataPinsInput() {
 
 void setDataPinsOutput() {
   byte b;
-  if(arduinoToTtlQueue.peek(&b)) {
+  if(arduinoToTtlQueue.pop(&b)) {
     if (debug) {
       Serial.print("#Arduino->TTL    @");
       Serial.print(millis());
       Serial.print(": ");
       Serial.println(b, HEX);
     }
-    b |= 0x80;
+
+    if (arduinoToTtlQueue.getCount() == 0) {
+      digitalWrite(TTYIN_RTR, LOW);
+    }
   } else {
     b = 0;
   }
@@ -124,11 +126,15 @@ byte readDataPins() {
 }
 
 ISR(PCINT_vect){   // Port D, PCINT16 - PCINT23
+  static bool prevTTYIN_OE_ = true;
   bool newTTYIN_OE_ = digitalRead(TTYIN_OE_);
-  if (newTTYIN_OE_ == HIGH) {
-    setDataPinsInput();
-  } else {
-    setDataPinsOutput();
+  if (prevTTYIN_OE_ != newTTYIN_OE_) {
+    if (newTTYIN_OE_ == HIGH) {
+      setDataPinsInput();
+    } else {
+      setDataPinsOutput();
+    }
+    prevTTYIN_OE_ = newTTYIN_OE_;
   }
  
   static bool prevTTYOUT_CP = false;
@@ -149,43 +155,22 @@ ISR(PCINT_vect){   // Port D, PCINT16 - PCINT23
     }
   }
   prevTTYOUT_CP = newTTYOUT_CP;
-
-  static bool prevTTYIN_CP = false;
-  bool newTTYIN_CP = digitalRead(TTYIN_CP);
-  if (!prevTTYIN_CP && newTTYIN_CP) {
-    byte dequeued;
-    if (!arduinoToTtlQueue.pop(&dequeued)) {
-//      if (debug) {
-//        Serial.println("#TTL->ARDUINO ACK: Nothing to dequeue.");
-//      }
-    } else {
-      dequeued &= 0x7f;
-      byte acked = readDataPins() & 0x7f;
-      if (debug || dequeued != acked) {
-        Serial.print("#Arduino<-TTL ACK@");
-        Serial.print(millis());
-        Serial.print(": 0x");
-        Serial.print(dequeued, HEX);
-        if (dequeued != acked) {
-          Serial.print(" vs 0x");
-          Serial.println(acked, HEX);
-        } else {
-          Serial.println();
-        }
-      }
-    }
-  }
-  prevTTYIN_CP = newTTYIN_CP;
 }
 
+void tickOnce() {
+  CLK_PORT ^= (1<<CLK_BIT);
+  delayMicroseconds(DELAY_US);
+  CLK_PORT ^= (1<<CLK_BIT);
+  delayMicroseconds(DELAY_US);
+}
 
 void tick(bool force) { 
   if (force || !paused) {
     for(int i=0; i < INNER_TICKS; i++) {
       CLK_PORT ^= (1<<CLK_BIT);
       delayMicroseconds(DELAY_US);
-      tickCount += 1;
     }
+    tickCount += INNER_TICKS;
   }
 }
 
@@ -196,10 +181,8 @@ void checkSerial() {
 
   if (Serial.available() > 0) {
     b = Serial.read();
-    b &= 0x7F;
-
     if (b == 't') { 
-      tick(true);
+      tickOnce();
       unsigned long ms = millis();
       Serial.print(tickCount);
       Serial.print(" ticks in ");
@@ -226,6 +209,7 @@ void checkSerial() {
         Serial.println("#ERR arduinoToTtlQueue overflow");
         halted = true;
       }
+      digitalWrite(TTYIN_RTR, HIGH);
       sei();
     }
   }
@@ -272,6 +256,7 @@ void reset() {
   //Serial.println("RESETING...");
   digitalWrite(CLK, LOW);
   digitalWrite(RESET_, LOW);
+  digitalWrite(TTYIN_RTR, LOW);
   delay(100);
   tick(true);
   tick(true);
@@ -307,7 +292,7 @@ void loop() {
   }
   
   for (int i=0; i< 16; i++) {
-    if ((tickCount & 0xFF) == 0) {
+    if (paused || (tickCount & 0xFF) == 0) {
       checkSerial();
     }
     
@@ -329,9 +314,9 @@ void setup() {
   initOutput(LED, LOW);
   initOutput(RESET_, HIGH);
   initOutput(CLK, LOW);
+  initOutput(TTYIN_RTR, LOW);
   pinMode(HALT, INPUT);
   pinMode(TTYOUT_CP, INPUT);
-  pinMode(TTYIN_CP, INPUT);
   pinMode(TTYIN_OE_, INPUT);
 
   Serial.begin(2000000);
