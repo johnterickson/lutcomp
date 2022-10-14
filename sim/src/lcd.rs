@@ -1,41 +1,37 @@
 #![allow(non_upper_case_globals)]
-#![allow(dead_code)]
 
-use std::{ptr::{self}, convert::TryFrom, marker::PhantomPinned};
-
+use super::hd44780u::*;
 
 use crate::*;
 
-enum Protocol { Bits4, Bits8 }
+pub const CHAR_PIX_ROWS: usize = 10;
+pub const CGROM_PIX_ROWS: usize = 8;
+pub const CHAR_PIX_COLS: usize = 6;
+pub const DISPLAY_CHAR_ROWS: usize = 4;
+pub const DISPLAY_CHAR_COLS: usize = 20;
+pub const DISPLAY_PIX_ROWS: usize = DISPLAY_CHAR_ROWS * CHAR_PIX_ROWS;
+pub const DISPLAY_PIX_COLS: usize = DISPLAY_CHAR_COLS * CHAR_PIX_COLS;
 
-const CHAR_PIX_ROWS: usize = 10;
-const CGROM_PIX_ROWS: usize = 8;
-const CHAR_PIX_COLS: usize = 6;
-const DISPLAY_CHAR_ROWS: usize = 4;
-const DISPLAY_CHAR_COLS: usize = 20;
-const DISPLAY_PIX_ROWS: usize = DISPLAY_CHAR_ROWS * CHAR_PIX_ROWS;
-const DISPLAY_PIX_COLS: usize = DISPLAY_CHAR_COLS * CHAR_PIX_COLS;
+pub const ROW_START: [u8;DISPLAY_CHAR_ROWS] = [ 0x0, 0x40, 0x14, 0x54  ];
 
-const ROW_START: [u8;DISPLAY_CHAR_ROWS] = [ 0x0, 0x40, 0x14, 0x54  ];
-
-const CHAR_ROWS: usize = 8;
+pub const CHAR_ROWS: usize = 8;
 pub const CHAR_COLS: usize = 5;
 
+#[cfg(unix)]
 pub struct Lcd {
-    protocol: Protocol,
-    #[cfg(unix)]
     lazy_controller: Option<Box<HD44780U>>,
 }
 
+#[cfg(unix)]
 impl Lcd {
     pub fn new() -> Self {
         Lcd {
-            protocol: Protocol::Bits8,
             #[cfg(unix)]
             lazy_controller: None,
         }
     }
 
+    #[allow(dead_code)]
     fn controller(&mut self) -> &mut HD44780U {
         if self.lazy_controller.is_none() {
             self.lazy_controller = Some(HD44780U::new());
@@ -46,8 +42,11 @@ impl Lcd {
     }
 }
 
+#[cfg(unix)]
 impl Device for Lcd {
     fn process(&mut self) {
+        use ghdl_rs::StdLogic;
+
         if let Some(c) = &mut self.lazy_controller {
             let addr = c.ghdl.get_value_BinStr(c.nets["cgrom_addr"].handle);
             if let Some(addr) = StdLogic::from_str(addr) {

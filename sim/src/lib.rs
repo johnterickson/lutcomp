@@ -45,8 +45,8 @@ mod ps2;
 use ps2::*;
 
 
-//#[cfg(unix)]
-mod HD44780U;
+#[cfg(unix)]
+mod hd44780u;
 
 pub mod lcd;
 use lcd::*;

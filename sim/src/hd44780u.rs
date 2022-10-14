@@ -1,5 +1,10 @@
+#![allow(dead_code)]
+
+use std::{marker::PhantomPinned, ptr, convert::TryFrom};
+
 use crate::*;
 use ghdl_rs::*;
+use lcd::*;
 
 include!(concat!(env!("OUT_DIR"), "/hd44780u.rs"));
 
