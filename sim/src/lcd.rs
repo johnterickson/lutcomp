@@ -1,5 +1,6 @@
 #![allow(non_upper_case_globals)]
 
+#[cfg(unix)]
 use super::hd44780u::*;
 
 use crate::*;
@@ -16,6 +17,23 @@ pub const ROW_START: [u8;DISPLAY_CHAR_ROWS] = [ 0x0, 0x40, 0x14, 0x54  ];
 
 pub const CHAR_ROWS: usize = 8;
 pub const CHAR_COLS: usize = 5;
+
+#[cfg(not(unix))]
+pub struct Lcd {}
+
+#[cfg(not(unix))]
+impl Lcd {
+    pub fn new() -> Self { Self {} }
+}
+
+#[cfg(not(unix))]
+impl Device for Lcd {
+    fn process(&mut self) { }
+    fn ready_to_write(&self) -> bool { false }
+    fn ready_to_read(&self) -> bool { false }
+    fn read(&mut self) -> u8 { 0 }
+    fn write(&mut self, _b: u8) { }
+}
 
 #[cfg(unix)]
 pub struct Lcd {
