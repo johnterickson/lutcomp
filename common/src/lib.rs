@@ -354,12 +354,12 @@ pub const CHIP_ADDRESS_MASK: u32 = (1 << MEM_BITS_PER_CHIP) - 1;
 pub const ADDRESS_BITS: u32 = 20;
 
 pub const ROM_MIN: u32 = 0;
-pub const ROM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP;
-pub const ROM_MAX: u32 = ROM_MIN + ROM_SIZE - 1;
+pub const ROM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP; 
+pub const ROM_MAX: u32 = ROM_MIN + ROM_SIZE - 1; // 0x7FFFF
 
-pub const RAM_MIN: u32 = ROM_MAX + 1;
+pub const RAM_MIN: u32 = ROM_MAX + 1; // 0x80000
 pub const RAM_SIZE: u32 = 1 << MEM_BITS_PER_CHIP;
-pub const RAM_MAX: u32 = RAM_MIN + RAM_SIZE - 1;
+pub const RAM_MAX: u32 = RAM_MIN + RAM_SIZE - 1; //0xFFFFF
 
 pub const INTERRUPT_ISR: u32 = 0x0F0F0C;
 pub const INTERRUPT_PREVIOUS_PC: u32 = INTERRUPT_ISR-4;
