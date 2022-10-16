@@ -1228,6 +1228,35 @@ mod tests {
     }
 
     #[test]
+    fn delay() {
+        let find_tick_count = |delay_count| {
+            let cases = vec![
+                (vec![TestVar::Num(IlNumber::U32(delay_count))], TestVar::Num(IlNumber::U8(0))),
+            ];
+            test_var_inputs(
+                "test_delay",
+                include_str!("../../programs/lib/delay.j"),
+                &cases
+            )
+        };
+
+        let baseline = find_tick_count(0);
+        let single = find_tick_count(1);
+        let ten = find_tick_count(10);
+        dbg!(baseline, single, ten);
+
+        // ticks = m * delay_count + b;
+        let b = baseline;
+        let m = (ten - baseline) / 10;
+        dbg!(m, b);
+
+        let frequency = 500_000;
+        let ticks_per_ms = frequency / 1000;
+        let ms_per_delay_count = m / ticks_per_ms;
+        dbg!(ms_per_delay_count);
+    }
+
+    #[test]
     fn bootram_sanity() {
         let a = RAM_MIN + 1024;
         let (_loader_ctxt, _loader_il, loader_image) = assemble(
@@ -1437,7 +1466,7 @@ mod tests {
         Ascii(&'static [u8]),
         String(String),
         Ptr(Vec<u8>),
-        Num(IlNumber)
+        Num(IlNumber),
     }
 
     impl TestVar {
@@ -1593,13 +1622,13 @@ mod tests {
         (c, il_result)
     }
 
-    fn test_var_inputs(entry: &str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) {
+    fn test_var_inputs<'a>(entry: &'a str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) -> u64 {
         let (ctxt, il) = emit_il(entry, program, &test_programs_dir());
-        // dbg!(&il);
 
         let (_, asm) = emit_assembly(&ctxt, &il);
         let rom = assemble::assemble(asm);
 
+        let mut last_tick_count = None;
         for case in cases
         {
             check_args(&ctxt, case);
@@ -1633,7 +1662,10 @@ mod tests {
                 },
             };
 
+            last_tick_count = Some(tc.comp.tick_count);
         }
+
+        last_tick_count.unwrap()
     }
 
     fn test_inputs<'a, T1,T2,T3>(entry: &str, program: &str, cases: &'a [(T1,T2,T3)])

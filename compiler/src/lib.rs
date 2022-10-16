@@ -114,9 +114,10 @@ pub fn print_state(c: &Computer) {
     }
 }
 
-pub const STATICS_START_ADDRESS: u32 = common::RAM_MIN as u32 + common::REGISTER_COUNT;
+pub const STATICS_START_ADDRESS: u32 = (common::INTERRUPT_ISR + 0x1000 - 1) / 0x1000 * 0x1000;
 
 pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
+    assert_eq!(STATICS_START_ADDRESS, 0x0F1000);
     let mut input = input.to_owned();
 
     let mut includes = BTreeSet::new();

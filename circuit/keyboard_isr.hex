@@ -1054,7 +1054,7 @@ ff
 # Var g (Local g Ptr(Struct("Globals")) Reg(U32)) Reg(U32) Some([20, 21, 22, 23])
 # Var index (Local index Number(USIZE) Reg(U32)) Reg(U32) Some([24, 25, 26, 27])
 # Var inline_handle_ps2_globals_2_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_handle_ps2_globals_2_g (Local g Struct("Globals") Static(524544)) Static(524544) None
+# Var inline_handle_ps2_globals_2_g (Local g Struct("Globals") Static(987136)) Static(987136) None
 # Var inline_handle_ps2_globals_2_t0 (t0 AddressOf(Ident("g"))) Reg(U32) Some([28, 29, 30, 31])
 # Var inline_handle_ps2_globals_2_t1 (static "g") Reg(U32) Some([28, 29, 30, 31])
 # Var inline_handle_ps2_queue_push_21_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
@@ -1139,10 +1139,10 @@ ff
 # Var t7 (t7 Number(U8, 0)) Reg(U8) Some([40])
 # Var t8 (t8 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }) Reg(U32) Some([28, 29, 30, 31])
 # Var t9 (t9 Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }) Reg(U32) Some([36, 37, 38, 39])
-# inline_handle_ps2_globals_2_t1 <- 0n524544/0x00080100u32 
+# inline_handle_ps2_globals_2_t1 <- 0n987136/0x000f1000u32 
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
-# 0042f Instruction { source: "inline_handle_ps2_globals_2_t1 <- 0n524544/0x00080100u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x00080100=524544)], resolved: None }
-20 1c 00 01 08 00 
+# 0042f Instruction { source: "inline_handle_ps2_globals_2_t1 <- 0n987136/0x000f1000u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x1c), Constant32(0x000f1000=987136)], resolved: None }
+20 1c 00 10 0f 00 
 # inline_handle_ps2_globals_2_t0 <- inline_handle_ps2_globals_2_t1 U32
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
 # optimized away noop copy Instruction { source: "inline_handle_ps2_globals_2_t0 <- inline_handle_ps2_globals_2_t1 U32\n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: Copy32, args: [Register(0x1c), Register(0x1c)], resolved: None }
@@ -1706,7 +1706,7 @@ ff
 # Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
 # Var g (Local g Ptr(Struct("Globals")) Reg(U32)) Reg(U32) Some([52, 53, 54, 55])
 # Var inline_handle_tty_globals_3_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_handle_tty_globals_3_g (Local g Struct("Globals") Static(524544)) Static(524544) None
+# Var inline_handle_tty_globals_3_g (Local g Struct("Globals") Static(987136)) Static(987136) None
 # Var inline_handle_tty_globals_3_t0 (t0 AddressOf(Ident("g"))) Reg(U32) Some([52, 53, 54, 55])
 # Var inline_handle_tty_globals_3_t1 (static "g") Reg(U32) Some([52, 53, 54, 55])
 # Var inline_handle_tty_queue_push_22_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
@@ -1735,10 +1735,10 @@ ff
 # Var t1 (t1 AddressOf(PtrFieldDeref("g", "stdin"))) Reg(U32) Some([52, 53, 54, 55])
 # Var t2 (t2 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Struct("Queue")), value: Cast { old_type: Some(Ptr(Struct("Globals"))), new_type: Number(USIZE), value: Ident("g") } }) Reg(U32) Some([52, 53, 54, 55])
 # Var t3 (t3 TtyIn) Reg(U8) Some([77])
-# inline_handle_tty_globals_3_t1 <- 0n524544/0x00080100u32 
+# inline_handle_tty_globals_3_t1 <- 0n987136/0x000f1000u32 
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
-# 005e0 Instruction { source: "inline_handle_tty_globals_3_t1 <- 0n524544/0x00080100u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x34), Constant32(0x00080100=524544)], resolved: None }
-20 34 00 01 08 00 
+# 005e0 Instruction { source: "inline_handle_tty_globals_3_t1 <- 0n987136/0x000f1000u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x34), Constant32(0x000f1000=987136)], resolved: None }
+20 34 00 10 0f 00 
 # inline_handle_tty_globals_3_t0 <- inline_handle_tty_globals_3_t1 U32
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
 # optimized away noop copy Instruction { source: "inline_handle_tty_globals_3_t0 <- inline_handle_tty_globals_3_t1 U32\n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: Copy32, args: [Register(0x34), Register(0x34)], resolved: None }
@@ -2032,7 +2032,7 @@ ff
 # Var inline_main_getc_19_ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([81])
 # Var inline_main_getc_19_g (Local g Ptr(Struct("Globals")) Reg(U32)) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_getc_19_inline_getc_globals_1_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_main_getc_19_inline_getc_globals_1_g (Local g Struct("Globals") Static(524544)) Static(524544) None
+# Var inline_main_getc_19_inline_getc_globals_1_g (Local g Struct("Globals") Static(987136)) Static(987136) None
 # Var inline_main_getc_19_inline_getc_globals_1_t0 (t0 AddressOf(Ident("g"))) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_getc_19_inline_getc_globals_1_t1 (static "g") Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_getc_19_inline_getc_queue_pop_18_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
@@ -2075,7 +2075,7 @@ ff
 # Var inline_main_getc_20_ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([81])
 # Var inline_main_getc_20_g (Local g Ptr(Struct("Globals")) Reg(U32)) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_getc_20_inline_getc_globals_1_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_main_getc_20_inline_getc_globals_1_g (Local g Struct("Globals") Static(524544)) Static(524544) None
+# Var inline_main_getc_20_inline_getc_globals_1_g (Local g Struct("Globals") Static(987136)) Static(987136) None
 # Var inline_main_getc_20_inline_getc_globals_1_t0 (t0 AddressOf(Ident("g"))) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_getc_20_inline_getc_globals_1_t1 (static "g") Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_getc_20_inline_getc_queue_pop_18_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
@@ -2115,7 +2115,7 @@ ff
 # Var inline_main_getc_20_t3 (t3 Call(Call { function: "enable_interrupts", parameters: [] })) Reg(U8) Some([81])
 # Var inline_main_getc_20_t4 (t4 Ident("ch")) Reg(U8) Some([81])
 # Var inline_main_globals_4_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_main_globals_4_g (Local g Struct("Globals") Static(524544)) Static(524544) None
+# Var inline_main_globals_4_g (Local g Struct("Globals") Static(987136)) Static(987136) None
 # Var inline_main_globals_4_t0 (t0 AddressOf(Ident("g"))) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_globals_4_t1 (static "g") Reg(U32) Some([84, 85, 86, 87])
 # Var inline_main_queue_init_17_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
@@ -2151,10 +2151,10 @@ ff
 # Var t7 (t7 Number(U8, 0)) Reg(U8) Some([100])
 # Var t8 (t8 Call(Call { function: "queue_init", parameters: [AddressOf(PtrFieldDeref("g", "stdin"))] })) Reg(U8) Some([81])
 # Var t9 (t9 AddressOf(PtrFieldDeref("g", "stdin"))) Reg(U32) Some([84, 85, 86, 87])
-# inline_main_globals_4_t1 <- 0n524544/0x00080100u32 
+# inline_main_globals_4_t1 <- 0n987136/0x000f1000u32 
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
-# 006ae Instruction { source: "inline_main_globals_4_t1 <- 0n524544/0x00080100u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x54), Constant32(0x00080100=524544)], resolved: None }
-20 54 00 01 08 00 
+# 006ae Instruction { source: "inline_main_globals_4_t1 <- 0n987136/0x000f1000u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x54), Constant32(0x000f1000=987136)], resolved: None }
+20 54 00 10 0f 00 
 # inline_main_globals_4_t0 <- inline_main_globals_4_t1 U32
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
 # optimized away noop copy Instruction { source: "inline_main_globals_4_t0 <- inline_main_globals_4_t1 U32\n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: Copy32, args: [Register(0x54), Register(0x54)], resolved: None }
@@ -2285,10 +2285,10 @@ ff
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: NotEquals, left: Number(U8, 97), right: Call(Call { function: \"getc\", parameters: [] }) }, while_true: [] }", "Comparison { op: NotEquals, left: Number(U8, 97), right: Call(Call { function: \"getc\", parameters: [] }) }", "Number(U8, 97)", "Number(U8, 97)"] }
 # 006fd Instruction { source: "t12 <- 0n97/0x61u8 \n\tSourceContext { contexts: [\"While { predicate: Comparison { op: NotEquals, left: Number(U8, 97), right: Call(Call { function: \\\"getc\\\", parameters: [] }) }, while_true: [] }\", \"Comparison { op: NotEquals, left: Number(U8, 97), right: Call(Call { function: \\\"getc\\\", parameters: [] }) }\", \"Number(U8, 97)\", \"Number(U8, 97)\"] }", opcode: LoadImm8, args: [Register(0x66), Constant8(0x61=97)], resolved: None }
 04 66 61 
-# inline_main_getc_19_inline_getc_globals_1_t1 <- 0n524544/0x00080100u32 
+# inline_main_getc_19_inline_getc_globals_1_t1 <- 0n987136/0x000f1000u32 
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
-# 00700 Instruction { source: "inline_main_getc_19_inline_getc_globals_1_t1 <- 0n524544/0x00080100u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x54), Constant32(0x00080100=524544)], resolved: None }
-20 54 00 01 08 00 
+# 00700 Instruction { source: "inline_main_getc_19_inline_getc_globals_1_t1 <- 0n987136/0x000f1000u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x54), Constant32(0x000f1000=987136)], resolved: None }
+20 54 00 10 0f 00 
 # inline_main_getc_19_inline_getc_globals_1_t0 <- inline_main_getc_19_inline_getc_globals_1_t1 U32
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
 # optimized away noop copy Instruction { source: "inline_main_getc_19_inline_getc_globals_1_t0 <- inline_main_getc_19_inline_getc_globals_1_t1 U32\n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: Copy32, args: [Register(0x54), Register(0x54)], resolved: None }
@@ -2554,10 +2554,10 @@ ff
 # :main_while_body_4
 # 	SourceContext { contexts: ["While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getc\", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 0) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }, TtyOut { value: Ident(\"ch\") }])], else_block: [] }] }"] }
 # main_while_body_4
-# inline_main_getc_20_inline_getc_globals_1_t1 <- 0n524544/0x00080100u32 
+# inline_main_getc_20_inline_getc_globals_1_t1 <- 0n987136/0x000f1000u32 
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
-# 007ad Instruction { source: "inline_main_getc_20_inline_getc_globals_1_t1 <- 0n524544/0x00080100u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x54), Constant32(0x00080100=524544)], resolved: None }
-20 54 00 01 08 00 
+# 007ad Instruction { source: "inline_main_getc_20_inline_getc_globals_1_t1 <- 0n987136/0x000f1000u32 \n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: LoadImm32, args: [Register(0x54), Constant32(0x000f1000=987136)], resolved: None }
+20 54 00 10 0f 00 
 # inline_main_getc_20_inline_getc_globals_1_t0 <- inline_main_getc_20_inline_getc_globals_1_t1 U32
 # 	SourceContext { contexts: ["Return { value: Some(AddressOf(Ident(\"g\"))) }", "AddressOf(Ident(\"g\"))", "AddressOf(Ident(\"g\"))"] }
 # optimized away noop copy Instruction { source: "inline_main_getc_20_inline_getc_globals_1_t0 <- inline_main_getc_20_inline_getc_globals_1_t1 U32\n\tSourceContext { contexts: [\"Return { value: Some(AddressOf(Ident(\\\"g\\\"))) }\", \"AddressOf(Ident(\\\"g\\\"))\", \"AddressOf(Ident(\\\"g\\\"))\"] }", opcode: Copy32, args: [Register(0x54), Register(0x54)], resolved: None }
