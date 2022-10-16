@@ -68,14 +68,14 @@ WiFiClient client;
 #endif
 
 cppQueue  ttlToArduinoQueue(sizeof(char), 512, FIFO, false);
-cppQueue  arduinoToTtlQueue(sizeof(char), 256, FIFO, false);
+cppQueue  arduinoToTtlQueue(sizeof(char), 512, FIFO, false);
 
 unsigned long tickCount = 0;
-//unsigned long breakPoint = 0;//1700/4*4;
+//unsigned long breakPoint = 0x80425;
 //long dataBreakPoint = 0x23;
 bool paused = false;
 bool halted = false;
-bool debug = true;
+bool debug = false;
 #define DELAY_US  2
 #define INNER_TICKS (4*8)
 
@@ -174,6 +174,21 @@ void tick(bool force) {
   }
 }
 
+void pushToTtlQueue(char c) {
+  cli();
+  while (!arduinoToTtlQueue.push(&c)) {
+    sei();
+    if (debug) {
+      Serial.print("waiting for TTL to dequeue...");
+      Serial.flush();
+    }
+    delay(1000);
+    cli();
+  }
+  digitalWrite(TTYIN_RTR, HIGH);
+  sei();
+}
+
 void checkSerial() {
   //Serial.println("CHECK SERIAL START");
   byte b;
@@ -197,20 +212,20 @@ void checkSerial() {
       paused = !paused;
     } else if (b == '?') {
       debug = !debug;
+    } else if (b == 'y') {
+      char *c = "s000F0EFC\nw00\nn\nw14\nn\nw08\nn\nw00\nq\n";
+      while (*c) {
+        pushToTtlQueue(*c);
+        c++;
+      }
     } else {
       if (debug) {
         Serial.print("#PC->Arduino@");
         Serial.print(millis());
-        Serial.print(": ");
+        Serial.print(": 0x");
         Serial.println(b, HEX);
       }
-      cli();
-      if (!arduinoToTtlQueue.push(&b)) {
-        Serial.println("#ERR arduinoToTtlQueue overflow");
-        halted = true;
-      }
-      digitalWrite(TTYIN_RTR, HIGH);
-      sei();
+      pushToTtlQueue(b);
     }
   }
 
@@ -290,9 +305,11 @@ void loop() {
       previousOutCount = outCount;
     }
   }
+
+  checkSerial();
   
   for (int i=0; i< 16; i++) {
-    if (paused || (tickCount & 0xFF) == 0) {
+    if ((tickCount & 0xFF) == 0) {
       checkSerial();
     }
     

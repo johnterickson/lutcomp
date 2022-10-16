@@ -9,7 +9,7 @@ fn [inline] getchar() -> u8 {
 
 fn [inline] putc(c: u8) {
     io_write0(c);
-    lcd_write_char(c);
+    /* lcd_write_char(c); */
 }
 
 fn [inline] readline(buf:&u8) {
