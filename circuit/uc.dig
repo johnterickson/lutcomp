@@ -885,7 +885,7 @@
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>UNUSED_5</string>
+          <string>IR0_CP</string>
         </entry>
       </elementAttributes>
       <pos x="1360" y="20"/>
@@ -1468,10 +1468,6 @@ C    0      1     0</dataString>
       <p2 x="1180" y="520"/>
     </wire>
     <wire>
-      <p1 x="1140" y="-140"/>
-      <p2 x="1340" y="-140"/>
-    </wire>
-    <wire>
       <p1 x="-820" y="-780"/>
       <p2 x="-780" y="-780"/>
     </wire>
@@ -1601,11 +1597,15 @@ C    0      1     0</dataString>
     </wire>
     <wire>
       <p1 x="1140" y="20"/>
-      <p2 x="1360" y="20"/>
+      <p2 x="1340" y="20"/>
     </wire>
     <wire>
       <p1 x="1000" y="20"/>
       <p2 x="1020" y="20"/>
+    </wire>
+    <wire>
+      <p1 x="1340" y="20"/>
+      <p2 x="1360" y="20"/>
     </wire>
     <wire>
       <p1 x="-1100" y="-280"/>
@@ -2489,7 +2489,7 @@ C    0      1     0</dataString>
     </wire>
     <wire>
       <p1 x="1340" y="-300"/>
-      <p2 x="1340" y="-140"/>
+      <p2 x="1340" y="20"/>
     </wire>
     <wire>
       <p1 x="960" y="-160"/>

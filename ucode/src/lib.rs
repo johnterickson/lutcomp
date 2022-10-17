@@ -27,11 +27,11 @@ pub const PATCH_VERSION: u8 = 0;
 #[strum(serialize_all = "lowercase")]
 pub enum DataBusLoadEdge {
     PcInc = 0,
-    IR0 = 1,
+    NoOp = 1,
     In1 = 2,
     Alu = 3,
     Mem = 4,
-    // Reserved5 = 5,
+    IR0 = 5,
     IoXCp = 6,
     Flags = 7,
     W = 8,
@@ -41,7 +41,7 @@ pub enum DataBusLoadEdge {
     Addr0 = 12,
     Addr1 = 13,
     Addr2 = 14,
-    // Reserved15 = 15,
+    //unused = 15,
 }
 
 impl DataBusLoadEdge {
@@ -194,6 +194,16 @@ impl MicroOp {
         }
         assert_eq!(data_bus_load == DataBusLoadEdge::Alu, alu_opcode.is_some());
         assert_eq!(data_bus_out == DataBusOutputLevel::Imm, immediate.is_some());
+
+        if DataBusLoadEdge::IR0 == data_bus_load {
+            // because IR0 affects IOSEL, make sure it doesn't coincide with IO ops
+            assert_ne!(DataBusOutputLevel::IoXData, data_bus_out);
+            assert_ne!(DataBusOutputLevel::IoReadyToRead, data_bus_out);
+            assert_ne!(DataBusOutputLevel::IoReadyToWrite, data_bus_out);
+
+            // in fact, it should always be memory
+            assert_eq!(DataBusOutputLevel::Mem, data_bus_out);
+        }
 
         if data_bus_out == DataBusOutputLevel::Next {
             assert_eq!(None, address_bus_out);
@@ -473,7 +483,7 @@ impl Ucode {
             None,
             DataBusOutputLevel::Halt,
             None,
-            DataBusLoadEdge::IR0, //same value as Halt
+            DataBusLoadEdge::NoOp, //same value as Halt
             None,
         );
 

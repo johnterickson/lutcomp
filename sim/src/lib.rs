@@ -516,6 +516,7 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::X => self.regs[1] = data_bus.unwrap(),
             DataBusLoadEdge::Y => self.regs[2] = data_bus.unwrap(),
             DataBusLoadEdge::Z => self.regs[3] = data_bus.unwrap(),
+            DataBusLoadEdge::NoOp => panic!(),
         }
 
         self.upc += 2;
