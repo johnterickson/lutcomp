@@ -19,7 +19,7 @@
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>MEM_CP</string>
+          <string>MEM_WE</string>
         </entry>
       </elementAttributes>
       <pos x="760" y="240"/>
@@ -318,7 +318,7 @@
         <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>ADDR_out ADDR_OE_ MEM_OE_ DATA  A0_CP A1_CP A2_CP MEM_CP DATA_out
+            <dataString>ADDR_out ADDR_OE_ MEM_OE_ DATA  A0_CP A1_CP A2_CP MEM_WE DATA_out
 Z        1        1       0x00  C     0     0     0      0x00
 Z        1        1       0x00  0     C     0     0      0x00
 Z        1        1       0x00  0     0     C     0      0x00
@@ -368,7 +368,7 @@ Z        1        1       0x02  C     0     0     0      0x02
         <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>ADDR     ADDR_OE_ MEM_OE_ DATA  MEM_CP ADDR_out DATA_out
+            <dataString>ADDR     ADDR_OE_ MEM_OE_ DATA  MEM_WE ADDR_out DATA_out
 0x80007  1        1       0xAB  C      0x80007  0xAB
 0x90001  1        1       0x34  C      0x90001  0x34
 0x80007  1        0       Z     0      0x80007  0xAB

@@ -851,7 +851,7 @@
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>MEM_CP</string>
+          <string>MEM_WE</string>
         </entry>
       </elementAttributes>
       <pos x="1220" y="-20"/>
