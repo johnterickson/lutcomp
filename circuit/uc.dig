@@ -1377,10 +1377,6 @@ C    0      1     0</dataString>
       <elementName>Splitter</elementName>
       <elementAttributes>
         <entry>
-          <string>splitterSpreading</string>
-          <int>2</int>
-        </entry>
-        <entry>
           <string>Input Splitting</string>
           <string>2</string>
         </entry>
@@ -1394,37 +1390,27 @@ C    0      1     0</dataString>
     <visualElement>
       <elementName>Not</elementName>
       <elementAttributes/>
-      <pos x="420" y="600"/>
+      <pos x="620" y="560"/>
     </visualElement>
     <visualElement>
-      <elementName>And</elementName>
+      <elementName>Or</elementName>
       <elementAttributes>
         <entry>
           <string>wideShape</string>
           <boolean>true</boolean>
         </entry>
       </elementAttributes>
-      <pos x="480" y="560"/>
+      <pos x="480" y="540"/>
     </visualElement>
     <visualElement>
-      <elementName>Not</elementName>
-      <elementAttributes/>
-      <pos x="-280" y="540"/>
-    </visualElement>
-    <visualElement>
-      <elementName>Not</elementName>
-      <elementAttributes/>
-      <pos x="-280" y="580"/>
-    </visualElement>
-    <visualElement>
-      <elementName>And</elementName>
+      <elementName>Or</elementName>
       <elementAttributes>
         <entry>
           <string>wideShape</string>
           <boolean>true</boolean>
         </entry>
       </elementAttributes>
-      <pos x="-200" y="540"/>
+      <pos x="380" y="560"/>
     </visualElement>
   </visualElements>
   <wires>
@@ -1701,12 +1687,12 @@ C    0      1     0</dataString>
       <p2 x="-400" y="540"/>
     </wire>
     <wire>
-      <p1 x="-380" y="540"/>
-      <p2 x="-280" y="540"/>
+      <p1 x="440" y="540"/>
+      <p2 x="480" y="540"/>
     </wire>
     <wire>
-      <p1 x="-240" y="540"/>
-      <p2 x="-200" y="540"/>
+      <p1 x="-380" y="540"/>
+      <p2 x="360" y="540"/>
     </wire>
     <wire>
       <p1 x="-1520" y="-160"/>
@@ -1817,8 +1803,16 @@ C    0      1     0</dataString>
       <p2 x="1360" y="1200"/>
     </wire>
     <wire>
-      <p1 x="-120" y="560"/>
-      <p2 x="480" y="560"/>
+      <p1 x="560" y="560"/>
+      <p2 x="620" y="560"/>
+    </wire>
+    <wire>
+      <p1 x="660" y="560"/>
+      <p2 x="940" y="560"/>
+    </wire>
+    <wire>
+      <p1 x="-380" y="560"/>
+      <p2 x="380" y="560"/>
     </wire>
     <wire>
       <p1 x="1140" y="-180"/>
@@ -1985,16 +1979,8 @@ C    0      1     0</dataString>
       <p2 x="-880" y="580"/>
     </wire>
     <wire>
-      <p1 x="560" y="580"/>
-      <p2 x="940" y="580"/>
-    </wire>
-    <wire>
-      <p1 x="-380" y="580"/>
-      <p2 x="-280" y="580"/>
-    </wire>
-    <wire>
-      <p1 x="-240" y="580"/>
-      <p2 x="-200" y="580"/>
+      <p1 x="460" y="580"/>
+      <p2 x="480" y="580"/>
     </wire>
     <wire>
       <p1 x="-540" y="-840"/>
@@ -2101,12 +2087,8 @@ C    0      1     0</dataString>
       <p2 x="1220" y="1240"/>
     </wire>
     <wire>
-      <p1 x="460" y="600"/>
-      <p2 x="480" y="600"/>
-    </wire>
-    <wire>
-      <p1 x="380" y="600"/>
-      <p2 x="420" y="600"/>
+      <p1 x="360" y="600"/>
+      <p2 x="380" y="600"/>
     </wire>
     <wire>
       <p1 x="-540" y="-220"/>
@@ -2265,7 +2247,7 @@ C    0      1     0</dataString>
       <p2 x="0" y="500"/>
     </wire>
     <wire>
-      <p1 x="380" y="500"/>
+      <p1 x="440" y="500"/>
       <p2 x="1180" y="500"/>
     </wire>
     <wire>
@@ -2529,7 +2511,7 @@ C    0      1     0</dataString>
       <p2 x="-940" y="940"/>
     </wire>
     <wire>
-      <p1 x="940" y="580"/>
+      <p1 x="940" y="560"/>
       <p2 x="940" y="780"/>
     </wire>
     <wire>
@@ -2567,6 +2549,10 @@ C    0      1     0</dataString>
     <wire>
       <p1 x="-1080" y="-1200"/>
       <p2 x="-1080" y="-260"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="500"/>
+      <p2 x="440" y="540"/>
     </wire>
     <wire>
       <p1 x="-60" y="760"/>
@@ -2757,6 +2743,10 @@ C    0      1     0</dataString>
       <p2 x="360" y="360"/>
     </wire>
     <wire>
+      <p1 x="360" y="540"/>
+      <p2 x="360" y="600"/>
+    </wire>
+    <wire>
       <p1 x="1000" y="20"/>
       <p2 x="1000" y="100"/>
     </wire>
@@ -2803,10 +2793,6 @@ C    0      1     0</dataString>
     <wire>
       <p1 x="-380" y="-940"/>
       <p2 x="-380" y="-920"/>
-    </wire>
-    <wire>
-      <p1 x="380" y="500"/>
-      <p2 x="380" y="600"/>
     </wire>
   </wires>
   <measurementOrdering/>
