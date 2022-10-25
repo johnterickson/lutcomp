@@ -41,6 +41,10 @@ const int DATA_PINS[] = {
   22,23,24,25,26,27,28,29
 };
 
+#define DATA_PORT_IN PINA
+#define DATA_PORT_OUT PORTA
+#define DATA_PORT_DIR DDRA
+
 #define PCICR_FLAGS (1<<0) //PCIE0/PB
 #define PCMSK PCMSK0
 #define PCMSK_FLAGS ((1<<6) /*PB6/PCINT6*/ | (1<<5) /*PB5/PCINT5*/ | (1<<4) /*PB4/PCINT4*/)
@@ -71,13 +75,20 @@ cppQueue  ttlToArduinoQueue(sizeof(char), 512, FIFO, false);
 cppQueue  arduinoToTtlQueue(sizeof(char), 512, FIFO, false);
 
 unsigned long tickCount = 0;
-//unsigned long breakPoint = 0x80425;
-//long dataBreakPoint = 0x23;
+unsigned long lastBootMs = 0;
+//#define BREAKPOINT (1120-INNER_TICKS)
 bool paused = false;
 bool halted = false;
 bool debug = false;
 #define DELAY_US  2
 #define INNER_TICKS (4*8)
+
+
+#if defined(BREAKPOINT)
+#define UPDATE_TICKCOUNT_AND_CHECK_BREAKPOINT(ticks) do { if(tickCount < BREAKPOINT && tickCount + ticks >= BREAKPOINT) { paused = true;} tickCount += ticks; } while(0)
+#else
+#define UPDATE_TICKCOUNT_AND_CHECK_BREAKPOINT(ticks) do { tickCount += ticks; } while(0)
+#endif
 
 void initOutput(int pin, int initValue) {
   if (initValue != 0) {
@@ -90,39 +101,52 @@ void initOutput(int pin, int initValue) {
 }
 
 void setDataPinsInput() {
+#if defined(DATA_PORT_OUT)
+  DATA_PORT_DIR = 0x0;
+  DATA_PORT_OUT = 0x0;
+#else
   for(int i=0; i<8;i++) {
     pinMode(DATA_PINS[i], INPUT);
   }
+#endif
 }
 
 void setDataPinsOutput() {
   byte b;
   if(arduinoToTtlQueue.pop(&b)) {
-    if (debug) {
-      Serial.print("#Arduino->TTL    @");
-      Serial.print(millis());
-      Serial.print(": ");
-      Serial.println(b, HEX);
-    }
-
-    if (arduinoToTtlQueue.getCount() == 0) {
-      digitalWrite(TTYIN_RTR, LOW);
-    }
   } else {
-    b = 0;
+    b = 0xFF;
   }
 
+#if defined(DATA_PORT_OUT)
+  DATA_PORT_DIR = 0xFF;
+  DATA_PORT_OUT = b;
+#else
   for(int i=0; i<8;i++) {
     initOutput(DATA_PINS[i], (b >> i) & 0x1);
+  }
+#endif
+
+  if (arduinoToTtlQueue.getCount() == 0) {
+    digitalWrite(TTYIN_RTR, LOW);
+  }
+
+  if (debug) {
+    Serial.print("# CT->UC 0x");
+    Serial.println(b, HEX);
   }
 }
 
 byte readDataPins() {
+#if defined(DATA_PORT_OUT)
+  return DATA_PORT_IN;
+#else
   byte b = 0;
   for(int i=0; i<8;i++) {
     b |= digitalRead(DATA_PINS[i]) << i;
   }
   return b;
+#endif
 }
 
 ISR(PCINT_vect){   // Port D, PCINT16 - PCINT23
@@ -141,27 +165,22 @@ ISR(PCINT_vect){   // Port D, PCINT16 - PCINT23
   bool newTTYOUT_CP = digitalRead(TTYOUT_CP);
   if (!prevTTYOUT_CP && newTTYOUT_CP) {
     byte b = readDataPins();
-    if (b != 0) {
-      if (!ttlToArduinoQueue.push(&b)) {
-        Serial.println("#ERR ttlToArduinoQueue overflow");
-        halted = true;
-      }
-      if (debug) {
-        Serial.print("#TTL->Arduino@");
-        Serial.print(millis());
-        Serial.print(": ");
-        Serial.println(b, HEX);
-      }
+    if (!ttlToArduinoQueue.push(&b)) {
+      Serial.println("#ERR ttlToArduinoQueue overflow");
+      halted = true;
+    }
+    if (debug) {
+      Serial.print("# CT<-UC 0x");
+      Serial.println(b, HEX);
     }
   }
   prevTTYOUT_CP = newTTYOUT_CP;
 }
 
-void tickOnce() {
+void halfTick() {
   CLK_PORT ^= (1<<CLK_BIT);
   delayMicroseconds(DELAY_US);
-  CLK_PORT ^= (1<<CLK_BIT);
-  delayMicroseconds(DELAY_US);
+  UPDATE_TICKCOUNT_AND_CHECK_BREAKPOINT(1);
 }
 
 void tick(bool force) { 
@@ -170,7 +189,7 @@ void tick(bool force) {
       CLK_PORT ^= (1<<CLK_BIT);
       delayMicroseconds(DELAY_US);
     }
-    tickCount += INNER_TICKS;
+    UPDATE_TICKCOUNT_AND_CHECK_BREAKPOINT(INNER_TICKS);
   }
 }
 
@@ -179,7 +198,7 @@ void pushToTtlQueue(char c) {
   while (!arduinoToTtlQueue.push(&c)) {
     sei();
     if (debug) {
-      Serial.print("waiting for TTL to dequeue...");
+      Serial.println("# waiting for TTL to dequeue...");
       Serial.flush();
     }
     delay(1000);
@@ -189,6 +208,17 @@ void pushToTtlQueue(char c) {
   sei();
 }
 
+void displayTicks() {
+  unsigned long ms = millis() - lastBootMs;
+  Serial.print(tickCount);
+  Serial.print(" ticks in ");
+  Serial.print(ms);
+  Serial.print("ms = ");
+  Serial.print(tickCount/ms);
+  Serial.println(" kHz.");
+  Serial.flush();
+}
+
 void checkSerial() {
   //Serial.println("CHECK SERIAL START");
   byte b;
@@ -196,16 +226,13 @@ void checkSerial() {
 
   if (Serial.available() > 0) {
     b = Serial.read();
-    if (b == 't') { 
-      tickOnce();
-      unsigned long ms = millis();
-      Serial.print(tickCount);
-      Serial.print(" ticks in ");
-      Serial.print(ms);
-      Serial.print("ms = ");
-      Serial.print(tickCount/ms);
-      Serial.println(" kHz.");
-      Serial.flush();
+    if (b == 'h') {
+      halfTick();
+      displayTicks();
+    } else if (b == 't') { 
+      halfTick();
+      halfTick();
+      displayTicks();
     } else if (b == 'z') {
       reset();
     } else if (b == 'p') {
@@ -220,9 +247,7 @@ void checkSerial() {
       }
     } else {
       if (debug) {
-        Serial.print("#PC->Arduino@");
-        Serial.print(millis());
-        Serial.print(": 0x");
+        Serial.print("# PC->CT: 0x");
         Serial.println(b, HEX);
       }
       pushToTtlQueue(b);
@@ -250,19 +275,17 @@ void checkSerial() {
   cli();
   if (ttlToArduinoQueue.pop(&b)) {
     sei();
-    if (b > 0) {
-      Serial.print((char)b);
+    Serial.print((char)b);
 #if defined(ENABLE_WIFI)
-      if (client) {
-        if (client.connected()) {
-          client.write(b);
-        }
+    if (client) {
+      if (client.connected()) {
+        client.write(b);
       }
-#endif
     }
-    cli();
+#endif
+  } else {
+    sei();
   }
-  sei();
 
   //Serial.println("CHECK SERIAL END");
 }
@@ -281,6 +304,7 @@ void reset() {
   ttlToArduinoQueue.clean();
   arduinoToTtlQueue.clean();
   tickCount = 0;
+  lastBootMs = millis();
   halted = false;
   digitalWrite(RESET_, HIGH);
   //Serial.println("RUNNING...");
@@ -290,28 +314,28 @@ void loop() {
   static uint16_t previousInCount = 0;
   static uint16_t previousOutCount = 0;
 
-  if (debug) {
-    uint16_t inCount = ttlToArduinoQueue.getCount();
-    if (previousInCount != inCount) {
-      Serial.print("#ttlToArduinoQueue length:");
-      Serial.println(inCount);
-      previousInCount = inCount;
-    }
-    
-    uint16_t outCount = arduinoToTtlQueue.getCount();
-    if (previousOutCount != outCount) {
-      Serial.print("#arduinoToTtlQueue length:");
-      Serial.println(outCount);
-      previousOutCount = outCount;
-    }
-  }
+//  if (debug) {
+//    uint16_t inCount = ttlToArduinoQueue.getCount();
+//    if (previousInCount != inCount) {
+//      Serial.print("#ttlToArduinoQueue length:");
+//      Serial.println(inCount);
+//      previousInCount = inCount;
+//    }
+//    
+//    uint16_t outCount = arduinoToTtlQueue.getCount();
+//    if (previousOutCount != outCount) {
+//      Serial.print("#arduinoToTtlQueue length:");
+//      Serial.println(outCount);
+//      previousOutCount = outCount;
+//    }
+//  }
 
   checkSerial();
   
   for (int i=0; i< 16; i++) {
-    if ((tickCount & 0xFF) == 0) {
-      checkSerial();
-    }
+    //if ((DELAY_US == 65535) || (tickCount & 0xFF) == 0) {
+    checkSerial();
+    //}
     
     if(digitalRead(HALT) == HIGH) {
         tick(false);

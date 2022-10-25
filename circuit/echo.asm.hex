@@ -1,4 +1,6 @@
 v2.0 raw
+#  line: '#!image_base_address=(00080400)'
+#   comment: '#!image_base_address=(00080400)'
 #  line: 'loadimm8 r00 <- $01'
 #   instruction: 'loadimm8 r00 <- $01'
 #    loadimm8: 'loadimm8 r00 <- $01'
@@ -178,6 +180,7 @@ v2.0 raw
 #      signed_hex_constant: '00000000'
 #       unsigned_hex_constant: '00000000'
 #  EOI: ''
+# #!image_base_address=(00080400)
 # 00000 Instruction { source: "loadimm8 r00 <- $01", opcode: LoadImm8, args: [Register(0x00), Constant8(0x01=1)], resolved: None }
 04 00 01 
 # 00003 Instruction { source: "and8 r00 r00 -> r00", opcode: And8, args: [Register(0x00), Register(0x00), Register(0x00)], resolved: None }

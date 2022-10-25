@@ -1,5 +1,6 @@
 !include 'stdio.j'
 !include 'print_hex.j'
+!include 'rpnlib.j'
 
 fn main() -> u8 {
     addr: usize = 0x0;
@@ -21,7 +22,12 @@ fn main() -> u8 {
         readline(&(buf[0]));
         ch = buf[0x0];
 
-        if (ch == 'r') {
+        if (ch == 'g') {
+            static calc: RpnCalc;
+            RpnCalc_init(&calc);
+            RpnCalc_run(&calc);
+        }
+        else if (ch == 'r') {
             p_byte = ((addr) AS &u8);
             printHex(*p_byte);
             ttyout(10);

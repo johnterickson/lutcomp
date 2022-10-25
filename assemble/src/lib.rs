@@ -264,6 +264,10 @@ impl AssemblyInputLine {
         assert_eq!(line.as_rule(), Rule::line);
         let line = line.into_inner().next().unwrap();
         match line.as_rule() {
+            Rule::image_base_address => {
+                let base_address = line.into_inner().next().unwrap();
+                AssemblyInputLine::ImageBaseAddress(parse_unsigned_hex(base_address))
+            }
             Rule::instruction => AssemblyInputLine::Instruction(parse_instruction(line)),
             Rule::label => AssemblyInputLine::Label(line.as_str().to_owned()),
             Rule::comment => AssemblyInputLine::Comment(line.as_str().to_owned()),

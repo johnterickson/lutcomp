@@ -52,8 +52,8 @@ enable_interrupts = { "enable_interrupts" }
 disable_interrupts = { "disable_interrupts" }
 io_ready_to_read = { "io_ready_to_read" ~ register }
 io_ready_to_write = { "io_ready_to_write" ~ register }
-io_in = { "io_in" ~ unsigned_hex_constant ~ register }
-io_out = { "io_out" ~ unsigned_hex_constant ~ register }
+io_in = { "io_in" ~ constant8 ~ register }
+io_out = { "io_out" ~ constant8 ~ register }
 
 halt = {"halt" ~ constant32}
 
@@ -82,6 +82,7 @@ comment = { "#" ~ (!new_line ~ ANY)* }
 literal8 = { "LITERAL8" ~ constant8 }
 literal_string_value = { (!new_line ~ ANY)+ }
 literal_string = {"LITERAL_STRING" ~ literal_string_value }
-line = { comment | label | pseudo_call | pseudo_return | instruction | literal8 | literal_string}
+image_base_address = { "!image_base_address=(" ~ unsigned_hex_constant ~ ")"}
+line = { comment | label | pseudo_call | pseudo_return | instruction | literal8 | literal_string | image_base_address}
 
 program = {SOI ~ (line? ~ new_line)* ~ EOI}

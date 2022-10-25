@@ -178,7 +178,7 @@ fn main() {
         Some("ascii_to_ps2") => {
             println!("v2.0 raw");
             for (c, codes) in ASCII_TO_PS2_SCAN_CODES.iter().enumerate() {
-                if (0xA..=0xD).contains(&c) {
+                if c < 0x20 || c == 0x7F {
                     println!("# ASCII 0x{:02x}", c);
                 } else {
                     println!("# ASCII 0x{:02x} == `{}`", c, (c as u8) as char);

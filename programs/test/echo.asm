@@ -1,3 +1,4 @@
+#!image_base_address=(00080400)
 loadimm8 r00 <- $01
 and8 r00 r00 -> r00
 loadimm8 r01 <- 'H'
