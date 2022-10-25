@@ -43,6 +43,8 @@ impl FunctionDefinition {
     {
         if let Some((var_type, _)) = ctxt.consts.get(name) {
             Some((&Scope::Static, var_type))
+        } else  if let Some(var_type) = ctxt.statics.get(name) {
+            Some((&Scope::Static, var_type))
         }
         else if let Some((s,t)) = self.vars.get(name) {
             Some((s,t))

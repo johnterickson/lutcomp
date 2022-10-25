@@ -191,9 +191,10 @@ v2.0 raw
 # ScanCodeMapping { key_name: None, ascii: 0, shift_key_name: None, shift_ascii: 0, is_shift: false, is_release: false }
 00 00 00 00
 # PS2 CODE 0x29
-# ScanCodeMapping { key_name: Some("Spacebar"), ascii: 0, shift_key_name: None, shift_ascii: 0, is_shift: false, is_release: false }
-# "Spacebar"
-00 00 00 00
+# ScanCodeMapping { key_name: None, ascii: 32, shift_key_name: None, shift_ascii: 32, is_shift: false, is_release: false }
+#  NORMAL ASCII 0x20 == ` `
+# SHIFTED ASCII 0x20 == ` `
+20 20 00 00
 # PS2 CODE 0x2a
 # ScanCodeMapping { key_name: Some("v"), ascii: 118, shift_key_name: Some("V"), shift_ascii: 86, is_shift: false, is_release: false }
 # "v"
@@ -473,10 +474,10 @@ v2.0 raw
 # "Right Shift"
 00 00 01 00
 # PS2 CODE 0x5a
-# ScanCodeMapping { key_name: Some("Enter"), ascii: 0, shift_key_name: Some("Enter"), shift_ascii: 0, is_shift: false, is_release: false }
-# "Enter"
-# "Enter"
-00 00 00 00
+# ScanCodeMapping { key_name: None, ascii: 10, shift_key_name: None, shift_ascii: 10, is_shift: false, is_release: false }
+# NORMAL ASCII  0x0a
+# SHIFTED ASCII 0x0a
+0a 0a 00 00
 # PS2 CODE 0x5b
 # ScanCodeMapping { key_name: Some("]"), ascii: 93, shift_key_name: Some("}"), shift_ascii: 125, is_shift: false, is_release: false }
 # "]"

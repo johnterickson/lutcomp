@@ -139,6 +139,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
             statics_base_address: STATICS_START_ADDRESS,
             image_base_address: 0,
             consts: BTreeMap::new(),
+            statics: BTreeMap::new(),
         };
         
         // add intrinsics
@@ -279,7 +280,7 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                     let existing = ctxt.function_defs.insert(f.name.clone(), f);
                     assert!(existing.is_none(), "{:?} is already defined.", &existing);
                 },
-                Rule::const_value => {
+                Rule::global_const_value => {
                     let mut decl = pair.into_inner();
                     let mut decl_tokens = decl.next().unwrap().into_inner();
                     let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
@@ -297,6 +298,13 @@ pub fn create_program(entry: &str, input: &str, root: &Path) -> ProgramContext {
                         _ => unresolved_var_type,
                     };
                     ctxt.consts.insert(var_name, (var_type, const_value));
+                }
+                Rule::global_static_value => {
+                    let mut decl = pair.into_inner();
+                    let mut decl_tokens = decl.next().unwrap().into_inner();
+                    let var_name = decl_tokens.next().unwrap().as_str().trim().to_owned();
+                    let var_type = Type::parse(decl_tokens.next().unwrap(), true);
+                    ctxt.statics.insert(var_name, var_type);
                 }
                 Rule::EOI => {},
                 _ => panic!("Unexpected rule: {:?}", pair)

@@ -1550,6 +1550,24 @@ impl IlProgram {
             );
         }
 
+        for (name, var_type) in &ctxt.statics {
+            let byte_count = var_type.byte_count(ctxt);
+            let space_reserved = (byte_count + 4 - 1) / 4 * 4;
+
+            let addr = next_static_addr;
+            next_static_addr += space_reserved;
+
+            il.statics.insert(
+                (None, IlVarId(name.clone())),
+                IlVarInfo {
+                    description: format!("global static {:?}", var_type),
+                    location: IlLocation::Static(addr),
+                    var_type: var_type.clone(),
+                    byte_size: byte_count,
+                }
+            );
+        }
+
         for (_, def) in &ctxt.function_defs {
             let mut il_ctxt = IlContext {
                 next_static_addr,
@@ -1828,13 +1846,20 @@ impl<'a> IlContext<'a> {
             return var.clone();
         }
 
+        if let Some((info, _)) = self.il.consts.get(&n) {
+            return info.clone();
+        }
+
+        // first look at the function
         let static_key = (Some(il_func.id.clone()), n.clone());
         if let Some(var) = self.il.statics.get(&static_key) {
             return var.clone();
         }
 
-        if let Some((info, _)) = self.il.consts.get(&n) {
-            return info.clone();
+        // then global
+        let static_key = (None, static_key.1);
+        if let Some(var) = self.il.statics.get(&static_key) {
+            return var.clone();
         }
 
         panic!("Could not find '{}'", &n.0);

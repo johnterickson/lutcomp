@@ -1400,6 +1400,7 @@ mod tests {
             &[
                 ("abcq\n",0x0,0x0,"abc"),
                 ("aBcq\n",0x0,0x0,"aBc"),
+                ("a bq\n",0x0,0x0,"a b"),
             ]);
     }
 
@@ -1411,6 +1412,7 @@ mod tests {
             &[
                 ("abcq\n",0x0,0x0,"abc"),
                 ("aBcq\n",0x0,0x0,"aBc"),
+                ("a bq\n",0x0,0x0,"a b"),
             ]);
     }
 

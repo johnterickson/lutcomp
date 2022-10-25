@@ -7,4 +7,5 @@ pub struct ProgramContext {
     pub image_base_address: u32,
     pub statics_base_address: u32,
     pub consts: BTreeMap<String, (Type, Vec<u8>)>,
+    pub statics: BTreeMap<String, Type>,
 }

@@ -225,7 +225,11 @@ fn main() {
                     println!("# \"{}\"", shifted_key_name);
                 }
                 if mapping.shift_ascii != 0 {
-                    println!("# SHIFTED ASCII 0x{:02x} == `{}`", mapping.shift_ascii, mapping.shift_ascii as char);
+                    if 0xA <= mapping.ascii && mapping.ascii <= 0xD {
+                        println!("# SHIFTED ASCII 0x{:02x}", mapping.shift_ascii);
+                    } else {
+                        println!("# SHIFTED ASCII 0x{:02x} == `{}`", mapping.shift_ascii, mapping.shift_ascii as char);
+                    }
                 }
 
                 if is_hex {

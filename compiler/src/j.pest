@@ -109,10 +109,11 @@ include = { "!include" ~ "'" ~ include_path ~ "'" }
 image_base_address = { "!image_base_address=(" ~ expression ~ ")"}
 statics_base_address = { "!statics_base_address=(" ~ expression ~ ")"}
 
-const_value = { "const" ~ variable_decl  ~ "=" ~ expression ~ ";" }
+global_const_value = { "const" ~ variable_decl  ~ "=" ~ expression ~ ";" }
+global_static_value = { "static" ~ variable_decl ~ ";" }
 
 program = {
     SOI ~
-    (image_base_address | statics_base_address | include | struct_decl | function | const_value)+   ~
+    (image_base_address | statics_base_address | include | struct_decl | function | global_const_value | global_static_value)+   ~
     EOI
 }

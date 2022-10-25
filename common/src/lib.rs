@@ -4,7 +4,7 @@ extern crate strum_macros;
 
 extern crate packed_struct;
 extern crate packed_struct_codegen;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use packed_struct::prelude::*;
 
@@ -435,14 +435,18 @@ lazy_static! {
 fn map_ascii_to_ps2_scan_codes() -> [[u8;8]; 128] {
     let mut mappings = [[0;8]; 128];
 
+    let mut seen = BTreeSet::new();
+
     for (code, key, shifted_key) in SCAN_CODE_TO_KEY {
         if key.len() == 1 {
             let c = key[0] as char;
+            assert!(seen.insert(c));
             mappings[c as usize] = [*code, 0xF0, *code, 0, 0, 0, 0, 0];
         }
 
-        if shifted_key.len() == 1 {
+        if shifted_key.len() == 1 && shifted_key != key {
             let c = shifted_key[0] as char;
+            assert!(seen.insert(c));
             mappings[c as usize] = [0x12, *code, 0xF0, *code, 0xF0, 0x12, 0, 0];
         }
     }
@@ -527,7 +531,7 @@ const SCAN_CODE_TO_KEY : &[(u8, &[u8], &[u8])] = &[
     (0x4B,b"l",b"L"),
     (0x4C,b";",b":"),
     (0x52,b"'",b"\""),
-    (0x5A,b"Enter",b"Enter"),
+    (0x5A,b"\n",b"\n"), //Enter
     (0x12,b"Left Shift",b""),
     (0x1A,b"z",b"Z"),
     (0x22,b"x",b"X"),
@@ -542,7 +546,7 @@ const SCAN_CODE_TO_KEY : &[(u8, &[u8], &[u8])] = &[
     (0x59,b"Right Shift",b""),
     (0x11,b"Left Ctrl",b""),
     (0x19,b"Left Alt",b""),
-    (0x29,b"Spacebar",b""),
+    (0x29,b" ",b" "), // Spacebar
     (0x39,b"Right Alt",b""),
     (0x58,b"Right Ctrl",b""),
     (0x67,b"Insert",b""),
@@ -601,9 +605,12 @@ mod tests {
         for code in 0u8..=0xFF {
             let mapping = PS2_SCAN_CODE_TO_ASCII[code as usize];
             if mapping.ascii != 0 {
-                assert_eq!(code, ASCII_TO_PS2_SCAN_CODES[mapping.ascii as usize][0]);
+                let reverse = &ASCII_TO_PS2_SCAN_CODES[mapping.ascii as usize];
+                assert_eq!(code, reverse[0],
+                    "Mismatch for code 0x{:02x}, ascii '{}'=0x{:02x}, ps2->ascii {:?}, and ascii->ps2 {:?}", 
+                    code, mapping.ascii as char, mapping.ascii, &mapping, &reverse);
             }
-            if mapping.shift_ascii != 0 {
+            if mapping.shift_ascii != 0 && mapping.ascii != mapping.ascii {
                 let codes = &ASCII_TO_PS2_SCAN_CODES[mapping.shift_ascii as usize];
                 assert_eq!(code, codes[1]);
             }
