@@ -1,7 +1,7 @@
 !include 'rpnlib.j'
 
 fn main() -> u8 {
-    lcd_init();
+    stdio_init();
 
     putc('R');
 
