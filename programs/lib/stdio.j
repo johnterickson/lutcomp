@@ -1,15 +1,35 @@
 
 !include 'lcd.j'
+!include 'Keyboard.j'
+!include 'Queue.j'
+
+static stdin: Queue;
+
+fn stdio_init() {
+    queue_init(&stdin);
+    lcd_init();
+    KeyBoard_init();
+}
 
 fn [inline] getchar() -> u8 {
-    while ((io_ready_to_read() & 1) == 0) {
+    ch: u8 = 0;
+    
+    while (ch == 0) {
+        if ((io_ready_to_read() & 1) != 0) {
+            queue_push(&stdin, ttyin);
+        } else {
+            Keyboard_poll();
+        }
+
+        ch = queue_pop(&stdin);
     }
-    return ttyin;
+
+    return ch;
 }
 
 fn [inline] putc(c: u8) {
     io_write0(c);
-    /* lcd_write_char(c); */
+    lcd_write_char(c);
 }
 
 fn [inline] readline(buf:&u8) {

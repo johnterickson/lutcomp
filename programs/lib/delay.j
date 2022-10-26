@@ -1,6 +1,6 @@
 fn delay(x:usize) {
     while (x != 0x0) {
-        x = (x - 1);
+        x = (x - 0x1);
     }
 }
 
