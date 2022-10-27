@@ -5,13 +5,13 @@ fn main() -> u8 {
 
     ch: u8 = 'a';
     while (ch <= 'z') {
-        lcd_write_char(ch);
+        lcd_putc(ch);
         ch = (ch + 1);
     }
 
     ch = 'A';
     while (ch <= 'Z') {
-        lcd_write_char(ch);
+        lcd_putc(ch);
         ch = (ch + 1);
     }
 }

@@ -239,7 +239,9 @@ impl<'a> Computer<'a> {
     }
 
     pub fn mem_slice(&self, addr: u32, len: u32) -> &[u8] { 
-        self.try_mem_slice(addr, len).or_else(|| panic!("Invalid memory read: {:08x}", addr)).unwrap()
+        self.try_mem_slice(addr, len).or_else(
+            || panic!("Invalid memory read: {:08x}", addr)
+        ).unwrap()
     }
 
     pub fn try_mem_slice_mut(&mut self, addr: u32, len: u32) -> Option<&mut [u8]> {

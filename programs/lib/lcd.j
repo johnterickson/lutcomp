@@ -11,6 +11,18 @@ fn [inline] lcd_logical_to_physical(i: u8) -> u8 {
     return (lcd_row_start[row] + col);
 }
 
+fn lcd_draw_char(i:u8, ch:u8) {
+    pos: u8 = lcd_logical_to_physical(i);
+
+    io_write1((8 | (pos >> 4)));
+    io_write1((pos & 15));
+    delay(0x02);
+
+    io_write1((128 | (ch >> 4)));
+    io_write1((128 | (ch & 15)));
+    delay(0x02);
+}
+
 fn lcd_scroll_up() {
     lcd_current = (lcd_current - 20);
 
@@ -19,21 +31,19 @@ fn lcd_scroll_up() {
     while (i < 60) {
         ch = lcd_display[(i + 20)];
         lcd_display[i] = ch;
-        lcd_set_pos(lcd_logical_to_physical(i));
-        lcd_write_char(ch);
+        lcd_draw_char(i, ch);
         i = (i + 1);
     }
 
     # i is 60
     while (i < 80) {
         lcd_display[i] = 32;
-        lcd_set_pos(lcd_logical_to_physical(i));
-        lcd_write_char(32);
+        lcd_draw_char(i, 32);
         i = (i + 1);
     }
 }
 
-fn lcd_write_char(ch: u8) {
+fn lcd_putc(ch: u8) {
     if (ch == 10) {
         next: u8 = (((lcd_current / 20) + 1) * 20);
         while (lcd_current < next) {
@@ -42,21 +52,13 @@ fn lcd_write_char(ch: u8) {
         }
     } else {
         lcd_display[lcd_current] = ch;
-        lcd_set_pos(lcd_logical_to_physical(lcd_current));
-        io_write1((128 | (ch >> 4)));
-        io_write1((128 | (ch & 15)));
-        delay(0x02);
+        lcd_draw_char(lcd_current, ch);       
+        lcd_current = (lcd_current + 1);
     }
     
     if (lcd_current >= 80) {
         lcd_scroll_up();
     }
-}
-
-fn lcd_set_pos(pos: u8) {
-    io_write1((8 | (pos >> 4)));
-    io_write1((pos & 15));
-    delay(0x02);
 }
 
 fn lcd_init() {
