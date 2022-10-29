@@ -12,9 +12,9 @@ use common::*;
 
 use lazy_static::lazy_static;
 lazy_static! {
-    static ref UCODE_AND_HASH: (Vec<(u8, &'static str, u32)>, u32) = ucode(false);
+    static ref UCODE_AND_HASH: (Vec<(u16, &'static str, u32)>, u32) = ucode(false);
     pub static ref UCODE_HASH: u32 = UCODE_AND_HASH.1;
-    pub static ref UCODE: Vec<(u8, &'static str, u32)> = UCODE_AND_HASH.0.clone();
+    pub static ref UCODE: Vec<(u16, &'static str, u32)> = UCODE_AND_HASH.0.clone();
 }
 
 pub const MAJOR_VERSION: u8 = 1;
@@ -113,8 +113,8 @@ impl DataBusOutputLevel {
     }
 }
 
-const MAX_UOP_BYTES: usize = 128;
-const MAX_UOPS: usize = MAX_UOP_BYTES / 2;
+const UPC_BITS: usize = 7;
+const MAX_UOPS: usize = 1 << UPC_BITS;
 
 #[derive(Clone, Copy, Debug)]
 #[derive(PackedStruct)]
@@ -242,13 +242,17 @@ impl MicroOp {
         }
     }
 
-    fn emit(&self) -> (u8, u8) {
+    fn emit_bytes(&self) -> (u8, u8) {
         let bytes = self.pack().unwrap();
         (bytes[0], bytes[1])
     }
 
+    fn emit_word(&self) -> u16 {
+        u16::from_le_bytes(self.pack().unwrap())
+    }
+
     pub fn print(&self) {
-        println!("{:02x} {:02x}", self.emit().1, self.emit().0);
+        println!("{:04x}", self.emit_word());
     }
 }
 
@@ -274,9 +278,8 @@ impl MicroEntry {
 }
 
 pub struct Ucode {
-    vec_out: Vec<(u8,&'static str, u32)>,
+    vec_out: Vec<(u16,&'static str, u32)>,
     print: bool,
-
     base_address: usize,
     uop_count: usize,
     inc_pc: bool,
@@ -333,12 +336,11 @@ impl Ucode {
                 file = Cow::Owned(file.chars().map(|c| if c == '\\' {'/'} else {c}).collect());
             }
             println!("#  addr:{:05x} uop:{:?} source:{}:{}", 
-                self.base_address + self.uop_count * 2, &u, file, line);
+                self.base_address + self.uop_count, &u, file, line);
             u.print();
         }
-        let bytes = u.emit();
-        self.vec_out.push((bytes.0, file, line));
-        self.vec_out.push((bytes.1, file, line));
+        let bytes = u.emit_word();
+        self.vec_out.push((bytes, file, line));
         self.uop_count += 1;
     }
 
@@ -472,7 +474,7 @@ impl Ucode {
         add!(self, Output::Direct(DataBusOutputLevel::Alu), Load::Direct(DataBusLoadEdge::Flags));
     }
 
-    fn build(&mut self) -> (Vec<(u8, &'static str, u32)>,u32) {
+    fn build(&mut self) -> (Vec<(u16, &'static str, u32)>,u32) {
         if self.print {
             println!("v2.0 raw");
         }
@@ -496,7 +498,7 @@ impl Ucode {
             let flags = Flags::from_bits_truncate(*inst.flags);
             let opcode = Opcode::from_primitive(inst.instruction);
 
-            self.base_address = encoded_inst as usize * MAX_UOPS * 2;
+            self.base_address = encoded_inst as usize * MAX_UOPS;
             self.uop_count = 0;
             self.inc_pc = true;
             self.possible_carry_pending = false;
@@ -1885,14 +1887,13 @@ impl Ucode {
             if self.print {
                 println!("# Filling in remaining {} uops of {:?} with HALT", uop_remaining, opcode);
             }
-            let filler_bytes = 2 * uop_remaining;
-            let halt = halt.emit();
-            assert_eq!(halt.0, halt.1);
+            assert_eq!(halt.emit_bytes().0, halt.emit_bytes().1);
+            let halt = halt.emit_word();
             if self.print {
-                println!("{}*{:02x}", filler_bytes, halt.0);
+                println!("{}*{:04x}", uop_remaining, halt);
             }
-            for _ in 0..filler_bytes {
-                self.vec_out.push((halt.0, file!(), line!()));
+            for _ in 0..uop_remaining {
+                self.vec_out.push((halt, file!(), line!()));
             }
         }
 
@@ -1900,7 +1901,7 @@ impl Ucode {
 
         let hash = {
             let mut hasher = DefaultHasher::new();
-            let bytes: Vec<u8> = self.vec_out.iter().map(|(b,_,_)| *b).collect();
+            let bytes: Vec<u8> = self.vec_out.iter().map(|(w,_,_)| w.to_le_bytes()).flatten().collect();
             hasher.write(&bytes);
             hasher.finish()
         };
@@ -1908,15 +1909,16 @@ impl Ucode {
         let hash: u32 = (hash % 0x1_0000_0000).try_into().unwrap();
         {
             let hash = hash.to_le_bytes();
-            for (nib_index, byte_index) in hash_nibble_indices.iter().enumerate() {
+            for (nib_index, uop_index) in hash_nibble_indices.iter().enumerate() {
                 let nib_index = nib_index % 8;
                 let nibble = hash[nib_index/2];
                 let nibble = if nib_index % 2 == 0 { nibble & 0xF } else { nibble >> 4 };
                 assert_eq!(nibble & 0xF0, 0);
-                let b = self.vec_out.get_mut(*byte_index).unwrap();
-                assert_eq!(b.0 >> 4, nib_index.try_into().unwrap(), "{:02x}", b.0);
-                b.0 &= 0x0F;
-                b.0 |= nibble << 4;
+                let w = self.vec_out.get_mut(*uop_index).unwrap();
+                assert_eq!((w.0 >> 4) & 0xF, nib_index.try_into().unwrap(), "{:02x}", w.0);
+                w.0 &= 0xFF0F;
+                let nibble: u16 = nibble.into();
+                w.0 |= nibble << 4;
             }
         }
 
@@ -1956,7 +1958,7 @@ impl Ucode {
     }
 }
 
-pub fn ucode(print: bool) -> (Vec<(u8, &'static str, u32)>, u32) {
+pub fn ucode(print: bool) -> (Vec<(u16, &'static str, u32)>, u32) {
     let mut ucode = Ucode::new(print);
     ucode.build()
 }

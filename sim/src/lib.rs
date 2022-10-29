@@ -59,7 +59,7 @@ pub struct Computer<'a> {
     pub ps2: Ps2Keyboard,
     pub lcd: Lcd,
     alu_lut: &'a [u8],
-    ucode_rom: &'a [(u8, &'static str, u32)],
+    ucode_rom: &'a [(u16, &'static str, u32)],
     regs: [u8; 4],
     addr: [u8; 4],
     pub pc: [u8; 4],
@@ -393,11 +393,12 @@ impl<'a> Computer<'a> {
         //     _ => {}
         // }
 
-        let i0 = self.ucode_rom[urom_addr];
-        let i1 = self.ucode_rom[urom_addr + 1];
-        let urom_op = MicroOp::unpack(&[i0.0, i1.0]).unwrap();
+        let uop = self.ucode_rom[urom_addr];
+        let i0 = uop.0.to_le_bytes()[0];
+        let i1 = uop.0.to_le_bytes()[1];
+        let urom_op = MicroOp::unpack(&[i0, i1]).unwrap();
         if self.print {
-            println!("urom_op: {:?} {}:{}", urom_op, i0.1, i0.2);
+            println!("urom_op: {:?} {}:{}", urom_op, i0, i0);
         }
 
         let addr_bus = u32::from_le_bytes(match urom_op.address_bus_out {
@@ -521,7 +522,7 @@ impl<'a> Computer<'a> {
             DataBusLoadEdge::NoOp => panic!(),
         }
 
-        self.upc += 2;
+        self.upc += 1;
 
         if let (Some(pc),Some(pc_hit_count)) = (self.ir0_pc, &mut self.pc_hit_count) {
             *pc_hit_count.entry(pc).or_insert(0) += 1;
