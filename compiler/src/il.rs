@@ -66,6 +66,7 @@ pub struct IlVarInfo {
     pub location: IlLocation,
     pub var_type: Type,
     pub byte_size: u32,
+    pub constant: Option<Vec<u8>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -183,11 +184,13 @@ impl IlFunction {
         };
         let location = IlLocation::Reg(il_type);
         let var_type = e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap();
+        let byte_size = var_type.byte_count(ctxt.program);
         let info = IlVarInfo {
             description: format!("{} {:?}", &id.0, e),
-            byte_size: var_type.byte_count(ctxt.program),
+            byte_size,
             var_type,
             location,
+            constant: e.try_get_const().map(|c| c.to_le_bytes().iter().take(byte_size as usize).cloned().collect()),
         };
         self.vars.insert(id.clone(), info);
         self.next_temp_num += 1;
@@ -226,7 +229,8 @@ impl IlFunction {
             description: format!("static {:?}", &name),
             location: IlLocation::Reg(IlType::U32),
             byte_size: var_type.byte_count(ctxt.program),
-            var_type
+            var_type,
+            constant: None,
         });
         self.add_inst(ctxt, IlInstruction::AssignNumber {
                 dest: addr_var.clone(),
@@ -693,6 +697,7 @@ impl IlFunction {
                         description: "Stack size".to_owned(),
                         location: IlLocation::Reg(IlType::U32),
                         var_type: Type::Number(NumberType::USIZE),
+                        constant: Some(self.vars_stack_size.to_le_bytes().iter().cloned().collect()),
                     });
                     self.add_inst(ctxt, IlInstruction::AssignNumber {
                         dest: stack_size.clone(),
@@ -922,7 +927,7 @@ impl IlFunction {
             n => Some(n.try_into().unwrap())
         };
 
-        for (name, (var_type, _)) in &ctxt.program.consts {
+        for (name, (var_type, val)) in &ctxt.program.consts {
             func.vars.insert(
                 IlVarId(name.to_owned()),
                 IlVarInfo {
@@ -930,6 +935,7 @@ impl IlFunction {
                     location: IlLocation::Const(IlVarId(name.to_owned())),
                     byte_size: var_type.byte_count(ctxt.program),
                     var_type: var_type.clone(),
+                    constant: Some(val.clone()),
                 });
         }
         
@@ -943,6 +949,7 @@ impl IlFunction {
                     location,
                     var_type: var_type.clone(),
                     byte_size,
+                    constant: None,
                 });
             func.args.push(id);
         }
@@ -970,6 +977,7 @@ impl IlFunction {
                                 var_type: var_type.clone(),
                                 description: format!("static {}", name),
                                 byte_size: var_type.byte_count(ctxt.program),
+                                constant: None,
                             }
                         ).is_none()
                     );
@@ -986,7 +994,8 @@ impl IlFunction {
                     location: size.clone(),
                     description: format!("Local {} {:?} {:?}", name, var_type, size),
                     var_type: var_type.clone(),
-                    byte_size: var_type.byte_count(ctxt.program)
+                    byte_size: var_type.byte_count(ctxt.program),
+                    constant: None,
                 });
         }
 
@@ -998,6 +1007,7 @@ impl IlFunction {
                     location: IlLocation::Reg(IlType::U32),
                     var_type: Type::Number(NumberType::USIZE),
                     byte_size: 4,
+                    constant: None,
                 });
 
             let stack_size = func.alloc_tmp(IlVarInfo {
@@ -1005,6 +1015,7 @@ impl IlFunction {
                 description: "Stack size negated".to_owned(),
                 location: IlLocation::Reg(IlType::U32),
                 var_type: Type::Number(NumberType::USIZE),
+                constant: Some(func.vars_stack_size.wrapping_neg().to_le_bytes().iter().cloned().collect())
             });
 
             func.frame_pointer_size_instruction_index = Some((stack_size.clone(), func.body.len()));
@@ -1052,7 +1063,7 @@ impl IlFunction {
                     if refs.writes.len() != 1 {
                         continue;
                     }
-
+                    // find things that are written to once
                     let write = &func.body[*refs.writes.iter().next().unwrap()];
                     let const_val = match &write.0 {
                         IlInstruction::AssignNumber { dest, src } => {
@@ -1545,6 +1556,7 @@ impl IlProgram {
                         location: IlLocation::Const(IlVarId(name.clone())),
                         var_type: var_type.clone(),
                         byte_size: var_type.byte_count(ctxt),
+                        constant: Some(value.clone()),
                     },
                     value.clone())
             );
@@ -1564,6 +1576,7 @@ impl IlProgram {
                     location: IlLocation::Static(addr),
                     var_type: var_type.clone(),
                     byte_size: byte_count,
+                    constant: None,
                 }
             );
         }
@@ -2052,7 +2065,8 @@ mod tests {
                     byte_size: 1,
                     description: v.0.to_owned(),
                     location: IlLocation::Reg(IlType::U8),
-                    var_type: Type::Number(NumberType::U8)
+                    var_type: Type::Number(NumberType::U8),
+                    constant: None,
                 }
             );
         }

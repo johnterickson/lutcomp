@@ -36,6 +36,25 @@ pub fn optimize_assembly(assembly: &mut Vec<AssemblyInputLine>) -> usize {
         }
     }
 
+    // let mut reg_reads = BTreeMap::new();
+    // let mut reg_writes = BTreeMap::new();
+    // for (i, line) in assembly.iter().enumerate() {
+    //     if let AssemblyInputLine::Instruction(inst) = line {
+            
+    //         for arg in inst.args {
+    //             match arg {
+    //                 Value::Constant8(_) => todo!(),
+    //                 Value::Constant24(_) => todo!(),
+    //                 Value::Constant32(_) => todo!(),
+    //                 Value::Register(_) => todo!(),
+    //                 Value::Label24(_) => todo!(),
+    //                 Value::Label32(_) => todo!(),
+    //                 Value::PcOffset(_) => todo!(),
+    //             }
+    //         }
+    //     }
+    // }
+
     for line in assembly.iter_mut() {
         if let AssemblyInputLine::Instruction(i) = line {
             if (i.opcode == Opcode::Copy8 || i.opcode == Opcode::Copy32) && i.args[0] == i.args[1] {
