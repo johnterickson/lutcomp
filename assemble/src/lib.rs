@@ -579,6 +579,7 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
                     push_byte(&mut pc, *byte);
                 }
                 println!();
+                println!();
             }
             AssemblyOutputLine::Constant8(byte) => {
                 println!("{:02x} ", byte);

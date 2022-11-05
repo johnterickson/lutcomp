@@ -4,24 +4,31 @@ v2.0 raw
 # 00000 Init []
 #       Initialzing flags and internal regs.
 00 
+
 # 00001 LoadImm32 [Register(0x0c), Constant32(0x000f0f00=986880)]
 #       Initialzing stack register to 0x000f0f00.
 20 0c 00 0f 0f 00 
+
 # 00007 AddImm32IgnoreCarry [Register(0x0c), Constant32(0xfffffffc=4294967292)]
 #       PseudoCall(Label24(:main))
 32 0c fc ff ff ff 
+
 # 0000d StoreImm32 [Register(0x0c), PcOffset(0x0000000a)]
 #       PseudoCall(Label24(:main))
 25 0c 17 00 00 00 
+
 # 00013 JmpImm [Label24(:main)]
 #       PseudoCall(Label24(:main))
 70 95 05 00 
+
 # 00017 AddImm32IgnoreCarry [Register(0x0c), Constant32(0x00000004=4)]
 #       PseudoCall(Label24(:main))
 32 0c 04 00 00 00 
+
 # 0001d Halt [Constant32(0x00000000=0)]
 #       Halting after return from entry function.
 7e 00 00 00 00 
+
 # :PS2_SCAN_CODE_TO_ASCII
 # const Array(Number(U8), Some(1025))
 00 
@@ -1109,6 +1116,7 @@ ff
 # 00427 IoReadyToRead [Register(0x10)]
 #       ReadyToRead
 79 10 
+
 # t3334 <- t861f BitwiseAnd Number(0n4/0x04u8) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 # Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
@@ -1119,12 +1127,14 @@ ff
 #       Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
 #       Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4))
 04 00 04 
+
 # 0042c And8 [Register(0x10), Register(0x00), Register(0x10)]
 #       t3334 <- t861f BitwiseAnd Number(0n4/0x04u8) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 #       Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
 #       Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4))
 1b 10 00 10 
+
 # tb36e <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 # Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
@@ -1135,6 +1145,7 @@ ff
 #       Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 31 00 
+
 # if t3334 == tb36e then 'Keyboard_poll_if_true_0_1' else 'Keyboard_poll_if_else_0_2' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 # Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
@@ -1143,16 +1154,19 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 #       Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
 15 10 31 
+
 # 00436 JzImm [Label24(Keyboard_poll_if_true_0_1)]
 #       if t3334 == tb36e then 'Keyboard_poll_if_true_0_1' else 'Keyboard_poll_if_else_0_2' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 #       Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
 72 3e 04 00 
+
 # 0043a JmpImm [Label24(Keyboard_poll_if_else_0_2)]
 #       if t3334 == tb36e then 'Keyboard_poll_if_true_0_1' else 'Keyboard_poll_if_else_0_2' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 #       Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
 70 44 04 00 
+
 # :Keyboard_poll_if_true_0_1 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 # Keyboard_poll_if_true_0_1
@@ -1161,10 +1175,12 @@ ff
 # 0043e JmpMem [Register(0x0c)]
 #       PseudoReturn
 75 0c 
+
 # goto Keyboard_poll_if_end_0 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # 00440 JmpImm [Label24(Keyboard_poll_if_end_0)]
 #       goto Keyboard_poll_if_end_0 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 70 44 04 00 
+
 # :Keyboard_poll_if_else_0_2 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # Keyboard_poll_if_else_0_2
 # :Keyboard_poll_if_end_0 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
@@ -1175,6 +1191,7 @@ ff
 # 00444 In2 [Register(0x10)]
 #       IoRead2
 62 10 
+
 # tf68c <- code U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(22,5))
 # Assign { target: Ident("index"), var_type: Some(Number(USIZE)), value: Arithmetic(Multiply, Number(USIZE, 4), Ident("code")) }
 # Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
@@ -1191,12 +1208,14 @@ ff
 #       Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("code") }
 20 2c 00 00 00 00 
+
 # 0044c Copy8 [Register(0x10), Register(0x2c)]
 #       t528d U32 <- tf68c U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(22,5))
 #       Assign { target: Ident("index"), var_type: Some(Number(USIZE)), value: Arithmetic(Multiply, Number(USIZE, 4), Ident("code")) }
 #       Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("code") }
 0b 10 2c 
+
 # index <- t528d Multiply Number(0n4/0x00000004u32) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(22,5))
 # Assign { target: Ident("index"), var_type: Some(Number(USIZE)), value: Arithmetic(Multiply, Number(USIZE, 4), Ident("code")) }
 # Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
@@ -1205,21 +1224,25 @@ ff
 #       Assign { target: Ident("index"), var_type: Some(Number(USIZE)), value: Arithmetic(Multiply, Number(USIZE, 4), Ident("code")) }
 #       Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
 20 00 04 00 00 00 
+
 # 00455 Mul8_16 [Register(0x2c), Register(0x00), Register(0x14)]
 #       index <- t528d Multiply Number(0n4/0x00000004u32) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(22,5))
 #       Assign { target: Ident("index"), var_type: Some(Number(USIZE)), value: Arithmetic(Multiply, Number(USIZE, 4), Ident("code")) }
 #       Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
 11 2c 00 14 
+
 # 00459 LoadImm8 [Register(0x16), Constant8(0x00=0)]
 #       index <- t528d Multiply Number(0n4/0x00000004u32) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(22,5))
 #       Assign { target: Ident("index"), var_type: Some(Number(USIZE)), value: Arithmetic(Multiply, Number(USIZE, 4), Ident("code")) }
 #       Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
 04 16 00 
+
 # 0045c LoadImm8 [Register(0x17), Constant8(0x00=0)]
 #       index <- t528d Multiply Number(0n4/0x00000004u32) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(22,5))
 #       Assign { target: Ident("index"), var_type: Some(Number(USIZE)), value: Arithmetic(Multiply, Number(USIZE, 4), Ident("code")) }
 #       Arithmetic(Multiply, Number(USIZE, 4), Ident("code"))
 04 17 00 
+
 # td45b <- 0n987136/0x000f1000u32  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }, [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }] }
 # Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
@@ -1234,6 +1257,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }
 #       Number(USIZE, 987136)
 20 2c 00 10 0f 00 
+
 # t379c <- mem[td45b] U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }, [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }] }
 # Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
@@ -1244,6 +1268,7 @@ ff
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
 #       LocalFieldDeref("keyboard", "shift_held")
 05 2c 10 
+
 # tb36e <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }, [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }] }
 # Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
@@ -1254,6 +1279,7 @@ ff
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 31 00 
+
 # if t379c != tb36e then 'Keyboard_poll_if_true_0_4' else 'Keyboard_poll_if_else_0_5' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }, [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }] }
 # Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
@@ -1262,11 +1288,13 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }, [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }] }
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
 15 10 31 
+
 # 0046e JzImm [Label24(Keyboard_poll_if_else_0_5)]
 #       if t379c != tb36e then 'Keyboard_poll_if_true_0_4' else 'Keyboard_poll_if_else_0_5' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }, [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }] }
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }
 72 8e 04 00 
+
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if t379c != tb36e then 'Keyboard_poll_if_true_0_4' else 'Keyboard_poll_if_else_0_5' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref(\"keyboard\", \"shift_held\"), right: Number(U8, 0) }, [Assign { target: Ident(\"c\"), var_type: None, value: Index(\"PS2_SCAN_CODE_TO_ASCII\", Arithmetic(Add, Ident(\"index\"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident(\"c\"), var_type: None, value: Index(\"PS2_SCAN_CODE_TO_ASCII\", Ident(\"index\")) }] }\nComparison { op: NotEquals, left: LocalFieldDeref(\"keyboard\", \"shift_held\"), right: Number(U8, 0) }\n", opcode: JmpImm, args: [Label24(Keyboard_poll_if_true_0_4)], resolved: None }
 # :Keyboard_poll_if_true_0_4 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "shift_held"), right: Number(U8, 0) }, [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }])], else_block: [Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }] }
@@ -1287,6 +1315,7 @@ ff
 #       Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }
 #       Ident("PS2_SCAN_CODE_TO_ASCII")
 20 2c 22 00 00 00 
+
 # td18e <- index U32 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
 # Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
@@ -1309,6 +1338,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
 #       Arithmetic(Add, Ident("index"), Number(USIZE, 1))
 21 14 18 
+
 # 0047b AddImm32IgnoreCarry [Register(0x18), Constant32(0x00000001=1)]
 #       t674 <- td18e Add Number(0n1/0x00000001u32) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 #       Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
@@ -1317,6 +1347,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
 #       Arithmetic(Add, Ident("index"), Number(USIZE, 1))
 32 18 01 00 00 00 
+
 # t23a <- t4c8b Add Var(t674) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
 # Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
@@ -1329,6 +1360,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
 03 
+
 # 00482 AddCarry32_1 [Register(0x2c), Register(0x18), Register(0x2c)]
 #       t23a <- t4c8b Add Var(t674) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 #       Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
@@ -1336,6 +1368,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
 30 2c 18 2c 
+
 # 00486 AddCarry32_2 []
 #       t23a <- t4c8b Add Var(t674) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 #       Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
@@ -1343,6 +1376,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
 31 
+
 # c <- mem[t23a] U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
 # Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
@@ -1351,10 +1385,12 @@ ff
 #       Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }
 #       Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 1)))
 05 2c 10 
+
 # goto Keyboard_poll_if_end_3 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # 0048a JmpImm [Label24(Keyboard_poll_if_end_3)]
 #       goto Keyboard_poll_if_end_3 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 70 9d 04 00 
+
 # :Keyboard_poll_if_else_0_5 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # Keyboard_poll_if_else_0_5
 # t4c8b <- const &PS2_SCAN_CODE_TO_ASCII Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
@@ -1373,6 +1409,7 @@ ff
 #       Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }
 #       Ident("PS2_SCAN_CODE_TO_ASCII")
 20 2c 22 00 00 00 
+
 # td18e <- index U32 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }
 # Index("PS2_SCAN_CODE_TO_ASCII", Ident("index"))
@@ -1392,6 +1429,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index")) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index"))
 03 
+
 # 00495 AddCarry32_1 [Register(0x2c), Register(0x14), Register(0x2c)]
 #       tb62e <- t4c8b Add Var(td18e) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 #       Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }
@@ -1399,6 +1437,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index")) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index"))
 30 2c 14 2c 
+
 # 00499 AddCarry32_2 []
 #       tb62e <- t4c8b Add Var(td18e) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 #       Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }
@@ -1406,6 +1445,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index")) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index"))
 31 
+
 # c <- mem[tb62e] U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }
 # Index("PS2_SCAN_CODE_TO_ASCII", Ident("index"))
@@ -1414,6 +1454,7 @@ ff
 #       Assign { target: Ident("c"), var_type: None, value: Index("PS2_SCAN_CODE_TO_ASCII", Ident("index")) }
 #       Index("PS2_SCAN_CODE_TO_ASCII", Ident("index"))
 05 2c 10 
+
 # :Keyboard_poll_if_end_3 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(25,5))
 # Keyboard_poll_if_end_3
 # tdaa <- 0n987140/0x000f1004u32  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
@@ -1430,6 +1471,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }
 #       Number(USIZE, 987140)
 20 18 04 10 0f 00 
+
 # t7ebd <- mem[tdaa] U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }])], else_block: [] }
 # Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
@@ -1440,6 +1482,7 @@ ff
 #       Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 #       LocalFieldDeref("keyboard", "release_in_progress")
 05 18 30 
+
 # tb36e <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }])], else_block: [] }
 # Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
@@ -1450,6 +1493,7 @@ ff
 #       Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 31 00 
+
 # if t7ebd == tb36e then 'Keyboard_poll_if_true_0_7' else 'Keyboard_poll_if_else_0_8' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }])], else_block: [] }
 # Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
@@ -1458,16 +1502,19 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }])], else_block: [] }
 #       Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 15 30 31 
+
 # 004ac JzImm [Label24(Keyboard_poll_if_true_0_7)]
 #       if t7ebd == tb36e then 'Keyboard_poll_if_true_0_7' else 'Keyboard_poll_if_else_0_8' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }])], else_block: [] }
 #       Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 72 b4 04 00 
+
 # 004b0 JmpImm [Label24(Keyboard_poll_if_else_0_8)]
 #       if t7ebd == tb36e then 'Keyboard_poll_if_true_0_7' else 'Keyboard_poll_if_else_0_8' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }])], else_block: [] }
 #       Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 70 fe 04 00 
+
 # :Keyboard_poll_if_true_0_7 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }])], else_block: [] }
 # Keyboard_poll_if_true_0_7
@@ -1481,6 +1528,7 @@ ff
 #       Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] })
 #       AddressOf(Ident("stdin"))
 20 18 5c 10 0f 00 
+
 # tfff6 <- t0 U32 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 # VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] }) }
 # Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] })
@@ -1514,6 +1562,7 @@ ff
 #       Assign { target: Ident("values"), var_type: Some(Ptr(Number(U8))), value: AddressOf(PtrFieldDeref("s", "values")) }
 #       AddressOf(PtrFieldDeref("s", "values"))
 21 18 1c 
+
 # inline_Keyboard_poll_queue_push_5_t1d36 <- inline_Keyboard_poll_queue_push_5_values U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -1550,6 +1599,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 21 18 28 
+
 # 004c0 AddImm32IgnoreCarry [Register(0x28), Constant32(0x00000104=260)]
 #       inline_Keyboard_poll_queue_push_5_tc1ff <- inline_Keyboard_poll_queue_push_5_t4d4f Add Number(0n260/0x00000104u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
@@ -1560,6 +1610,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 32 28 04 01 00 00 
+
 # inline_Keyboard_poll_queue_push_5_t3ee <- mem[inline_Keyboard_poll_queue_push_5_tc1ff] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -1574,6 +1625,7 @@ ff
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "last")
 05 28 20 
+
 # inline_Keyboard_poll_queue_push_5_t5bb7 U32 <- inline_Keyboard_poll_queue_push_5_t3ee U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -1586,6 +1638,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }
 20 24 00 00 00 00 
+
 # 004cf Copy8 [Register(0x20), Register(0x24)]
 #       inline_Keyboard_poll_queue_push_5_t5bb7 U32 <- inline_Keyboard_poll_queue_push_5_t3ee U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
@@ -1593,6 +1646,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }
 0b 20 24 
+
 # inline_Keyboard_poll_queue_push_5_t2187 <- inline_Keyboard_poll_queue_push_5_t1d36 Add Var(inline_Keyboard_poll_queue_push_5_t5bb7) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -1603,18 +1657,21 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 03 
+
 # 004d3 AddCarry32_1 [Register(0x1c), Register(0x24), Register(0x1c)]
 #       inline_Keyboard_poll_queue_push_5_t2187 <- inline_Keyboard_poll_queue_push_5_t1d36 Add Var(inline_Keyboard_poll_queue_push_5_t5bb7) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 30 1c 24 1c 
+
 # 004d7 AddCarry32_2 []
 #       inline_Keyboard_poll_queue_push_5_t2187 <- inline_Keyboard_poll_queue_push_5_t1d36 Add Var(inline_Keyboard_poll_queue_push_5_t5bb7) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 31 
+
 # inline_Keyboard_poll_queue_push_5_t531d <- inline_Keyboard_poll_queue_push_5_n U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Ident("n")
@@ -1625,6 +1682,7 @@ ff
 #       mem[inline_Keyboard_poll_queue_push_5_t2187] <- inline_Keyboard_poll_queue_push_5_t531d U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 06 10 1c 
+
 # inline_Keyboard_poll_queue_push_5_t4d4f <- inline_Keyboard_poll_queue_push_5_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
@@ -1642,12 +1700,14 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 21 18 28 
+
 # 004de AddImm32IgnoreCarry [Register(0x28), Constant32(0x00000104=260)]
 #       inline_Keyboard_poll_queue_push_5_tc1ff <- inline_Keyboard_poll_queue_push_5_t4d4f Add Number(0n260/0x00000104u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 32 28 04 01 00 00 
+
 # inline_Keyboard_poll_queue_push_5_t4d4f <- inline_Keyboard_poll_queue_push_5_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
@@ -1671,6 +1731,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 21 18 28 
+
 # 004e7 AddImm32IgnoreCarry [Register(0x28), Constant32(0x00000104=260)]
 #       inline_Keyboard_poll_queue_push_5_tc1ff <- inline_Keyboard_poll_queue_push_5_t4d4f Add Number(0n260/0x00000104u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
@@ -1679,6 +1740,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 32 28 04 01 00 00 
+
 # inline_Keyboard_poll_queue_push_5_t3ee <- mem[inline_Keyboard_poll_queue_push_5_tc1ff] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
@@ -1689,6 +1751,7 @@ ff
 #       Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
 #       PtrFieldDeref("s", "last")
 05 28 20 
+
 # inline_Keyboard_poll_queue_push_5_t6778 <- inline_Keyboard_poll_queue_push_5_t3ee Add Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
@@ -1697,17 +1760,20 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
 04 00 01 
+
 # 004f3 Add8NoCarryIn [Register(0x20), Register(0x00), Register(0x10)]
 #       inline_Keyboard_poll_queue_push_5_t6778 <- inline_Keyboard_poll_queue_push_5_t3ee Add Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
 14 20 00 10 
+
 # mem[inline_Keyboard_poll_queue_push_5_tc1ff] <- inline_Keyboard_poll_queue_push_5_t6778 U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # 004f7 Store8 [Register(0x10), Register(0x28)]
 #       mem[inline_Keyboard_poll_queue_push_5_tc1ff] <- inline_Keyboard_poll_queue_push_5_t6778 U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 06 10 28 
+
 # goto inline_Keyboard_poll_queue_push_5_function_end_queue_push None
 # Return { value: None }
 # Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_Keyboard_poll_queue_push_5_function_end_queue_push None\nReturn { value: None }\n", opcode: JmpImm, args: [Label24(inline_Keyboard_poll_queue_push_5_function_end_queue_push)], resolved: None }
@@ -1717,6 +1783,7 @@ ff
 # 004fa JmpImm [Label24(Keyboard_poll_if_end_6)]
 #       goto Keyboard_poll_if_end_6 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 70 fe 04 00 
+
 # :Keyboard_poll_if_else_0_8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
 # Keyboard_poll_if_else_0_8
 # :Keyboard_poll_if_end_6 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(31,5))
@@ -1731,6 +1798,7 @@ ff
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
 #       Number(U8, 0)
 04 31 00 
+
 # t4c8b <- const &PS2_SCAN_CODE_TO_ASCII Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
@@ -1749,6 +1817,7 @@ ff
 #       Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }
 #       Ident("PS2_SCAN_CODE_TO_ASCII")
 20 2c 22 00 00 00 
+
 # td18e <- index U32 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
@@ -1774,6 +1843,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2)))
 #       Arithmetic(Add, Ident("index"), Number(USIZE, 2))
 21 14 18 
+
 # 0050a AddImm32IgnoreCarry [Register(0x18), Constant32(0x00000002=2)]
 #       te5cf <- td18e Add Number(0n2/0x00000002u32) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
@@ -1783,6 +1853,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2)))
 #       Arithmetic(Add, Ident("index"), Number(USIZE, 2))
 32 18 02 00 00 00 
+
 # ted94 <- t4c8b Add Var(te5cf) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
@@ -1797,6 +1868,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2)))
 03 
+
 # 00511 AddCarry32_1 [Register(0x2c), Register(0x18), Register(0x2c)]
 #       ted94 <- t4c8b Add Var(te5cf) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
@@ -1805,6 +1877,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2)))
 30 2c 18 2c 
+
 # 00515 AddCarry32_2 []
 #       ted94 <- t4c8b Add Var(te5cf) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
@@ -1813,6 +1886,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2)))
 31 
+
 # t2ca9 <- mem[ted94] U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
@@ -1823,6 +1897,7 @@ ff
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
 #       Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2)))
 05 2c 10 
+
 # if tb36e != t2ca9 then 'Keyboard_poll_if_true_0_10' else 'Keyboard_poll_if_else_0_11' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
@@ -1831,11 +1906,13 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
 15 31 10 
+
 # 0051c JzImm [Label24(Keyboard_poll_if_else_0_11)]
 #       if tb36e != t2ca9 then 'Keyboard_poll_if_true_0_10' else 'Keyboard_poll_if_else_0_11' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }
 72 53 05 00 
+
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if tb36e != t2ca9 then 'Keyboard_poll_if_true_0_10' else 'Keyboard_poll_if_else_0_11' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index(\"PS2_SCAN_CODE_TO_ASCII\", Arithmetic(Add, Ident(\"index\"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref(\"keyboard\", \"release_in_progress\"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref(\"keyboard\", \"shift_held\"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref(\"keyboard\", \"shift_held\"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }\nComparison { op: NotEquals, left: Number(U8, 0), right: Index(\"PS2_SCAN_CODE_TO_ASCII\", Arithmetic(Add, Ident(\"index\"), Number(USIZE, 2))) }\n", opcode: JmpImm, args: [Label24(Keyboard_poll_if_true_0_10)], resolved: None }
 # :Keyboard_poll_if_true_0_10 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }])], else_block: [] }
@@ -1854,6 +1931,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }
 #       Number(USIZE, 987140)
 20 18 04 10 0f 00 
+
 # t7ebd <- mem[tdaa] U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }
 # Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
@@ -1864,6 +1942,7 @@ ff
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 #       LocalFieldDeref("keyboard", "release_in_progress")
 05 18 30 
+
 # tb36e <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }
 # Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
@@ -1874,6 +1953,7 @@ ff
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 31 00 
+
 # if t7ebd != tb36e then 'Keyboard_poll_if_true_0_13' else 'Keyboard_poll_if_else_0_14' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }
 # Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
@@ -1882,11 +1962,13 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 15 30 31 
+
 # 0052f JzImm [Label24(Keyboard_poll_if_else_0_14)]
 #       if t7ebd != tb36e then 'Keyboard_poll_if_true_0_13' else 'Keyboard_poll_if_else_0_14' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }
 #       Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }
 72 43 05 00 
+
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if t7ebd != tb36e then 'Keyboard_poll_if_true_0_13' else 'Keyboard_poll_if_else_0_14' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref(\"keyboard\", \"release_in_progress\"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref(\"keyboard\", \"shift_held\"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref(\"keyboard\", \"shift_held\"), var_type: None, value: Number(U8, 1) }] }\nComparison { op: NotEquals, left: LocalFieldDeref(\"keyboard\", \"release_in_progress\"), right: Number(U8, 0) }\n", opcode: JmpImm, args: [Label24(Keyboard_poll_if_true_0_13)], resolved: None }
 # :Keyboard_poll_if_true_0_13 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(U8, 0) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }] }
@@ -1901,6 +1983,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }
 #       Number(USIZE, 987136)
 20 2c 00 10 0f 00 
+
 # tb36e <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }
 # Number(U8, 0)
@@ -1909,16 +1992,19 @@ ff
 #       Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }
 #       Number(U8, 0)
 04 31 00 
+
 # mem[td45b] <- tb36e U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }
 # 0053c Store8 [Register(0x31), Register(0x2c)]
 #       mem[td45b] <- tb36e U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 #       Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }
 06 31 2c 
+
 # goto Keyboard_poll_if_end_12 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # 0053f JmpImm [Label24(Keyboard_poll_if_end_12)]
 #       goto Keyboard_poll_if_end_12 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 70 4f 05 00 
+
 # :Keyboard_poll_if_else_0_14 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # Keyboard_poll_if_else_0_14
 # td45b <- 0n987136/0x000f1000u32  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
@@ -1931,6 +2017,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }
 #       Number(USIZE, 987136)
 20 2c 00 10 0f 00 
+
 # tfcd <- 0n1/0x01u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }
 # Number(U8, 1)
@@ -1939,18 +2026,21 @@ ff
 #       Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }
 #       Number(U8, 1)
 04 31 01 
+
 # mem[td45b] <- tfcd U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }
 # 0054c Store8 [Register(0x31), Register(0x2c)]
 #       mem[td45b] <- tfcd U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 #       Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 1) }
 06 31 2c 
+
 # :Keyboard_poll_if_end_12 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # Keyboard_poll_if_end_12
 # goto Keyboard_poll_if_end_9 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # 0054f JmpImm [Label24(Keyboard_poll_if_end_9)]
 #       goto Keyboard_poll_if_end_9 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 70 53 05 00 
+
 # :Keyboard_poll_if_else_0_11 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
 # Keyboard_poll_if_else_0_11
 # :Keyboard_poll_if_end_9 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(37,5))
@@ -1965,6 +2055,7 @@ ff
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
 #       Number(U8, 0)
 04 31 00 
+
 # t4c8b <- const &PS2_SCAN_CODE_TO_ASCII Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
@@ -1983,6 +2074,7 @@ ff
 #       Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }
 #       Ident("PS2_SCAN_CODE_TO_ASCII")
 20 2c 22 00 00 00 
+
 # td18e <- index U32 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
@@ -2008,6 +2100,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 3)))
 #       Arithmetic(Add, Ident("index"), Number(USIZE, 3))
 32 14 03 00 00 00 
+
 # t6cd9 <- t4c8b Add Var(t5e63) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
@@ -2022,6 +2115,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 3)))
 03 
+
 # 00563 AddCarry32_1 [Register(0x2c), Register(0x14), Register(0x2c)]
 #       t6cd9 <- t4c8b Add Var(t5e63) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
@@ -2030,6 +2124,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 3)))
 30 2c 14 2c 
+
 # 00567 AddCarry32_2 []
 #       t6cd9 <- t4c8b Add Var(t5e63) Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
@@ -2038,6 +2133,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 3)))
 31 
+
 # t7b09 <- mem[t6cd9] U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
@@ -2048,6 +2144,7 @@ ff
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
 #       Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3)))
 05 2c 10 
+
 # if tb36e != t7b09 then 'Keyboard_poll_if_true_0_16' else 'Keyboard_poll_if_else_0_17' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
 # Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
@@ -2056,11 +2153,13 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
 15 31 10 
+
 # 0056e JzImm [Label24(Keyboard_poll_if_else_0_17)]
 #       if tb36e != t7b09 then 'Keyboard_poll_if_true_0_16' else 'Keyboard_poll_if_else_0_17' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
 #       Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }
 72 82 05 00 
+
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if tb36e != t7b09 then 'Keyboard_poll_if_true_0_16' else 'Keyboard_poll_if_else_0_17' Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index(\"PS2_SCAN_CODE_TO_ASCII\", Arithmetic(Add, Ident(\"index\"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref(\"keyboard\", \"release_in_progress\"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref(\"keyboard\", \"release_in_progress\"), var_type: None, value: Number(U8, 0) }] }\nComparison { op: NotEquals, left: Number(U8, 0), right: Index(\"PS2_SCAN_CODE_TO_ASCII\", Arithmetic(Add, Ident(\"index\"), Number(USIZE, 3))) }\n", opcode: JmpImm, args: [Label24(Keyboard_poll_if_true_0_16)], resolved: None }
 # :Keyboard_poll_if_true_0_16 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(U8, 0), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(USIZE, 3))) }, [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }] }
@@ -2075,6 +2174,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }
 #       Number(USIZE, 987140)
 20 18 04 10 0f 00 
+
 # tfcd <- 0n1/0x01u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }
 # Number(U8, 1)
@@ -2083,16 +2183,19 @@ ff
 #       Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }
 #       Number(U8, 1)
 04 31 01 
+
 # mem[tdaa] <- tfcd U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }
 # 0057b Store8 [Register(0x31), Register(0x18)]
 #       mem[tdaa] <- tfcd U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 #       Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 1) }
 06 31 18 
+
 # goto Keyboard_poll_if_end_15 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # 0057e JmpImm [Label24(Keyboard_poll_if_end_15)]
 #       goto Keyboard_poll_if_end_15 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 70 8e 05 00 
+
 # :Keyboard_poll_if_else_0_17 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # Keyboard_poll_if_else_0_17
 # tdaa <- 0n987140/0x000f1004u32  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
@@ -2105,6 +2208,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }
 #       Number(USIZE, 987140)
 20 18 04 10 0f 00 
+
 # tb36e <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }
 # Number(U8, 0)
@@ -2113,12 +2217,14 @@ ff
 #       Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }
 #       Number(U8, 0)
 04 31 00 
+
 # mem[tdaa] <- tb36e U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }
 # 0058b Store8 [Register(0x31), Register(0x18)]
 #       mem[tdaa] <- tb36e U8 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 #       Assign { target: LocalFieldDeref("keyboard", "release_in_progress"), var_type: None, value: Number(U8, 0) }
 06 31 18 
+
 # :Keyboard_poll_if_end_15 Some('/home/john/lutcomp/programs/lib/Keyboard.j':(49,5))
 # Keyboard_poll_if_end_15
 # return None None
@@ -2126,12 +2232,14 @@ ff
 # 0058e JmpMem [Register(0x0c)]
 #       PseudoReturn
 75 0c 
+
 # :function_end_Keyboard_poll None
 # function_end_Keyboard_poll
 # Unreachable None
 # 00590 Halt [Constant32(0x10000000=268435456)]
 #       Unreachable None
 7e 00 00 00 10 
+
 # :main
 # Ret Some(U8)
 # Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
@@ -2198,12 +2306,14 @@ ff
 #       TtyOut { value: Number(U8, 72) }
 #       Number(U8, 72)
 04 32 48 
+
 # ttyout <- t6100 Some('programs/test/echo.j':(4,5))
 # TtyOut { value: Number(U8, 72) }
 # 00598 Out0 [Register(0x32)]
 #       ttyout <- t6100 Some('programs/test/echo.j':(4,5))
 #       TtyOut { value: Number(U8, 72) }
 68 32 
+
 # tc49a <- 0n105/0x69u8  Some('programs/test/echo.j':(5,5))
 # TtyOut { value: Number(U8, 105) }
 # Number(U8, 105)
@@ -2212,12 +2322,14 @@ ff
 #       TtyOut { value: Number(U8, 105) }
 #       Number(U8, 105)
 04 32 69 
+
 # ttyout <- tc49a Some('programs/test/echo.j':(5,5))
 # TtyOut { value: Number(U8, 105) }
 # 0059d Out0 [Register(0x32)]
 #       ttyout <- tc49a Some('programs/test/echo.j':(5,5))
 #       TtyOut { value: Number(U8, 105) }
 68 32 
+
 # tf089 <- 0n33/0x21u8  Some('programs/test/echo.j':(6,5))
 # TtyOut { value: Number(U8, 33) }
 # Number(U8, 33)
@@ -2226,12 +2338,14 @@ ff
 #       TtyOut { value: Number(U8, 33) }
 #       Number(U8, 33)
 04 32 21 
+
 # ttyout <- tf089 Some('programs/test/echo.j':(6,5))
 # TtyOut { value: Number(U8, 33) }
 # 005a2 Out0 [Register(0x32)]
 #       ttyout <- tf089 Some('programs/test/echo.j':(6,5))
 #       TtyOut { value: Number(U8, 33) }
 68 32 
+
 # td7b5 <- 0n10/0x0au8  Some('programs/test/echo.j':(7,5))
 # TtyOut { value: Number(U8, 10) }
 # Number(U8, 10)
@@ -2240,12 +2354,14 @@ ff
 #       TtyOut { value: Number(U8, 10) }
 #       Number(U8, 10)
 04 32 0a 
+
 # ttyout <- td7b5 Some('programs/test/echo.j':(7,5))
 # TtyOut { value: Number(U8, 10) }
 # 005a7 Out0 [Register(0x32)]
 #       ttyout <- td7b5 Some('programs/test/echo.j':(7,5))
 #       TtyOut { value: Number(U8, 10) }
 68 32 
+
 # ch <- 0n0/0x00u8  Some('programs/test/echo.j':(8,5))
 # Assign { target: Ident("ch"), var_type: Some(Number(U8)), value: Number(U8, 0) }
 # Number(U8, 0)
@@ -2254,6 +2370,7 @@ ff
 #       Assign { target: Ident("ch"), var_type: Some(Number(U8)), value: Number(U8, 0) }
 #       Number(U8, 0)
 04 32 00 
+
 # :main_while_predicate_0 Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }
 # main_while_predicate_0
@@ -2267,6 +2384,7 @@ ff
 #       Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 32 00 
+
 # tb36e <- 0n0/0x00u8  Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }
 # Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }
@@ -2277,6 +2395,7 @@ ff
 #       Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 32 00 
+
 # if tb36e == tb36e then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }
 # Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }
@@ -2285,16 +2404,19 @@ ff
 #       While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }
 #       Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }
 15 32 32 
+
 # 005b5 JzImm [Label24(main_while_body_1)]
 #       if tb36e == tb36e then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/echo.j':(9,5))
 #       While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }
 #       Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }
 72 bd 05 00 
+
 # 005b9 JmpImm [Label24(main_while_end_2)]
 #       if tb36e == tb36e then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/echo.j':(9,5))
 #       While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }
 #       Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }
 70 0f 07 00 
+
 # :main_while_body_1 Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: Equals, left: Number(U8, 0), right: Number(U8, 0) }, while_true: [TtyOut { value: Number(U8, 62) }, TtyOut { value: Number(U8, 58) }, Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }] }
 # main_while_body_1
@@ -2306,12 +2428,14 @@ ff
 #       TtyOut { value: Number(U8, 62) }
 #       Number(U8, 62)
 04 32 3e 
+
 # ttyout <- tfc57 Some('programs/test/echo.j':(9,5))
 # TtyOut { value: Number(U8, 62) }
 # 005c0 Out0 [Register(0x32)]
 #       ttyout <- tfc57 Some('programs/test/echo.j':(9,5))
 #       TtyOut { value: Number(U8, 62) }
 68 32 
+
 # tebdf <- 0n58/0x3au8  Some('programs/test/echo.j':(9,5))
 # TtyOut { value: Number(U8, 58) }
 # Number(U8, 58)
@@ -2320,12 +2444,14 @@ ff
 #       TtyOut { value: Number(U8, 58) }
 #       Number(U8, 58)
 04 32 3a 
+
 # ttyout <- tebdf Some('programs/test/echo.j':(9,5))
 # TtyOut { value: Number(U8, 58) }
 # 005c5 Out0 [Register(0x32)]
 #       ttyout <- tebdf Some('programs/test/echo.j':(9,5))
 #       TtyOut { value: Number(U8, 58) }
 68 32 
+
 # ch <- 0n0/0x00u8  Some('programs/test/echo.j':(9,5))
 # Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }
 # Number(U8, 0)
@@ -2334,6 +2460,7 @@ ff
 #       Assign { target: Ident("ch"), var_type: None, value: Number(U8, 0) }
 #       Number(U8, 0)
 04 32 00 
+
 # :main_while_predicate_3 Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }
 # main_while_predicate_3
@@ -2347,6 +2474,7 @@ ff
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }
 #       Ident("ch")
 0b 32 44 
+
 # td7b5 <- 0n10/0x0au8  Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }
 # Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }
@@ -2357,6 +2485,7 @@ ff
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }
 #       Number(U8, 10)
 04 32 0a 
+
 # if tdcd9 != td7b5 then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }
 # Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }
@@ -2365,11 +2494,13 @@ ff
 #       While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }
 15 44 32 
+
 # 005d3 JzImm [Label24(main_while_end_5)]
 #       if tdcd9 != td7b5 then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/echo.j':(9,5))
 #       While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }
 72 0b 07 00 
+
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if tdcd9 != td7b5 then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/echo.j':(9,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }\nComparison { op: NotEquals, left: Ident(\"ch\"), right: Number(U8, 10) }\n", opcode: JmpImm, args: [Label24(main_while_body_4)], resolved: None }
 # :main_while_body_4 Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(U8, 10) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }] }
@@ -2382,6 +2513,7 @@ ff
 #       Assign { target: Ident("ch"), var_type: Some(Number(U8)), value: Number(U8, 0) }
 #       Number(U8, 0)
 04 32 00 
+
 # :inline_main_getchar_7_getchar_while_predicate_0 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
 # inline_main_getchar_7_getchar_while_predicate_0
@@ -2400,6 +2532,7 @@ ff
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 3c 00 
+
 # if inline_main_getchar_7_tdcd9 == inline_main_getchar_7_tb36e then 'inline_main_getchar_7_getchar_while_body_1' else 'inline_main_getchar_7_getchar_while_end_2' Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }
@@ -2408,16 +2541,19 @@ ff
 #       While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }
 15 32 3c 
+
 # 005e0 JzImm [Label24(inline_main_getchar_7_getchar_while_body_1)]
 #       if inline_main_getchar_7_tdcd9 == inline_main_getchar_7_tb36e then 'inline_main_getchar_7_getchar_while_body_1' else 'inline_main_getchar_7_getchar_while_end_2' Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 #       While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }
 72 e8 05 00 
+
 # 005e4 JmpImm [Label24(inline_main_getchar_7_getchar_while_end_2)]
 #       if inline_main_getchar_7_tdcd9 == inline_main_getchar_7_tb36e then 'inline_main_getchar_7_getchar_while_body_1' else 'inline_main_getchar_7_getchar_while_end_2' Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 #       While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }
 70 e5 06 00 
+
 # :inline_main_getchar_7_getchar_while_body_1 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 0) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
 # inline_main_getchar_7_getchar_while_body_1
@@ -2429,6 +2565,7 @@ ff
 # 005e8 IoReadyToRead [Register(0x32)]
 #       ReadyToRead
 79 32 
+
 # inline_main_getchar_7_tf0b5 <- inline_main_getchar_7_t861f BitwiseAnd Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }
 # Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
@@ -2439,12 +2576,14 @@ ff
 #       Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
 #       Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1))
 04 00 01 
+
 # 005ed And8 [Register(0x32), Register(0x00), Register(0x32)]
 #       inline_main_getchar_7_tf0b5 <- inline_main_getchar_7_t861f BitwiseAnd Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }
 #       Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
 #       Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1))
 1b 32 00 32 
+
 # inline_main_getchar_7_tb36e <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }
 # Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
@@ -2455,6 +2594,7 @@ ff
 #       Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
 #       Number(U8, 0)
 04 3c 00 
+
 # if inline_main_getchar_7_tf0b5 != inline_main_getchar_7_tb36e then 'inline_main_getchar_7_getchar_if_true_0_4' else 'inline_main_getchar_7_getchar_if_else_0_5' Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }
 # Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
@@ -2463,11 +2603,13 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }
 #       Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
 15 32 3c 
+
 # 005f7 JzImm [Label24(inline_main_getchar_7_getchar_if_else_0_5)]
 #       if inline_main_getchar_7_tf0b5 != inline_main_getchar_7_tb36e then 'inline_main_getchar_7_getchar_if_true_0_4' else 'inline_main_getchar_7_getchar_if_else_0_5' Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }
 #       Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }
 72 4a 06 00 
+
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if inline_main_getchar_7_tf0b5 != inline_main_getchar_7_tb36e then 'inline_main_getchar_7_getchar_if_true_0_4' else 'inline_main_getchar_7_getchar_if_else_0_5' Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: \"io_ready_to_read\", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"stdin\")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: \"Keyboard_poll\", parameters: [] }) }] }\nComparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: \"io_ready_to_read\", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }\n", opcode: JmpImm, args: [Label24(inline_main_getchar_7_getchar_if_true_0_4)], resolved: None }
 # :inline_main_getchar_7_getchar_if_true_0_4 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1)), right: Number(U8, 0) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }])], else_block: [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }] }
@@ -2482,6 +2624,7 @@ ff
 #       Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })
 #       AddressOf(Ident("stdin"))
 20 34 5c 10 0f 00 
+
 # inline_main_getchar_7_tfff6 <- inline_main_getchar_7_t0 U32 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }
 # Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })
@@ -2492,6 +2635,7 @@ ff
 #       Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })
 #       AddressOf(Ident("stdin"))
 21 34 38 
+
 # inline_main_getchar_7_tb816 <- ttyin Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }
 # Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })
@@ -2502,6 +2646,7 @@ ff
 #       Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })
 #       TtyIn
 60 32 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_s <- inline_main_getchar_7_tfff6 U32 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }
 # Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })
@@ -2525,6 +2670,7 @@ ff
 #       Assign { target: Ident("values"), var_type: Some(Ptr(Number(U8))), value: AddressOf(PtrFieldDeref("s", "values")) }
 #       AddressOf(PtrFieldDeref("s", "values"))
 21 38 40 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t1d36 <- inline_main_getchar_7_inline_getchar_queue_push_6_values U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -2561,6 +2707,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 21 38 50 
+
 # 0060c AddImm32IgnoreCarry [Register(0x50), Constant32(0x00000104=260)]
 #       inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff <- inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f Add Number(0n260/0x00000104u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
@@ -2571,6 +2718,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 32 50 04 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t3ee <- mem[inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -2585,6 +2733,7 @@ ff
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "last")
 05 50 4c 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t5bb7 U32 <- inline_main_getchar_7_inline_getchar_queue_push_6_t3ee U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -2597,6 +2746,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }
 20 48 00 00 00 00 
+
 # 0061b Copy8 [Register(0x4c), Register(0x48)]
 #       inline_main_getchar_7_inline_getchar_queue_push_6_t5bb7 U32 <- inline_main_getchar_7_inline_getchar_queue_push_6_t3ee U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
@@ -2604,6 +2754,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }
 0b 4c 48 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t2187 <- inline_main_getchar_7_inline_getchar_queue_push_6_t1d36 Add Var(inline_main_getchar_7_inline_getchar_queue_push_6_t5bb7) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
@@ -2614,18 +2765,21 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 03 
+
 # 0061f AddCarry32_1 [Register(0x40), Register(0x48), Register(0x40)]
 #       inline_main_getchar_7_inline_getchar_queue_push_6_t2187 <- inline_main_getchar_7_inline_getchar_queue_push_6_t1d36 Add Var(inline_main_getchar_7_inline_getchar_queue_push_6_t5bb7) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 30 40 48 40 
+
 # 00623 AddCarry32_2 []
 #       inline_main_getchar_7_inline_getchar_queue_push_6_t2187 <- inline_main_getchar_7_inline_getchar_queue_push_6_t1d36 Add Var(inline_main_getchar_7_inline_getchar_queue_push_6_t5bb7) Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "last") })
 31 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t531d <- inline_main_getchar_7_inline_getchar_queue_push_6_n U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Ident("n")
@@ -2636,6 +2790,7 @@ ff
 #       mem[inline_main_getchar_7_inline_getchar_queue_push_6_t2187] <- inline_main_getchar_7_inline_getchar_queue_push_6_t531d U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 06 32 40 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f <- inline_main_getchar_7_inline_getchar_queue_push_6_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
@@ -2653,12 +2808,14 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 21 38 50 
+
 # 0062a AddImm32IgnoreCarry [Register(0x50), Constant32(0x00000104=260)]
 #       inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff <- inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f Add Number(0n260/0x00000104u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 32 50 04 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f <- inline_main_getchar_7_inline_getchar_queue_push_6_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
@@ -2682,6 +2839,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 21 38 50 
+
 # 00633 AddImm32IgnoreCarry [Register(0x50), Constant32(0x00000104=260)]
 #       inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff <- inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f Add Number(0n260/0x00000104u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
@@ -2690,6 +2848,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 32 50 04 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t3ee <- mem[inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
@@ -2700,6 +2859,7 @@ ff
 #       Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
 #       PtrFieldDeref("s", "last")
 05 50 4c 
+
 # inline_main_getchar_7_inline_getchar_queue_push_6_t6778 <- inline_main_getchar_7_inline_getchar_queue_push_6_t3ee Add Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
@@ -2708,17 +2868,20 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
 04 00 01 
+
 # 0063f Add8NoCarryIn [Register(0x4c), Register(0x00), Register(0x32)]
 #       inline_main_getchar_7_inline_getchar_queue_push_6_t6778 <- inline_main_getchar_7_inline_getchar_queue_push_6_t3ee Add Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))
 14 4c 00 32 
+
 # mem[inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff] <- inline_main_getchar_7_inline_getchar_queue_push_6_t6778 U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 # 00643 Store8 [Register(0x32), Register(0x50)]
 #       mem[inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff] <- inline_main_getchar_7_inline_getchar_queue_push_6_t6778 U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1)) }
 06 32 50 
+
 # goto inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push None
 # Return { value: None }
 # Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push None\nReturn { value: None }\n", opcode: JmpImm, args: [Label24(inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push)], resolved: None }
@@ -2728,6 +2891,7 @@ ff
 # 00646 JmpImm [Label24(inline_main_getchar_7_getchar_if_end_3)]
 #       goto inline_main_getchar_7_getchar_if_end_3 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 70 60 06 00 
+
 # :inline_main_getchar_7_getchar_if_else_0_5 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # inline_main_getchar_7_getchar_if_else_0_5
 # None <= call Keyboard_poll() Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
@@ -2739,15 +2903,19 @@ ff
 # 0064a AddImm32IgnoreCarry [Register(0x0c), Constant32(0xfffffffc=4294967292)]
 #       PseudoCall(Label24(:Keyboard_poll))
 32 0c fc ff ff ff 
+
 # 00650 StoreImm32 [Register(0x0c), PcOffset(0x0000000a)]
 #       PseudoCall(Label24(:Keyboard_poll))
 25 0c 5a 06 00 00 
+
 # 00656 JmpImm [Label24(:Keyboard_poll)]
 #       PseudoCall(Label24(:Keyboard_poll))
 70 27 04 00 
+
 # 0065a AddImm32IgnoreCarry [Register(0x0c), Constant32(0x00000004=4)]
 #       PseudoCall(Label24(:Keyboard_poll))
 32 0c 04 00 00 00 
+
 # :inline_main_getchar_7_getchar_if_end_3 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # inline_main_getchar_7_getchar_if_end_3
 # inline_main_getchar_7_t1 <- 0n987228/0x000f105cu32  Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
@@ -2760,6 +2928,7 @@ ff
 #       Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] })
 #       AddressOf(Ident("stdin"))
 20 34 5c 10 0f 00 
+
 # inline_main_getchar_7_tfff6 <- inline_main_getchar_7_t1 U32 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }
 # Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] })
@@ -2770,6 +2939,7 @@ ff
 #       Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] })
 #       AddressOf(Ident("stdin"))
 21 34 38 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_s <- inline_main_getchar_7_tfff6 U32 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }
 # Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] })
@@ -2778,6 +2948,7 @@ ff
 #       Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }
 #       Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] })
 21 38 34 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f <- inline_main_getchar_7_inline_getchar_queue_pop_4_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -2801,6 +2972,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 21 34 48 
+
 # 0066f AddImm32IgnoreCarry [Register(0x48), Constant32(0x00000100=256)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tb702 <- inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f Add Number(0n256/0x00000100u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
@@ -2809,6 +2981,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 32 48 00 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd <- mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tb702] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -2819,6 +2992,7 @@ ff
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "first")
 05 48 44 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f <- inline_main_getchar_7_inline_getchar_queue_pop_4_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -2842,6 +3016,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 21 34 38 
+
 # 0067b AddImm32IgnoreCarry [Register(0x38), Constant32(0x00000104=260)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tc1ff <- inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f Add Number(0n260/0x00000104u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
@@ -2850,6 +3025,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260))
 32 38 04 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t3ee <- mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tc1ff] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -2860,6 +3036,7 @@ ff
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "last")
 05 38 3c 
+
 # if inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd == inline_main_getchar_7_inline_getchar_queue_pop_4_t3ee then 'inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_true_0_1' else 'inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_else_0_2' Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -2868,16 +3045,19 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 15 44 3c 
+
 # 00687 JzImm [Label24(inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_true_0_1)]
 #       if inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd == inline_main_getchar_7_inline_getchar_queue_pop_4_t3ee then 'inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_true_0_1' else 'inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_else_0_2' Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 72 8f 06 00 
+
 # 0068b JmpImm [Label24(inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_else_0_2)]
 #       if inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd == inline_main_getchar_7_inline_getchar_queue_pop_4_t3ee then 'inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_true_0_1' else 'inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_else_0_2' Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 70 9a 06 00 
+
 # :inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_true_0_1 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_true_0_1
@@ -2889,6 +3069,7 @@ ff
 #       Return { value: Some(Number(U8, 0)) }
 #       Number(U8, 0)
 04 32 00 
+
 # inline_main_getchar_7_ch <- inline_main_getchar_7_inline_getchar_queue_pop_4_tb36e U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # Return { value: Some(Number(U8, 0)) }
 # optimized away noop copy Instruction { source: "inline_main_getchar_7_ch <- inline_main_getchar_7_inline_getchar_queue_pop_4_tb36e U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))\nReturn { value: Some(Number(U8, 0)) }\n", opcode: Copy8, args: [Register(0x32), Register(0x32)], resolved: None }
@@ -2898,10 +3079,12 @@ ff
 #       goto inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(U8, 0)) }
 70 e1 06 00 
+
 # goto inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_end_0 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # 00696 JmpImm [Label24(inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_end_0)]
 #       goto inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_end_0 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 70 9a 06 00 
+
 # :inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_else_0_2 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
 # inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_else_0_2
 # :inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_end_0 Some('/home/john/lutcomp/programs/lib/Queue.j':(13,5))
@@ -2921,6 +3104,7 @@ ff
 #       Assign { target: Ident("values"), var_type: Some(Ptr(Number(U8))), value: AddressOf(PtrFieldDeref("s", "values")) }
 #       AddressOf(PtrFieldDeref("s", "values"))
 21 34 38 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t1d36 <- inline_main_getchar_7_inline_getchar_queue_pop_4_values U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 # Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 # Index("values", PtrFieldDeref("s", "first"))
@@ -2961,6 +3145,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 21 34 48 
+
 # 006a0 AddImm32IgnoreCarry [Register(0x48), Constant32(0x00000100=256)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tb702 <- inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f Add Number(0n256/0x00000100u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -2972,6 +3157,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 32 48 00 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd <- mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tb702] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 # Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 # Index("values", PtrFieldDeref("s", "first"))
@@ -2988,6 +3174,7 @@ ff
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }
 #       PtrFieldDeref("s", "first")
 05 48 44 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_tb469 U32 <- inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 # Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 # Index("values", PtrFieldDeref("s", "first"))
@@ -3002,6 +3189,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }
 20 40 00 00 00 00 
+
 # 006af Copy8 [Register(0x44), Register(0x40)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tb469 U32 <- inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -3010,6 +3198,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }
 0b 44 40 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_tae11 <- inline_main_getchar_7_inline_getchar_queue_pop_4_t1d36 Add Var(inline_main_getchar_7_inline_getchar_queue_pop_4_tb469) Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 # Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 # Index("values", PtrFieldDeref("s", "first"))
@@ -3022,6 +3211,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") })
 03 
+
 # 006b3 AddCarry32_1 [Register(0x38), Register(0x40), Register(0x38)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tae11 <- inline_main_getchar_7_inline_getchar_queue_pop_4_t1d36 Add Var(inline_main_getchar_7_inline_getchar_queue_pop_4_tb469) Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -3029,6 +3219,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") })
 30 38 40 38 
+
 # 006b7 AddCarry32_2 []
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tae11 <- inline_main_getchar_7_inline_getchar_queue_pop_4_t1d36 Add Var(inline_main_getchar_7_inline_getchar_queue_pop_4_tb469) Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -3036,6 +3227,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") })
 31 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_value <- mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tae11] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(18,5))
 # Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 # Index("values", PtrFieldDeref("s", "first"))
@@ -3044,6 +3236,7 @@ ff
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
 05 38 3c 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f <- inline_main_getchar_7_inline_getchar_queue_pop_4_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
@@ -3061,12 +3254,14 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 21 34 48 
+
 # 006be AddImm32IgnoreCarry [Register(0x48), Constant32(0x00000100=256)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tb702 <- inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f Add Number(0n256/0x00000100u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 32 48 00 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f <- inline_main_getchar_7_inline_getchar_queue_pop_4_s U32 Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))
@@ -3090,6 +3285,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 21 34 48 
+
 # 006c7 AddImm32IgnoreCarry [Register(0x48), Constant32(0x00000100=256)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_tb702 <- inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f Add Number(0n256/0x00000100u32) Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
@@ -3098,6 +3294,7 @@ ff
 #       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256))
 32 48 00 01 00 00 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd <- mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tb702] U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))
@@ -3108,6 +3305,7 @@ ff
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))
 #       PtrFieldDeref("s", "first")
 05 48 44 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t6fdb <- inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd Add Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 # Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))
@@ -3116,17 +3314,20 @@ ff
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))
 04 00 01 
+
 # 006d3 Add8NoCarryIn [Register(0x44), Register(0x00), Register(0x32)]
 #       inline_main_getchar_7_inline_getchar_queue_pop_4_t6fdb <- inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd Add Number(0n1/0x01u8) Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))
 14 44 00 32 
+
 # mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tb702] <- inline_main_getchar_7_inline_getchar_queue_pop_4_t6fdb U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 # 006d7 Store8 [Register(0x32), Register(0x48)]
 #       mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tb702] <- inline_main_getchar_7_inline_getchar_queue_pop_4_t6fdb U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1)) }
 06 32 48 
+
 # inline_main_getchar_7_inline_getchar_queue_pop_4_t44ed <- inline_main_getchar_7_inline_getchar_queue_pop_4_value U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(20,5))
 # Return { value: Some(Ident("value")) }
 # Ident("value")
@@ -3135,6 +3336,7 @@ ff
 #       Return { value: Some(Ident("value")) }
 #       Ident("value")
 0b 3c 32 
+
 # inline_main_getchar_7_ch <- inline_main_getchar_7_inline_getchar_queue_pop_4_t44ed U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(20,5))
 # Return { value: Some(Ident("value")) }
 # optimized away noop copy Instruction { source: "inline_main_getchar_7_ch <- inline_main_getchar_7_inline_getchar_queue_pop_4_t44ed U8 Some('/home/john/lutcomp/programs/lib/Queue.j':(20,5))\nReturn { value: Some(Ident(\"value\")) }\n", opcode: Copy8, args: [Register(0x32), Register(0x32)], resolved: None }
@@ -3144,12 +3346,14 @@ ff
 #       goto inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop Some('/home/john/lutcomp/programs/lib/Queue.j':(20,5))
 #       Return { value: Some(Ident("value")) }
 70 e1 06 00 
+
 # :inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop None
 # inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop
 # goto inline_main_getchar_7_getchar_while_predicate_0 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # 006e1 JmpImm [Label24(inline_main_getchar_7_getchar_while_predicate_0)]
 #       goto inline_main_getchar_7_getchar_while_predicate_0 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 70 da 05 00 
+
 # :inline_main_getchar_7_getchar_while_end_2 Some('/home/john/lutcomp/programs/lib/stdio.j':(17,5))
 # inline_main_getchar_7_getchar_while_end_2
 # inline_main_getchar_7_tdcd9 <- inline_main_getchar_7_ch U8 Some('/home/john/lutcomp/programs/lib/stdio.j':(27,5))
@@ -3172,12 +3376,14 @@ ff
 #       TtyOut { value: Ident("ch") }
 #       Ident("ch")
 0b 32 44 
+
 # ttyout <- tdcd9 Some('programs/test/echo.j':(9,5))
 # TtyOut { value: Ident("ch") }
 # 006e8 Out0 [Register(0x44)]
 #       ttyout <- tdcd9 Some('programs/test/echo.j':(9,5))
 #       TtyOut { value: Ident("ch") }
 68 44 
+
 # tdcd9 <- ch U8 Some('programs/test/echo.j':(9,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
@@ -3188,6 +3394,7 @@ ff
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
 #       Ident("ch")
 0b 32 44 
+
 # t1501 <- 0n113/0x71u8  Some('programs/test/echo.j':(9,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
@@ -3198,6 +3405,7 @@ ff
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
 #       Number(U8, 113)
 04 3c 71 
+
 # if tdcd9 == t1501 then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/echo.j':(9,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
@@ -3206,16 +3414,19 @@ ff
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
 15 44 3c 
+
 # 006f3 JzImm [Label24(main_if_true_0_7)]
 #       if tdcd9 == t1501 then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/echo.j':(9,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
 72 fb 06 00 
+
 # 006f7 JmpImm [Label24(main_if_else_0_8)]
 #       if tdcd9 == t1501 then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/echo.j':(9,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }
 70 07 07 00 
+
 # :main_if_true_0_7 Some('programs/test/echo.j':(9,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(U8, 113) }, [Return { value: Some(Number(U8, 0)) }])], else_block: [] }
 # main_if_true_0_7
@@ -3227,19 +3438,23 @@ ff
 #       Return { value: Some(Number(U8, 0)) }
 #       Number(U8, 0)
 04 32 00 
+
 # return Some(tb36e) Some('programs/test/echo.j':(9,5))
 # Return { value: Some(Number(U8, 0)) }
 # 006fe Copy8 [Register(0x32), Register(0x00)]
 #       return Some(tb36e) Some('programs/test/echo.j':(9,5))
 #       Return { value: Some(Number(U8, 0)) }
 0b 32 00 
+
 # 00701 JmpMem [Register(0x0c)]
 #       PseudoReturn
 75 0c 
+
 # goto main_if_end_6 Some('programs/test/echo.j':(9,5))
 # 00703 JmpImm [Label24(main_if_end_6)]
 #       goto main_if_end_6 Some('programs/test/echo.j':(9,5))
 70 07 07 00 
+
 # :main_if_else_0_8 Some('programs/test/echo.j':(9,5))
 # main_if_else_0_8
 # :main_if_end_6 Some('programs/test/echo.j':(9,5))
@@ -3248,12 +3463,14 @@ ff
 # 00707 JmpImm [Label24(main_while_predicate_3)]
 #       goto main_while_predicate_3 Some('programs/test/echo.j':(9,5))
 70 ca 05 00 
+
 # :main_while_end_5 Some('programs/test/echo.j':(9,5))
 # main_while_end_5
 # goto main_while_predicate_0 Some('programs/test/echo.j':(9,5))
 # 0070b JmpImm [Label24(main_while_predicate_0)]
 #       goto main_while_predicate_0 Some('programs/test/echo.j':(9,5))
 70 ac 05 00 
+
 # :main_while_end_2 Some('programs/test/echo.j':(9,5))
 # main_while_end_2
 # :function_end_main None
@@ -3262,3 +3479,4 @@ ff
 # 0070f Halt [Constant32(0x10000000=268435456)]
 #       Unreachable None
 7e 00 00 00 10 
+

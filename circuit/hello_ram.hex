@@ -4,24 +4,31 @@ v2.0 raw
 # 80400 Init []
 #       Initialzing flags and internal regs.
 00 
+
 # 80401 LoadImm32 [Register(0x0c), Constant32(0x000f0f00=986880)]
 #       Initialzing stack register to 0x000f0f00.
 20 0c 00 0f 0f 00 
+
 # 80407 AddImm32IgnoreCarry [Register(0x0c), Constant32(0xfffffffc=4294967292)]
 #       PseudoCall(Label24(:main))
 32 0c fc ff ff ff 
+
 # 8040d StoreImm32 [Register(0x0c), PcOffset(0x0000000a)]
 #       PseudoCall(Label24(:main))
 25 0c 17 04 08 00 
+
 # 80413 JmpImm [Label24(:main)]
 #       PseudoCall(Label24(:main))
 70 22 04 08 
+
 # 80417 AddImm32IgnoreCarry [Register(0x0c), Constant32(0x00000004=4)]
 #       PseudoCall(Label24(:main))
 32 0c 04 00 00 00 
+
 # 8041d Halt [Constant32(0x00000000=0)]
 #       Halting after return from entry function.
 7e 00 00 00 00 
+
 # :main
 # Ret Some(U32)
 # Var t2f9f (t2f9f Number(U8, 77)) Reg(U8) Some([16])
@@ -45,12 +52,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 72) }
 #       Number(U8, 72)
 04 10 48 
+
 # ttyout <- t6100 Some('programs/test/hello_ram.j':(3,5))
 # TtyOut { value: Number(U8, 72) }
 # 80425 Out0 [Register(0x10)]
 #       ttyout <- t6100 Some('programs/test/hello_ram.j':(3,5))
 #       TtyOut { value: Number(U8, 72) }
 68 10 
+
 # tc49a <- 0n105/0x69u8  Some('programs/test/hello_ram.j':(4,5))
 # TtyOut { value: Number(U8, 105) }
 # Number(U8, 105)
@@ -59,12 +68,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 105) }
 #       Number(U8, 105)
 04 10 69 
+
 # ttyout <- tc49a Some('programs/test/hello_ram.j':(4,5))
 # TtyOut { value: Number(U8, 105) }
 # 8042a Out0 [Register(0x10)]
 #       ttyout <- tc49a Some('programs/test/hello_ram.j':(4,5))
 #       TtyOut { value: Number(U8, 105) }
 68 10 
+
 # te8f <- 0n95/0x5fu8  Some('programs/test/hello_ram.j':(5,5))
 # TtyOut { value: Number(U8, 95) }
 # Number(U8, 95)
@@ -73,12 +84,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 95) }
 #       Number(U8, 95)
 04 10 5f 
+
 # ttyout <- te8f Some('programs/test/hello_ram.j':(5,5))
 # TtyOut { value: Number(U8, 95) }
 # 8042f Out0 [Register(0x10)]
 #       ttyout <- te8f Some('programs/test/hello_ram.j':(5,5))
 #       TtyOut { value: Number(U8, 95) }
 68 10 
+
 # tc4b5 <- 0n102/0x66u8  Some('programs/test/hello_ram.j':(6,5))
 # TtyOut { value: Number(U8, 102) }
 # Number(U8, 102)
@@ -87,12 +100,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 102) }
 #       Number(U8, 102)
 04 10 66 
+
 # ttyout <- tc4b5 Some('programs/test/hello_ram.j':(6,5))
 # TtyOut { value: Number(U8, 102) }
 # 80434 Out0 [Register(0x10)]
 #       ttyout <- tc4b5 Some('programs/test/hello_ram.j':(6,5))
 #       TtyOut { value: Number(U8, 102) }
 68 10 
+
 # tc076 <- 0n114/0x72u8  Some('programs/test/hello_ram.j':(7,5))
 # TtyOut { value: Number(U8, 114) }
 # Number(U8, 114)
@@ -101,12 +116,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 114) }
 #       Number(U8, 114)
 04 10 72 
+
 # ttyout <- tc076 Some('programs/test/hello_ram.j':(7,5))
 # TtyOut { value: Number(U8, 114) }
 # 80439 Out0 [Register(0x10)]
 #       ttyout <- tc076 Some('programs/test/hello_ram.j':(7,5))
 #       TtyOut { value: Number(U8, 114) }
 68 10 
+
 # tb699 <- 0n111/0x6fu8  Some('programs/test/hello_ram.j':(8,5))
 # TtyOut { value: Number(U8, 111) }
 # Number(U8, 111)
@@ -115,12 +132,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 111) }
 #       Number(U8, 111)
 04 10 6f 
+
 # ttyout <- tb699 Some('programs/test/hello_ram.j':(8,5))
 # TtyOut { value: Number(U8, 111) }
 # 8043e Out0 [Register(0x10)]
 #       ttyout <- tb699 Some('programs/test/hello_ram.j':(8,5))
 #       TtyOut { value: Number(U8, 111) }
 68 10 
+
 # te879 <- 0n109/0x6du8  Some('programs/test/hello_ram.j':(9,5))
 # TtyOut { value: Number(U8, 109) }
 # Number(U8, 109)
@@ -129,12 +148,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 109) }
 #       Number(U8, 109)
 04 10 6d 
+
 # ttyout <- te879 Some('programs/test/hello_ram.j':(9,5))
 # TtyOut { value: Number(U8, 109) }
 # 80443 Out0 [Register(0x10)]
 #       ttyout <- te879 Some('programs/test/hello_ram.j':(9,5))
 #       TtyOut { value: Number(U8, 109) }
 68 10 
+
 # te8f <- 0n95/0x5fu8  Some('programs/test/hello_ram.j':(10,5))
 # TtyOut { value: Number(U8, 95) }
 # Number(U8, 95)
@@ -143,12 +164,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 95) }
 #       Number(U8, 95)
 04 10 5f 
+
 # ttyout <- te8f Some('programs/test/hello_ram.j':(10,5))
 # TtyOut { value: Number(U8, 95) }
 # 80448 Out0 [Register(0x10)]
 #       ttyout <- te8f Some('programs/test/hello_ram.j':(10,5))
 #       TtyOut { value: Number(U8, 95) }
 68 10 
+
 # t9c38 <- 0n82/0x52u8  Some('programs/test/hello_ram.j':(11,5))
 # TtyOut { value: Number(U8, 82) }
 # Number(U8, 82)
@@ -157,12 +180,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 82) }
 #       Number(U8, 82)
 04 10 52 
+
 # ttyout <- t9c38 Some('programs/test/hello_ram.j':(11,5))
 # TtyOut { value: Number(U8, 82) }
 # 8044d Out0 [Register(0x10)]
 #       ttyout <- t9c38 Some('programs/test/hello_ram.j':(11,5))
 #       TtyOut { value: Number(U8, 82) }
 68 10 
+
 # t3c19 <- 0n65/0x41u8  Some('programs/test/hello_ram.j':(12,5))
 # TtyOut { value: Number(U8, 65) }
 # Number(U8, 65)
@@ -171,12 +196,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 65) }
 #       Number(U8, 65)
 04 10 41 
+
 # ttyout <- t3c19 Some('programs/test/hello_ram.j':(12,5))
 # TtyOut { value: Number(U8, 65) }
 # 80452 Out0 [Register(0x10)]
 #       ttyout <- t3c19 Some('programs/test/hello_ram.j':(12,5))
 #       TtyOut { value: Number(U8, 65) }
 68 10 
+
 # t2f9f <- 0n77/0x4du8  Some('programs/test/hello_ram.j':(13,5))
 # TtyOut { value: Number(U8, 77) }
 # Number(U8, 77)
@@ -185,12 +212,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 77) }
 #       Number(U8, 77)
 04 10 4d 
+
 # ttyout <- t2f9f Some('programs/test/hello_ram.j':(13,5))
 # TtyOut { value: Number(U8, 77) }
 # 80457 Out0 [Register(0x10)]
 #       ttyout <- t2f9f Some('programs/test/hello_ram.j':(13,5))
 #       TtyOut { value: Number(U8, 77) }
 68 10 
+
 # tf089 <- 0n33/0x21u8  Some('programs/test/hello_ram.j':(14,5))
 # TtyOut { value: Number(U8, 33) }
 # Number(U8, 33)
@@ -199,12 +228,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 33) }
 #       Number(U8, 33)
 04 10 21 
+
 # ttyout <- tf089 Some('programs/test/hello_ram.j':(14,5))
 # TtyOut { value: Number(U8, 33) }
 # 8045c Out0 [Register(0x10)]
 #       ttyout <- tf089 Some('programs/test/hello_ram.j':(14,5))
 #       TtyOut { value: Number(U8, 33) }
 68 10 
+
 # td7b5 <- 0n10/0x0au8  Some('programs/test/hello_ram.j':(15,5))
 # TtyOut { value: Number(U8, 10) }
 # Number(U8, 10)
@@ -213,12 +244,14 @@ v2.0 raw
 #       TtyOut { value: Number(U8, 10) }
 #       Number(U8, 10)
 04 10 0a 
+
 # ttyout <- td7b5 Some('programs/test/hello_ram.j':(15,5))
 # TtyOut { value: Number(U8, 10) }
 # 80461 Out0 [Register(0x10)]
 #       ttyout <- td7b5 Some('programs/test/hello_ram.j':(15,5))
 #       TtyOut { value: Number(U8, 10) }
 68 10 
+
 # t7012 <- 0xaabbccddu32  Some('programs/test/hello_ram.j':(16,5))
 # Return { value: Some(Number(USIZE, 2864434397)) }
 # Number(USIZE, 2864434397)
@@ -227,18 +260,22 @@ v2.0 raw
 #       Return { value: Some(Number(USIZE, 2864434397)) }
 #       Number(USIZE, 2864434397)
 20 14 dd cc bb aa 
+
 # return Some(t7012) Some('programs/test/hello_ram.j':(16,5))
 # Return { value: Some(Number(USIZE, 2864434397)) }
 # 80469 Copy32 [Register(0x14), Register(0x00)]
 #       return Some(t7012) Some('programs/test/hello_ram.j':(16,5))
 #       Return { value: Some(Number(USIZE, 2864434397)) }
 21 14 00 
+
 # 8046c JmpMem [Register(0x0c)]
 #       PseudoReturn
 75 0c 
+
 # :function_end_main None
 # function_end_main
 # Unreachable None
 # 8046e Halt [Constant32(0x10000000=268435456)]
 #       Unreachable None
 7e 00 00 00 10 
+
