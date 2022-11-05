@@ -568,8 +568,6 @@ impl IlFunction {
                     other => panic!("Don't know how to index into {:?}", other)
                 }
             },
-            Expression::Optimized { original:_, optimized } => 
-                self.emit_target_expression(ctxt, optimized),
             _ => panic!(),
         }
     }
@@ -966,7 +964,6 @@ impl IlFunction {
                     args: params,
                 });
             },
-            Expression::Optimized { .. } => todo!(),
             Expression::Array(_) => todo!(),
         
         }

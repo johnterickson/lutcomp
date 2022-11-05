@@ -133,7 +133,7 @@ impl FunctionDefinition {
             (Type::Void, return_or_body)
         };
 
-        let mut body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
+        let body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
 
         // find vars
         let mut vars = BTreeMap::new();
@@ -177,10 +177,6 @@ impl FunctionDefinition {
 
         for s in &body {
             FunctionDefinition::walk_decls(ctxt, s, &mut validate_no_mismatch);
-        }
-
-        for s in body.iter_mut() {
-            while s.optimize(ctxt) { }
         }
 
         let body = FunctionImpl::Body(body);

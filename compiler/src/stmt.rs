@@ -14,51 +14,6 @@ pub enum Statement {
 }
 
 impl Statement {
-    pub fn optimize(&mut self, ctxt: &ProgramContext) -> bool{
-        let mut optimized = false;
-        match self {
-            Statement::Continue | Statement::Break => {},
-            Statement::Assign { target, var_type:_, value} => {
-                while target.optimize(ctxt) { optimized = true; }
-                while value.optimize(ctxt) { optimized = true; }
-            }
-            Statement::While { predicate, while_true} => {
-                while predicate.left.optimize(ctxt) { optimized = true; }
-                while predicate.right.optimize(ctxt) { optimized = true; }
-                for s in while_true {
-                    while s.optimize(ctxt) { optimized = true; }
-                }
-            }
-            Statement::Return {value} => {
-                if let Some(value) = value {
-                    while value.optimize(ctxt) { optimized = true; }
-                }
-            }
-            Statement::Declare { .. } =>  {},
-            Statement::VoidExpression {expression } => {
-                while expression.optimize(ctxt) { optimized = true; } 
-
-            }
-            Statement::IfElse { if_blocks, else_block: when_false } => {
-                for (predicate, when_true) in if_blocks {
-                    while predicate.left.optimize(ctxt) { optimized = true; }
-                    while predicate.right.optimize(ctxt) { optimized = true; }
-                    for s in when_true {
-                        while s.optimize(ctxt) { optimized = true; }
-                    }
-                }
-                for s in when_false {
-                    while s.optimize(ctxt) { optimized = true; }
-                }
-            }
-            Statement::TtyOut { value } => {
-                while value.optimize(ctxt) { optimized = true; }
-            }
-        }
-
-        optimized
-    }
-
     pub fn parse(pair: pest::iterators::Pair<Rule>) -> Statement {
         assert_eq!(Rule::statement, pair.as_rule());
         let pair = pair.into_inner().next().unwrap();

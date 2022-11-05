@@ -67,7 +67,6 @@ pub enum Expression {
     Index(String, Box<Expression>),
     Cast{old_type: Option<Type>, new_type: Type, value:Box<Expression>},
     Call(Call),
-    Optimized{original: Box<Expression>, optimized: Box<Expression>},
 }
 
 impl Expression {
@@ -254,79 +253,9 @@ impl Expression {
             Expression::TtyIn() => Some(Type::Number(NumberType::U8)),
             Expression::Comparison(_) => todo!(),
             Expression::Cast { old_type:_, new_type, value:_ } => Some(new_type.clone()),
-            Expression::Optimized { original:_, optimized } => optimized.try_emit_type(ctxt, f),
             Expression::Array(_) => todo!(),
         }
     }
-
-    pub fn optimize(&mut self, ctxt: &ProgramContext) -> bool {
-        let (optimized, new_self) = match self {
-           Expression::Arithmetic(op, left, right) => {
-               let inner = left.optimize(ctxt) || right.optimize(ctxt);
-               if inner {
-                   (true, None)
-               } else {
-                   let (left_val, right_val) = (left.try_get_const(), right.try_get_const());
-                   match (op, left_val, right_val) {
-                       (ArithmeticOperator::Add, Some(0), _) => {
-                           (true, Some((*right).clone()))
-                       }
-                       (ArithmeticOperator::Add, _, Some(0)) => {
-                           (true, Some((*left).clone()))
-                       }
-                       _ => (false, None)
-                   }
-               }
-           }
-           Expression::Comparison(c) => {
-               (c.left.optimize(ctxt) || c.right.optimize(ctxt), None)
-
-           }
-           Expression::Deref(inner) => {
-               (inner.optimize(ctxt), None)
-           }
-           Expression::AddressOf(inner) => {
-               (inner.optimize(ctxt), None)
-           }
-           Expression::Index(_, index_exp) => {
-               (index_exp.optimize(ctxt), None)
-           }
-           Expression::Cast{old_type, new_type, value} => {
-               if old_type.is_none() {
-                   *old_type = value.try_emit_type(ctxt, None);
-               }
-
-               if let (Some(Type::Number(NumberType::U8)), Type::Number(NumberType::USIZE), Some(v)) = 
-                      (&old_type, &new_type, value.try_get_const())
-               {
-                   let v: u32 = v.try_into().unwrap();
-                   (true, Some(Box::new(Expression::Number(NumberType::USIZE, v.into()))))
-               }
-               else if let (Some(Type::Number(NumberType::U8)), 4, Some(v)) = 
-                             (&old_type, &new_type.byte_count(ctxt), value.try_get_const())
-               {
-                   let v: u32 = v.try_into().unwrap();
-                   (true, Some(Box::new(Expression::Cast {
-                       old_type: Some(Type::Number(NumberType::USIZE)),
-                       new_type: new_type.clone(),
-                       value: Box::new(Expression::Number(NumberType::USIZE, v.into()))
-                   })))
-               } else {
-                   (value.optimize(ctxt), None)
-               }
-           }
-           Expression::Optimized{original:_, optimized} => {
-               (optimized.optimize(ctxt), None)
-           }
-           _ => (false, None)
-       };
-
-       if let Some(new_self) = new_self {
-           *self = Expression::Optimized{original: Box::new(self.clone()), optimized: new_self};
-       }
-
-       optimized
-   }
 
     pub fn parse(pair: pest::iterators::Pair<Rule>) -> Expression {
         assert_eq!(Rule::expression, pair.as_rule());
