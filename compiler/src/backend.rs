@@ -7,6 +7,16 @@ use crate::*;
 use crate::il::*;
 use crate::optimize::optimize_assembly;
 
+impl From<IlNumber> for Value {
+    fn from(n: IlNumber) -> Self {
+        match n {
+            IlNumber::U8(n) => Value::Constant8(n),
+            IlNumber::U16(_) => todo!(),
+            IlNumber::U32(n) => Value::Constant32(n),
+        }
+    }
+}
+
 pub struct BackendProgram<'a> {
     pub frontend_context: &'a ProgramContext,
     pub il: &'a IlProgram,
@@ -562,6 +572,39 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
     
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                         opcode: Opcode::AddCarry32_2, args: vec![], resolved: None, source
+                                    }));
+                                },
+                                (IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr, size, IlOperand::Number(n)) => {
+                                    assert_eq!(n.il_type(), size);
+
+                                    let (copy_op, const_val) = match size {
+                                        IlType::U8 => (Opcode::Copy8, n.into()),
+                                        IlType::U16 => todo!(),
+                                        IlType::U32 => (Opcode::Copy32, n.into()),
+                                    };
+
+                                    if dest_regs[0] != src1_regs[0] {
+                                        ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                            opcode: copy_op,
+                                            args: vec![Value::Register(src1_regs[0]), Value::Register(dest_regs[0])],
+                                            resolved: None,
+                                            source: source.clone(),
+                                        }));
+                                    }
+
+                                    let opcode = match (op, size) {
+                                        (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::AndImm32,
+                                        (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::AndImm8,
+                                        (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::OrImm32,
+                                        (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::OrImm8,
+                                        _ => panic!(),
+                                    };
+
+                                    ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
+                                        opcode,
+                                        args: vec![Value::Register(dest_regs[0]), const_val],
+                                        resolved: None,
+                                        source: source
                                     }));
                                 },
                                 // TODO: more *Imm* operations
