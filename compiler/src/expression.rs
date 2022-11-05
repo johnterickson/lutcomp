@@ -33,6 +33,23 @@ impl ArithmeticOperator {
             op => panic!("Unknown op: {}", op),
         }
     }
+
+    pub fn is_commutative(&self) -> bool {
+        match self {
+            ArithmeticOperator::Add |
+            ArithmeticOperator::Multiply |
+            ArithmeticOperator::Or |
+            ArithmeticOperator::And 
+                => true,
+            ArithmeticOperator::Subtract |
+            ArithmeticOperator::Divide |
+            ArithmeticOperator::ShiftLeft |
+            ArithmeticOperator::ShiftRight |
+            ArithmeticOperator::RotateLeft |
+            ArithmeticOperator::RotateRight 
+                => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -96,7 +113,12 @@ impl Expression {
             Expression::Number(_, val) => Some(*val),
             Expression::Cast{old_type: _, new_type, value} => {
                 if let (Some(v), Some(new_size)) = (value.try_get_const(), new_type.try_byte_count()) {
-                    Some(v & ((1 << new_size)-1))
+                    Some(v & match new_size {
+                        1 => 0xFF,
+                        2 => 0xFFFF,
+                        4 => 0xFFFFFFFF,
+                        _ => panic!(),
+                    })
                 } else {
                     None
                 }

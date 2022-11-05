@@ -78,8 +78,8 @@ fn main() {
                     print!("{:?},", a);
                 }
                 println!(")");
-                for s in &f.body {
-                    println!("{:?}", s);
+                for (il, _) in &f.body {
+                    println!("{:?}", il);
                 }
                 println!();
             }

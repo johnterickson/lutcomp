@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::{Debug, Display}, ops::Range};
+use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::{Debug, Display}, ops::Range, borrow::Cow};
 
 use topological_sort::TopologicalSort;
 
@@ -719,7 +719,36 @@ impl IlFunction {
     fn emit_expression(&mut self, ctxt: &mut IlContext, dest: IlVarId, e: &Expression) {
         // println!("START {:?}", e);
         ctxt.src_ctxt.push(e);
-        match e {
+
+        let e = match (e.try_get_const(), ctxt.try_emit_type(e), e) {
+            (_, _, Expression::Number(_,_)) => Cow::Borrowed(e),
+            (Some(n), Some(var_type), _) => {
+                let byte_count = var_type.byte_count(ctxt.program);
+                let nt = match byte_count {
+                    1 => Some(NumberType::U8),
+                    2 => Some(NumberType::U16),
+                    4 => Some(NumberType::USIZE),
+                    _ => None,
+                };
+                if let Some(nt) = nt {
+
+                    let const_exp = Cow::Owned(Expression::Cast {
+                        old_type: Some(Type::Number(nt)),
+                        new_type: var_type,
+                        value: Box::new(Expression::Number(nt, n)),
+                    });
+
+                    // println!("CONST {:?} -> {:?}", e, const_exp);
+
+                    const_exp
+                } else {
+                    Cow::Borrowed(e)
+                }
+            }
+            _=> Cow::Borrowed(e),
+        };
+
+        match e.as_ref() {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);
                 // dbg!("{:?}", &info);
@@ -756,6 +785,12 @@ impl IlFunction {
                 self.add_inst(ctxt, IlInstruction::TtyIn {dest});
             },
             Expression::Arithmetic(op, left, right) => {
+
+                // let (left, right) = match (op.is_commutative(), left.try_get_const(), right.try_get_const()) {
+                //     (true, Some(_), None) => (right, left),
+                //     (true, Some(_), Some(_)) => panic!(),
+                //     _ => (left, right),
+                // };
 
                 let orig_left_type = ctxt.try_emit_type(left).expect(&format!("Could not find type for {:?}.", left));
                 let orig_left_type = orig_left_type.get_number_type().expect(&format!("Expected Number, but is {:?}.", orig_left_type));
@@ -823,7 +858,7 @@ impl IlFunction {
             },
             Expression::LocalFieldDeref(_,_) |
             Expression::PtrFieldDeref(_,_) => {
-                let (addr, size) = self.emit_address(ctxt, e);
+                let (addr, size) = self.emit_address(ctxt, e.as_ref());
                 self.add_inst(ctxt, IlInstruction::ReadMemory {
                     dest,
                     addr,
@@ -860,7 +895,7 @@ impl IlFunction {
                         }
                     }
                     (_, Type::Ptr(..)) | (_, Type::Array(..)) =>  {
-                        let (addr, size) = self.emit_address(ctxt, e);
+                        let (addr, size) = self.emit_address(ctxt, e.as_ref());
                         self.add_inst(ctxt, IlInstruction::ReadMemory {
                             dest,
                             addr,
