@@ -16,7 +16,7 @@ impl FunctionAttribute {
 
 #[derive(Clone,Debug)]
 pub enum FunctionImpl {
-    Body(Vec<Statement>),
+    Body(Vec<(Statement, Source)>),
     Intrinsic(Intrinsic)
 }
 
@@ -96,7 +96,7 @@ impl FunctionDefinition {
         }
     }
 
-    pub fn parse(ctxt: &ProgramContext, pair: pest::iterators::Pair<Rule>) -> FunctionDefinition {
+    pub fn parse(path: &Path, ctxt: &ProgramContext, pair: pest::iterators::Pair<Rule>) -> FunctionDefinition {
         assert_eq!(Rule::function, pair.as_rule());
 
         let mut args = Vec::new();
@@ -133,7 +133,11 @@ impl FunctionDefinition {
             (Type::Void, return_or_body)
         };
 
-        let body : Vec<Statement> = body.into_inner().map(|p| Statement::parse(p)).collect();
+        let body : Vec<_> = body.into_inner()
+            .map(|p| {
+                let pos = p.as_span().start_pos().line_col();
+                (Statement::parse(p), Source {path: path.display().to_string(), pos})
+            }).collect();
 
         // find vars
         let mut vars = BTreeMap::new();
@@ -147,7 +151,7 @@ impl FunctionDefinition {
             }
         };
 
-        for s in &body {
+        for (s,_) in &body {
             FunctionDefinition::walk_decls(ctxt, s, &mut find_vars);
         }
 
@@ -175,7 +179,7 @@ impl FunctionDefinition {
             }
         };
 
-        for s in &body {
+        for (s,_) in &body {
             FunctionDefinition::walk_decls(ctxt, s, &mut validate_no_mismatch);
         }
 

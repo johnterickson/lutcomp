@@ -181,60 +181,87 @@ v2.0 raw
 #       unsigned_hex_constant: '00000000'
 #  EOI: ''
 # #!image_base_address=(00080400)
-# 00000 Instruction { source: "loadimm8 r00 <- $01", opcode: LoadImm8, args: [Register(0x00), Constant8(0x01=1)], resolved: None }
+# 00000 LoadImm8 [Register(0x00), Constant8(0x01=1)]
+#       loadimm8 r00 <- $01
 04 00 01 
-# 00003 Instruction { source: "and8 r00 r00 -> r00", opcode: And8, args: [Register(0x00), Register(0x00), Register(0x00)], resolved: None }
+# 00003 And8 [Register(0x00), Register(0x00), Register(0x00)]
+#       and8 r00 r00 -> r00
 1b 00 00 00 
-# 00007 Instruction { source: "loadimm8 r01 <- 'H'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x48=72)], resolved: None }
+# 00007 LoadImm8 [Register(0x01), Constant8(0x48=72)]
+#       loadimm8 r01 <- 'H'
 04 01 48 
-# 0000a Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+# 0000a Out0 [Register(0x01)]
+#       ttyout r01
 68 01 
-# 0000c Instruction { source: "loadimm8 r01 <- 'i'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x69=105)], resolved: None }
+# 0000c LoadImm8 [Register(0x01), Constant8(0x69=105)]
+#       loadimm8 r01 <- 'i'
 04 01 69 
-# 0000f Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+# 0000f Out0 [Register(0x01)]
+#       ttyout r01
 68 01 
-# 00011 Instruction { source: "loadimm8 r01 <- '!'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x21=33)], resolved: None }
+# 00011 LoadImm8 [Register(0x01), Constant8(0x21=33)]
+#       loadimm8 r01 <- '!'
 04 01 21 
-# 00014 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+# 00014 Out0 [Register(0x01)]
+#       ttyout r01
 68 01 
-# 00016 Instruction { source: "loadimm8 r01 <- $0A", opcode: LoadImm8, args: [Register(0x01), Constant8(0x0a=10)], resolved: None }
+# 00016 LoadImm8 [Register(0x01), Constant8(0x0a=10)]
+#       loadimm8 r01 <- $0A
 04 01 0a 
-# 00019 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+# 00019 Out0 [Register(0x01)]
+#       ttyout r01
 68 01 
 # :prompt
-# 0001b Instruction { source: "loadimm8 r01 <- '>'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3e=62)], resolved: None }
+# 0001b LoadImm8 [Register(0x01), Constant8(0x3e=62)]
+#       loadimm8 r01 <- '>'
 04 01 3e 
-# 0001e Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+# 0001e Out0 [Register(0x01)]
+#       ttyout r01
 68 01 
-# 00020 Instruction { source: "loadimm8 r01 <- ':'", opcode: LoadImm8, args: [Register(0x01), Constant8(0x3a=58)], resolved: None }
+# 00020 LoadImm8 [Register(0x01), Constant8(0x3a=58)]
+#       loadimm8 r01 <- ':'
 04 01 3a 
-# 00023 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+# 00023 Out0 [Register(0x01)]
+#       ttyout r01
 68 01 
 # :read
-# 00025 Instruction { source: "io_ready_to_read r02", opcode: IoReadyToRead, args: [Register(0x02)], resolved: None }
+# 00025 IoReadyToRead [Register(0x02)]
+#       io_ready_to_read r02
 79 02 
-# 00027 Instruction { source: "andimm8 r02 <- $01", opcode: AndImm8, args: [Register(0x02), Constant8(0x01=1)], resolved: None }
+# 00027 AndImm8 [Register(0x02), Constant8(0x01=1)]
+#       andimm8 r02 <- $01
 18 02 01 
-# 0002a Instruction { source: "jzimm :read", opcode: JzImm, args: [Label24(:read)], resolved: None }
+# 0002a JzImm [Label24(:read)]
+#       jzimm :read
 72 25 00 00 
-# 0002e Instruction { source: "ttyin r01", opcode: In0, args: [Register(0x01)], resolved: None }
+# 0002e In0 [Register(0x01)]
+#       ttyin r01
 60 01 
-# 00030 Instruction { source: "ttyout r01", opcode: Out0, args: [Register(0x01)], resolved: None }
+# 00030 Out0 [Register(0x01)]
+#       ttyout r01
 68 01 
-# 00032 Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
+# 00032 And8 [Register(0x01), Register(0x01), Register(0x02)]
+#       and8 r01 r01 -> r02
 1b 01 01 02 
-# 00036 Instruction { source: "xorimm8 r02 <- 'q'", opcode: XorImm8, args: [Register(0x02), Constant8(0x71=113)], resolved: None }
+# 00036 XorImm8 [Register(0x02), Constant8(0x71=113)]
+#       xorimm8 r02 <- 'q'
 1a 02 71 
-# 00039 Instruction { source: "jzimm :halt", opcode: JzImm, args: [Label24(:halt)], resolved: None }
+# 00039 JzImm [Label24(:halt)]
+#       jzimm :halt
 72 4c 00 00 
-# 0003d Instruction { source: "and8 r01 r01 -> r02", opcode: And8, args: [Register(0x01), Register(0x01), Register(0x02)], resolved: None }
+# 0003d And8 [Register(0x01), Register(0x01), Register(0x02)]
+#       and8 r01 r01 -> r02
 1b 01 01 02 
-# 00041 Instruction { source: "xorimm8 r02 <- $0A", opcode: XorImm8, args: [Register(0x02), Constant8(0x0a=10)], resolved: None }
+# 00041 XorImm8 [Register(0x02), Constant8(0x0a=10)]
+#       xorimm8 r02 <- $0A
 1a 02 0a 
-# 00044 Instruction { source: "jzimm :prompt", opcode: JzImm, args: [Label24(:prompt)], resolved: None }
+# 00044 JzImm [Label24(:prompt)]
+#       jzimm :prompt
 72 1b 00 00 
-# 00048 Instruction { source: "jmpimm :read", opcode: JmpImm, args: [Label24(:read)], resolved: None }
+# 00048 JmpImm [Label24(:read)]
+#       jmpimm :read
 70 25 00 00 
 # :halt
-# 0004c Instruction { source: "halt $00000000", opcode: Halt, args: [Constant32(0x00000000=0)], resolved: None }
+# 0004c Halt [Constant32(0x00000000=0)]
+#       halt $00000000
 7e 00 00 00 00 

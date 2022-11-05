@@ -70,7 +70,7 @@ fn main() {
                 input
             };
             let entry = get_param("entry").unwrap_or("main");
-            let ctxt = create_program(entry, &input, file_path.parent().unwrap());
+            let ctxt = create_program(file_path, entry, &input, file_path.parent().unwrap());
             let il = IlProgram::from_program(&ctxt);
             for (name, f) in &il.functions {
                 print!("// {:?}(", name);
@@ -78,8 +78,8 @@ fn main() {
                     print!("{:?},", a);
                 }
                 println!(")");
-                for (il, _) in &f.body {
-                    println!("{:?}", il);
+                for (il, src, _) in &f.body {
+                    println!("{:?} # {:?}", il, src);
                 }
                 println!();
             }
@@ -98,7 +98,7 @@ fn main() {
             let entry = get_param("entry").unwrap_or("main");
             let root = file_path.parent().unwrap();
 
-            let (ctxt, il) = emit_il(entry, &input, root);
+            let (ctxt, il) = emit_il(file_path, entry, &input, root);
 
             let (_backend, mut assembly) = emit_assembly(&ctxt, &il);
 

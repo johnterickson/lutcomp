@@ -6,9 +6,8 @@ use topological_sort::TopologicalSort;
 
 use crate::*;
 
-pub fn emit_il(entry: &str, input: &str, root: &Path) -> (ProgramContext, IlProgram) {
-    let ctxt = create_program(entry, input, root);
-    
+pub fn emit_il(path: &Path, entry: &str, input: &str, root: &Path) -> (ProgramContext, IlProgram) {
+    let ctxt = create_program(path, entry, input, root);
     let p =  IlProgram::from_program(&ctxt);
     (ctxt, p)
 }
@@ -101,7 +100,7 @@ pub struct IlFunction {
     pub id: IlFunctionId,
     pub attributes: BTreeSet<FunctionAttribute>,
     pub args: Vec<IlVarId>,
-    pub body: Vec<(IlInstruction,SourceContext)>,
+    pub body: Vec<(IlInstruction, Option<Source>, SourceContext)>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
     pub consts: BTreeMap<IlVarId, IlNumber>,
     pub ret: Option<IlType>,
@@ -158,7 +157,7 @@ impl IlFunction {
         }
 
         let (stack_size_var, instruction_index) = self.frame_pointer_size_instruction_index.as_ref().unwrap();
-        let (mut existing, src_ctxt) = self.body.remove(*instruction_index);
+        let (mut existing, src, src_ctxt) = self.body.remove(*instruction_index);
         match &mut existing {
             IlInstruction::AssignNumber { dest, src } => {
                 assert_eq!(dest, stack_size_var);
@@ -168,11 +167,11 @@ impl IlFunction {
             },
             _ => panic!(),
         }
-        self.body.insert(*instruction_index, (existing, src_ctxt));
+        self.body.insert(*instruction_index, (existing, src, src_ctxt));
     }
 
     fn add_inst(&mut self, ctxt: &IlContext, inst: IlInstruction) {
-        self.body.push((inst, ctxt.src_ctxt.clone()));
+        self.body.push((inst, ctxt.src.as_ref().map(|s| s.clone()), ctxt.src_ctxt.clone()));
     }
 
     fn alloc_tmp(&mut self, info: IlVarInfo) -> IlVarId {
@@ -1090,8 +1089,10 @@ impl IlFunction {
 
         match &ctxt.func_def.body {
             FunctionImpl::Body(body) => {
-                for s in body {
+                for (s, src) in body {
+                    ctxt.src = Some(src.clone());
                     func.emit_statement(ctxt, s);
+                    ctxt.src = None;
                 }
             },
             FunctionImpl::Intrinsic(_) => {
@@ -1660,6 +1661,7 @@ impl IlProgram {
                 func_def: def,
                 loops: VecDeque::new(),
                 src_ctxt: SourceContext::default(),
+                src: None,
             };
             let f = IlFunction::emit_from(&mut il_ctxt);
             next_static_addr = il_ctxt.next_static_addr;
@@ -1702,7 +1704,7 @@ impl IlProgram {
 
     fn find_calls<'a, F: FnMut(&'a IlFunction, &'a IlFunctionId, usize)>(&'a self, mut f: F) {
         for (_, caller) in &self.functions {
-            for (i, (stmt, _)) in caller.body.iter().enumerate() {
+            for (i, (stmt, _, _)) in caller.body.iter().enumerate() {
                 match stmt {
                     IlInstruction::Call { ret: _, f: callee, args: _ } => {
                         f(caller, callee, i);
@@ -1754,7 +1756,7 @@ impl IlProgram {
             let mut inlined_instructions = Vec::new();
 
             let mut caller = self.functions.remove(&caller).unwrap();
-            let (call, call_source_ctxt) = caller.body.remove(instruction_index);
+            let (call, call_src, call_source_ctxt) = caller.body.remove(instruction_index);
             match call {
                 IlInstruction::Call { ret, f, args: caller_param_values } => {
 
@@ -1810,10 +1812,11 @@ impl IlProgram {
                             src_range: None,
                             size: callee.vars[arg].byte_size.try_into().unwrap(),
                         },
+                        call_src.clone(),
                         call_source_ctxt.clone()));
                     }
 
-                    for (stmt, src_ctxt) in &callee.body {
+                    for (stmt, src, src_ctxt) in &callee.body {
 
                         // dbg!(&stmt);
 
@@ -1829,6 +1832,7 @@ impl IlProgram {
                                             src_range: None,
                                             size: callee.vars[val].byte_size.try_into().unwrap(),
                                         },
+                                        src.clone(),
                                         src_ctxt.clone()));
 
                                     
@@ -1838,6 +1842,7 @@ impl IlProgram {
 
                             inlined_instructions.push((
                                 IlInstruction::Goto(callee_label_to_caller_inlined_label[&callee.end_label].clone()),
+                                src.clone(),
                                 src_ctxt.clone(),
                             ));
 
@@ -1859,12 +1864,14 @@ impl IlProgram {
                             IlInstruction::Goto(l) => {
                                 inlined_instructions.push((
                                     IlInstruction::Goto(callee_label_to_caller_inlined_label[&l].clone()),
+                                    src.clone(),
                                     src_ctxt.clone(),
                                 ));
                             }
                             IlInstruction::Label(l) => {
                                 inlined_instructions.push((
                                     IlInstruction::Label(callee_label_to_caller_inlined_label[&l].clone()),
+                                    src.clone(),
                                     src_ctxt.clone(),
                                 ));
                             },
@@ -1878,6 +1885,7 @@ impl IlProgram {
                                         then_label: callee_label_to_caller_inlined_label[&then_label].clone(),
                                         else_label: callee_label_to_caller_inlined_label[&else_label].clone(),
                                     },
+                                    src.clone(),
                                     src_ctxt.clone(),
                                 ));
                             }
@@ -1885,7 +1893,7 @@ impl IlProgram {
                                 panic!("Should be handled above.")
                             }
                             stmt => {
-                                inlined_instructions.push((stmt, src_ctxt.clone()));
+                                inlined_instructions.push((stmt, src.clone(), src_ctxt.clone()));
                             }
                         }
                     }
@@ -1894,7 +1902,7 @@ impl IlProgram {
                 _ => panic!(),
             }
 
-            if let Some(IlInstruction::Unreachable) = inlined_instructions.last().map(|(i,_)| i) {
+            if let Some(IlInstruction::Unreachable) = inlined_instructions.last().map(|(i,_,_)| i) {
                 inlined_instructions.pop();
             }
 
@@ -1920,6 +1928,7 @@ struct IlContext<'a> {
     il: &'a mut IlProgram,
     func_def: &'a FunctionDefinition,
     loops: VecDeque<LoopContext>,
+    src: Option<Source>,
     src_ctxt: SourceContext,
 }
 
@@ -2176,7 +2185,7 @@ mod tests {
                 IlInstruction::Goto(loop_label.clone()),
                 IlInstruction::Label(end_label.clone()),
                 IlInstruction::Return{val: Some(a.clone())},
-            ].iter().map(|i| (i.clone(), ctxt.clone())).collect(),
+            ].iter().map(|i| (i.clone(), None, ctxt.clone())).collect(),
         };
 
         let l = IlLiveness::calculate(&f);

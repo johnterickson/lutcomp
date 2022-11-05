@@ -1092,6 +1092,7 @@ mod tests {
     #[test]
     fn local_array() {
         let (_ctxt, il) = emit_il(
+            &PathBuf::from(file!()),
             "main",
             include_str!("../../programs/test/local_array.j"),
             &test_programs_dir());
@@ -1539,7 +1540,7 @@ mod tests {
     }
 
     fn assemble(entry: &str, program: &str) -> (ProgramContext, IlProgram, Image) {
-        let (ctxt, program) = emit_il(entry, program, &test_programs_dir());
+        let (ctxt, program) = emit_il(&PathBuf::from(file!()), entry, program, &test_programs_dir());
         let (_, assembly) = emit_assembly(&ctxt, &program);
         let rom = assemble::assemble(assembly);
         (ctxt, program, rom)
@@ -1628,7 +1629,7 @@ mod tests {
     }
 
     fn test_var_inputs<'a>(entry: &'a str, program: &str, cases: &[(Vec<TestVar>, TestVar)]) -> u64 {
-        let (ctxt, il) = emit_il(entry, program, &test_programs_dir());
+        let (ctxt, il) = emit_il(&PathBuf::from(file!()), entry, program, &test_programs_dir());
 
         let (_, asm) = emit_assembly(&ctxt, &il);
         let rom = assemble::assemble(asm);
@@ -1709,7 +1710,7 @@ mod tests {
         where T: std::fmt::Debug
     {
         eprintln!("Compiling to IL...");
-        let (ctxt, il) = emit_il(entry,program, &test_programs_dir());
+        let (ctxt, il) = emit_il(&PathBuf::from(file!()), entry,program, &test_programs_dir());
         // dbg!(&il);
 
         eprintln!("Compiling to assembly...");

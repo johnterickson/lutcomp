@@ -567,7 +567,11 @@ fn assemble_inner(mut input: Vec<AssemblyInputLine>) -> Image {
                 }
             }
             AssemblyOutputLine::Instruction(i) => {
-                println!("# {:05x} {:?}", pc, i);
+                println!("# {:05x} {:?} {:?}", pc, i.opcode, i.args);
+                for line in i.source.lines() {
+                    println!("#       {}", line);
+                }
+
                 i.resolve(&labels, pc);
 
                 for byte in i.resolved.as_ref().unwrap() {

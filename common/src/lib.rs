@@ -4,7 +4,7 @@ extern crate strum_macros;
 
 extern crate packed_struct;
 extern crate packed_struct_codegen;
-use std::collections::{BTreeMap, BTreeSet};
+use std::{collections::{BTreeMap, BTreeSet}, fmt::Display};
 
 use packed_struct::prelude::*;
 
@@ -522,6 +522,25 @@ pub const INITIAL_STACK: u32 = 0x0F0F00;
 #[derive(Clone,Debug,Default)]
 pub struct Symbol {
     pub notes: Vec<String>,
+}
+
+
+#[derive(Clone)]
+pub struct Source {
+    pub path: String,
+    pub pos: (usize, usize),
+}
+
+impl Display for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "'{}':({},{})", &self.path, self.pos.0, self.pos.1)
+    }
+}
+
+impl std::fmt::Debug for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        (self as &dyn Display).fmt(f)
+    }
 }
 
 #[derive(Clone,Debug,Default)]

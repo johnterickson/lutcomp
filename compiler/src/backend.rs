@@ -56,8 +56,8 @@ impl<'a> BackendProgram<'a> {
                 available_registers: (0x10u8..=0xFF).collect(),
             };
 
-            for s in &f.body {
-                if let IlInstruction::Call{f: callee, ..} = &s.0 {
+            for (il, ..) in &f.body {
+                if let IlInstruction::Call{f: callee, ..} = il {
                     info.functions_directly_called.insert(callee.clone());
                 }
             }
@@ -398,11 +398,19 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 format!("Save function parameter '{}' registers {:?} to locals {:?}.", arg_name.0, &arg_regs, &local_regs));
         }
 
-        for s in &f.body {
+        for (il, src, src_ctxt) in &f.body {
             // dbg!(s);
-            let source = format!("{:?}\n\t{:?}", &s.0, &s.1);
+            let mut source = format!("{:?} {:?}\n", il, src);
+            let mut prev = None;
+            for src_ctxt in &src_ctxt.contexts  {
+                use std::fmt::Write;
+                if prev != Some(src_ctxt) {
+                    write!(&mut source, "{}\n", src_ctxt).unwrap();
+                }
+                prev = Some(src_ctxt);
+            }
             ctxt.lines.push(AssemblyInputLine::Comment(source.to_owned()));
-            match &s.0 {
+            match il {
                 IlInstruction::Unreachable => {
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                         opcode: Opcode::Halt,
