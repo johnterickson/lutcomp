@@ -3,7 +3,7 @@ use crate::il::IlVarId;
 use super::*;
 use super::parse::*;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum ArithmeticOperator {
     Add,
     Subtract,
@@ -52,7 +52,7 @@ impl ArithmeticOperator {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub enum Expression {
     Ident(String),
     Number(NumberType, u32),

@@ -1,7 +1,7 @@
 use super::*;
 use super::parse::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct Call {
     pub function: String, 
     pub parameters: Vec<Expression>,

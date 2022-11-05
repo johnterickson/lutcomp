@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::{BTreeMap, VecDeque}, convert::TryFrom, fmt::{Debug, Display}, ops::Range, borrow::Cow};
+use std::{collections::{BTreeMap, VecDeque, hash_map::DefaultHasher}, convert::TryFrom, fmt::{Debug, Display}, ops::Range, borrow::Cow, hash::{Hash, Hasher}};
 
 use topological_sort::TopologicalSort;
 
@@ -106,6 +106,7 @@ pub struct IlFunction {
     pub consts: BTreeMap<IlVarId, IlNumber>,
     pub ret: Option<IlType>,
     labels: BTreeSet<IlLabelId>,
+    full_expression_hashes: BTreeMap<u16,u64>,
     end_label: IlLabelId,
     next_temp_num: usize,
     next_label_num: usize,
@@ -132,6 +133,7 @@ impl IlFunction {
             vars: BTreeMap::new(),
             body: Vec::new(),
             labels: BTreeSet::new(),
+            full_expression_hashes: BTreeMap::new(),
             consts: BTreeMap::new(),
             next_temp_num: 0,
             next_label_num: 0,
@@ -181,25 +183,37 @@ impl IlFunction {
     }
 
     fn alloc_tmp_for_expression(&mut self, ctxt: &IlContext, e: &Expression) -> (IlVarId, IlVarInfo) {
-        let id = IlVarId(format!("t{}", self.next_temp_num));
-        let t = e.try_emit_type(ctxt.program, Some(ctxt.func_def))
-            .unwrap_or_else(|| panic!("Could not determine type for '{:?}'.", e));
-        let il_type: IlType = match t.byte_count(ctxt.program) {
-            0 => IlType::U8,
-            n => n.try_into().unwrap()
-        };
-        let location = IlLocation::Reg(il_type);
-        let var_type = e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap();
-        let byte_size = var_type.byte_count(ctxt.program);
-        let info = IlVarInfo {
-            description: format!("{} {:?}", &id.0, e),
-            byte_size,
-            var_type,
-            location,
-            constant: e.try_get_const().map(|c| c.to_le_bytes().iter().take(byte_size as usize).cloned().collect()),
-        };
-        self.vars.insert(id.clone(), info);
-        self.next_temp_num += 1;
+        let mut hasher = DefaultHasher::new();
+        e.hash(&mut hasher);
+        let full_hash =  hasher.finish();
+        let brief_hash = (full_hash & 0xFFFF) as u16;
+        let id = IlVarId(format!("t{:0x}", brief_hash));
+
+        match self.full_expression_hashes.get(&brief_hash) {
+            None => {
+                let t = e.try_emit_type(ctxt.program, Some(ctxt.func_def))
+                    .unwrap_or_else(|| panic!("Could not determine type for '{:?}'.", e));
+                let il_type: IlType = match t.byte_count(ctxt.program) {
+                    0 => IlType::U8,
+                    n => n.try_into().unwrap()
+                };
+                let location = IlLocation::Reg(il_type);
+                let var_type = e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap();
+                let byte_size = var_type.byte_count(ctxt.program);
+                let info = IlVarInfo {
+                    description: format!("{} {:?}", &id.0, e),
+                    byte_size,
+                    var_type,
+                    location,
+                    constant: e.try_get_const().map(|c| c.to_le_bytes().iter().take(byte_size as usize).cloned().collect()),
+                };
+                self.vars.insert(id.clone(), info);
+            }
+            Some(existing) => {
+                assert_eq!(existing, &full_hash);
+            }
+        }
+        
         let (id, info) = self.vars.get_key_value(&id).unwrap();
         (id.clone(), info.clone())
     }
@@ -2146,6 +2160,7 @@ mod tests {
             frame_pointer_size_instruction_index: None,
             vars,
             labels: ([&loop_label, &body_label, &end_label]).iter().map(|l| (**l).clone()).collect(),
+            full_expression_hashes: BTreeMap::new(),
             end_label: IlLabelId("end".to_owned()),
             body : [
                 IlInstruction::AssignNumber {dest: one.clone(), src: IlNumber::U8(1)},

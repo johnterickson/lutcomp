@@ -1,7 +1,7 @@
 use crate::*;
 
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum ComparisonOperator {
     Equals,
     NotEquals,
@@ -25,7 +25,7 @@ impl ComparisonOperator {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct Comparison {
     pub op: ComparisonOperator,
     pub left: Expression,

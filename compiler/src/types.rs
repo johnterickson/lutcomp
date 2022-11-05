@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum NumberType {
     U8,
     U16,
@@ -44,7 +44,7 @@ pub enum Scope {
 }
 
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Type {
     Void,
     Number(NumberType),
