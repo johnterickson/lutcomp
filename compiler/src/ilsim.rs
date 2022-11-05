@@ -183,8 +183,11 @@ impl IlFunction {
                 IlInstruction::AssignBinary { dest, op, src1, src2 } => {
                     let src1 = *vars.get(src1)
                         .expect(&format!("Could not find {:?}.", &src1));
-                    let src2 = *vars.get(src2)
-                        .expect(&format!("Could not find {:?}.", &src2));
+                    let src2 = match src2 {
+                        IlOperand::Number(n) => *n,
+                        IlOperand::Var(src2) => *vars.get(src2)
+                            .expect(&format!("Could not find {:?}.", &src2)),
+                    };
                     let result = match (src1, src2) {
                         (IlNumber::U8(n1), IlNumber::U8(n2)) => {
                             IlNumber::U8(match op {

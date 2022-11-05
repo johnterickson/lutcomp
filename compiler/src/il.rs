@@ -13,6 +13,12 @@ pub fn emit_il(entry: &str, input: &str, root: &Path) -> (ProgramContext, IlProg
     (ctxt, p)
 }
 
+#[derive(Clone)]
+#[derive(Debug)]
+pub enum IlOperand {
+    Number(IlNumber),
+    Var(IlVarId)
+}
 
 #[derive(Clone)]
 pub enum IlInstruction {
@@ -22,7 +28,7 @@ pub enum IlInstruction {
     AssignNumber{ dest: IlVarId, src: IlNumber },
     AssignVar{ dest: IlVarId, src: IlVarId, size: IlType, src_range: Option<Range<u32>>, dest_range: Option<Range<u32>>},
     AssignUnary{ dest: IlVarId, op: IlUnaryOp, src: IlVarId },
-    AssignBinary { dest: IlVarId, op: IlBinaryOp, src1: IlVarId, src2: IlVarId },
+    AssignBinary { dest: IlVarId, op: IlBinaryOp, src1: IlVarId, src2: IlOperand },
     ReadMemory {dest: IlVarId, addr: IlVarId, size: IlType},
     WriteMemory {addr: IlVarId, src: IlVarId, size: IlType},
     Goto(IlLabelId),
@@ -692,22 +698,11 @@ impl IlFunction {
                 };
 
                 if self.vars_stack_size > 0 {
-                    let stack_size = self.alloc_tmp(IlVarInfo {
-                        byte_size: 4,
-                        description: "Stack size".to_owned(),
-                        location: IlLocation::Reg(IlType::U32),
-                        var_type: Type::Number(NumberType::USIZE),
-                        constant: Some(self.vars_stack_size.to_le_bytes().iter().cloned().collect()),
-                    });
-                    self.add_inst(ctxt, IlInstruction::AssignNumber {
-                        dest: stack_size.clone(),
-                        src: IlNumber::U32(self.vars_stack_size),
-                    });
                     self.add_inst(ctxt, IlInstruction::AssignBinary {
                         dest: IlVarId::frame_pointer(),
                         op: IlBinaryOp::Add,
                         src1: IlVarId::frame_pointer(),
-                        src2: stack_size,
+                        src2: IlOperand::Number(IlNumber::U32(self.vars_stack_size)),
                     });
                 }
                 
@@ -762,15 +757,15 @@ impl IlFunction {
             },
             Expression::Arithmetic(op, left, right) => {
 
-                let left_type = ctxt.try_emit_type(left).expect(&format!("Could not find type for {:?}.", left));
-                let left_type = left_type.get_number_type().expect(&format!("Expected Number, but is {:?}.", left_type));
-                let right_type = ctxt.try_emit_type(right).unwrap().get_number_type().unwrap();
+                let orig_left_type = ctxt.try_emit_type(left).expect(&format!("Could not find type for {:?}.", left));
+                let orig_left_type = orig_left_type.get_number_type().expect(&format!("Expected Number, but is {:?}.", orig_left_type));
+                let orig_right_type = ctxt.try_emit_type(right).unwrap().get_number_type().unwrap();
 
-                let promo_needed = left_type != right_type;
+                let promo_needed = orig_left_type != orig_right_type;
 
                 let promote = |side: &Box<Expression>, side_type| {
                     if promo_needed && side_type == NumberType::U8 {
-                        if let Some(c) = side.try_get_const() {
+                        let val = if let Some(c) = side.try_get_const() {
                             Expression::Number(NumberType::USIZE, c)
                         } else {
                             Expression::Cast {
@@ -778,22 +773,42 @@ impl IlFunction {
                                 old_type: Some(Type::Number(side_type)),
                                 new_type: Type::Number(NumberType::USIZE)
                             }
-                        }
+                        };
+                        (val, NumberType::USIZE)
                     } else {
-                        *(side.clone())
+                        (*(side.clone()), side_type)
                     }
                 };
 
-                let left = promote(left, left_type);
-                let right = promote(right, right_type);
+                let (left, promoted_num_type) = promote(left, orig_left_type);
+                let (right, promoted_num_type_right) = promote(right, orig_right_type);
 
-                let (left_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, &left);
-                let (right_tmp, _) = self.alloc_tmp_and_emit_value(ctxt, &right);
+                assert_eq!(promoted_num_type, promoted_num_type_right);
+
+                let (left_tmp, left_info) = self.alloc_tmp_and_emit_value(ctxt, &left);
+                assert_eq!(promoted_num_type.byte_count(ctxt.program), left_info.var_type.byte_count(ctxt.program));
+
+                let right_operand = if let Some(constant) = right.try_get_const() {
+                    let right_val = match promoted_num_type {
+                        NumberType::U8 => IlNumber::U8(constant.try_into().unwrap()),
+                        NumberType::U16 => IlNumber::U16(constant.try_into().unwrap()),
+                        NumberType::USIZE => IlNumber::U32(constant.try_into().unwrap()),
+                    };
+                    assert_eq!(left_info.byte_size, right_val.il_type().byte_count());
+
+                    IlOperand::Number(right_val)
+                } else {
+                    let (right_tmp, right_info) = self.alloc_tmp_and_emit_value(ctxt, &right);
+                    assert_eq!(left_info.byte_size, right_info.byte_size);
+                    IlOperand::Var(right_tmp)
+                };
+
+
                 self.add_inst(ctxt, IlInstruction::AssignBinary {
                     dest,
                     op: IlBinaryOp::from(op),
                     src1: left_tmp.clone(),
-                    src2: right_tmp.clone(),
+                    src2: right_operand,
                 });
             },
             Expression::Comparison(_) => todo!(),
@@ -1019,15 +1034,11 @@ impl IlFunction {
             });
 
             func.frame_pointer_size_instruction_index = Some((stack_size.clone(), func.body.len()));
-            func.add_inst(ctxt, IlInstruction::AssignNumber {
-                dest: stack_size.clone(),
-                src: IlNumber::U32(func.vars_stack_size.wrapping_neg()),
-            });
             func.add_inst(ctxt, IlInstruction::AssignBinary {
                 dest: IlVarId::frame_pointer(),
                 op: IlBinaryOp::Add,
                 src1: IlVarId::frame_pointer(),
-                src2: stack_size,
+                src2: IlOperand::Number(IlNumber::U32(func.vars_stack_size.wrapping_neg())),
             });
         }
 
@@ -1110,7 +1121,7 @@ impl IlFunction {
     }
 
     fn optimze_round(&mut self) -> bool {
-        let refs = self.find_refs();
+        // let refs = self.find_refs();
 
         // dbg!(&self.body);
 
@@ -1143,37 +1154,37 @@ impl IlFunction {
         //     }
         // }
 
-        for offset in [0,1] {
-            for pair in self.body.as_mut_slice()[offset..].chunks_mut(2) {
-                if pair.len() != 2 { continue; }
-                let (first,second) = pair.split_first_mut().unwrap();
-                let second = &mut second[0];
-                if let (IlInstruction::AssignNumber { dest: num_dest, src },
-                        IlInstruction::AssignBinary { dest, op, src1, src2 }) = (&mut first.0, &mut second.0) {
-                    if num_dest == src2 && 
-                       *src == IlNumber::U32(4) && 
-                       *op == IlBinaryOp::Multiply
-                    {
-                        let refs: &VarReferences = &refs[num_dest];
-                        if refs.reads.len() == 1 && refs.writes.len() == 1 {
-                            // println!("# MUL4 {:?} {:?} {:?} {:?} {:?} {:?}", num_dest, src, dest, op, src1, src2);
-                            first.0 = IlInstruction::AssignBinary {
-                                dest: dest.clone(),
-                                op:IlBinaryOp::Add,
-                                src1: src1.clone(),
-                                src2: src1.clone(),
-                            };
-                            second.0 = IlInstruction::AssignBinary {
-                                dest: dest.clone(),
-                                op: IlBinaryOp::Add,
-                                src1: dest.clone(),
-                                src2: dest.clone(),
-                            };
-                        }
-                    }
-                }
-            }
-        }
+        // for offset in [0,1] {
+        //     for pair in self.body.as_mut_slice()[offset..].chunks_mut(2) {
+        //         if pair.len() != 2 { continue; }
+        //         let (first,second) = pair.split_first_mut().unwrap();
+        //         let second = &mut second[0];
+        //         if let (IlInstruction::AssignNumber { dest: num_dest, src },
+        //                 IlInstruction::AssignBinary { dest, op, src1, src2 }) = (&mut first.0, &mut second.0) {
+        //             if num_dest == src2 && 
+        //                *src == IlNumber::U32(4) && 
+        //                *op == IlBinaryOp::Multiply
+        //             {
+        //                 let refs: &VarReferences = &refs[num_dest];
+        //                 if refs.reads.len() == 1 && refs.writes.len() == 1 {
+        //                     // println!("# MUL4 {:?} {:?} {:?} {:?} {:?} {:?}", num_dest, src, dest, op, src1, src2);
+        //                     first.0 = IlInstruction::AssignBinary {
+        //                         dest: dest.clone(),
+        //                         op:IlBinaryOp::Add,
+        //                         src1: src1.clone(),
+        //                         src2: src1.clone(),
+        //                     };
+        //                     second.0 = IlInstruction::AssignBinary {
+        //                         dest: dest.clone(),
+        //                         op: IlBinaryOp::Add,
+        //                         src1: dest.clone(),
+        //                         src2: dest.clone(),
+        //                     };
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         
 
         false
@@ -1355,7 +1366,10 @@ impl IlInstruction {
             IlInstruction::AssignUnary { dest, op:_, src } => 
                 (vec![src], Some(dest)),
             IlInstruction::AssignBinary { dest, op:_, src1, src2 } =>
-                (vec![src1, src2], Some(dest)),
+                match src2 {
+                    IlOperand::Number(_) => (vec![src1], Some(dest)),
+                    IlOperand::Var(src2) => (vec![src1, src2], Some(dest)),
+                },
             IlInstruction::ReadMemory { dest, addr, size:_ } =>
                 (vec![addr], Some(dest)),
             IlInstruction::WriteMemory { addr, src, size:_ } => 
@@ -1389,7 +1403,10 @@ impl IlInstruction {
             IlInstruction::AssignUnary { dest, op:_, src } => 
                 (vec![src], Some(dest)),
             IlInstruction::AssignBinary { dest, op:_, src1, src2 } =>
-                (vec![src1, src2], Some(dest)),
+                match src2 {
+                    IlOperand::Number(_) => (vec![src1], Some(dest)),
+                    IlOperand::Var(src2) => (vec![src1, src2], Some(dest)),
+                },
             IlInstruction::ReadMemory { dest, addr, size:_ } =>
                 (vec![addr], Some(dest)),
             IlInstruction::WriteMemory { addr, src, size:_ } => 
@@ -1487,6 +1504,14 @@ impl IlNumber {
             IlNumber::U8(n) => (*n).into(),
             IlNumber::U16(n) => (*n).into(),
             IlNumber::U32(n) => *n,
+        }
+    }
+
+    pub fn cast_checked(&self, promoted: IlType) -> IlNumber {
+        match promoted {
+            IlType::U8 => IlNumber::U8(self.as_u32().try_into().unwrap()),
+            IlType::U16 => IlNumber::U16(self.as_u32().try_into().unwrap()),
+            IlType::U32 => IlNumber::U32(self.as_u32().try_into().unwrap()),
         }
     }
 }
@@ -2096,10 +2121,10 @@ mod tests {
                 IlInstruction::IfThenElse {left: n.clone(), op: IlCmpOp::Equals, right: z.clone(), 
                     then_label: end_label.clone(), else_label: body_label.clone() },
                 IlInstruction::Label(body_label.clone()),
-                IlInstruction::AssignBinary { dest: t.clone(), op: IlBinaryOp::Add, src1: a.clone(), src2: b.clone() },
+                IlInstruction::AssignBinary { dest: t.clone(), op: IlBinaryOp::Add, src1: a.clone(), src2: IlOperand::Var(b.clone()) },
                 IlInstruction::AssignVar { dest: a.clone(), src: b.clone(), size: IlType::U8, dest_range: None, src_range: None },
                 IlInstruction::AssignVar { dest: b.clone(), src: t.clone(), size: IlType::U8, dest_range: None, src_range: None },
-                IlInstruction::AssignBinary { dest: n.clone(), op: IlBinaryOp::Subtract, src1: n.clone(), src2: one.clone() },
+                IlInstruction::AssignBinary { dest: n.clone(), op: IlBinaryOp::Subtract, src1: n.clone(), src2: IlOperand::Var(one.clone()) },
                 IlInstruction::AssignNumber {dest: z.clone(), src: IlNumber::U8(0)},
                 IlInstruction::Goto(loop_label.clone()),
                 IlInstruction::Label(end_label.clone()),
