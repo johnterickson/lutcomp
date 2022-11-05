@@ -800,11 +800,11 @@ impl IlFunction {
             },
             Expression::Arithmetic(op, left, right) => {
 
-                // let (left, right) = match (op.is_commutative(), left.try_get_const(), right.try_get_const()) {
-                //     (true, Some(_), None) => (right, left),
-                //     (true, Some(_), Some(_)) => panic!(),
-                //     _ => (left, right),
-                // };
+                let (left, right) = match (op.is_commutative(), left.try_get_const(), right.try_get_const()) {
+                    (true, Some(_), None) => (right, left),
+                    (true, Some(_), Some(_)) => panic!(),
+                    _ => (left, right),
+                };
 
                 let orig_left_type = ctxt.try_emit_type(left).expect(&format!("Could not find type for {:?}.", left));
                 let orig_left_type = orig_left_type.get_number_type().expect(&format!("Expected Number, but is {:?}.", orig_left_type));
