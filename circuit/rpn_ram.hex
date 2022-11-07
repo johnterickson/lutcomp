@@ -1064,11 +1064,13 @@ ff
 54 
 # :KeyBoard_init
 # Ret None
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([16])
-# Var td45b (td45b Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }) Reg(U32) Some([20, 21, 22, 23])
-# Var tdaa (tdaa Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }) Reg(U32) Some([20, 21, 22, 23])
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([16]) [0]
+# Var td45b (td45b Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }) Reg(U32) Some([20, 21, 22, 23]) [0, 16, 15, 0]
+# Var tdaa (tdaa Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }) Reg(U32) Some([20, 21, 22, 23]) [4, 16, 15, 0]
+# Consts td45b: 0n987136/0x000f1000u32
+# Consts tdaa: 0n987140/0x000f1004u32
 # td45b <- 0n987136/0x000f1000u32  Some('/home/john/lutcomp/programs/lib/Keyboard.j':(11,5))
 # Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(U8, 0) }
 # Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }
@@ -1138,12 +1140,12 @@ ff
 
 # :Keyboard_poll
 # Ret None
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var c (Local c Number(U8) Reg(U8)) Reg(U8) Some([24])
 # Var code (Local code Number(U8) Reg(U8)) Reg(U8) Some([24])
 # Var index (Local index Number(USIZE) Reg(U32)) Reg(U32) Some([28, 29, 30, 31])
-# Var inline_Keyboard_poll_queue_push_37_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_Keyboard_poll_queue_push_37_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_Keyboard_poll_queue_push_37_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_Keyboard_poll_queue_push_37_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_Keyboard_poll_queue_push_37_n (Arg1 n Number(U8)) Reg(U8) Some([24])
 # Var inline_Keyboard_poll_queue_push_37_s (Arg0 s Ptr(Struct("Queue"))) Reg(U32) Some([32, 33, 34, 35])
 # Var inline_Keyboard_poll_queue_push_37_t1d36 (t1d36 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([36, 37, 38, 39])
@@ -1156,7 +1158,7 @@ ff
 # Var inline_Keyboard_poll_queue_push_37_t6778 (t6778 Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))) Reg(U8) Some([24])
 # Var inline_Keyboard_poll_queue_push_37_tc1ff (tc1ff Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }) Reg(U32) Some([48, 49, 50, 51])
 # Var inline_Keyboard_poll_queue_push_37_values (Local values Ptr(Number(U8)) Reg(U32)) Reg(U32) Some([36, 37, 38, 39])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t0 (static "stdin") Reg(U32) Some([32, 33, 34, 35])
 # Var t12ac (t12ac Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] })) Reg(U8) Some([24])
 # Var t23a (t23a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }) Reg(U32) Some([52, 53, 54, 55])
@@ -1172,16 +1174,17 @@ ff
 # Var t7ebd (t7ebd LocalFieldDeref("keyboard", "release_in_progress")) Reg(U8) Some([56])
 # Var t861f (t861f Call(Call { function: "io_ready_to_read", parameters: [] })) Reg(U8) Some([24])
 # Var tac13 (tac13 Ident("c")) Reg(U8) Some([24])
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([57])
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([57]) [0]
 # Var tb62e (tb62e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index")) }) Reg(U32) Some([52, 53, 54, 55])
 # Var td18e (td18e Ident("index")) Reg(U32) Some([28, 29, 30, 31])
-# Var td45b (td45b Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }) Reg(U32) Some([52, 53, 54, 55])
-# Var tdaa (tdaa Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }) Reg(U32) Some([32, 33, 34, 35])
+# Var td45b (td45b Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }) Reg(U32) Some([52, 53, 54, 55]) [0, 16, 15, 0]
+# Var tdaa (tdaa Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }) Reg(U32) Some([32, 33, 34, 35]) [4, 16, 15, 0]
 # Var te5cf (te5cf Arithmetic(Add, Ident("index"), Number(USIZE, 2))) Reg(U32) Some([32, 33, 34, 35])
 # Var ted94 (ted94 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }) Reg(U32) Some([52, 53, 54, 55])
 # Var tf68c (tf68c Ident("code")) Reg(U8) Some([24])
-# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([57])
+# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([57]) [1]
 # Var tfff6 (tfff6 AddressOf(Ident("stdin"))) Reg(U32) Some([32, 33, 34, 35])
+# Consts t0: 0n987228/0x000f105cu32
 # Some(t861f) <= call io_ready_to_read() Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 # Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
@@ -2311,33 +2314,33 @@ ff
 # Ret Some(U8)
 # Arg0=c
 # Arg1=ch
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var a (Local a Number(USIZE) Reg(U32)) Reg(U32) Some([60, 61, 62, 63])
 # Var b (Local b Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
 # Var c (Arg0 c Ptr(Struct("RpnCalc"))) Reg(U32) Some([68, 69, 70, 71])
 # Var ch (Arg1 ch Number(U8)) Reg(U8) Some([72])
 # Var diff (Local diff Number(USIZE) Reg(U32)) Reg(U32) Some([60, 61, 62, 63])
 # Var i (Local i Number(U8) Reg(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_RpnCalc_init_50_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_RpnCalc_init_50_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_RpnCalc_init_50_c (Arg0 c Ptr(Struct("RpnCalc"))) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_t4bb9 (t4bb9 Cast { old_type: Some(Ptr(Struct("Stack"))), new_type: Number(USIZE), value: Ident("s") }) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67])
+# Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67]) [0, 0, 0, 0]
 # Var inline_RpnCalc_handle_RpnCalc_init_50_inline_RpnCalc_init_stack_init_49_tc957 (tc957 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Stack"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 64)) }) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_RpnCalc_init_50_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_init_50_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_init_50_s (Local s Ptr(Struct("Stack")) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_RpnCalc_handle_RpnCalc_init_50_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([60, 61, 62, 63])
+# Var inline_RpnCalc_handle_RpnCalc_init_50_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([60, 61, 62, 63]) [0, 0, 0, 0]
 # Var inline_RpnCalc_handle_RpnCalc_init_50_t6e8e (t6e8e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 68)) }) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_RpnCalc_init_50_tb1ed (tb1ed Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_RpnCalc_init_50_tb2e9 (tb2e9 Ident("s")) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_RpnCalc_init_50_tbc15 (tbc15 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Struct("Stack")), value: Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") } }) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_RpnCalc_init_50_tf462 (tf462 Call(Call { function: "stack_init", parameters: [Ident("s")] })) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_c (Arg0 c Ptr(Struct("RpnCalc"))) Reg(U32) Some([76, 77, 78, 79])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_n (Arg1 n Number(USIZE)) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([88, 89, 90, 91])
@@ -2350,21 +2353,21 @@ ff
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([88, 89, 90, 91])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([96, 97, 98, 99])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_inline_RpnCalc_push_pending_stack_push_60_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([88, 89, 90, 91])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_t4760 (t4760 AddressOf(PtrFieldDeref("c", "stack"))) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_t5fbe (t5fbe Call(Call { function: "stack_push", parameters: [AddressOf(PtrFieldDeref("c", "stack")), PtrFieldDeref("c", "num")] })) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([80, 81, 82, 83])
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([80, 81, 82, 83]) [0, 0, 0, 0]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_t6e8e (t6e8e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 68)) }) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_ta34f (ta34f PtrFieldDeref("c", "have_num")) Reg(U8) Some([100])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_tb1ed (tb1ed Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }) Reg(U32) Some([76, 77, 78, 79])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([101])
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_61_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([101]) [0]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_tbc15 (tbc15 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Struct("Stack")), value: Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") } }) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_td60 (td60 PtrFieldDeref("c", "num")) Reg(U32) Some([88, 89, 90, 91])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_61_tfdb7 (tfdb7 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 72)) }) Reg(U32) Some([80, 81, 82, 83])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_c (Arg0 c Ptr(Struct("RpnCalc"))) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_n (Arg1 n Number(USIZE)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([104, 105, 106, 107])
@@ -2377,21 +2380,21 @@ ff
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_inline_RpnCalc_push_pending_stack_push_60_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_t4760 (t4760 AddressOf(PtrFieldDeref("c", "stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_t5fbe (t5fbe Call(Call { function: "stack_push", parameters: [AddressOf(PtrFieldDeref("c", "stack")), PtrFieldDeref("c", "num")] })) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67])
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67]) [0, 0, 0, 0]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_t6e8e (t6e8e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 68)) }) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_ta34f (ta34f PtrFieldDeref("c", "have_num")) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_tb1ed (tb1ed Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([109])
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_62_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([109]) [0]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_tbc15 (tbc15 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Struct("Stack")), value: Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") } }) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_td60 (td60 PtrFieldDeref("c", "num")) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_62_tfdb7 (tfdb7 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 72)) }) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_c (Arg0 c Ptr(Struct("RpnCalc"))) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_n (Arg1 n Number(USIZE)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([104, 105, 106, 107])
@@ -2404,32 +2407,32 @@ ff
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_inline_RpnCalc_push_pending_stack_push_60_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_t4760 (t4760 AddressOf(PtrFieldDeref("c", "stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_t5fbe (t5fbe Call(Call { function: "stack_push", parameters: [AddressOf(PtrFieldDeref("c", "stack")), PtrFieldDeref("c", "num")] })) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67])
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67]) [0, 0, 0, 0]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_t6e8e (t6e8e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 68)) }) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_ta34f (ta34f PtrFieldDeref("c", "have_num")) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_tb1ed (tb1ed Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([109])
+# Var inline_RpnCalc_handle_RpnCalc_push_pending_63_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([109]) [0]
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_tbc15 (tbc15 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Struct("Stack")), value: Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") } }) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_td60 (td60 PtrFieldDeref("c", "num")) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_RpnCalc_push_pending_63_tfdb7 (tfdb7 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 72)) }) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_RpnCalc_handle_mul32_32_12_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_mul32_32_12_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_mul32_32_12_a (Arg0 a Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_mul32_32_12_a_hi (Local a_hi Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_mul32_32_12_b (Arg1 b Number(USIZE)) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_mul32_32_12_b_hi (Local b_hi Number(USIZE) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_mul32_32_12_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_mul32_32_12_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_a (Arg0 a Number(USIZE)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_b (Arg1 b Number(USIZE)) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([80, 81, 82, 83])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_t3585 (t3585 Ident("e")) Reg(U32) Some([64, 65, 66, 67])
@@ -2441,20 +2444,20 @@ ff
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tac13 (tac13 Ident("c")) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tace9 (tace9 Ident("b")) Reg(U32) Some([104, 105, 106, 107])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([101])
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([101]) [0]
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([100])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_5_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([84, 85, 86, 87])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_a (Arg0 a Number(USIZE)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_b (Arg1 b Number(USIZE)) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([84, 85, 86, 87])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_t3585 (t3585 Ident("e")) Reg(U32) Some([64, 65, 66, 67])
@@ -2466,20 +2469,20 @@ ff
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tac13 (tac13 Ident("c")) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tace9 (tace9 Ident("b")) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([110])
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([110]) [0]
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([108])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([101])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_6_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([88, 89, 90, 91])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_a (Arg0 a Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_b (Arg1 b Number(USIZE)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_t3585 (t3585 Ident("e")) Reg(U32) Some([60, 61, 62, 63])
@@ -2491,13 +2494,13 @@ ff
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tac13 (tac13 Ident("c")) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tace9 (tace9 Ident("b")) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([100])
+# Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([100]) [0]
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([72])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_mul32_32_12_inline_mul32_32_mul16_32_7_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([80, 81, 82, 83])
-# Var inline_RpnCalc_handle_mul32_32_12_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_mul32_32_12_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_mul32_32_12_t45f5 (t45f5 Ident("d")) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_mul32_32_12_t577f (t577f Index("a", Number(U8, 2))) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_mul32_32_12_t5b7c (t5b7c Index("a", Number(U8, 3))) Reg(U8) Some([73])
@@ -2511,78 +2514,78 @@ ff
 # Var inline_RpnCalc_handle_mul32_32_12_tac13 (tac13 Ident("c")) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_mul32_32_12_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_mul32_32_12_tace9 (tace9 Ident("b")) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_mul32_32_12_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([108])
+# Var inline_RpnCalc_handle_mul32_32_12_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([108]) [0]
 # Var inline_RpnCalc_handle_mul32_32_12_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_mul32_32_12_tbe0a (tbe0a Call(Call { function: "mul16_32", parameters: [Ident("a"), Ident("b_hi")] })) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_RpnCalc_handle_mul32_by10_13_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_mul32_by10_13_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_mul32_by10_13_a (Arg0 a Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_mul32_by10_13_b (Local b Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_RpnCalc_handle_mul32_by10_13_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_mul32_by10_13_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_mul32_by10_13_t7eaf (t7eaf Arithmetic(Add, Ident("b"), Ident("a"))) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_mul32_by10_13_t8792 (t8792 Ident("a")) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_mul32_by10_13_tace9 (tace9 Ident("b")) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_RpnCalc_handle_putc_15_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_15_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_15_c (Arg0 c Number(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_15_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_15_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_15_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_15_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_15_tac13 (tac13 Ident("c")) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_16_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_16_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_16_c (Arg0 c Number(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_16_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_16_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_16_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_16_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_16_tac13 (tac13 Ident("c")) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_17_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_17_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_17_c (Arg0 c Number(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_17_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_17_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_17_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_17_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_17_tac13 (tac13 Ident("c")) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_18_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_18_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_18_c (Arg0 c Number(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_18_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_18_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_18_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_18_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_18_tac13 (tac13 Ident("c")) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_19_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_19_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_19_c (Arg0 c Number(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_19_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_19_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_19_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_19_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_19_tac13 (tac13 Ident("c")) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_20_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_20_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_20_c (Arg0 c Number(U8)) Reg(U8) Some([108])
-# Var inline_RpnCalc_handle_putc_20_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_20_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_20_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_20_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_20_tac13 (tac13 Ident("c")) Reg(U8) Some([108])
-# Var inline_RpnCalc_handle_putc_21_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_21_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_21_c (Arg0 c Number(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_21_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_21_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_21_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_21_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_21_tac13 (tac13 Ident("c")) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_22_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_22_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_22_c (Arg0 c Number(U8)) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_22_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_22_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_22_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_22_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_22_tac13 (tac13 Ident("c")) Reg(U8) Some([73])
-# Var inline_RpnCalc_handle_putc_23_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_23_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_23_c (Arg0 c Number(U8)) Reg(U8) Some([108])
-# Var inline_RpnCalc_handle_putc_23_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_23_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_23_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_23_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_23_tac13 (tac13 Ident("c")) Reg(U8) Some([108])
-# Var inline_RpnCalc_handle_putc_24_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_handle_putc_24_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_handle_putc_24_c (Arg0 c Number(U8)) Reg(U8) Some([108])
-# Var inline_RpnCalc_handle_putc_24_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_putc_24_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_putc_24_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_24_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([73])
 # Var inline_RpnCalc_handle_putc_24_tac13 (tac13 Ident("c")) Reg(U8) Some([108])
-# Var inline_RpnCalc_handle_stack_get_48_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_get_48_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_get_48_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_get_48_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_get_48_n (Arg1 n Number(USIZE)) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_get_48_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_get_48_t2db0 (t2db0 Index("values", Ident("n"))) Reg(U32) Some([64, 65, 66, 67])
@@ -2592,8 +2595,8 @@ ff
 # Var inline_RpnCalc_handle_stack_get_48_td38d (td38d Arithmetic(Multiply, Ident("n"), Number(USIZE, 4))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_get_48_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_get_48_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_stack_pop_52_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_pop_52_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_pop_52_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_pop_52_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_pop_52_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_pop_52_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_pop_52_t14ab (t14ab PtrFieldDeref("s", "first_free")) Reg(U32) Some([76, 77, 78, 79])
@@ -2605,8 +2608,8 @@ ff
 # Var inline_RpnCalc_handle_stack_pop_52_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_pop_52_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_RpnCalc_handle_stack_pop_52_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([76, 77, 78, 79])
-# Var inline_RpnCalc_handle_stack_pop_53_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_pop_53_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_pop_53_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_pop_53_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_pop_53_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_pop_53_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_pop_53_t14ab (t14ab PtrFieldDeref("s", "first_free")) Reg(U32) Some([76, 77, 78, 79])
@@ -2618,8 +2621,8 @@ ff
 # Var inline_RpnCalc_handle_stack_pop_53_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_pop_53_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_RpnCalc_handle_stack_pop_53_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([76, 77, 78, 79])
-# Var inline_RpnCalc_handle_stack_push_54_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_push_54_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_push_54_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_push_54_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_push_54_n (Arg1 n Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_push_54_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_push_54_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([68, 69, 70, 71])
@@ -2632,8 +2635,8 @@ ff
 # Var inline_RpnCalc_handle_stack_push_54_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_push_54_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_stack_push_54_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_stack_push_55_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_push_55_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_push_55_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_push_55_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_push_55_n (Arg1 n Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_push_55_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_push_55_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([68, 69, 70, 71])
@@ -2646,8 +2649,8 @@ ff
 # Var inline_RpnCalc_handle_stack_push_55_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_push_55_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_stack_push_55_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_stack_push_56_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_push_56_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_push_56_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_push_56_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_push_56_n (Arg1 n Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_push_56_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_push_56_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([68, 69, 70, 71])
@@ -2660,8 +2663,8 @@ ff
 # Var inline_RpnCalc_handle_stack_push_56_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_push_56_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_stack_push_56_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_stack_push_57_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_push_57_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_push_57_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_push_57_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_push_57_n (Arg1 n Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_push_57_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_push_57_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([68, 69, 70, 71])
@@ -2674,8 +2677,8 @@ ff
 # Var inline_RpnCalc_handle_stack_push_57_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_push_57_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_stack_push_57_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_RpnCalc_handle_stack_push_58_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_push_58_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_push_58_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_push_58_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_push_58_n (Arg1 n Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_push_58_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_push_58_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([104, 105, 106, 107])
@@ -2688,8 +2691,8 @@ ff
 # Var inline_RpnCalc_handle_stack_push_58_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_RpnCalc_handle_stack_push_58_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_RpnCalc_handle_stack_push_58_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
-# Var inline_RpnCalc_handle_stack_push_59_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_handle_stack_push_59_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_handle_stack_push_59_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_handle_stack_push_59_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_handle_stack_push_59_n (Arg1 n Number(USIZE)) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_RpnCalc_handle_stack_push_59_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_RpnCalc_handle_stack_push_59_t100e (t100e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }, Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) }) Reg(U32) Some([68, 69, 70, 71])
@@ -2702,7 +2705,7 @@ ff
 # Var inline_RpnCalc_handle_stack_push_59_tf659 (tf659 Arithmetic(Multiply, PtrFieldDeref("s", "first_free"), Number(USIZE, 4))) Reg(U32) Some([68, 69, 70, 71])
 # Var inline_RpnCalc_handle_stack_push_59_tf90a (tf90a Cast { old_type: Some(Ptr(Number(USIZE))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_RpnCalc_handle_stack_push_59_values (Local values Ptr(Number(USIZE)) Reg(U32)) Reg(U32) Some([68, 69, 70, 71])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var product (Local product Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
 # Var quotient (Local quotient Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
 # Var stack (Local stack Ptr(Struct("Stack")) Reg(U32)) Reg(U32) Some([112, 113, 114, 115])
@@ -2710,24 +2713,24 @@ ff
 # Var stack_count_usize (Local stack_count_usize Number(USIZE) Reg(U32)) Reg(U32) Some([76, 77, 78, 79])
 # Var stack_needed (Local stack_needed Number(U8) Reg(U8)) Reg(U8) Some([116])
 # Var sum (Local sum Number(USIZE) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
-# Var t1501 (t1501 Number(U8, 113)) Reg(U8) Some([73])
+# Var t1501 (t1501 Number(U8, 113)) Reg(U8) Some([73]) [113]
 # Var t17ee (t17ee Ident("diff")) Reg(U32) Some([60, 61, 62, 63])
 # Var t18a9 (t18a9 Call(Call { function: "stack_push", parameters: [Ident("stack"), Ident("quotient")] })) Reg(U8) Some([73])
 # Var t1ba9 (t1ba9 Ident("quotient")) Reg(U32) Some([60, 61, 62, 63])
 # Var t2398 (t2398 Call(Call { function: "print_dec32", parameters: [Ident("product")] })) Reg(U8) Some([73])
 # Var t24a4 (t24a4 Call(Call { function: "RpnCalc_push_pending", parameters: [Ident("c")] })) Reg(U8) Some([73])
-# Var t2597 (t2597 Number(U8, 43)) Reg(U8) Some([117])
+# Var t2597 (t2597 Number(U8, 43)) Reg(U8) Some([117]) [43]
 # Var t2754 (t2754 Ident("product")) Reg(U32) Some([60, 61, 62, 63])
-# Var t2ac9 (t2ac9 Number(U8, 57)) Reg(U8) Some([73])
+# Var t2ac9 (t2ac9 Number(U8, 57)) Reg(U8) Some([73]) [57]
 # Var t2af9 (t2af9 Call(Call { function: "putc", parameters: [Number(U8, 69)] })) Reg(U8) Some([73])
 # Var t2d0c (t2d0c Call(Call { function: "stack_push", parameters: [Ident("stack"), Ident("b")] })) Reg(U8) Some([73])
 # Var t352b (t352b Call(Call { function: "stack_push", parameters: [Ident("stack"), Ident("a")] })) Reg(U8) Some([73])
-# Var t39b5 (t39b5 Number(U8, 115)) Reg(U8) Some([117])
+# Var t39b5 (t39b5 Number(U8, 115)) Reg(U8) Some([117]) [115]
 # Var t3f70 (t3f70 Cast { old_type: None, new_type: Number(USIZE), value: Arithmetic(Subtract, Ident("ch"), Number(U8, 48)) }) Reg(U32) Some([60, 61, 62, 63])
 # Var t4376 (t4376 Cast { old_type: None, new_type: Number(USIZE), value: Ident("i") }) Reg(U32) Some([64, 65, 66, 67])
 # Var t4671 (t4671 Ident("stack_needed")) Reg(U8) Some([117])
-# Var t49a (t49a Number(U8, 100)) Reg(U8) Some([73])
-# Var t4e08 (t4e08 Number(U8, 99)) Reg(U8) Some([73])
+# Var t49a (t49a Number(U8, 100)) Reg(U8) Some([73]) [100]
+# Var t4e08 (t4e08 Number(U8, 99)) Reg(U8) Some([73]) [99]
 # Var t6001 (t6001 Ident("stack_count")) Reg(U8) Some([100])
 # Var t670d (t670d Ident("sum")) Reg(U32) Some([60, 61, 62, 63])
 # Var t6e8e (t6e8e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 68)) }) Reg(U32) Some([76, 77, 78, 79])
@@ -2737,14 +2740,14 @@ ff
 # Var t7ff1 (t7ff1 Arithmetic(Subtract, Ident("ch"), Number(U8, 48))) Reg(U8) Some([73])
 # Var t8103 (t8103 Call(Call { function: "print_dec32", parameters: [Ident("quotient")] })) Reg(U8) Some([73])
 # Var t8792 (t8792 Ident("a")) Reg(U32) Some([104, 105, 106, 107])
-# Var t8b2f (t8b2f Number(U8, 45)) Reg(U8) Some([117])
+# Var t8b2f (t8b2f Number(U8, 45)) Reg(U8) Some([117]) [45]
 # Var t9046 (t9046 Call(Call { function: "stack_push", parameters: [Ident("stack"), Ident("sum")] })) Reg(U8) Some([73])
-# Var t969e (t969e Number(U8, 42)) Reg(U8) Some([117])
-# Var t9c38 (t9c38 Number(U8, 82)) Reg(U8) Some([73])
+# Var t969e (t969e Number(U8, 42)) Reg(U8) Some([117]) [42]
+# Var t9c38 (t9c38 Number(U8, 82)) Reg(U8) Some([73]) [82]
 # Var ta378 (ta378 Call(Call { function: "print_dec32", parameters: [Ident("sum")] })) Reg(U8) Some([73])
 # Var ta622 (ta622 Call(Call { function: "print_dec8", parameters: [Ident("i")] })) Reg(U8) Some([73])
 # Var tac13 (tac13 Ident("c")) Reg(U32) Some([68, 69, 70, 71])
-# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([73])
+# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([73]) [32]
 # Var tace9 (tace9 Ident("b")) Reg(U32) Some([68, 69, 70, 71])
 # Var tacf6 (tacf6 Arithmetic(Add, PtrFieldDeref("c", "num"), Cast { old_type: None, new_type: Number(USIZE), value: Arithmetic(Subtract, Ident("ch"), Number(U8, 48)) })) Reg(U32) Some([60, 61, 62, 63])
 # Var tadd (tadd Call(Call { function: "mul32_by10", parameters: [PtrFieldDeref("c", "num")] })) Reg(U32) Some([60, 61, 62, 63])
@@ -2753,23 +2756,31 @@ ff
 # Var tb1ed (tb1ed Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }) Reg(U32) Some([60, 61, 62, 63])
 # Var tb303 (tb303 Call(Call { function: "putc", parameters: [Number(U8, 82)] })) Reg(U8) Some([73])
 # Var tb336 (tb336 Call(Call { function: "stack_get", parameters: [Ident("stack"), Cast { old_type: None, new_type: Number(USIZE), value: Ident("i") }] })) Reg(U32) Some([64, 65, 66, 67])
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([100])
-# Var tb507 (tb507 Number(U8, 69)) Reg(U8) Some([73])
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([100]) [0]
+# Var tb507 (tb507 Number(U8, 69)) Reg(U8) Some([73]) [69]
 # Var tbc15 (tbc15 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Struct("Stack")), value: Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") } }) Reg(U32) Some([60, 61, 62, 63])
 # Var tbf93 (tbf93 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Stack"))), new_type: Number(USIZE), value: Ident("stack") }, Number(USIZE, 64)) }) Reg(U32) Some([76, 77, 78, 79])
 # Var tca36 (tca36 Call(Call { function: "stack_push", parameters: [Ident("stack"), Ident("product")] })) Reg(U8) Some([73])
 # Var td0f3 (td0f3 Ident("i")) Reg(U8) Some([73])
 # Var td60 (td60 PtrFieldDeref("c", "num")) Reg(U32) Some([64, 65, 66, 67])
-# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([117])
+# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([117]) [10]
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([72])
 # Var te25f (te25f Call(Call { function: "print_dec32", parameters: [Ident("diff")] })) Reg(U8) Some([73])
-# Var te668 (te668 Number(U8, 47)) Reg(U8) Some([117])
-# Var tebdf (tebdf Number(U8, 58)) Reg(U8) Some([108])
+# Var te668 (te668 Number(U8, 47)) Reg(U8) Some([117]) [47]
+# Var tebdf (tebdf Number(U8, 58)) Reg(U8) Some([108]) [58]
 # Var tec99 (tec99 Call(Call { function: "putc", parameters: [Number(U8, 10)] })) Reg(U8) Some([73])
-# Var tf48d (tf48d Number(U8, 48)) Reg(U8) Some([73])
-# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([100])
+# Var tf48d (tf48d Number(U8, 48)) Reg(U8) Some([73]) [48]
+# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([100]) [1]
 # Var tfdb7 (tfdb7 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 72)) }) Reg(U32) Some([60, 61, 62, 63])
 # Var tfe08 (tfe08 Ident("stack")) Reg(U32) Some([76, 77, 78, 79])
+# Consts t1501: 0n113/0x71u8
+# Consts t2ac9: 0n57/0x39u8
+# Consts t49a: 0n100/0x64u8
+# Consts t4e08: 0n99/0x63u8
+# Consts tac5f: 0n32/0x20u8
+# Consts tb507: 0n69/0x45u8
+# Consts tebdf: 0n58/0x3au8
+# Consts tf48d: 0n48/0x30u8
 # 809b0 Copy32 [Register(0x00), Register(0x44)]
 #       Save function parameter 'c' registers [0, 1, 2, 3] to locals [68, 69, 70, 71].
 21 00 44 
@@ -14357,13 +14368,13 @@ ff
 # :RpnCalc_run
 # Ret Some(U8)
 # Arg0=calc
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var calc (Arg0 calc Ptr(Struct("RpnCalc"))) Reg(U32) Some([120, 121, 122, 123])
 # Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([124])
-# Var inline_RpnCalc_run_getchar_39_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_RpnCalc_run_getchar_39_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_RpnCalc_run_getchar_39_ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([124])
-# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_s (Arg0 s Ptr(Struct("Queue"))) Reg(U32) Some([128, 129, 130, 131])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_t1d36 (t1d36 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([132, 133, 134, 135])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_t3ee (t3ee PtrFieldDeref("s", "last")) Reg(U8) Some([136])
@@ -14372,15 +14383,15 @@ ff
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_t565a (t565a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Array(Number(U8), Some(256))), value: Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") } }) Reg(U32) Some([128, 129, 130, 131])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_t6fdb (t6fdb Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))) Reg(U8) Some([124])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_tae11 (tae11 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }) }) Reg(U32) Some([132, 133, 134, 135])
-# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([124])
+# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([124]) [0]
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_tb469 (tb469 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }) Reg(U32) Some([140, 141, 142, 143])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_tb6dd (tb6dd PtrFieldDeref("s", "first")) Reg(U8) Some([144])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_tb702 (tb702 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }) Reg(U32) Some([148, 149, 150, 151])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_tc1ff (tc1ff Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }) Reg(U32) Some([132, 133, 134, 135])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_value (Local value Number(U8) Reg(U8)) Reg(U8) Some([136])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_pop_36_values (Local values Ptr(Number(U8)) Reg(U32)) Reg(U32) Some([132, 133, 134, 135])
-# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_n (Arg1 n Number(U8)) Reg(U8) Some([124])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_s (Arg0 s Ptr(Struct("Queue"))) Reg(U32) Some([132, 133, 134, 135])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_t1d36 (t1d36 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([140, 141, 142, 143])
@@ -14393,21 +14404,21 @@ ff
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_t6778 (t6778 Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))) Reg(U8) Some([124])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_tc1ff (tc1ff Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }) Reg(U32) Some([156, 157, 158, 159])
 # Var inline_RpnCalc_run_getchar_39_inline_getchar_queue_push_38_values (Local values Ptr(Number(U8)) Reg(U32)) Reg(U32) Some([140, 141, 142, 143])
-# Var inline_RpnCalc_run_getchar_39_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_RpnCalc_run_getchar_39_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_RpnCalc_run_getchar_39_t0 (static "stdin") Reg(U32) Some([128, 129, 130, 131])
 # Var inline_RpnCalc_run_getchar_39_t1 (static "stdin") Reg(U32) Some([128, 129, 130, 131])
 # Var inline_RpnCalc_run_getchar_39_t861f (t861f Call(Call { function: "io_ready_to_read", parameters: [] })) Reg(U8) Some([124])
-# Var inline_RpnCalc_run_getchar_39_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([136])
+# Var inline_RpnCalc_run_getchar_39_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([136]) [0]
 # Var inline_RpnCalc_run_getchar_39_tb816 (tb816 TtyIn) Reg(U8) Some([124])
 # Var inline_RpnCalc_run_getchar_39_tc9d5 (tc9d5 Call(Call { function: "Keyboard_poll", parameters: [] })) Reg(U8) Some([160])
 # Var inline_RpnCalc_run_getchar_39_tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([124])
 # Var inline_RpnCalc_run_getchar_39_te31 (te31 Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })) Reg(U8) Some([160])
 # Var inline_RpnCalc_run_getchar_39_tf0b5 (tf0b5 Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1))) Reg(U8) Some([124])
 # Var inline_RpnCalc_run_getchar_39_tfff6 (tfff6 AddressOf(Ident("stdin"))) Reg(U32) Some([132, 133, 134, 135])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var result (Local result Number(U8) Reg(U8)) Reg(U8) Some([124])
 # Var t57fd (t57fd Ident("result")) Reg(U8) Some([124])
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([136])
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([136]) [0]
 # Var td337 (td337 Ident("calc")) Reg(U32) Some([120, 121, 122, 123])
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([124])
 # 8190f Copy32 [Register(0x00), Register(0x78)]
@@ -15803,11 +15814,12 @@ ff
 # :delay
 # Ret None
 # Arg0=x
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
-# Var t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([164, 165, 166, 167])
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
+# Var t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([164, 165, 166, 167]) [0, 0, 0, 0]
 # Var tad57 (tad57 Ident("x")) Reg(U32) Some([168, 169, 170, 171])
 # Var x (Arg0 x Number(USIZE)) Reg(U32) Some([168, 169, 170, 171])
+# Consts t60ec: 0n0/0x00000000u32
 # 81ae3 Copy32 [Register(0x00), Register(0xa8)]
 #       Save function parameter 'x' registers [0, 1, 2, 3] to locals [168, 169, 170, 171].
 21 00 a8 
@@ -15906,23 +15918,23 @@ ff
 # Ret Some(U32)
 # Arg0=a
 # Arg1=b
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var __frame_pointer (__frame_pointer) Reg(U32) Some([12, 13, 14, 15])
 # Var a (Arg0 a Number(USIZE)) Reg(U32) Some([172, 173, 174, 175])
 # Var b (Arg1 b Number(USIZE)) Reg(U32) Some([176, 177, 178, 179])
 # Var hi (Local hi Number(USIZE) Reg(U32)) Reg(U32) Some([180, 181, 182, 183])
-# Var inline_div32_div16_43_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_div32_div16_43_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_div32_div16_43_a (Arg0 a Number(USIZE)) Reg(U32) Some([172, 173, 174, 175])
 # Var inline_div32_div16_43_b (Arg1 b Number(USIZE)) Reg(U32) Some([176, 177, 178, 179])
 # Var inline_div32_div16_43_hi (Local hi Number(USIZE) Reg(U32)) Reg(U32) Some([180, 181, 182, 183])
-# Var inline_div32_div16_43_inline_div16_mul16_32_4_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_div32_div16_43_inline_div16_mul16_32_4_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_a (Arg0 a Number(USIZE)) Reg(U32) Some([184, 185, 186, 187])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_b (Arg1 b Number(USIZE)) Reg(U32) Some([188, 189, 190, 191])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([192, 193, 194, 195])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([196, 197, 198, 199])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([184, 185, 186, 187])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([196, 197, 198, 199])
-# Var inline_div32_div16_43_inline_div16_mul16_32_4_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_div32_div16_43_inline_div16_mul16_32_4_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([200])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([200])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_t3585 (t3585 Ident("e")) Reg(U32) Some([184, 185, 186, 187])
@@ -15934,15 +15946,15 @@ ff
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_tac13 (tac13 Ident("c")) Reg(U32) Some([192, 193, 194, 195])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([200])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_tace9 (tace9 Ident("b")) Reg(U32) Some([188, 189, 190, 191])
-# Var inline_div32_div16_43_inline_div16_mul16_32_4_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([203])
+# Var inline_div32_div16_43_inline_div16_mul16_32_4_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([203]) [0]
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([200])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([196, 197, 198, 199])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([201])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([196, 197, 198, 199])
 # Var inline_div32_div16_43_inline_div16_mul16_32_4_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([204, 205, 206, 207])
-# Var inline_div32_div16_43_inline_div16_shiftright1_42_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_div32_div16_43_inline_div16_shiftright1_42_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_div32_div16_43_inline_div16_shiftright1_42_a (Arg0 a Number(USIZE)) Reg(U32) Some([184, 185, 186, 187])
-# Var inline_div32_div16_43_inline_div16_shiftright1_42_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_div32_div16_43_inline_div16_shiftright1_42_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_div32_div16_43_inline_div16_shiftright1_42_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([200])
 # Var inline_div32_div16_43_inline_div16_shiftright1_42_t1bbf (t1bbf Arithmetic(Or, Index("a", Number(U8, 2)), Arithmetic(And, Index("a", Number(U8, 3)), Number(U8, 128)))) Reg(U8) Some([202])
 # Var inline_div32_div16_43_inline_div16_shiftright1_42_t1f15 (t1f15 Arithmetic(And, Index("a", Number(U8, 2)), Number(U8, 128))) Reg(U8) Some([202])
@@ -15962,21 +15974,21 @@ ff
 # Var inline_div32_div16_43_inline_div16_shiftright1_42_tc29b (tc29b Arithmetic(And, Index("a", Number(U8, 3)), Number(U8, 128))) Reg(U8) Some([208])
 # Var inline_div32_div16_43_inline_div16_shiftright1_42_tdd9e (tdd9e Index("a", Number(U8, 0))) Reg(U8) Some([208])
 # Var inline_div32_div16_43_inline_div16_shiftright1_42_tf572 (tf572 Arithmetic(Or, Index("a", Number(U8, 0)), Arithmetic(And, Index("a", Number(U8, 1)), Number(U8, 128)))) Reg(U8) Some([202])
-# Var inline_div32_div16_43_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_div32_div16_43_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_div32_div16_43_lo (Local lo Number(USIZE) Reg(U32)) Reg(U32) Some([212, 213, 214, 215])
 # Var inline_div32_div16_43_mid (Local mid Number(USIZE) Reg(U32)) Reg(U32) Some([216, 217, 218, 219])
 # Var inline_div32_div16_43_r (Local r Number(USIZE) Reg(U32)) Reg(U32) Some([184, 185, 186, 187])
 # Var inline_div32_div16_43_t1506 (t1506 Ident("lo")) Reg(U32) Some([184, 185, 186, 187])
 # Var inline_div32_div16_43_t3c0e (t3c0e Index("b", Number(U8, 0))) Reg(U8) Some([220])
 # Var inline_div32_div16_43_t5508 (t5508 Ident("hi")) Reg(U32) Some([180, 181, 182, 183])
-# Var inline_div32_div16_43_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([172, 173, 174, 175])
+# Var inline_div32_div16_43_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([172, 173, 174, 175]) [0, 0, 0, 0]
 # Var inline_div32_div16_43_t8792 (t8792 Ident("a")) Reg(U32) Some([172, 173, 174, 175])
-# Var inline_div32_div16_43_t9c15 (t9c15 Number(USIZE, 256)) Reg(U32) Some([180, 181, 182, 183])
+# Var inline_div32_div16_43_t9c15 (t9c15 Number(USIZE, 256)) Reg(U32) Some([180, 181, 182, 183]) [0, 1, 0, 0]
 # Var inline_div32_div16_43_tace9 (tace9 Ident("b")) Reg(U32) Some([176, 177, 178, 179])
 # Var inline_div32_div16_43_tad57 (tad57 Ident("x")) Reg(U32) Some([184, 185, 186, 187])
 # Var inline_div32_div16_43_taee0 (taee0 Ident("r")) Reg(U32) Some([184, 185, 186, 187])
 # Var inline_div32_div16_43_tb0a8 (tb0a8 Index("x", Number(U8, 2))) Reg(U8) Some([200])
-# Var inline_div32_div16_43_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([202])
+# Var inline_div32_div16_43_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([202]) [0]
 # Var inline_div32_div16_43_tda9f (tda9f Arithmetic(Divide, Index("a", Number(U8, 0)), Index("b", Number(U8, 0)))) Reg(U8) Some([220])
 # Var inline_div32_div16_43_tdd9e (tdd9e Index("a", Number(U8, 0))) Reg(U8) Some([221])
 # Var inline_div32_div16_43_te264 (te264 Cast { old_type: None, new_type: Number(USIZE), value: Arithmetic(Divide, Index("a", Number(U8, 0)), Index("b", Number(U8, 0))) }) Reg(U32) Some([172, 173, 174, 175])
@@ -15984,9 +15996,9 @@ ff
 # Var inline_div32_div16_43_tf944 (tf944 Index("x", Number(U8, 3))) Reg(U8) Some([200])
 # Var inline_div32_div16_43_tfd7e (tfd7e Ident("mid")) Reg(U32) Some([184, 185, 186, 187])
 # Var inline_div32_div16_43_x (Local x Number(USIZE) Reg(U32)) Reg(U32) Some([184, 185, 186, 187])
-# Var inline_div32_shiftright1_44_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_div32_shiftright1_44_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_div32_shiftright1_44_a (Arg0 a Number(USIZE)) Reg(U32) Some([184, 185, 186, 187])
-# Var inline_div32_shiftright1_44_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_div32_shiftright1_44_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_div32_shiftright1_44_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([200])
 # Var inline_div32_shiftright1_44_t1bbf (t1bbf Arithmetic(Or, Index("a", Number(U8, 2)), Arithmetic(And, Index("a", Number(U8, 3)), Number(U8, 128)))) Reg(U8) Some([202])
 # Var inline_div32_shiftright1_44_t1f15 (t1f15 Arithmetic(And, Index("a", Number(U8, 2)), Number(U8, 128))) Reg(U8) Some([202])
@@ -16006,9 +16018,9 @@ ff
 # Var inline_div32_shiftright1_44_tc29b (tc29b Arithmetic(And, Index("a", Number(U8, 3)), Number(U8, 128))) Reg(U8) Some([208])
 # Var inline_div32_shiftright1_44_tdd9e (tdd9e Index("a", Number(U8, 0))) Reg(U8) Some([208])
 # Var inline_div32_shiftright1_44_tf572 (tf572 Arithmetic(Or, Index("a", Number(U8, 0)), Arithmetic(And, Index("a", Number(U8, 1)), Number(U8, 128)))) Reg(U8) Some([202])
-# Var inline_div32_shiftright1_45_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_div32_shiftright1_45_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_div32_shiftright1_45_a (Arg0 a Number(USIZE)) Reg(U32) Some([184, 185, 186, 187])
-# Var inline_div32_shiftright1_45_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_div32_shiftright1_45_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_div32_shiftright1_45_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([200])
 # Var inline_div32_shiftright1_45_t1bbf (t1bbf Arithmetic(Or, Index("a", Number(U8, 2)), Arithmetic(And, Index("a", Number(U8, 3)), Number(U8, 128)))) Reg(U8) Some([202])
 # Var inline_div32_shiftright1_45_t1f15 (t1f15 Arithmetic(And, Index("a", Number(U8, 2)), Number(U8, 128))) Reg(U8) Some([202])
@@ -16028,19 +16040,19 @@ ff
 # Var inline_div32_shiftright1_45_tc29b (tc29b Arithmetic(And, Index("a", Number(U8, 3)), Number(U8, 128))) Reg(U8) Some([208])
 # Var inline_div32_shiftright1_45_tdd9e (tdd9e Index("a", Number(U8, 0))) Reg(U8) Some([208])
 # Var inline_div32_shiftright1_45_tf572 (tf572 Arithmetic(Or, Index("a", Number(U8, 0)), Arithmetic(And, Index("a", Number(U8, 1)), Number(U8, 128)))) Reg(U8) Some([202])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var lo (Local lo Number(USIZE) Reg(U32)) Reg(U32) Some([196, 197, 198, 199])
 # Var mid (Local mid Number(USIZE) Reg(U32)) Reg(U32) Some([184, 185, 186, 187])
 # Var r (Local r Number(USIZE) Reg(U32)) Reg(U32) Some([188, 189, 190, 191])
-# Var t0 (Stack size negated) Reg(U32) Some([224, 225, 226, 227])
+# Var t0 (Stack size negated) Reg(U32) Some([224, 225, 226, 227]) [248, 255, 255, 255]
 # Var t1506 (t1506 Ident("lo")) Reg(U32) Some([184, 185, 186, 187])
 # Var t1a85 (t1a85 Call(Call { function: "mul32_64", parameters: [Ident("mid"), Ident("b"), AddressOf(Ident("x64"))] })) Reg(U8) Some([228])
 # Var t3803 (t3803 Call(Call { function: "shiftright1", parameters: [Ident("hi")] })) Reg(U32) Some([184, 185, 186, 187])
 # Var t3f2a (t3f2a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Ident("__frame_pointer"), Number(USIZE, 4)) }) Reg(U32) Some([188, 189, 190, 191])
-# Var t4917 (t4917 Number(USIZE, 65536)) Reg(U32) Some([180, 181, 182, 183])
+# Var t4917 (t4917 Number(USIZE, 65536)) Reg(U32) Some([180, 181, 182, 183]) [0, 0, 1, 0]
 # Var t4a94 (t4a94 Arithmetic(Add, Ident("__frame_pointer"), Number(USIZE, 0))) Reg(U32) Some([188, 189, 190, 191])
 # Var t5508 (t5508 Ident("hi")) Reg(U32) Some([180, 181, 182, 183])
-# Var t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([188, 189, 190, 191])
+# Var t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([188, 189, 190, 191]) [0, 0, 0, 0]
 # Var t8792 (t8792 Ident("a")) Reg(U32) Some([172, 173, 174, 175])
 # Var t9599 (t9599 Call(Call { function: "shiftright1", parameters: [Ident("lo")] })) Reg(U32) Some([204, 205, 206, 207])
 # Var tace9 (tace9 Ident("b")) Reg(U32) Some([176, 177, 178, 179])
@@ -16054,6 +16066,7 @@ ff
 # Var tfd7e (tfd7e Ident("mid")) Reg(U32) Some([184, 185, 186, 187])
 # Var x (Local x Number(USIZE) Reg(U32)) Reg(U32) Some([188, 189, 190, 191])
 # Var x64 (Local x64 Struct("U64") FrameOffset(0)) FrameOffset(0) None
+# Consts t4917: 0n65536/0x00010000u32
 # 81b0d AddImm32IgnoreCarry [Register(0x0c), Constant32(0xfffffff8=4294967288)]
 #       reserve 8 bytes of stack space for locals
 32 0c f8 ff ff ff 
@@ -19708,13 +19721,13 @@ ff
 # Ret None
 # Arg0=i
 # Arg1=ch
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var ch (Arg1 ch Number(U8)) Reg(U8) Some([231])
 # Var i (Arg0 i Number(U8)) Reg(U8) Some([232])
-# Var inline_lcd_draw_char_lcd_logical_to_physical_3_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_lcd_draw_char_lcd_logical_to_physical_3_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_col (Local col Number(U8) Reg(U8)) Reg(U8) Some([232])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_i (Arg0 i Number(U8)) Reg(U8) Some([232])
-# Var inline_lcd_draw_char_lcd_logical_to_physical_3_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_lcd_draw_char_lcd_logical_to_physical_3_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_row (Local row Number(U8) Reg(U8)) Reg(U8) Some([233])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_t1acd (t1acd Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) Reg(U8) Some([232])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_t2f80 (t2f80 Index("lcd_row_start", Ident("row"))) Reg(U8) Some([233])
@@ -19725,7 +19738,7 @@ ff
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_td007 (td007 Ident("row")) Reg(U8) Some([233])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_td0f3 (td0f3 Ident("i")) Reg(U8) Some([244])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_3_tfee9 (tfee9 Ident("col")) Reg(U8) Some([232])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var pos (Local pos Number(U8) Reg(U8)) Reg(U8) Some([232])
 # Var t1261 (t1261 Arithmetic(And, Ident("ch"), Number(U8, 15))) Reg(U8) Some([231])
 # Var t136d (t136d Ident("pos")) Reg(U8) Some([232])
@@ -19735,7 +19748,7 @@ ff
 # Var t6e3a (t6e3a Arithmetic(Or, Number(U8, 8), Arithmetic(ShiftRight, Ident("pos"), Number(U8, 4)))) Reg(U8) Some([233])
 # Var t7d80 (t7d80 Arithmetic(And, Ident("pos"), Number(U8, 15))) Reg(U8) Some([232])
 # Var t8d12 (t8d12 Arithmetic(ShiftRight, Ident("pos"), Number(U8, 4))) Reg(U8) Some([233])
-# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([248, 249, 250, 251])
+# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([248, 249, 250, 251]) [2, 0, 0, 0]
 # Var tb875 (tb875 Arithmetic(Or, Number(U8, 128), Arithmetic(And, Ident("ch"), Number(U8, 15)))) Reg(U8) Some([231])
 # Var tbd94 (tbd94 Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })) Reg(U8) Some([231])
 # Var tcd38 (tcd38 Arithmetic(Or, Number(U8, 128), Arithmetic(ShiftRight, Ident("ch"), Number(U8, 4)))) Reg(U8) Some([232])
@@ -20210,31 +20223,37 @@ ff
 
 # :lcd_init
 # Ret None
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var i (Local i Number(U8) Reg(U8)) Reg(U8) Some([252])
 # Var lcd_current (Local lcd_current Number(U8) Reg(U8)) Reg(U8) Some([252])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t1f11 (t1f11 Call(Call { function: "io_write1", parameters: [Number(U8, 1)] })) Reg(U8) Some([252])
 # Var t2bc4 (t2bc4 Call(Call { function: "io_write1", parameters: [Number(U8, 8)] })) Reg(U8) Some([252])
-# Var t385d (t385d Number(USIZE, 1)) Reg(U32) Some([16, 17, 18, 19])
-# Var t40c1 (t40c1 Number(U8, 2)) Reg(U8) Some([252])
+# Var t385d (t385d Number(USIZE, 1)) Reg(U32) Some([16, 17, 18, 19]) [1, 0, 0, 0]
+# Var t40c1 (t40c1 Number(U8, 2)) Reg(U8) Some([252]) [2]
 # Var t7bb3 (t7bb3 Call(Call { function: "io_write1", parameters: [Number(U8, 0)] })) Reg(U8) Some([252])
-# Var t80a1 (t80a1 Number(U8, 12)) Reg(U8) Some([252])
-# Var t8820 (t8820 Number(U8, 3)) Reg(U8) Some([252])
-# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([20])
-# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([16, 17, 18, 19])
+# Var t80a1 (t80a1 Number(U8, 12)) Reg(U8) Some([252]) [12]
+# Var t8820 (t8820 Number(U8, 3)) Reg(U8) Some([252]) [3]
+# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([20]) [80]
+# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([16, 17, 18, 19]) [2, 0, 0, 0]
 # Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) Reg(U32) Some([24, 25, 26, 27])
 # Var t9bbb (t9bbb Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })) Reg(U8) Some([252])
 # Var t9e70 (t9e70 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987148), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }) Reg(U32) Some([24, 25, 26, 27])
-# Var t9f32 (t9f32 Number(U8, 8)) Reg(U8) Some([252])
-# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([28])
+# Var t9f32 (t9f32 Number(U8, 8)) Reg(U8) Some([252]) [8]
+# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([28]) [32]
 # Var tb018 (tb018 Call(Call { function: "io_write1", parameters: [Number(U8, 3)] })) Reg(U8) Some([252])
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([252])
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([252]) [0]
 # Var tb9f6 (tb9f6 Call(Call { function: "io_write1", parameters: [Number(U8, 2)] })) Reg(U8) Some([252])
 # Var tbd94 (tbd94 Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })) Reg(U8) Some([252])
 # Var td0f3 (td0f3 Ident("i")) Reg(U8) Some([252])
 # Var td623 (td623 Call(Call { function: "io_write1", parameters: [Number(U8, 12)] })) Reg(U8) Some([252])
-# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([252])
+# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([252]) [1]
+# Consts lcd_current: 0n0/0x00u8
+# Consts t80a1: 0n12/0x0cu8
+# Consts t8fe0: 0n80/0x50u8
+# Consts t9f32: 0n8/0x08u8
+# Consts tac5f: 0n32/0x20u8
+# Consts tfcd: 0n1/0x01u8
 # lcd_current <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/lcd.j':(65,5))
 # Assign { target: Ident("lcd_current"), var_type: None, value: Number(U8, 0) }
 # Number(U8, 0)
@@ -20842,9 +20861,9 @@ ff
 # :lcd_putc
 # Ret None
 # Arg0=ch
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var ch (Arg0 ch Number(U8)) Reg(U8) Some([29])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var next (Local next Number(U8) Reg(U8)) Reg(U8) Some([29])
 # Var t0 (static "lcd_current") Reg(U32) Some([32, 33, 34, 35])
 # Var t1 (static "lcd_current") Reg(U32) Some([36, 37, 38, 39])
@@ -20861,14 +20880,27 @@ ff
 # Var t7 (static "lcd_current") Reg(U32) Some([32, 33, 34, 35])
 # Var t8 (static "lcd_current") Reg(U32) Some([36, 37, 38, 39])
 # Var t8658 (t8658 Arithmetic(Add, Arithmetic(Divide, Ident("lcd_current"), Number(U8, 20)), Number(U8, 1))) Reg(U8) Some([29])
-# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([29])
+# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([29]) [80]
 # Var t9 (static "lcd_current") Reg(U32) Some([32, 33, 34, 35])
 # Var ta5ff (ta5ff Ident("next")) Reg(U8) Some([29])
 # Var tab78 (tab78 Arithmetic(Divide, Ident("lcd_current"), Number(U8, 20))) Reg(U8) Some([29])
-# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([44])
+# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([44]) [32]
 # Var tad4e (tad4e Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) Reg(U32) Some([36, 37, 38, 39])
-# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([45])
+# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([45]) [10]
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([29])
+# Consts t0: 0n987144/0x000f1008u32
+# Consts t1: 0n987144/0x000f1008u32
+# Consts t2: 0n987144/0x000f1008u32
+# Consts t3: 0n987144/0x000f1008u32
+# Consts t4: 0n987144/0x000f1008u32
+# Consts t5: 0n987144/0x000f1008u32
+# Consts t6: 0n987144/0x000f1008u32
+# Consts t7: 0n987144/0x000f1008u32
+# Consts t8: 0n987144/0x000f1008u32
+# Consts t8fe0: 0n80/0x50u8
+# Consts t9: 0n987144/0x000f1008u32
+# Consts tac5f: 0n32/0x20u8
+# Consts td7b5: 0n10/0x0au8
 # 8226b Copy8 [Register(0x00), Register(0x1d)]
 #       Save function parameter 'ch' registers [0] to locals [29].
 0b 00 1d 
@@ -21479,26 +21511,30 @@ ff
 
 # :lcd_scroll_up
 # Ret None
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([46])
 # Var i (Local i Number(U8) Reg(U8)) Reg(U8) Some([47])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t0 (static "lcd_current") Reg(U32) Some([48, 49, 50, 51])
 # Var t1 (static "lcd_current") Reg(U32) Some([52, 53, 54, 55])
 # Var t21b4 (t21b4 Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] })) Reg(U8) Some([46])
-# Var t2aa3 (t2aa3 Number(U8, 60)) Reg(U8) Some([46])
+# Var t2aa3 (t2aa3 Number(U8, 60)) Reg(U8) Some([46]) [60]
 # Var t5dda (t5dda Ident("lcd_current")) Reg(U8) Some([47])
 # Var t763a (t763a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987148), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }) Reg(U32) Some([48, 49, 50, 51])
 # Var t7e9 (t7e9 Arithmetic(Add, Ident("i"), Number(U8, 20))) Reg(U8) Some([46])
-# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([46])
+# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([46]) [80]
 # Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) Reg(U32) Some([56, 57, 58, 59])
 # Var t9e70 (t9e70 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987148), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }) Reg(U32) Some([56, 57, 58, 59])
-# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([46])
+# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([46]) [32]
 # Var tb02d (tb02d Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] })) Reg(U8) Some([46])
 # Var tb175 (tb175 Arithmetic(Subtract, Ident("lcd_current"), Number(U8, 20))) Reg(U8) Some([47])
 # Var td0f3 (td0f3 Ident("i")) Reg(U8) Some([47])
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([46])
 # Var tfd7d (tfd7d Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) Reg(U32) Some([48, 49, 50, 51])
+# Consts t0: 0n987144/0x000f1008u32
+# Consts t1: 0n987144/0x000f1008u32
+# Consts t2aa3: 0n60/0x3cu8
+# Consts t8fe0: 0n80/0x50u8
 # t0 <- 0n987144/0x000f1008u32  Some('/home/john/lutcomp/programs/lib/lcd.j':(27,5))
 # Assign { target: Ident("lcd_current"), var_type: None, value: Arithmetic(Subtract, Ident("lcd_current"), Number(U8, 20)) }
 # 8237a LoadImm32 [Register(0x30), Constant32(0x000f1008=987144)]
@@ -21985,63 +22021,69 @@ ff
 
 # :main
 # Ret Some(U8)
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var calc (Local calc Struct("RpnCalc") Static(987500)) Static(987500) None
-# Var inline_main_RpnCalc_init_51_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_main_RpnCalc_init_51_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_main_RpnCalc_init_51_c (Arg0 c Ptr(Struct("RpnCalc"))) Reg(U32) Some([60, 61, 62, 63])
-# Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_s (Arg0 s Ptr(Struct("Stack"))) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_t4bb9 (t4bb9 Cast { old_type: Some(Ptr(Struct("Stack"))), new_type: Number(USIZE), value: Ident("s") }) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67])
+# Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([64, 65, 66, 67]) [0, 0, 0, 0]
 # Var inline_main_RpnCalc_init_51_inline_RpnCalc_init_stack_init_49_tc957 (tc957 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Stack"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 64)) }) Reg(U32) Some([68, 69, 70, 71])
-# Var inline_main_RpnCalc_init_51_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_RpnCalc_init_51_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_RpnCalc_init_51_s (Local s Ptr(Struct("Stack")) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_main_RpnCalc_init_51_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([60, 61, 62, 63])
+# Var inline_main_RpnCalc_init_51_t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([60, 61, 62, 63]) [0, 0, 0, 0]
 # Var inline_main_RpnCalc_init_51_t6e8e (t6e8e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 68)) }) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_main_RpnCalc_init_51_tb1ed (tb1ed Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") }) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_main_RpnCalc_init_51_tb2e9 (tb2e9 Ident("s")) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_main_RpnCalc_init_51_tbc15 (tbc15 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Struct("Stack")), value: Cast { old_type: Some(Ptr(Struct("RpnCalc"))), new_type: Number(USIZE), value: Ident("c") } }) Reg(U32) Some([60, 61, 62, 63])
 # Var inline_main_RpnCalc_init_51_tf462 (tf462 Call(Call { function: "stack_init", parameters: [Ident("s")] })) Reg(U8) Some([72])
-# Var inline_main_putc_25_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_main_putc_25_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_main_putc_25_c (Arg0 c Number(U8)) Reg(U8) Some([72])
-# Var inline_main_putc_25_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_putc_25_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_putc_25_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_25_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_25_tac13 (tac13 Ident("c")) Reg(U8) Some([72])
-# Var inline_main_putc_26_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_main_putc_26_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_main_putc_26_c (Arg0 c Number(U8)) Reg(U8) Some([72])
-# Var inline_main_putc_26_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_putc_26_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_putc_26_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_26_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_26_tac13 (tac13 Ident("c")) Reg(U8) Some([72])
-# Var inline_main_putc_27_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_main_putc_27_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_main_putc_27_c (Arg0 c Number(U8)) Reg(U8) Some([72])
-# Var inline_main_putc_27_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_putc_27_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_putc_27_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_27_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_27_tac13 (tac13 Ident("c")) Reg(U8) Some([72])
-# Var inline_main_putc_28_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_main_putc_28_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_main_putc_28_c (Arg0 c Number(U8)) Reg(U8) Some([72])
-# Var inline_main_putc_28_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_putc_28_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_putc_28_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_28_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([72])
 # Var inline_main_putc_28_tac13 (tac13 Ident("c")) Reg(U8) Some([72])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t0 (static "calc") Reg(U32) Some([60, 61, 62, 63])
 # Var t1 (static "calc") Reg(U32) Some([60, 61, 62, 63])
 # Var t2a99 (t2a99 Call(Call { function: "RpnCalc_run", parameters: [AddressOf(Ident("calc"))] })) Reg(U8) Some([72])
 # Var t71d9 (t71d9 Call(Call { function: "RpnCalc_init", parameters: [AddressOf(Ident("calc"))] })) Reg(U8) Some([72])
 # Var t7ddc (t7ddc Call(Call { function: "putc", parameters: [Number(U8, 78)] })) Reg(U8) Some([72])
-# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([72])
-# Var t9c38 (t9c38 Number(U8, 82)) Reg(U8) Some([72])
+# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([72]) [80]
+# Var t9c38 (t9c38 Number(U8, 82)) Reg(U8) Some([72]) [82]
 # Var tb303 (tb303 Call(Call { function: "putc", parameters: [Number(U8, 82)] })) Reg(U8) Some([72])
 # Var tca8 (tca8 AddressOf(Ident("calc"))) Reg(U32) Some([60, 61, 62, 63])
-# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([72])
+# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([72]) [10]
 # Var tdcaa (tdcaa Call(Call { function: "stdio_init", parameters: [] })) Reg(U8) Some([72])
-# Var te6fd (te6fd Number(U8, 78)) Reg(U8) Some([72])
+# Var te6fd (te6fd Number(U8, 78)) Reg(U8) Some([72]) [78]
 # Var te7a4 (te7a4 Call(Call { function: "putc", parameters: [Number(U8, 80)] })) Reg(U8) Some([72])
 # Var tec99 (tec99 Call(Call { function: "putc", parameters: [Number(U8, 10)] })) Reg(U8) Some([72])
+# Consts t0: 0n987500/0x000f116cu32
+# Consts t1: 0n987500/0x000f116cu32
+# Consts t8fe0: 0n80/0x50u8
+# Consts t9c38: 0n82/0x52u8
+# Consts td7b5: 0n10/0x0au8
+# Consts te6fd: 0n78/0x4eu8
 # None <= call stdio_init() Some('programs/app/rpn.j':(4,5))
 # VoidExpression { expression: Call(Call { function: "stdio_init", parameters: [] }) }
 # Call(Call { function: "stdio_init", parameters: [] })
@@ -22700,18 +22742,18 @@ ff
 # Arg0=a
 # Arg1=b
 # Arg2=c
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var __frame_pointer (__frame_pointer) Reg(U32) Some([12, 13, 14, 15])
 # Var a (Arg0 a Number(USIZE)) Reg(U32) Some([76, 77, 78, 79])
 # Var a_hi (Local a_hi Number(USIZE) Reg(U32)) Reg(U32) Some([80, 81, 82, 83])
 # Var b (Arg1 b Number(USIZE)) Reg(U32) Some([84, 85, 86, 87])
 # Var b_hi (Local b_hi Number(USIZE) Reg(U32)) Reg(U32) Some([88, 89, 90, 91])
 # Var c (Arg2 c Ptr(Struct("U64"))) Reg(U32) Some([92, 93, 94, 95])
-# Var inline_mul32_64_add_U64_0_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_mul32_64_add_U64_0_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_mul32_64_add_U64_0_a (Arg0 a Ptr(Struct("U64"))) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_mul32_64_add_U64_0_b (Arg1 b Ptr(Struct("U64"))) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_mul32_64_add_U64_0_c (Arg2 c Ptr(Struct("U64"))) Reg(U32) Some([96, 97, 98, 99])
-# Var inline_mul32_64_add_U64_0_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_mul32_64_add_U64_0_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_mul32_64_add_U64_0_lo (Local lo Number(USIZE) Reg(U32)) Reg(U32) Some([100, 101, 102, 103])
 # Var inline_mul32_64_add_U64_0_t1335 (t1335 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 4)) }) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_mul32_64_add_U64_0_t144a (t144a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("a") }, Number(USIZE, 4)) }) Reg(U32) Some([108, 109, 110, 111])
@@ -22732,11 +22774,11 @@ ff
 # Var inline_mul32_64_add_U64_0_te24c (te24c PtrFieldDeref("a", "hi")) Reg(U32) Some([112, 113, 114, 115])
 # Var inline_mul32_64_add_U64_0_teec0 (teec0 Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("b") }) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_mul32_64_add_U64_0_tf677 (tf677 PtrFieldDeref("c", "hi")) Reg(U32) Some([80, 81, 82, 83])
-# Var inline_mul32_64_add_U64_1_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_mul32_64_add_U64_1_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_mul32_64_add_U64_1_a (Arg0 a Ptr(Struct("U64"))) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_mul32_64_add_U64_1_b (Arg1 b Ptr(Struct("U64"))) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_mul32_64_add_U64_1_c (Arg2 c Ptr(Struct("U64"))) Reg(U32) Some([84, 85, 86, 87])
-# Var inline_mul32_64_add_U64_1_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_mul32_64_add_U64_1_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_mul32_64_add_U64_1_lo (Local lo Number(USIZE) Reg(U32)) Reg(U32) Some([88, 89, 90, 91])
 # Var inline_mul32_64_add_U64_1_t1335 (t1335 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 4)) }) Reg(U32) Some([92, 93, 94, 95])
 # Var inline_mul32_64_add_U64_1_t144a (t144a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("a") }, Number(USIZE, 4)) }) Reg(U32) Some([96, 97, 98, 99])
@@ -22757,14 +22799,14 @@ ff
 # Var inline_mul32_64_add_U64_1_te24c (te24c PtrFieldDeref("a", "hi")) Reg(U32) Some([100, 101, 102, 103])
 # Var inline_mul32_64_add_U64_1_teec0 (teec0 Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("b") }) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_mul32_64_add_U64_1_tf677 (tf677 PtrFieldDeref("c", "hi")) Reg(U32) Some([76, 77, 78, 79])
-# Var inline_mul32_64_mul16_32_10_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_mul32_64_mul16_32_10_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_mul32_64_mul16_32_10_a (Arg0 a Number(USIZE)) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_mul32_64_mul16_32_10_b (Arg1 b Number(USIZE)) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_mul32_64_mul16_32_10_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([96, 97, 98, 99])
 # Var inline_mul32_64_mul16_32_10_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([100, 101, 102, 103])
 # Var inline_mul32_64_mul16_32_10_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_mul32_64_mul16_32_10_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([100, 101, 102, 103])
-# Var inline_mul32_64_mul16_32_10_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_mul32_64_mul16_32_10_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_mul32_64_mul16_32_10_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([116])
 # Var inline_mul32_64_mul16_32_10_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([116])
 # Var inline_mul32_64_mul16_32_10_t3585 (t3585 Ident("e")) Reg(U32) Some([80, 81, 82, 83])
@@ -22776,20 +22818,20 @@ ff
 # Var inline_mul32_64_mul16_32_10_tac13 (tac13 Ident("c")) Reg(U32) Some([96, 97, 98, 99])
 # Var inline_mul32_64_mul16_32_10_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([116])
 # Var inline_mul32_64_mul16_32_10_tace9 (tace9 Ident("b")) Reg(U32) Some([84, 85, 86, 87])
-# Var inline_mul32_64_mul16_32_10_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([119])
+# Var inline_mul32_64_mul16_32_10_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([119]) [0]
 # Var inline_mul32_64_mul16_32_10_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([116])
 # Var inline_mul32_64_mul16_32_10_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([100, 101, 102, 103])
 # Var inline_mul32_64_mul16_32_10_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([117])
 # Var inline_mul32_64_mul16_32_10_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([100, 101, 102, 103])
 # Var inline_mul32_64_mul16_32_10_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([104, 105, 106, 107])
-# Var inline_mul32_64_mul16_32_11_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_mul32_64_mul16_32_11_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_mul32_64_mul16_32_11_a (Arg0 a Number(USIZE)) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_mul32_64_mul16_32_11_b (Arg1 b Number(USIZE)) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_mul32_64_mul16_32_11_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_mul32_64_mul16_32_11_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([88, 89, 90, 91])
 # Var inline_mul32_64_mul16_32_11_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([76, 77, 78, 79])
 # Var inline_mul32_64_mul16_32_11_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([88, 89, 90, 91])
-# Var inline_mul32_64_mul16_32_11_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_mul32_64_mul16_32_11_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_mul32_64_mul16_32_11_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([120])
 # Var inline_mul32_64_mul16_32_11_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([120])
 # Var inline_mul32_64_mul16_32_11_t3585 (t3585 Ident("e")) Reg(U32) Some([76, 77, 78, 79])
@@ -22801,20 +22843,20 @@ ff
 # Var inline_mul32_64_mul16_32_11_tac13 (tac13 Ident("c")) Reg(U32) Some([84, 85, 86, 87])
 # Var inline_mul32_64_mul16_32_11_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([120])
 # Var inline_mul32_64_mul16_32_11_tace9 (tace9 Ident("b")) Reg(U32) Some([80, 81, 82, 83])
-# Var inline_mul32_64_mul16_32_11_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([122])
+# Var inline_mul32_64_mul16_32_11_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([122]) [0]
 # Var inline_mul32_64_mul16_32_11_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([120])
 # Var inline_mul32_64_mul16_32_11_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([88, 89, 90, 91])
 # Var inline_mul32_64_mul16_32_11_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([121])
 # Var inline_mul32_64_mul16_32_11_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([88, 89, 90, 91])
 # Var inline_mul32_64_mul16_32_11_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([96, 97, 98, 99])
-# Var inline_mul32_64_mul16_32_8_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_mul32_64_mul16_32_8_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_mul32_64_mul16_32_8_a (Arg0 a Number(USIZE)) Reg(U32) Some([96, 97, 98, 99])
 # Var inline_mul32_64_mul16_32_8_b (Arg1 b Number(USIZE)) Reg(U32) Some([100, 101, 102, 103])
 # Var inline_mul32_64_mul16_32_8_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_mul32_64_mul16_32_8_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([108, 109, 110, 111])
 # Var inline_mul32_64_mul16_32_8_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([96, 97, 98, 99])
 # Var inline_mul32_64_mul16_32_8_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([108, 109, 110, 111])
-# Var inline_mul32_64_mul16_32_8_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_mul32_64_mul16_32_8_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_mul32_64_mul16_32_8_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_8_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_8_t3585 (t3585 Ident("e")) Reg(U32) Some([96, 97, 98, 99])
@@ -22826,20 +22868,20 @@ ff
 # Var inline_mul32_64_mul16_32_8_tac13 (tac13 Ident("c")) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_mul32_64_mul16_32_8_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_8_tace9 (tace9 Ident("b")) Reg(U32) Some([100, 101, 102, 103])
-# Var inline_mul32_64_mul16_32_8_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([124])
+# Var inline_mul32_64_mul16_32_8_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([124]) [0]
 # Var inline_mul32_64_mul16_32_8_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_8_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([108, 109, 110, 111])
 # Var inline_mul32_64_mul16_32_8_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([123])
 # Var inline_mul32_64_mul16_32_8_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([108, 109, 110, 111])
 # Var inline_mul32_64_mul16_32_8_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([112, 113, 114, 115])
-# Var inline_mul32_64_mul16_32_9_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_mul32_64_mul16_32_9_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_mul32_64_mul16_32_9_a (Arg0 a Number(USIZE)) Reg(U32) Some([96, 97, 98, 99])
 # Var inline_mul32_64_mul16_32_9_b (Arg1 b Number(USIZE)) Reg(U32) Some([100, 101, 102, 103])
 # Var inline_mul32_64_mul16_32_9_c (Local c Number(USIZE) Reg(U32)) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_mul32_64_mul16_32_9_d (Local d Number(USIZE) Reg(U32)) Reg(U32) Some([108, 109, 110, 111])
 # Var inline_mul32_64_mul16_32_9_e (Local e Number(USIZE) Reg(U32)) Reg(U32) Some([96, 97, 98, 99])
 # Var inline_mul32_64_mul16_32_9_f (Local f Number(USIZE) Reg(U32)) Reg(U32) Some([108, 109, 110, 111])
-# Var inline_mul32_64_mul16_32_9_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_mul32_64_mul16_32_9_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_mul32_64_mul16_32_9_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_9_t2d6f (t2d6f Index("d", Number(U8, 2))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_9_t3585 (t3585 Ident("e")) Reg(U32) Some([96, 97, 98, 99])
@@ -22851,14 +22893,14 @@ ff
 # Var inline_mul32_64_mul16_32_9_tac13 (tac13 Ident("c")) Reg(U32) Some([104, 105, 106, 107])
 # Var inline_mul32_64_mul16_32_9_tac23 (tac23 Index("d", Number(U8, 0))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_9_tace9 (tace9 Ident("b")) Reg(U32) Some([100, 101, 102, 103])
-# Var inline_mul32_64_mul16_32_9_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([124])
+# Var inline_mul32_64_mul16_32_9_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([124]) [0]
 # Var inline_mul32_64_mul16_32_9_tbd6 (tbd6 Index("d", Number(U8, 1))) Reg(U8) Some([122])
 # Var inline_mul32_64_mul16_32_9_tcbd4 (tcbd4 Ident("f")) Reg(U32) Some([108, 109, 110, 111])
 # Var inline_mul32_64_mul16_32_9_te25f (te25f Index("f", Number(U8, 0))) Reg(U8) Some([123])
 # Var inline_mul32_64_mul16_32_9_te8d8 (te8d8 Cast { old_type: None, new_type: Number(USIZE), value: Index("b", Number(U8, 1)) }) Reg(U32) Some([108, 109, 110, 111])
 # Var inline_mul32_64_mul16_32_9_tff1a (tff1a Cast { old_type: None, new_type: Number(USIZE), value: Index("a", Number(U8, 1)) }) Reg(U32) Some([112, 113, 114, 115])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
-# Var t0 (Stack size negated) Reg(U32) Some([128, 129, 130, 131])
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
+# Var t0 (Stack size negated) Reg(U32) Some([128, 129, 130, 131]) [248, 255, 255, 255]
 # Var t1335 (t1335 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("c") }, Number(USIZE, 4)) }) Reg(U32) Some([132, 133, 134, 135])
 # Var t1f52 (t1f52 Call(Call { function: "add_U64", parameters: [Ident("c"), AddressOf(Ident("temp64")), Ident("c")] })) Reg(U8) Some([136])
 # Var t2558 (t2558 Cast { old_type: Some(Ptr(Struct("U64"))), new_type: Number(USIZE), value: Ident("c") }) Reg(U32) Some([92, 93, 94, 95])
@@ -26366,14 +26408,14 @@ ff
 # :print_dec32
 # Ret None
 # Arg0=a
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var a (Arg0 a Number(USIZE)) Reg(U32) Some([144, 145, 146, 147])
 # Var b (Local b Number(USIZE) Reg(U32)) Reg(U32) Some([148, 149, 150, 151])
-# Var inline_print_dec32_div32_by10_47_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_print_dec32_div32_by10_47_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_print_dec32_div32_by10_47_a (Arg0 a Number(USIZE)) Reg(U32) Some([148, 149, 150, 151])
-# Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_a (Arg0 a Number(USIZE)) Reg(U32) Some([148, 149, 150, 151])
-# Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_t1539 (t1539 Index("a", Number(U8, 1))) Reg(U8) Some([152])
 # Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_t1c22 (t1c22 Arithmetic(And, Index("a", Number(U8, 2)), Number(U8, 31))) Reg(U8) Some([153])
 # Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_t2574 (t2574 Arithmetic(Or, Index("a", Number(U8, 2)), Arithmetic(And, Index("a", Number(U8, 3)), Number(U8, 224)))) Reg(U8) Some([153])
@@ -26393,39 +26435,40 @@ ff
 # Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_tdd9e (tdd9e Index("a", Number(U8, 0))) Reg(U8) Some([154])
 # Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_te046 (te046 Arithmetic(And, Index("a", Number(U8, 0)), Number(U8, 31))) Reg(U8) Some([153])
 # Var inline_print_dec32_div32_by10_47_inline_div32_by10_shiftright3_46_tea96 (tea96 Arithmetic(Or, Index("a", Number(U8, 1)), Arithmetic(And, Index("a", Number(U8, 2)), Number(U8, 224)))) Reg(U8) Some([153])
-# Var inline_print_dec32_div32_by10_47_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_print_dec32_div32_by10_47_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_print_dec32_div32_by10_47_prod (Local prod Struct("U64") Static(987492)) Static(987492) None
 # Var inline_print_dec32_div32_by10_47_t0 (static "prod") Reg(U32) Some([148, 149, 150, 151])
 # Var inline_print_dec32_div32_by10_47_t1c61 (t1c61 AddressOf(Ident("prod"))) Reg(U32) Some([148, 149, 150, 151])
 # Var inline_print_dec32_div32_by10_47_t45ae (t45ae Call(Call { function: "shiftright3", parameters: [LocalFieldDeref("prod", "hi")] })) Reg(U32) Some([148, 149, 150, 151])
 # Var inline_print_dec32_div32_by10_47_t8792 (t8792 Ident("a")) Reg(U32) Some([156, 157, 158, 159])
-# Var inline_print_dec32_div32_by10_47_t9514 (t9514 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Number(USIZE, 987492), Number(USIZE, 4)) }) Reg(U32) Some([148, 149, 150, 151])
+# Var inline_print_dec32_div32_by10_47_t9514 (t9514 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(USIZE)), value: Arithmetic(Add, Number(USIZE, 987492), Number(USIZE, 4)) }) Reg(U32) Some([148, 149, 150, 151]) [104, 17, 15, 0]
 # Var inline_print_dec32_div32_by10_47_tb354 (tb354 LocalFieldDeref("prod", "hi")) Reg(U32) Some([148, 149, 150, 151])
-# Var inline_print_dec32_div32_by10_47_tef1a (tef1a Number(USIZE, 3435973837)) Reg(U32) Some([160, 161, 162, 163])
+# Var inline_print_dec32_div32_by10_47_tef1a (tef1a Number(USIZE, 3435973837)) Reg(U32) Some([160, 161, 162, 163]) [205, 204, 204, 204]
 # Var inline_print_dec32_div32_by10_47_tfc6a (tfc6a Call(Call { function: "mul32_64", parameters: [Ident("a"), Number(USIZE, 3435973837), AddressOf(Ident("prod"))] })) Reg(U8) Some([164])
-# Var inline_print_dec32_mul32_by10_14_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_print_dec32_mul32_by10_14_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_print_dec32_mul32_by10_14_a (Arg0 a Number(USIZE)) Reg(U32) Some([144, 145, 146, 147])
 # Var inline_print_dec32_mul32_by10_14_b (Local b Number(USIZE) Reg(U32)) Reg(U32) Some([148, 149, 150, 151])
-# Var inline_print_dec32_mul32_by10_14_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_print_dec32_mul32_by10_14_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_print_dec32_mul32_by10_14_t7eaf (t7eaf Arithmetic(Add, Ident("b"), Ident("a"))) Reg(U32) Some([144, 145, 146, 147])
 # Var inline_print_dec32_mul32_by10_14_t8792 (t8792 Ident("a")) Reg(U32) Some([144, 145, 146, 147])
 # Var inline_print_dec32_mul32_by10_14_tace9 (tace9 Ident("b")) Reg(U32) Some([148, 149, 150, 151])
-# Var inline_print_dec32_putc_29_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_print_dec32_putc_29_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_print_dec32_putc_29_c (Arg0 c Number(U8)) Reg(U8) Some([164])
-# Var inline_print_dec32_putc_29_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_print_dec32_putc_29_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_print_dec32_putc_29_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([164])
 # Var inline_print_dec32_putc_29_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([164])
 # Var inline_print_dec32_putc_29_tac13 (tac13 Ident("c")) Reg(U8) Some([164])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t1723 (t1723 Call(Call { function: "print_dec8", parameters: [Index("a", Number(U8, 0))] })) Reg(U8) Some([164])
 # Var t1a60 (t1a60 Arithmetic(Add, Index("a", Number(U8, 0)), Number(U8, 48))) Reg(U8) Some([164])
 # Var t86e2 (t86e2 Call(Call { function: "mul32_by10", parameters: [Ident("b")] })) Reg(U32) Some([144, 145, 146, 147])
 # Var t8792 (t8792 Ident("a")) Reg(U32) Some([156, 157, 158, 159])
-# Var t9c15 (t9c15 Number(USIZE, 256)) Reg(U32) Some([148, 149, 150, 151])
+# Var t9c15 (t9c15 Number(USIZE, 256)) Reg(U32) Some([148, 149, 150, 151]) [0, 1, 0, 0]
 # Var ta8fd (ta8fd Call(Call { function: "putc", parameters: [Arithmetic(Add, Index("a", Number(U8, 0)), Number(U8, 48))] })) Reg(U8) Some([164])
 # Var tace9 (tace9 Ident("b")) Reg(U32) Some([148, 149, 150, 151])
 # Var tc4db (tc4db Call(Call { function: "print_dec32", parameters: [Ident("b")] })) Reg(U8) Some([164])
 # Var tdd9e (tdd9e Index("a", Number(U8, 0))) Reg(U8) Some([164])
+# Consts t9c15: 0n256/0x00000100u32
 # 829e5 Copy32 [Register(0x00), Register(0x90)]
 #       Save function parameter 'a' registers [0, 1, 2, 3] to locals [144, 145, 146, 147].
 21 00 90 
@@ -27731,23 +27774,24 @@ ff
 # :print_dec8
 # Ret None
 # Arg0=a
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var a (Arg0 a Number(U8)) Reg(U8) Some([165])
 # Var b (Local b Number(U8) Reg(U8)) Reg(U8) Some([166])
-# Var inline_print_dec8_putc_30_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_print_dec8_putc_30_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_print_dec8_putc_30_c (Arg0 c Number(U8)) Reg(U8) Some([165])
-# Var inline_print_dec8_putc_30_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_print_dec8_putc_30_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_print_dec8_putc_30_t34eb (t34eb Call(Call { function: "lcd_putc", parameters: [Ident("c")] })) Reg(U8) Some([165])
 # Var inline_print_dec8_putc_30_t642e (t642e Call(Call { function: "io_write0", parameters: [Ident("c")] })) Reg(U8) Some([165])
 # Var inline_print_dec8_putc_30_tac13 (tac13 Ident("c")) Reg(U8) Some([165])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t6cb (t6cb Arithmetic(Multiply, Ident("b"), Number(U8, 10))) Reg(U8) Some([165])
 # Var t6db1 (t6db1 Arithmetic(Add, Ident("a"), Number(U8, 48))) Reg(U8) Some([165])
 # Var t79c4 (t79c4 Call(Call { function: "print_dec8", parameters: [Ident("b")] })) Reg(U8) Some([165])
 # Var t8792 (t8792 Ident("a")) Reg(U8) Some([167])
 # Var tace9 (tace9 Ident("b")) Reg(U8) Some([166])
 # Var td36e (td36e Call(Call { function: "putc", parameters: [Arithmetic(Add, Ident("a"), Number(U8, 48))] })) Reg(U8) Some([165])
-# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([166])
+# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([166]) [10]
+# Consts td7b5: 0n10/0x0au8
 # 82bcd Copy8 [Register(0x00), Register(0xa5)]
 #       Save function parameter 'a' registers [0] to locals [165].
 0b 00 a5 
@@ -28094,20 +28138,21 @@ ff
 
 # :stdio_init
 # Ret None
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_stdio_init_queue_init_35_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_stdio_init_queue_init_35_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_stdio_init_queue_init_35_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_stdio_init_queue_init_35_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_stdio_init_queue_init_35_s (Arg0 s Ptr(Struct("Queue"))) Reg(U32) Some([168, 169, 170, 171])
 # Var inline_stdio_init_queue_init_35_t4d4f (t4d4f Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }) Reg(U32) Some([168, 169, 170, 171])
-# Var inline_stdio_init_queue_init_35_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([172])
+# Var inline_stdio_init_queue_init_35_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([172]) [0]
 # Var inline_stdio_init_queue_init_35_tb702 (tb702 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }) Reg(U32) Some([176, 177, 178, 179])
 # Var inline_stdio_init_queue_init_35_tc1ff (tc1ff Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }) Reg(U32) Some([168, 169, 170, 171])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t0 (static "stdin") Reg(U32) Some([168, 169, 170, 171])
 # Var t5c19 (t5c19 Call(Call { function: "KeyBoard_init", parameters: [] })) Reg(U8) Some([180])
 # Var t7567 (t7567 Call(Call { function: "queue_init", parameters: [AddressOf(Ident("stdin"))] })) Reg(U8) Some([180])
 # Var t7b05 (t7b05 Call(Call { function: "lcd_init", parameters: [] })) Reg(U8) Some([180])
 # Var tfff6 (tfff6 AddressOf(Ident("stdin"))) Reg(U32) Some([168, 169, 170, 171])
+# Consts t0: 0n987228/0x000f105cu32
 # t0 <- 0n987228/0x000f105cu32  Some('/home/john/lutcomp/programs/lib/stdio.j':(9,5))
 # VoidExpression { expression: Call(Call { function: "queue_init", parameters: [AddressOf(Ident("stdin"))] }) }
 # Call(Call { function: "queue_init", parameters: [AddressOf(Ident("stdin"))] })

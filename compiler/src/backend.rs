@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::ops::Range;
 use std::str::FromStr;
 
@@ -357,13 +358,29 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         ));
         ctxt.lines.push(AssemblyInputLine::Label(format!(":{}", &f.id.0)));
         ctxt.lines.push(AssemblyInputLine::Comment(format!("Ret {:?}", f.ret)));
+        
         for (i, arg_name) in f.args.iter().enumerate() {
             ctxt.lines.push(AssemblyInputLine::Comment(format!("Arg{}={}", i, arg_name.0)));
         }
+
         for (var_name, var_info) in &f.vars {
             let reg_assignment = ctxt.f_info.register_assignments.get(var_name);
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("Var {} ({}) {:?} {:?}",
-                var_name.0, var_info.description, var_info.location, reg_assignment)));
+            let mut comment = format!(
+                "Var {} ({}) {:?} {:?}",
+                var_name.0, var_info.description, var_info.location, reg_assignment);
+            if let Some(constant) = &var_info.constant {
+                if constant.len() > 8 {
+                    write!(&mut comment, " [0..8]={:?} of {}", &constant[0..8], constant.len()).unwrap();
+                } else {
+                    write!(&mut comment, " {:?}", constant).unwrap();
+                }
+            }
+            ctxt.lines.push(AssemblyInputLine::Comment(comment));
+        }
+
+        for (var_name, num) in &f.consts {
+            ctxt.lines.push(AssemblyInputLine::Comment(format!("Consts {}: {:?}",
+                var_name.0, num)));
         }
 
         if f.is_isr() {
@@ -413,7 +430,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
             let mut source = format!("{:?} {:?}\n", il, src);
             let mut prev = None;
             for src_ctxt in &src_ctxt.contexts  {
-                use std::fmt::Write;
                 if prev != Some(src_ctxt) {
                     write!(&mut source, "{}\n", src_ctxt).unwrap();
                 }

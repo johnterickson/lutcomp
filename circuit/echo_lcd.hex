@@ -38,10 +38,11 @@ v2.0 raw
 # :delay
 # Ret None
 # Arg0=x
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
-# Var t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([16, 17, 18, 19])
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
+# Var t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([16, 17, 18, 19]) [0, 0, 0, 0]
 # Var tad57 (tad57 Ident("x")) Reg(U32) Some([20, 21, 22, 23])
 # Var x (Arg0 x Number(USIZE)) Reg(U32) Some([20, 21, 22, 23])
+# Consts t60ec: 0n0/0x00000000u32
 # 00026 Copy32 [Register(0x00), Register(0x14)]
 #       Save function parameter 'x' registers [0, 1, 2, 3] to locals [20, 21, 22, 23].
 21 00 14 
@@ -144,7 +145,7 @@ v2.0 raw
 # Var i (Arg0 i Number(U8)) Reg(U8) Some([26])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_col (Local col Number(U8) Reg(U8)) Reg(U8) Some([26])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_i (Arg0 i Number(U8)) Reg(U8) Some([26])
-# Var inline_lcd_draw_char_lcd_logical_to_physical_0_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_lcd_draw_char_lcd_logical_to_physical_0_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_row (Local row Number(U8) Reg(U8)) Reg(U8) Some([27])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd (t1acd Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) Reg(U8) Some([26])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_t2f80 (t2f80 Index("lcd_row_start", Ident("row"))) Reg(U8) Some([27])
@@ -155,7 +156,7 @@ v2.0 raw
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_td007 (td007 Ident("row")) Reg(U8) Some([27])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_td0f3 (td0f3 Ident("i")) Reg(U8) Some([36])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_tfee9 (tfee9 Ident("col")) Reg(U8) Some([26])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var pos (Local pos Number(U8) Reg(U8)) Reg(U8) Some([26])
 # Var t1261 (t1261 Arithmetic(And, Ident("ch"), Number(U8, 15))) Reg(U8) Some([25])
 # Var t136d (t136d Ident("pos")) Reg(U8) Some([26])
@@ -165,7 +166,7 @@ v2.0 raw
 # Var t6e3a (t6e3a Arithmetic(Or, Number(U8, 8), Arithmetic(ShiftRight, Ident("pos"), Number(U8, 4)))) Reg(U8) Some([27])
 # Var t7d80 (t7d80 Arithmetic(And, Ident("pos"), Number(U8, 15))) Reg(U8) Some([26])
 # Var t8d12 (t8d12 Arithmetic(ShiftRight, Ident("pos"), Number(U8, 4))) Reg(U8) Some([27])
-# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([40, 41, 42, 43])
+# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([40, 41, 42, 43]) [2, 0, 0, 0]
 # Var tb875 (tb875 Arithmetic(Or, Number(U8, 128), Arithmetic(And, Ident("ch"), Number(U8, 15)))) Reg(U8) Some([25])
 # Var tbd94 (tbd94 Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })) Reg(U8) Some([25])
 # Var tcd38 (tcd38 Arithmetic(Or, Number(U8, 128), Arithmetic(ShiftRight, Ident("ch"), Number(U8, 4)))) Reg(U8) Some([26])
@@ -642,28 +643,34 @@ v2.0 raw
 # Ret None
 # Var i (Local i Number(U8) Reg(U8)) Reg(U8) Some([44])
 # Var lcd_current (Local lcd_current Number(U8) Reg(U8)) Reg(U8) Some([44])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t1f11 (t1f11 Call(Call { function: "io_write1", parameters: [Number(U8, 1)] })) Reg(U8) Some([44])
 # Var t2bc4 (t2bc4 Call(Call { function: "io_write1", parameters: [Number(U8, 8)] })) Reg(U8) Some([44])
-# Var t385d (t385d Number(USIZE, 1)) Reg(U32) Some([48, 49, 50, 51])
-# Var t40c1 (t40c1 Number(U8, 2)) Reg(U8) Some([44])
+# Var t385d (t385d Number(USIZE, 1)) Reg(U32) Some([48, 49, 50, 51]) [1, 0, 0, 0]
+# Var t40c1 (t40c1 Number(U8, 2)) Reg(U8) Some([44]) [2]
 # Var t7bb3 (t7bb3 Call(Call { function: "io_write1", parameters: [Number(U8, 0)] })) Reg(U8) Some([44])
-# Var t80a1 (t80a1 Number(U8, 12)) Reg(U8) Some([44])
-# Var t8820 (t8820 Number(U8, 3)) Reg(U8) Some([44])
-# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([52])
-# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([48, 49, 50, 51])
+# Var t80a1 (t80a1 Number(U8, 12)) Reg(U8) Some([44]) [12]
+# Var t8820 (t8820 Number(U8, 3)) Reg(U8) Some([44]) [3]
+# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([52]) [80]
+# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([48, 49, 50, 51]) [2, 0, 0, 0]
 # Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) Reg(U32) Some([56, 57, 58, 59])
 # Var t9bbb (t9bbb Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })) Reg(U8) Some([44])
-# Var t9f32 (t9f32 Number(U8, 8)) Reg(U8) Some([44])
-# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([52])
+# Var t9f32 (t9f32 Number(U8, 8)) Reg(U8) Some([44]) [8]
+# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([52]) [32]
 # Var tb018 (tb018 Call(Call { function: "io_write1", parameters: [Number(U8, 3)] })) Reg(U8) Some([44])
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([44])
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([44]) [0]
 # Var tb9f6 (tb9f6 Call(Call { function: "io_write1", parameters: [Number(U8, 2)] })) Reg(U8) Some([44])
 # Var tbd94 (tbd94 Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })) Reg(U8) Some([44])
 # Var td0f3 (td0f3 Ident("i")) Reg(U8) Some([44])
 # Var td623 (td623 Call(Call { function: "io_write1", parameters: [Number(U8, 12)] })) Reg(U8) Some([44])
 # Var tdd66 (tdd66 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }) Reg(U32) Some([60, 61, 62, 63])
-# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([44])
+# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([44]) [1]
+# Consts lcd_current: 0n0/0x00u8
+# Consts t80a1: 0n12/0x0cu8
+# Consts t8fe0: 0n80/0x50u8
+# Consts t9f32: 0n8/0x08u8
+# Consts tac5f: 0n32/0x20u8
+# Consts tfcd: 0n1/0x01u8
 # lcd_current <- 0n0/0x00u8  Some('/home/john/lutcomp/programs/lib/lcd.j':(65,5))
 # Assign { target: Ident("lcd_current"), var_type: None, value: Number(U8, 0) }
 # Number(U8, 0)
@@ -1279,7 +1286,7 @@ v2.0 raw
 # Ret None
 # Arg0=ch
 # Var ch (Arg0 ch Number(U8)) Reg(U8) Some([64])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var next (Local next Number(U8) Reg(U8)) Reg(U8) Some([64])
 # Var t0 (static "lcd_current") Reg(U32) Some([68, 69, 70, 71])
 # Var t1 (static "lcd_current") Reg(U32) Some([72, 73, 74, 75])
@@ -1296,14 +1303,27 @@ v2.0 raw
 # Var t7 (static "lcd_current") Reg(U32) Some([68, 69, 70, 71])
 # Var t8 (static "lcd_current") Reg(U32) Some([72, 73, 74, 75])
 # Var t8658 (t8658 Arithmetic(Add, Arithmetic(Divide, Ident("lcd_current"), Number(U8, 20)), Number(U8, 1))) Reg(U8) Some([64])
-# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([64])
+# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([64]) [80]
 # Var t9 (static "lcd_current") Reg(U32) Some([68, 69, 70, 71])
 # Var ta5ff (ta5ff Ident("next")) Reg(U8) Some([64])
 # Var tab78 (tab78 Arithmetic(Divide, Ident("lcd_current"), Number(U8, 20))) Reg(U8) Some([64])
-# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([80])
+# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([80]) [32]
 # Var tad4e (tad4e Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) Reg(U32) Some([72, 73, 74, 75])
-# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([81])
+# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([81]) [10]
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([64])
+# Consts t0: 0n987136/0x000f1000u32
+# Consts t1: 0n987136/0x000f1000u32
+# Consts t2: 0n987136/0x000f1000u32
+# Consts t3: 0n987136/0x000f1000u32
+# Consts t4: 0n987136/0x000f1000u32
+# Consts t5: 0n987136/0x000f1000u32
+# Consts t6: 0n987136/0x000f1000u32
+# Consts t7: 0n987136/0x000f1000u32
+# Consts t8: 0n987136/0x000f1000u32
+# Consts t8fe0: 0n80/0x50u8
+# Consts t9: 0n987136/0x000f1000u32
+# Consts tac5f: 0n32/0x20u8
+# Consts td7b5: 0n10/0x0au8
 # 00240 Copy8 [Register(0x00), Register(0x40)]
 #       Save function parameter 'ch' registers [0] to locals [64].
 0b 00 40 
@@ -1916,23 +1936,27 @@ v2.0 raw
 # Ret None
 # Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([82])
 # Var i (Local i Number(U8) Reg(U8)) Reg(U8) Some([83])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t0 (static "lcd_current") Reg(U32) Some([84, 85, 86, 87])
 # Var t1 (static "lcd_current") Reg(U32) Some([88, 89, 90, 91])
 # Var t1324 (t1324 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }) Reg(U32) Some([84, 85, 86, 87])
 # Var t21b4 (t21b4 Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] })) Reg(U8) Some([82])
-# Var t2aa3 (t2aa3 Number(U8, 60)) Reg(U8) Some([82])
+# Var t2aa3 (t2aa3 Number(U8, 60)) Reg(U8) Some([82]) [60]
 # Var t5dda (t5dda Ident("lcd_current")) Reg(U8) Some([83])
 # Var t7e9 (t7e9 Arithmetic(Add, Ident("i"), Number(U8, 20))) Reg(U8) Some([82])
-# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([82])
+# Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([82]) [80]
 # Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) Reg(U32) Some([92, 93, 94, 95])
-# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([82])
+# Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([82]) [32]
 # Var tb02d (tb02d Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] })) Reg(U8) Some([82])
 # Var tb175 (tb175 Arithmetic(Subtract, Ident("lcd_current"), Number(U8, 20))) Reg(U8) Some([83])
 # Var td0f3 (td0f3 Ident("i")) Reg(U8) Some([83])
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([82])
 # Var tdd66 (tdd66 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }) Reg(U32) Some([92, 93, 94, 95])
 # Var tfd7d (tfd7d Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) Reg(U32) Some([84, 85, 86, 87])
+# Consts t0: 0n987136/0x000f1000u32
+# Consts t1: 0n987136/0x000f1000u32
+# Consts t2aa3: 0n60/0x3cu8
+# Consts t8fe0: 0n80/0x50u8
 # t0 <- 0n987136/0x000f1000u32  Some('/home/john/lutcomp/programs/lib/lcd.j':(27,5))
 # Assign { target: Ident("lcd_current"), var_type: None, value: Arithmetic(Subtract, Ident("lcd_current"), Number(U8, 20)) }
 # 0034f LoadImm32 [Register(0x54), Constant32(0x000f1000=987136)]
@@ -2420,12 +2444,14 @@ v2.0 raw
 # :main
 # Ret Some(U8)
 # Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([96])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t7b05 (t7b05 Call(Call { function: "lcd_init", parameters: [] })) Reg(U8) Some([96])
-# Var ta435 (ta435 Number(U8, 90)) Reg(U8) Some([97])
+# Var ta435 (ta435 Number(U8, 90)) Reg(U8) Some([97]) [90]
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([96])
-# Var te986 (te986 Number(U8, 122)) Reg(U8) Some([97])
+# Var te986 (te986 Number(U8, 122)) Reg(U8) Some([97]) [122]
 # Var tf179 (tf179 Call(Call { function: "lcd_putc", parameters: [Ident("ch")] })) Reg(U8) Some([96])
+# Consts ta435: 0n90/0x5au8
+# Consts te986: 0n122/0x7au8
 # None <= call lcd_init() Some('programs/test/echo_lcd.j':(4,5))
 # VoidExpression { expression: Call(Call { function: "lcd_init", parameters: [] }) }
 # Call(Call { function: "lcd_init", parameters: [] })

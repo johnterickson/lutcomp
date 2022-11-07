@@ -1064,12 +1064,12 @@ ff
 54 
 # :Keyboard_poll
 # Ret None
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var c (Local c Number(U8) Reg(U8)) Reg(U8) Some([16])
 # Var code (Local code Number(U8) Reg(U8)) Reg(U8) Some([16])
 # Var index (Local index Number(USIZE) Reg(U32)) Reg(U32) Some([20, 21, 22, 23])
-# Var inline_Keyboard_poll_queue_push_5_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_Keyboard_poll_queue_push_5_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_Keyboard_poll_queue_push_5_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_Keyboard_poll_queue_push_5_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_Keyboard_poll_queue_push_5_n (Arg1 n Number(U8)) Reg(U8) Some([16])
 # Var inline_Keyboard_poll_queue_push_5_s (Arg0 s Ptr(Struct("Queue"))) Reg(U32) Some([24, 25, 26, 27])
 # Var inline_Keyboard_poll_queue_push_5_t1d36 (t1d36 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([28, 29, 30, 31])
@@ -1082,7 +1082,7 @@ ff
 # Var inline_Keyboard_poll_queue_push_5_t6778 (t6778 Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))) Reg(U8) Some([16])
 # Var inline_Keyboard_poll_queue_push_5_tc1ff (tc1ff Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }) Reg(U32) Some([40, 41, 42, 43])
 # Var inline_Keyboard_poll_queue_push_5_values (Local values Ptr(Number(U8)) Reg(U32)) Reg(U32) Some([28, 29, 30, 31])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var t0 (static "stdin") Reg(U32) Some([24, 25, 26, 27])
 # Var t12ac (t12ac Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), Ident("c")] })) Reg(U8) Some([16])
 # Var t23a (t23a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 1))) }) Reg(U32) Some([44, 45, 46, 47])
@@ -1098,16 +1098,17 @@ ff
 # Var t7ebd (t7ebd LocalFieldDeref("keyboard", "release_in_progress")) Reg(U8) Some([48])
 # Var t861f (t861f Call(Call { function: "io_ready_to_read", parameters: [] })) Reg(U8) Some([16])
 # Var tac13 (tac13 Ident("c")) Reg(U8) Some([16])
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([49])
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([49]) [0]
 # Var tb62e (tb62e Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Ident("index")) }) Reg(U32) Some([44, 45, 46, 47])
 # Var td18e (td18e Ident("index")) Reg(U32) Some([20, 21, 22, 23])
-# Var td45b (td45b Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }) Reg(U32) Some([44, 45, 46, 47])
-# Var tdaa (tdaa Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }) Reg(U32) Some([24, 25, 26, 27])
+# Var td45b (td45b Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Number(USIZE, 987136) }) Reg(U32) Some([44, 45, 46, 47]) [0, 16, 15, 0]
+# Var tdaa (tdaa Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987136), Number(USIZE, 4)) }) Reg(U32) Some([24, 25, 26, 27]) [4, 16, 15, 0]
 # Var te5cf (te5cf Arithmetic(Add, Ident("index"), Number(USIZE, 2))) Reg(U32) Some([24, 25, 26, 27])
 # Var ted94 (ted94 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(USIZE), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(USIZE, 2))) }) Reg(U32) Some([44, 45, 46, 47])
 # Var tf68c (tf68c Ident("code")) Reg(U8) Some([16])
-# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([49])
+# Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([49]) [1]
 # Var tfff6 (tfff6 AddressOf(Ident("stdin"))) Reg(U32) Some([24, 25, 26, 27])
+# Consts t0: 0n987228/0x000f105cu32
 # Some(t861f) <= call io_ready_to_read() Some('/home/john/lutcomp/programs/lib/Keyboard.j':(16,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }, [Return { value: None }])], else_block: [] }
 # Comparison { op: Equals, left: Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 4)), right: Number(U8, 0) }
@@ -2235,12 +2236,12 @@ ff
 
 # :main
 # Ret Some(U8)
-# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([50])
-# Var inline_main_getchar_7_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
+# Var inline_main_getchar_7_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
 # Var inline_main_getchar_7_ch (Local ch Number(U8) Reg(U8)) Reg(U8) Some([50])
-# Var inline_main_getchar_7_inline_getchar_queue_pop_4_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_main_getchar_7_inline_getchar_queue_pop_4_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_getchar_7_inline_getchar_queue_pop_4_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_main_getchar_7_inline_getchar_queue_pop_4_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_s (Arg0 s Ptr(Struct("Queue"))) Reg(U32) Some([52, 53, 54, 55])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_t1d36 (t1d36 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([56, 57, 58, 59])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_t3ee (t3ee PtrFieldDeref("s", "last")) Reg(U8) Some([60])
@@ -2249,15 +2250,15 @@ ff
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_t565a (t565a Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Array(Number(U8), Some(256))), value: Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") } }) Reg(U32) Some([52, 53, 54, 55])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_t6fdb (t6fdb Arithmetic(Add, PtrFieldDeref("s", "first"), Number(U8, 1))) Reg(U8) Some([50])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_tae11 (tae11 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }) }) Reg(U32) Some([56, 57, 58, 59])
-# Var inline_main_getchar_7_inline_getchar_queue_pop_4_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([50])
+# Var inline_main_getchar_7_inline_getchar_queue_pop_4_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([50]) [0]
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_tb469 (tb469 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: PtrFieldDeref("s", "first") }) Reg(U32) Some([64, 65, 66, 67])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_tb6dd (tb6dd PtrFieldDeref("s", "first")) Reg(U8) Some([68])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_tb702 (tb702 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 256)) }) Reg(U32) Some([72, 73, 74, 75])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_tc1ff (tc1ff Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }) Reg(U32) Some([56, 57, 58, 59])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_value (Local value Number(U8) Reg(U8)) Reg(U8) Some([60])
 # Var inline_main_getchar_7_inline_getchar_queue_pop_4_values (Local values Ptr(Number(U8)) Reg(U32)) Reg(U32) Some([56, 57, 58, 59])
-# Var inline_main_getchar_7_inline_getchar_queue_push_6_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None
-# Var inline_main_getchar_7_inline_getchar_queue_push_6_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_getchar_7_inline_getchar_queue_push_6_PS2_SCAN_CODE_TO_ASCII (const "PS2_SCAN_CODE_TO_ASCII") Const(PS2_SCAN_CODE_TO_ASCII) None [0..8]=[0, 0, 0, 0, 0, 0, 0, 0] of 1025
+# Var inline_main_getchar_7_inline_getchar_queue_push_6_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_getchar_7_inline_getchar_queue_push_6_n (Arg1 n Number(U8)) Reg(U8) Some([50])
 # Var inline_main_getchar_7_inline_getchar_queue_push_6_s (Arg0 s Ptr(Struct("Queue"))) Reg(U32) Some([56, 57, 58, 59])
 # Var inline_main_getchar_7_inline_getchar_queue_push_6_t1d36 (t1d36 Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(USIZE), value: Ident("values") }) Reg(U32) Some([64, 65, 66, 67])
@@ -2270,27 +2271,33 @@ ff
 # Var inline_main_getchar_7_inline_getchar_queue_push_6_t6778 (t6778 Arithmetic(Add, PtrFieldDeref("s", "last"), Number(U8, 1))) Reg(U8) Some([50])
 # Var inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff (tc1ff Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(USIZE), value: Ident("s") }, Number(USIZE, 260)) }) Reg(U32) Some([80, 81, 82, 83])
 # Var inline_main_getchar_7_inline_getchar_queue_push_6_values (Local values Ptr(Number(U8)) Reg(U32)) Reg(U32) Some([64, 65, 66, 67])
-# Var inline_main_getchar_7_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
+# Var inline_main_getchar_7_lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
 # Var inline_main_getchar_7_t0 (static "stdin") Reg(U32) Some([52, 53, 54, 55])
 # Var inline_main_getchar_7_t1 (static "stdin") Reg(U32) Some([52, 53, 54, 55])
 # Var inline_main_getchar_7_t861f (t861f Call(Call { function: "io_ready_to_read", parameters: [] })) Reg(U8) Some([50])
-# Var inline_main_getchar_7_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([60])
+# Var inline_main_getchar_7_tb36e (tb36e Number(U8, 0)) Reg(U8) Some([60]) [0]
 # Var inline_main_getchar_7_tb816 (tb816 TtyIn) Reg(U8) Some([50])
 # Var inline_main_getchar_7_tc9d5 (tc9d5 Call(Call { function: "Keyboard_poll", parameters: [] })) Reg(U8) Some([50])
 # Var inline_main_getchar_7_tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([50])
 # Var inline_main_getchar_7_te31 (te31 Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] })) Reg(U8) Some([50])
 # Var inline_main_getchar_7_tf0b5 (tf0b5 Arithmetic(And, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(U8, 1))) Reg(U8) Some([50])
 # Var inline_main_getchar_7_tfff6 (tfff6 AddressOf(Ident("stdin"))) Reg(U32) Some([56, 57, 58, 59])
-# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None
-# Var t1501 (t1501 Number(U8, 113)) Reg(U8) Some([60])
-# Var t6100 (t6100 Number(U8, 72)) Reg(U8) Some([50])
-# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([50])
-# Var tc49a (tc49a Number(U8, 105)) Reg(U8) Some([50])
-# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([50])
+# Var lcd_row_start (const "lcd_row_start") Const(lcd_row_start) None [0, 64, 20, 84]
+# Var t1501 (t1501 Number(U8, 113)) Reg(U8) Some([60]) [113]
+# Var t6100 (t6100 Number(U8, 72)) Reg(U8) Some([50]) [72]
+# Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([50]) [0]
+# Var tc49a (tc49a Number(U8, 105)) Reg(U8) Some([50]) [105]
+# Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([50]) [10]
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([68])
-# Var tebdf (tebdf Number(U8, 58)) Reg(U8) Some([50])
-# Var tf089 (tf089 Number(U8, 33)) Reg(U8) Some([50])
-# Var tfc57 (tfc57 Number(U8, 62)) Reg(U8) Some([50])
+# Var tebdf (tebdf Number(U8, 58)) Reg(U8) Some([50]) [58]
+# Var tf089 (tf089 Number(U8, 33)) Reg(U8) Some([50]) [33]
+# Var tfc57 (tfc57 Number(U8, 62)) Reg(U8) Some([50]) [62]
+# Consts t1501: 0n113/0x71u8
+# Consts t6100: 0n72/0x48u8
+# Consts tc49a: 0n105/0x69u8
+# Consts tebdf: 0n58/0x3au8
+# Consts tf089: 0n33/0x21u8
+# Consts tfc57: 0n62/0x3eu8
 # t6100 <- 0n72/0x48u8  Some('programs/test/echo.j':(4,5))
 # TtyOut { value: Number(U8, 72) }
 # Number(U8, 72)
