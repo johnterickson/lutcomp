@@ -12,6 +12,7 @@ use packed_struct::prelude::*;
 extern crate bitflags;
 
 bitflags! {
+    #[derive(Copy, Clone, PartialEq, Eq)]
     pub struct Flags: u8 {
         const CARRY = 0b0001;
         const ZERO = 0b0010;
@@ -27,6 +28,66 @@ bitflags! {
     }
 }
 
+// https://github.com/bitflags/bitflags/pull/328/files
+impl std::fmt::Debug for Flags {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let mut first = true;
+        
+        if self.contains(Flags::CARRY) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "CARRY")?;
+        }
+        
+        if self.contains(Flags::ZERO) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "ZERO")?;
+        }
+
+        if self.contains(Flags::NEG) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "NEG")?;
+        }
+
+        if self.contains(Flags::CARRY_PENDING) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "CARRY_PENDING")?;
+        }
+
+        if self.contains(Flags::MULTI_OPCODE_INSTRUCTION) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "MULTI_OPCODE_INSTRUCTION")?;
+        }
+
+        if self.contains(Flags::ARITHMETIC) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "ARITHMETIC")?;
+        }
+
+        if self.contains(Flags::INTERRUPTS_ENABLED) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "INTERRUPTS_ENABLED")?;
+        }
+
+        if self.contains(Flags::CHANGE_INTERRUPTS) {
+            if !first { write!(f, " | ")?; }
+            first = false;
+            write!(f, "CHANGE_INTERRUPTS")?;
+        }
+
+        if first {
+            write!(f, "INITIAL")?;
+        }
+
+        Ok(())
+    }
+}
 
 #[derive(Clone, Copy, Display, Debug, PartialEq, Eq)]
 #[derive(EnumCount, EnumIter, EnumString)]
