@@ -1076,6 +1076,11 @@
       </elementAttributes>
       <pos x="700" y="1820"/>
     </visualElement>
+    <visualElement>
+      <elementName>Const</elementName>
+      <elementAttributes/>
+      <pos x="740" y="1840"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -1309,6 +1314,10 @@
     <wire>
       <p1 x="-220" y="1840"/>
       <p2 x="-140" y="1840"/>
+    </wire>
+    <wire>
+      <p1 x="740" y="1840"/>
+      <p2 x="760" y="1840"/>
     </wire>
     <wire>
       <p1 x="-780" y="2100"/>
