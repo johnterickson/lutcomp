@@ -1,4 +1,4 @@
-
+[![Rust](https://github.com/johnterickson/lutcomp/actions/workflows/rust.yml/badge.svg)](https://github.com/johnterickson/lutcomp/actions/workflows/rust.yml)
 
 
 # computer  
