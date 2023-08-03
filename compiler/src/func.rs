@@ -96,6 +96,21 @@ impl FunctionDefinition {
         }
     }
 
+    #[cfg(target_family = "windows")]
+    fn normalize_path_dirs(path: &mut String) {
+        *path = path.replace('\\', "/");
+    }
+
+    #[cfg(not(target_family = "windows"))]
+    fn normalize_path_dirs(path: &mut String) { }
+
+    fn normalize_path(path: &mut String) {
+        Self::normalize_path_dirs(path);
+        if let Some(index) = path.match_indices("/lutcomp/").next().map(|(i,_)| i) {
+            *path = path.split_off(index);
+        }
+    }
+
     pub fn parse(path: &Path, ctxt: &ProgramContext, pair: pest::iterators::Pair<Rule>) -> FunctionDefinition {
         assert_eq!(Rule::function, pair.as_rule());
 
@@ -137,9 +152,7 @@ impl FunctionDefinition {
             .map(|p| {
                 let pos = p.as_span().start_pos().line_col();
                 let mut path = path.display().to_string();
-                if let Some(index) = path.match_indices("/lutcomp/").next().map(|(i,_)| i) {
-                    path = path.split_off(index);
-                }
+                Self::normalize_path(&mut path);
                 (Statement::parse(p), Source {path, pos})
             }).collect();
 
