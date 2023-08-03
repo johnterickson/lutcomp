@@ -23,25 +23,33 @@ pushd deps/Digital
 mvn package -DskipTests > /dev/null
 popd
 
+echo Run Digital tests
+cp circuit/echo.j.hex circuit/rom.hex
+proc_count=$(cat /proc/cpuinfo | grep '^processor\s' | wc -l)
+test_cmd="java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ"
+(find circuit/*.dig | xargs -P $proc_count -I % $test_cmd %) || \
+  (find circuit/*.dig | xargs --verbose -P 1 -I % $test_cmd %)
+
 echo "Build unit tester"
 pushd digital_tester
 mvn compile  > /dev/null
 popd
 
-echo Run Digital tests
-cp circuit/echo.j.hex circuit/rom.hex
-(find circuit/*.dig | xargs -P $(cat /proc/cpuinfo | grep '^processor\s' | wc -l) -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %) || \
-  (find circuit/*.dig | xargs --verbose -P 1 -I % java -cp deps/Digital/target/Digital.jar CLI test -verbose -circ %)
+if [[ -z "${WINDIR}" ]]; then
+  class_path_separator=":"
+else
+  class_path_separator=";"
+fi
 
-export RunTest="java -cp digital_tester/target/classes:deps/Digital/target/Digital.jar com.johnterickson.App circuit/lutcomp.dig"
+RunTest="java -cp \"digital_tester/target/classes$(echo $class_path_separator)deps/Digital/target/Digital.jar\" com.johnterickson.App circuit/lutcomp.dig"
 
 echo "run echo assembly"
 cp circuit/echo.asm.hex circuit/rom.hex
-$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" "input=$(printf 'Yo!\nq\n')"
+eval "$RunTest \"expected=$(printf 'Hi!\n>:Yo!\n>:q')\" \"input=$(printf 'Yo!\nq\n')\""
 
 echo "run echo compiled"
 cp circuit/echo.j.hex circuit/rom.hex
-$RunTest "expected=$(printf 'Hi!\n>:Yo!\n>:q')" "input=$(printf 'Yo!\nq\n')"
+eval "$RunTest \"expected=$(printf 'Hi!\n>:Yo!\n>:q')\" \"input=$(printf 'Yo!\nq\n')\""
 
 echo "run RPN in simulator"
 output=$(echo "6 7 * q" | cargo run --release --quiet -- compile programs/app/rpn.j --sim=true 2>&1 1>circuit/rpn.hex)
@@ -53,15 +61,15 @@ fi
 
 echo "run RPN in Digital ROM"
 cp circuit/rpn.hex circuit/rom.hex
-$RunTest "expected=$(printf 'RPN\n42\n')" "input=6 7 * q"
+eval "$RunTest \"expected=$(printf 'RPN\n42\n')\" \"input=6 7 * q\""
 
 echo "test ttyin interrupts"
 cp circuit/keyboard_isr.hex circuit/rom.hex
-$RunTest keyboard=TTYIN expected=abc input=abcq
+eval "$RunTest keyboard=TTYIN expected=abc input=abcq"
 
 echo "test PS2 interrupts"
 cp circuit/keyboard_isr.hex circuit/rom.hex
-$RunTest keyboard=PS2-Keyboard expected=abc input=abcq
+eval "$RunTest keyboard=PS2-Keyboard expected=abc input=abcq"
 
 echo "Upload echo to RAM and run it"
 cargo run -q --release -- compile programs/test/hello_ram.j --image_base_address=080400 > circuit/hello_ram.hex
@@ -83,7 +91,7 @@ fi
 
 echo "Upload echo to Digital RAM and run it"
 cp circuit/bootram.hex circuit/rom.hex
-(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex) | $RunTest "expected=$(printf 'READY\nHi_from_RAM!')"
+(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex) | eval "$RunTest \"expected=$(printf 'READY\nHi_from_RAM!')\""
 
 echo "copying rpn to ROM for tinkering"
 cp circuit/rpn.hex circuit/rom.hex

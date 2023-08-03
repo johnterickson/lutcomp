@@ -1,9 +1,5 @@
 package com.johnterickson;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-
 import de.neemann.digital.gui.components.terminal.Keyboard;
 import de.neemann.digital.gui.components.terminal.Keyboard.KeyboardInterface;
 
