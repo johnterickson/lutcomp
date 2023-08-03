@@ -20,6 +20,7 @@ jobs:
         submodules: 'recursive'
     - name: install deps
       run: |
+        sudo apt update
         sudo apt install "ghdl*"
         ghdl --version
         ghdl-llvm --version
