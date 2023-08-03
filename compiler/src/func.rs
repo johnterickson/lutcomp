@@ -136,7 +136,11 @@ impl FunctionDefinition {
         let body : Vec<_> = body.into_inner()
             .map(|p| {
                 let pos = p.as_span().start_pos().line_col();
-                (Statement::parse(p), Source {path: path.display().to_string(), pos})
+                let mut path = path.display().to_string();
+                if let Some(index) = path.match_indices("/lutcomp/").next().map(|(i,_)| i) {
+                    path = path.split_off(index);
+                }
+                (Statement::parse(p), Source {path, pos})
             }).collect();
 
         // find vars
