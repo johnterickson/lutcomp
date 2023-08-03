@@ -102,7 +102,7 @@ impl FunctionDefinition {
     }
 
     #[cfg(not(target_family = "windows"))]
-    fn normalize_path_dirs(path: &mut String) { }
+    fn normalize_path_dirs(_path: &mut String) { }
 
     fn normalize_path(path: &mut String) {
         Self::normalize_path_dirs(path);
