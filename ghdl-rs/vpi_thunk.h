@@ -30,17 +30,17 @@
 
 typedef struct {
   vpiHandle  (*vpi_register_systf) (p_vpi_systf_data data);
-  int        (*vpi_vprintf)        (char *fmt, va_list ap);
+  int        (*vpi_vprintf_no)     (char *fmt, void* ap);
   PLI_UINT32 (*vpi_mcd_close)      (PLI_UINT32 mcd);
   char*      (*vpi_mcd_name)       (PLI_UINT32 mcd);
   PLI_UINT32 (*vpi_mcd_open)       (char *name);
   PLI_UINT32 (*vpi_mcd_open_x)     (char *name, char *mode);
-  int        (*vpi_mcd_vprintf)    (PLI_UINT32 mcd, char *fmt, va_list ap);
+  int        (*vpi_mcd_vprintf_no) (PLI_UINT32 mcd, char *fmt, void* ap);
   int        (*vpi_mcd_fputc)      (PLI_UINT32 mcd, unsigned char x);
   int        (*vpi_mcd_fgetc)      (PLI_UINT32 mcd);
   vpiHandle  (*vpi_register_cb)    (p_cb_data data);
   int        (*vpi_remove_cb)      (vpiHandle ref);
-  void       (*vpi_sim_vcontrol)   (int operation, va_list ap);
+  void       (*vpi_sim_vcontrol_no)(int operation, void* ap);
   vpiHandle  (*vpi_handle)         (int type, vpiHandle ref);
   vpiHandle  (*vpi_iterate)        (int type, vpiHandle ref);
   vpiHandle  (*vpi_scan)           (vpiHandle iter);

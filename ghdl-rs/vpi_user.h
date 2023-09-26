@@ -963,11 +963,11 @@ XXTERN PLI_INT32    vpi_put_data        PROTO_PARAMS((PLI_INT32 id,
 XXTERN void        *vpi_get_userdata    PROTO_PARAMS((vpiHandle obj));
 XXTERN PLI_INT32    vpi_put_userdata    PROTO_PARAMS((vpiHandle obj,
                                                       void *userdata));
-XXTERN PLI_INT32    vpi_vprintf         PROTO_PARAMS((PLI_BYTE8 *format,
-                                                      va_list ap));
-XXTERN PLI_INT32    vpi_mcd_vprintf     PROTO_PARAMS((PLI_UINT32 mcd,
+XXTERN PLI_INT32    vpi_vprintf_NO      PROTO_PARAMS((PLI_BYTE8 *format,
+                                                      void* ap));
+XXTERN PLI_INT32    vpi_mcd_vprintf_NO  PROTO_PARAMS((PLI_UINT32 mcd,
                                                       PLI_BYTE8 *format,
-                                                      va_list ap));
+                                                      void* ap));
 XXTERN PLI_INT32    vpi_flush           PROTO_PARAMS((void));
 XXTERN PLI_INT32    vpi_mcd_flush       PROTO_PARAMS((PLI_UINT32 mcd));
 XXTERN PLI_INT32    vpi_control         PROTO_PARAMS((PLI_INT32 operation,
