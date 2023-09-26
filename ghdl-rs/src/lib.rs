@@ -23,6 +23,9 @@ extern crate packed_struct;
 extern crate packed_struct_codegen;
 use packed_struct::prelude::*;
 
+extern crate libc;
+use libc::c_char;
+
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::ffi::CStr;
@@ -331,7 +334,7 @@ impl GhdlDevice {
                 time: null_mut(),
                 value: null_mut(),
                 index: 0,
-                user_data: self as *mut GhdlDevice as *mut u8
+                user_data: self as *mut GhdlDevice as *mut c_char
             };
             // dbg!(cb.user_data as *mut c_void);
             self.thunk.vpi_register_cb.unwrap()(&mut cb)
@@ -399,7 +402,7 @@ impl GhdlDevice {
             let mut val: s_vpi_value = std::mem::zeroed();
             val.format = vpiBinStrVal as i32;
             let new_val = CString::new(new_val).unwrap();
-            val.value.str_ = new_val.as_ptr() as *mut u8;
+            val.value.str_ = new_val.as_ptr() as *mut libc::c_char;
             let mut time = t_vpi_time {
                 type_: vpiSimTime as i32,
                 high: 0,
