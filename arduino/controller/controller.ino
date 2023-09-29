@@ -80,7 +80,7 @@ unsigned long lastBootMs = 0;
 bool paused = false;
 bool halted = false;
 bool debug = false;
-#define DELAY_US  2
+#define DELAY_US  4
 #define INNER_TICKS (4*8)
 
 

@@ -28,8 +28,15 @@ fn counter2(n:u8) -> u8 {
     return globalc;
 }
 
-fn test2(n: u8) -> u8 {
-    counter2(0);
-    counter2(n);
-    return counter2(n);
+fn [inline] equal(n: u8, nn: u8) -> u8 {
+    globalc = n;
+    if (globalc != nn) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+fn inlined(n: u8, nn: u8) -> u8 {
+    return equal(n, nn);
 }

@@ -7,6 +7,12 @@ static stdin: Queue;
 static lcd_enable: u8;
 static keyboard_enable: u8;
 
+fn stdio_init_only_serial() {
+    lcd_enable = 0;
+    keyboard_enable = 0;
+    queue_init(&stdin);
+}
+
 fn stdio_init() {
     lcd_enable = 1;
     keyboard_enable = 1;

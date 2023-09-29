@@ -814,11 +814,22 @@ mod tests {
     #[test]
     fn statics_global() {
         test_var_inputs(
-            "test2",
+            "equal",
             include_str!("../../programs/test/static.j"),
             &[
-                (vec![1u8.into()],2u8.into()),
-                (vec![2u8.into()],4u8.into()),
+                (vec![1u8.into(),1u8.into()],1u8.into()),
+                (vec![2u8.into(),4u8.into()],0u8.into()),
+                ]);
+    }
+
+    #[test]
+    fn statics_global_inlined() {
+        test_var_inputs(
+            "inlined",
+            include_str!("../../programs/test/static.j"),
+            &[
+                (vec![1u8.into(),1u8.into()],1u8.into()),
+                (vec![2u8.into(),4u8.into()],0u8.into()),
                 ]);
     }
 
