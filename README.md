@@ -1,6 +1,8 @@
 [![Rust](https://github.com/johnterickson/lutcomp/actions/workflows/rust.yml/badge.svg)](https://github.com/johnterickson/lutcomp/actions/workflows/rust.yml)
 
 
+`picocom /dev/ttyUSB0 --baud 2000000 --imap lfcrlf --omap crlf --echo`
+
 # computer  
 
 ## todo

@@ -73,7 +73,7 @@ eval "$RunTest keyboard=PS2-Keyboard expected=abc input=abcq"
 
 echo "Upload echo to RAM and run it"
 cargo run -q --release -- compile programs/test/hello_ram.j --image_base_address=080400 > circuit/hello_ram.hex
-output=$(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex | cargo run -q --release -- compile programs/app/bootram.j --sim=true --block_for_stdin=true 2>&1 1>circuit/bootram.hex)
+output=$(cargo run -q --release -- program_ram --hex_path=./circuit/hello_ram.hex | cargo run -q --release -- compile programs/app/bootram.j --sim=true --block_for_stdin=true --profile=true 2>&1 1>circuit/bootram.hex)
 expected="$(printf 'READY\nHi_from_RAM!')"
 if [ "$expected" != "$output" ]; then
     echo "$output != $expected"

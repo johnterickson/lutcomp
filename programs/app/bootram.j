@@ -17,6 +17,8 @@ fn main() -> u8 {
     putc('Y');
     putc(10);
 
+    lcd_enable = 0;
+
     p_byte: &u8 = ((0x0) AS &u8);
 
     while (0 == 0) {
@@ -26,12 +28,14 @@ fn main() -> u8 {
         if (ch == 'g') {
             static calc: RpnCalc;
 
+            lcd_enable = 1;
             putc('R');
             putc('P');
             putc('N');
             putc(10);
             RpnCalc_init(&calc);
             RpnCalc_run(&calc);
+            lcd_enable = 0;
         }
         else if (ch == 'r') {
             p_byte = ((addr) AS &u8);
@@ -67,6 +71,7 @@ fn main() -> u8 {
             return 0;
         }
         else if (ch == 'i') {
+            lcd_enable = 1;
             putc('B');
             putc('o');
             putc('o');
@@ -75,6 +80,7 @@ fn main() -> u8 {
             putc('a');
             putc('m');
             putc(10);
+            lcd_enable = 0;
         }
         else {
             putc('H');

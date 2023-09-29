@@ -800,9 +800,20 @@ mod tests {
 
 
     #[test]
-    fn statics() {
+    fn statics_local() {
         test_var_inputs(
-            "main",
+            "test1",
+            include_str!("../../programs/test/static.j"),
+            &[
+                (vec![1u8.into()],2u8.into()),
+                (vec![2u8.into()],4u8.into()),
+                ]);
+    }
+
+    #[test]
+    fn statics_global() {
+        test_var_inputs(
+            "test2",
             include_str!("../../programs/test/static.j"),
             &[
                 (vec![1u8.into()],2u8.into()),

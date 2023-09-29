@@ -4,8 +4,12 @@
 !include 'Queue.j'
 
 static stdin: Queue;
+static lcd_enable: u8;
+static keyboard_enable: u8;
 
 fn stdio_init() {
+    lcd_enable = 1;
+    keyboard_enable = 1;
     queue_init(&stdin);
     lcd_init();
     KeyBoard_init();
@@ -17,7 +21,7 @@ fn [inline] getchar() -> u8 {
     while (ch == 0) {
         if ((io_ready_to_read() & 1) != 0) {
             queue_push(&stdin, ttyin);
-        } else {
+        } else if (keyboard_enable != 0) {
             Keyboard_poll();
         }
 
@@ -29,7 +33,9 @@ fn [inline] getchar() -> u8 {
 
 fn [inline] putc(c: u8) {
     io_write0(c);
-    lcd_putc(c);
+    if (lcd_enable != 0) {
+        lcd_putc(c);
+    }
 }
 
 fn [inline] readline(buf:&u8) {

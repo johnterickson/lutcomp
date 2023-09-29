@@ -1,0 +1,7 @@
+{
+    "configuration": "cpu=atmega2560",
+    "board": "arduino:avr:mega",
+    "sketch": "arduino/controller/controller.ino",
+    "port": "/dev/ttyUSB0",
+    "intelliSenseGen": "disable"
+}

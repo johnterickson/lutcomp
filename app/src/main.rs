@@ -150,7 +150,7 @@ fn main() {
                     hits.sort_by(|a,b| a.1.cmp(b.1).reverse().then_with(|| a.0.cmp(b.0)));
                     hits.truncate(10);
                     for h in &hits {
-                        print!("hits:{}", h.1);
+                        print!("# hits:{}", h.1);
 
                         if let Some(f) = rom.find_containing_function(*h.0) {
                             println!(" pc:{:05x}={}+0x{:x}", h.0, f.2, *h.0 - f.0);
@@ -160,7 +160,7 @@ fn main() {
 
                         if let Some(sym) = rom.symbols.get(h.0) {
                             for line in &sym.notes {
-                                println!(" {}", line);
+                                println!("# {}", line);
                             }
                         }
                     }
