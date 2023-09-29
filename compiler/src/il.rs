@@ -65,7 +65,7 @@ impl Display for IlVarId {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IlVarInfo {
     pub description: String,
     pub location: IlLocation,
@@ -176,7 +176,7 @@ impl IlFunction {
 
     fn alloc_tmp(&mut self, info: IlVarInfo) -> IlVarId {
         let id = IlVarId(format!("t{}", self.next_temp_num));
-        self.vars.insert(id.clone(), info);
+        assert!(self.vars.insert(id.clone(), info).is_none());
         self.next_temp_num += 1;
         id
     }
@@ -206,7 +206,10 @@ impl IlFunction {
                     location,
                     constant: e.try_get_const().map(|c| c.to_le_bytes().iter().take(byte_size as usize).cloned().collect()),
                 };
-                self.vars.insert(id.clone(), info);
+                if Some(&info) != self.vars.get(&id) {
+                    assert!(self.vars.insert(id.clone(), info.clone()).is_none(),
+                        "Could not add {}={:?} as it is already {:?}.", &id, &info, self.vars[&id]);
+                }
             }
             Some(existing) => {
                 assert_eq!(existing, &full_hash);
@@ -227,7 +230,7 @@ impl IlFunction {
 
     fn alloc_named(&mut self, name: String, info: IlVarInfo) -> IlVarId {
         let id = IlVarId(name);
-        self.vars.insert(id.clone(), info);
+        assert!(self.vars.insert(id.clone(), info).is_none());
         id
     }
 
@@ -983,8 +986,9 @@ impl IlFunction {
             n => Some(n.try_into().unwrap())
         };
 
+        // bring global statics into scope
         for (name, (var_type, val)) in &ctxt.program.consts {
-            func.vars.insert(
+            assert!(func.vars.insert(
                 IlVarId(name.to_owned()),
                 IlVarInfo {
                     description: format!("global const {:?}", &name),
@@ -992,25 +996,23 @@ impl IlFunction {
                     byte_size: var_type.byte_count(ctxt.program),
                     var_type: var_type.clone(),
                     constant: Some(val.clone()),
-                });
+                }).is_none());
         }
 
-        for (name, var_type) in &ctxt.program.statics {
-            let byte_size = var_type.byte_count(ctxt.program);
-            func.vars.insert(
-                IlVarId(name.to_owned()),
+        // bring global statics into scope
+        for ((f, name), info) in &ctxt.il.statics {
+            if f.is_some() {
+                continue;
+            }
+            assert!(func.vars.insert(
+                name.to_owned(),
                 IlVarInfo {
-                    description: format!("global static {:?}", &name),
-                    location: IlLocation::Static(ctxt.next_static_addr),
-                    byte_size: byte_size,
-                    var_type: var_type.clone(),
+                    description: format!("local view of global static {:?}", &name),
+                    location: info.location.clone(),
+                    byte_size: info.byte_size,
+                    var_type: info.var_type.clone(),
                     constant: None,
-                });
-
-            ctxt.next_static_addr += byte_size;
-            ctxt.next_static_addr += 3;
-            ctxt.next_static_addr /= 4;
-            ctxt.next_static_addr *= 4;
+                }).is_none());
         }
         
         for (i, (name, var_type)) in ctxt.func_def.args.iter().enumerate() {
@@ -1811,10 +1813,10 @@ impl IlProgram {
 
                         callee_var_to_caller_inlined_var.insert(var_id.clone(), inlined_name.clone());
 
-                        caller.vars.insert(
+                        assert!(caller.vars.insert(
                             inlined_name,
                             inlined_var
-                        );
+                        ).is_none());
                     }
 
                     caller.increase_stack_size(callee.vars_stack_size);

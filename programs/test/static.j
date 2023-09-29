@@ -40,3 +40,22 @@ fn [inline] equal(n: u8, nn: u8) -> u8 {
 fn inlined(n: u8, nn: u8) -> u8 {
     return equal(n, nn);
 }
+
+fn set(n: u8) -> u8 {
+    globalc = n;
+    return globalc;
+}
+
+fn get() -> u8 {
+    return globalc;
+}
+
+fn test3(n: u8) -> u8 {
+    if (n != set(n)) {
+        return 1;
+    } else if (n != get()) {
+        return 2;
+    } else {
+        return 0;
+    }
+}

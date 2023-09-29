@@ -834,6 +834,17 @@ mod tests {
     }
 
     #[test]
+    fn statics_global_shared_across_functions() {
+        test_var_inputs(
+            "test3",
+            include_str!("../../programs/test/static.j"),
+            &[
+                (vec![17u8.into()],0u8.into()),
+                (vec![18u8.into()],0u8.into()),
+                ]);
+    }
+
+    #[test]
     fn add_uptr() {
         test_inputs(
             "main",
