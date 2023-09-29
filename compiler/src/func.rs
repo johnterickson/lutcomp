@@ -45,11 +45,9 @@ impl FunctionDefinition {
             Some((&Scope::Static, var_type))
         } else  if let Some(var_type) = ctxt.statics.get(name) {
             Some((&Scope::Static, var_type))
-        }
-        else if let Some((s,t)) = self.vars.get(name) {
+        } else if let Some((s,t)) = self.vars.get(name) {
             Some((s,t))
-        }
-        else if let Some((_,t)) = self.args.iter().filter(|(n,_)| n == name).next() {
+        } else if let Some((_,t)) = self.args.iter().filter(|(n,_)| n == name).next() {
             Some((&Scope::Local, t))
         } else {
             None
@@ -162,7 +160,7 @@ impl FunctionDefinition {
         let mut find_vars  = |name: &String, scope: Option<&Scope>, var_type: Option<&Type>| {
             if let Some(var_type) = var_type {
                 let scope = scope.unwrap_or(&Scope::Local);
-                if !vars.contains_key(name) && !args.iter().any(|a|&a.0 == name) {
+                if !vars.contains_key(name) && !args.iter().any(|a|&a.0 == name)  && !ctxt.statics.contains_key(name) {
                     vars.insert(name.clone(), (*scope, var_type.clone()));
                 }
             }
@@ -176,7 +174,8 @@ impl FunctionDefinition {
             if let Some(declared_type) = var_type {
                 let existing = vars.get(name)
                     .map(|(scope, var_type)| (scope, var_type))
-                    .or_else(|| args.iter().filter(|(n,_)| n == name).map(|a| (&Scope::Local, &a.1)).next());
+                    .or_else(|| args.iter().filter(|(n,_)| n == name).map(|a| (&Scope::Local, &a.1)).next())
+                    .or_else(|| ctxt.statics.get(name).map(|t| (&Scope::Static, t)));
                 match existing {
                     Some((existing_scope, existing_type)) => {
                         if existing_type != declared_type {

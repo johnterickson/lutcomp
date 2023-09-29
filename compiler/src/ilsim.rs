@@ -4,6 +4,7 @@ use crate::il::*;
 use std::collections::VecDeque;
 use std::collections::btree_map::Entry;
 
+#[derive(Debug)]
 struct SimulationContext<'a> {
     program: &'a IlProgram,
     entry_function: &'a IlFunctionId,
@@ -109,7 +110,7 @@ impl IlFunction {
                 IlInstruction::Unreachable => panic!(),
                 IlInstruction::Comment(_) | IlInstruction::Label(_) => {},
                 IlInstruction::AssignVar { dest, src , size, dest_range, src_range} => {
-                    let value = *vars.get(src).unwrap();
+                    let value = *vars.get(src).expect(&format!("Could not find var {}.", src));
 
                     let value = if let Some(src_range) = src_range {
                         match value {
@@ -441,7 +442,7 @@ impl IlFunction {
 mod tests {
     use std::borrow::Cow;
 
-    use crate::{backend::emit_assembly};
+    use crate::backend::emit_assembly;
 
     use super::*;
 
