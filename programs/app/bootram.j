@@ -8,7 +8,7 @@ fn main() -> u8 {
     ch: u8 = 0;
     buf: u8[20];
 
-    stdio_init_only_serial();
+    stdio_init();
 
     putc('R');
     putc('E');
@@ -16,6 +16,8 @@ fn main() -> u8 {
     putc('D');
     putc('Y');
     putc(10);
+
+    lcd_enable = 0;
 
     p_byte: &u8 = ((0x0) AS &u8);
 
@@ -70,6 +72,7 @@ fn main() -> u8 {
             return 0;
         }
         else if (ch == 'i') {
+            lcd_enable = 1;
             putc('B');
             putc('o');
             putc('o');
@@ -78,6 +81,7 @@ fn main() -> u8 {
             putc('a');
             putc('m');
             putc(10);
+            lcd_enable = 0;
         }
         else {
             putc('H');

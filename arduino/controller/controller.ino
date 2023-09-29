@@ -26,7 +26,7 @@ const int DATA_PINS[] = {
 
 #elif defined(ARDUINO_AVR_MEGA2560)
 
-//#define ENABLE_WIFI
+#define ENABLE_WIFI
 
 const int
   RESET_ = 7,
@@ -80,7 +80,7 @@ unsigned long lastBootMs = 0;
 bool paused = false;
 bool halted = false;
 bool debug = false;
-#define DELAY_US  4
+#define DELAY_US  2
 #define INNER_TICKS (4*8)
 
 
@@ -290,7 +290,7 @@ void checkSerial() {
   //Serial.println("CHECK SERIAL END");
 }
 
-void reset() {
+void shutdown() {
   //Serial.println("RESETING...");
   digitalWrite(CLK, LOW);
   digitalWrite(RESET_, LOW);
@@ -303,11 +303,22 @@ void reset() {
   delay(100);
   ttlToArduinoQueue.clean();
   arduinoToTtlQueue.clean();
+  halted = true;
+}
+
+void startup() {
+  ttlToArduinoQueue.clean();
+  arduinoToTtlQueue.clean();
   tickCount = 0;
   lastBootMs = millis();
   halted = false;
   digitalWrite(RESET_, HIGH);
   //Serial.println("RUNNING...");
+}
+
+void reset() {
+  shutdown();
+  startup();
 }
 
 void loop() {
@@ -353,7 +364,7 @@ void loop() {
 
 void setup() {
   initOutput(LED, LOW);
-  initOutput(RESET_, HIGH);
+  initOutput(RESET_, LOW);
   initOutput(CLK, LOW);
   initOutput(TTYIN_RTR, LOW);
   pinMode(HALT, INPUT);
@@ -373,6 +384,8 @@ void setup() {
     Serial.flush();
     return;
   }
+
+  shutdown();
 
 #if defined(ENABLE_WIFI)
   memset(&wifiConnection, sizeof(wifiConnection), 0);
