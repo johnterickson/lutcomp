@@ -52,8 +52,8 @@ cp circuit/echo.j.hex circuit/rom.hex
 eval "$RunTest \"expected=$(printf 'Hi!\n>:Yo!\n>:q')\" \"input=$(printf 'Yo!\nq\n')\""
 
 echo "run RPN in simulator"
-output=$(echo "6 7 * q" | cargo run --release --quiet -- compile programs/app/rpn.j --sim=true 2>&1 1>circuit/rpn.hex)
-expected="$(printf 'RPN\n42')"
+output=$(echo "6 7 + 3 - 10 * 4 / 6 d q" | cargo run -q --release -- compile programs/app/rpn.j --sim=true --block_for_stdin=true 2>&1 1>circuit/rpn.hex)
+expected="$(printf 'RPN\n13\n10\n100\n25\n0:25\n1:6')"
 if [ "'$expected'" != "'$output'" ]; then
     echo "'$output' != '$expected'"
     exit 1
