@@ -15,9 +15,10 @@ struct SimulationContext<'a> {
 }
 
 impl<'a> SimulationContext<'a> {
-    fn run(&mut self) -> IlNumber {
+    fn run(&mut self) -> (u64, IlNumber) {
         let entry = self.program.functions.get(&self.entry_function).unwrap();
-        entry.simulate(self, &self.entry_args).unwrap()
+        let (ticks, result) = entry.simulate(self, &self.entry_args);
+        (ticks, result.unwrap())
     }
 }
 
@@ -33,8 +34,12 @@ impl IlProgram {
         }
     }
 
-    pub fn simulate(&self, args: &[IlNumber]) -> IlNumber {
+    pub fn simulate_with_ticks(&self, args: &[IlNumber]) -> (u64, IlNumber) {
         self.create_sim(args).run()
+    }
+
+    pub fn simulate(&self, args: &[IlNumber]) -> IlNumber {
+        self.create_sim(args).run().1
     }
 }
 
@@ -53,7 +58,7 @@ impl IlFunction {
             .next()
     }
 
-    fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> Option<IlNumber> {
+    fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> (u64, Option<IlNumber>) {
         let mut vars: BTreeMap<&IlVarId, IlNumber> = BTreeMap::new();
 
         let last_const_addr = ROM_MAX;
@@ -77,7 +82,9 @@ impl IlFunction {
         let frame_pointer = IlVarId::frame_pointer();
 
         let mut s_index = 0;
+        let mut ticks = 0;
         loop {
+            ticks += 1;
             if let Some(fp) = vars.get(&frame_pointer) {
                 ctxt.stack_pointer = fp.as_u32();
             }
@@ -364,7 +371,9 @@ impl IlFunction {
                             _ => todo!(),
                         }
                     } else {
-                       f.simulate(ctxt, &args)
+                       let (caller_ticks, result) = f.simulate(ctxt, &args);
+                       ticks += caller_ticks;
+                       result
                     };
 
                     match (result, ret) {
@@ -376,7 +385,7 @@ impl IlFunction {
                     }
                 },
                 IlInstruction::Return { val } => {
-                    return val.as_ref().map(|v| vars[v]);
+                    return (ticks, val.as_ref().map(|v| vars[v]));
                 },
                 IlInstruction::TtyIn { dest } => {
                     {
@@ -1647,7 +1656,7 @@ mod tests {
         // run in IL simulator
         let mut sim = il.create_sim(&args);
         sim.mem.append(&mut mem);
-        let il_result = sim.run();
+        let (_,il_result) = sim.run();
 
         // run in HW simulator
         let hw_sim_args: Vec<_> = args.iter().map(|a| a.as_u32()).collect();

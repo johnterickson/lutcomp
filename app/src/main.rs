@@ -59,6 +59,7 @@ fn main() {
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), false);
                 c.tty.read_stdin = true;
                 while c.step() { }
+                println!("# Tick Count: {}", c.tick_count);
             }
         }
         Some("il") => {
@@ -84,7 +85,9 @@ fn main() {
                 println!();
             }
             if let Some("true") = get_param("sim") {
-                println!("{:?}", il.simulate(&sim_args));
+                let (ticks, result) = il.simulate_with_ticks(&sim_args);
+                println!("# IL Result: {:?}", result);
+                println!("# IL \"Tick\" Count {:?}", ticks);
             }
         }
         Some("compile") => {
@@ -165,6 +168,8 @@ fn main() {
                         }
                     }
                 }
+
+                println!("# Tick Count: {}", c.tick_count);
             }
         }
         Some("make_test") => {
