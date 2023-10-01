@@ -726,11 +726,46 @@ impl IlFunction {
         ctxt.src_ctxt.pop();
     }
 
+    fn try_get_const(&self, e: &Expression, ctxt: &IlContext, var_type: Option<&Type>) -> Option<u32> {
+        match e {
+            Expression::Ident(name) => {
+                if let (Some(var), Some(var_type)) = (self.vars.get(&IlVarId(name.clone())), var_type) {
+                    assert_eq!(var_type, &var.var_type);
+                    if let (Type::Number(_), Some(constant)) =  (var_type, &var.constant) {
+                        assert_eq!(constant.len() as u32, var_type.byte_count(ctxt.program));
+                        let mut bytes = [0u8; 4];
+
+                        if constant.len() > 4 {
+                            None
+                        } else {
+                            for i in 0..=3 {
+                                if constant.len() > i {
+                                    bytes[i] = constant[i];
+                                }
+                            }
+                            // dbg!(&e, &var_type, &var, &constant);
+                            Some(u32::from_le_bytes(bytes))
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            }
+            _ => {
+                e.try_get_const()
+            }
+        }
+    }
+
     fn emit_expression(&mut self, ctxt: &mut IlContext, dest: IlVarId, e: &Expression) {
         // println!("START {:?}", e);
         ctxt.src_ctxt.push(e);
 
-        let e = match (e.try_get_const(), ctxt.try_emit_type(e), e) {
+        let var_type = ctxt.try_emit_type(e);
+
+        let e = match (self.try_get_const(e, ctxt, var_type.as_ref()), var_type, e) {
             (_, _, Expression::Number(_,_)) => Cow::Borrowed(e),
             (Some(n), Some(var_type), _) => {
                 let byte_count = var_type.byte_count(ctxt.program);
@@ -742,10 +777,24 @@ impl IlFunction {
                 };
                 if let Some(nt) = nt {
 
-                    let const_exp = Cow::Owned(Expression::Cast {
-                        old_type: Some(Type::Number(nt)),
-                        new_type: var_type,
-                        value: Box::new(Expression::Number(nt, n)),
+                    let same_type = if let Type::Number(nt2) = var_type {
+                        if nt == nt2 {
+                            Some(Expression::Number(nt, n))
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+
+                    let const_exp = Cow::Owned(if let Some(same_type) = same_type {
+                        same_type
+                    } else {
+                        Expression::Cast {
+                            old_type: Some(Type::Number(nt)),
+                            new_type: var_type,
+                            value: Box::new(Expression::Number(nt, n))
+                        }
                     });
 
                     // println!("CONST {:?} -> {:?}", e, const_exp);
@@ -761,7 +810,7 @@ impl IlFunction {
         match e.as_ref() {
             Expression::Ident(name) => {
                 let info = ctxt.find_arg_or_var(&self, name);
-                // dbg!("{:?}", &info);
+                // dbg!(&info);
                 match info.location {
                     IlLocation::Reg(_) => {
                         let src = IlVarId(name.clone());
@@ -1655,7 +1704,7 @@ impl IlProgram {
 
         for (name, var_type) in &ctxt.statics {
             let byte_count = var_type.byte_count(ctxt);
-            let space_reserved = (byte_count + 4 - 1) / 4 * 4;
+            let space_reserved = round_up(byte_count, 4);
 
             let addr = next_static_addr;
             next_static_addr += space_reserved;

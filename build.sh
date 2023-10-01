@@ -17,6 +17,7 @@ cargo run --release -- compile programs/test/keyboard_poll.j --image_base_addres
 cargo run --release -- compile programs/test/echo_lcd.j > circuit/echo_lcd.hex
 cargo run --release -- compile programs/app/rpn.j >circuit/rpn.hex
 cargo run --release -- compile programs/app/bootram.j >circuit/bootram.hex
+cargo run -q --release -- compile programs/test/queue_perf.j --sim=true --profile=true > circuit/queue_perf.hex
 
 echo "Build Digital fork"
 pushd deps/Digital

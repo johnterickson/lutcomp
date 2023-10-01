@@ -563,6 +563,20 @@ impl std::fmt::Debug for Register {
     }
 }
 
+pub const fn round_up(x: u32, round_to: u32) -> u32
+{
+    let offset = x % round_to;
+    let y = if offset == 0 {
+        x
+    } else {
+        x + (round_to - offset)
+    };
+    assert!(y % round_to == 0);
+    assert!(y >= x);
+    assert!(y < x + round_to);
+    y
+}
+
 pub const MEM_BITS_PER_CHIP: u32 = 19;
 pub const CHIP_ADDRESS_MASK: u32 = (1 << MEM_BITS_PER_CHIP) - 1;
 pub const ADDRESS_BITS: u32 = 20;
@@ -579,6 +593,9 @@ pub const INTERRUPT_ISR: u32 = 0x0F0F0C;
 pub const INTERRUPT_PREVIOUS_PC: u32 = INTERRUPT_ISR-4;
 pub const INTERRUPT_PREVIOUS_FLAGS: u32 = INTERRUPT_PREVIOUS_PC-4;
 pub const INITIAL_STACK: u32 = 0x0F0F00;
+
+pub const STATICS_START_ADDRESS: u32 = round_up(INTERRUPT_ISR, 0x1000);
+
 
 #[derive(Clone,Debug,Default)]
 pub struct Symbol {

@@ -114,8 +114,6 @@ pub fn print_state(c: &Computer) {
     }
 }
 
-pub const STATICS_START_ADDRESS: u32 = (common::INTERRUPT_ISR + 0x1000 - 1) / 0x1000 * 0x1000;
-
 fn parse_file(path: &Path, input: &str, ctxt: &mut ProgramContext) {
     let mut program = ProgramParser::parse(Rule::program, input)
         .unwrap_or_else(|_| panic!("Could not parse `{}`.", input));
@@ -203,7 +201,7 @@ fn parse_file(path: &Path, input: &str, ctxt: &mut ProgramContext) {
                 let var_type = match unresolved_var_type {
                     Type::Array(et, None) => {
                         let element_size = et.byte_count(&ctxt);
-                        let element_count = (const_value.len() as u32 + element_size - 1) / element_size;
+                        let element_count = round_up(const_value.len() as u32, element_size);
                         Type::Array(et, Some(element_count))
                     }
                     _ => unresolved_var_type,
