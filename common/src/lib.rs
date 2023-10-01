@@ -326,12 +326,104 @@ pub enum HaltCode {
     BadInstructionROM = 0xFFFF_FFFF,
 }
 
+pub enum OpcodeArg {
+    RegisterVal{size: u8, reads: bool, writes: bool},
+    ImmediateVal{size: u8},
+    RegisterMemAddress{mem_size: u8, reads_mem: bool, writes_mem: bool},
+    ImmediateMemAddress{mem_size: u8, reads_mem: bool, writes_mem: bool},
+}
+
 pub enum RegOperation {
     Read,
     Write,
 }
 
 impl Opcode {
+    pub const fn args(&self) -> &[OpcodeArg] {
+        match self {
+            Opcode::Init => &[],
+            Opcode::Invert8 | Opcode::Negate8 => &[
+                OpcodeArg::RegisterVal { size: 1, reads: true, writes: true }
+            ],
+            Opcode::ClearCarry => &[],
+            Opcode::LoadImm8 => &[
+                OpcodeArg::RegisterVal { size: 1, reads: false, writes: true },
+                OpcodeArg::ImmediateVal { size: 1 },
+            ],
+            Opcode::Load8 => &[
+                OpcodeArg::RegisterMemAddress { mem_size: 1, reads_mem: true, writes_mem: false },
+                OpcodeArg::RegisterVal { size: 1, reads: false, writes: true },
+            ],
+            Opcode::Store8 => &[
+                OpcodeArg::RegisterVal { size: 1, reads: true, writes: false },
+                OpcodeArg::RegisterMemAddress { mem_size: 1, reads_mem: false, writes_mem: true },
+            ],
+            Opcode::Push8 => todo!(),
+            Opcode::Pop8 => todo!(),
+            Opcode::Copy8 => todo!(),
+            Opcode::Noop => todo!(),
+            Opcode::Mul8_8 => todo!(),
+            Opcode::Mul8_16 => todo!(),
+            Opcode::AddCarry8 => todo!(),
+            Opcode::Add8NoCarry => todo!(),
+            Opcode::Add8NoCarryIn => todo!(),
+            Opcode::Cmp8 => todo!(),
+            Opcode::Cmp8IfZero => todo!(),
+            Opcode::Divide8 => todo!(),
+            Opcode::AndImm8 => todo!(),
+            Opcode::OrImm8 => todo!(),
+            Opcode::XorImm8 => todo!(),
+            Opcode::And8 => todo!(),
+            Opcode::Or8 => todo!(),
+            Opcode::Xor8 => todo!(),
+            Opcode::Shift8 => todo!(),
+            Opcode::LoadImm32 => todo!(),
+            Opcode::Copy32 => todo!(),
+            Opcode::Load32 => todo!(),
+            Opcode::Store32_1 => todo!(),
+            Opcode::Store32_2 => todo!(),
+            Opcode::StoreImm32 => todo!(),
+            Opcode::AddCarry32_1 => todo!(),
+            Opcode::AddCarry32_2 => todo!(),
+            Opcode::AddImm32IgnoreCarry => todo!(),
+            Opcode::Or32 => todo!(),
+            Opcode::And32 => todo!(),
+            Opcode::OrImm32 => todo!(),
+            Opcode::AndImm32 => todo!(),
+            Opcode::In0 => todo!(),
+            Opcode::In1 => todo!(),
+            Opcode::In2 => todo!(),
+            Opcode::In3 => todo!(),
+            Opcode::In4 => todo!(),
+            Opcode::In5 => todo!(),
+            Opcode::In6 => todo!(),
+            Opcode::In7 => todo!(),
+            Opcode::Out0 => todo!(),
+            Opcode::Out1 => todo!(),
+            Opcode::Out2 => todo!(),
+            Opcode::Out3 => todo!(),
+            Opcode::Out4 => todo!(),
+            Opcode::Out5 => todo!(),
+            Opcode::Out6 => todo!(),
+            Opcode::Out7 => todo!(),
+            Opcode::JmpImm => todo!(),
+            Opcode::JcImm => todo!(),
+            Opcode::JzImm => todo!(),
+            Opcode::JnImm => todo!(),
+            Opcode::JmpReg => todo!(),
+            Opcode::JmpMem => todo!(),
+            Opcode::EnableInterrupts => todo!(),
+            Opcode::DisableInterrupts => todo!(),
+            Opcode::ReturnFromInterrupt => todo!(),
+            Opcode::IoReadyToRead => todo!(),
+            Opcode::IoReadyToWrite => todo!(),
+            Opcode::HaltRAM => todo!(),
+            Opcode::GetUcodeInfo => todo!(),
+            Opcode::GetAluInfo => todo!(),
+            Opcode::Halt => todo!(),
+            Opcode::HaltNoCode => todo!(),
+        }
+    }
     pub fn read_regs_args(&self) -> &[u8] {
         match self {
             Opcode::Init => &[],

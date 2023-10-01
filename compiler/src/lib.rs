@@ -54,16 +54,17 @@ pub fn print_state(c: &Computer) {
     
         for stack_offset in [0,4,8,0xc] {
             let stack_mem = sp + stack_offset;
-            print!(" mem[sp");
-            if stack_offset != 0 {
-                print!("+{}", stack_offset);
-            }
-            print!("]:");
             if let Some(stack_slice) = c.try_mem_slice(stack_mem, 4) {
                 let slice: &[u8; 4] = stack_slice.try_into().unwrap();
-                print!("{:08x}", u32::from_le_bytes(*slice));
-            } else {
-                print!("err     ");
+                let val = u32::from_le_bytes(*slice);
+                if val != 0xCCCC_CCCC {
+                    print!(" mem[sp");
+                    if stack_offset != 0 {
+                        print!("+{}", stack_offset);
+                    }
+                    print!("]:");
+                    print!("{:08x}", val);
+                }
             }
         }
     }

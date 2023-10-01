@@ -1186,11 +1186,11 @@ impl IlFunction {
                 found = false;
 
                 for (id, refs) in &refs {
-                    if refs.writes.len() != 1 {
+                    if refs.write_indices.len() != 1 {
                         continue;
                     }
                     // find things that are written to once
-                    let write = &func.body[*refs.writes.iter().next().unwrap()];
+                    let write = &func.body[*refs.write_indices.iter().next().unwrap()];
                     let const_val = match &write.0 {
                         IlInstruction::AssignNumber { dest, src } => {
                             assert_eq!(id, dest);
@@ -1216,19 +1216,19 @@ impl IlFunction {
         let mut refs = BTreeMap::new();
 
         for v in self.vars.keys() {
-            refs.insert(v.clone(), VarReferences { reads: BTreeSet::new(), writes: BTreeSet::new()});
+            refs.insert(v.clone(), VarReferences { read_indices: BTreeSet::new(), write_indices: BTreeSet::new()});
         }
 
         for (index, usages) in self.body.iter_mut().map(|s| s.0.var_usages_mut()).enumerate() {
             
             if let Some(dest) = usages.dest {
                 let refs = refs.get_mut(dest).unwrap();
-                refs.writes.insert(index);
+                refs.write_indices.insert(index);
             }
 
             for src in usages.srcs {
                 let refs = refs.get_mut(src).unwrap();
-                refs.reads.insert(index);
+                refs.read_indices.insert(index);
             }
         }
 
@@ -1236,9 +1236,54 @@ impl IlFunction {
     }
 
     fn optimze_round(&mut self) -> bool {
-        // let refs = self.find_refs();
+        // dbg!(&self.id);
 
-        // dbg!(&self.body);
+        let refs = self.find_refs();
+        // for (var, refs) in &refs {
+        //     println!(" {var}");
+        //     for i in &refs.read_indices {
+        //         println!("  read: {} {:?}", *i, self.body[*i].0);
+        //     }
+        //     for i in &refs.write_indices {
+        //         println!("  write: {} {:?}", *i, self.body[*i].0);
+        //     }
+        // }
+
+        // check for no-op adds
+        {
+            let mut to_remove = None;
+            for (i, (il, _source, _ctxt)) in self.body.iter().enumerate() {
+                match il {
+                    IlInstruction::AssignBinary { 
+                        dest, 
+                        op: IlBinaryOp::Add,
+                        src1,
+                        src2: IlOperand::Number(n)
+                    } if n.as_u32() == 0 => {
+                        // println!("Removing no-op add: {:?}", il);
+                        to_remove = Some((i, dest.clone(), src1.clone()));
+                        break;
+                    },
+                    _ => {}
+                }
+            }
+
+            if let Some((to_remove_index, to_remove_var, replace_with_var)) = to_remove {
+                let var_refs = &refs[&to_remove_var];
+
+                for read_index in &var_refs.read_indices {
+                    let usages = self.body[*read_index].0.var_usages_mut();
+                    for read_var in  usages.srcs{
+                        if read_var == &to_remove_var {
+                            *read_var = replace_with_var.clone();
+                        }
+                    }
+                }
+
+                self.body.remove(to_remove_index);
+                return true;
+            }
+        }
 
         // for (var, refs) in &refs {
         //     if refs.writes.len() == 1 && refs.reads.len() == 1 {
@@ -1306,9 +1351,10 @@ impl IlFunction {
     }
 }
 
+#[derive(Debug)]
 struct VarReferences {
-    reads: BTreeSet<usize>,
-    writes: BTreeSet<usize>,
+    read_indices: BTreeSet<usize>,
+    write_indices: BTreeSet<usize>,
 }
 
 #[derive(Clone, Debug)]
