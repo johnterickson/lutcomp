@@ -30,15 +30,19 @@ fn lcd_scroll_up() {
     ch: u8;
     while (i < 60) {
         ch = lcd_display[(i + 20)];
-        lcd_display[i] = ch;
-        lcd_draw_char(i, ch);
+        if (ch != lcd_display[i]) {
+            lcd_display[i] = ch;
+            lcd_draw_char(i, ch);
+        }
         i = (i + 1);
     }
 
     # i is 60
     while (i < 80) {
-        lcd_display[i] = 32;
-        lcd_draw_char(i, 32);
+        if (lcd_display[i] != 32) {
+            lcd_display[i] = 32;
+            lcd_draw_char(i, 32);
+        }
         i = (i + 1);
     }
 }
