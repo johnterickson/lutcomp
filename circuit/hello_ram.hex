@@ -1,4 +1,36 @@
 v2.0 raw
+# IlFunctionId("main")()
+#  t6100 <- 0n72/0x48u8  # Some('programs/test/hello_ram.j':(3,5))
+#  ttyout <- t6100 # Some('programs/test/hello_ram.j':(3,5))
+#  tc49a <- 0n105/0x69u8  # Some('programs/test/hello_ram.j':(4,5))
+#  ttyout <- tc49a # Some('programs/test/hello_ram.j':(4,5))
+#  te8f <- 0n95/0x5fu8  # Some('programs/test/hello_ram.j':(5,5))
+#  ttyout <- te8f # Some('programs/test/hello_ram.j':(5,5))
+#  tc4b5 <- 0n102/0x66u8  # Some('programs/test/hello_ram.j':(6,5))
+#  ttyout <- tc4b5 # Some('programs/test/hello_ram.j':(6,5))
+#  tc076 <- 0n114/0x72u8  # Some('programs/test/hello_ram.j':(7,5))
+#  ttyout <- tc076 # Some('programs/test/hello_ram.j':(7,5))
+#  tb699 <- 0n111/0x6fu8  # Some('programs/test/hello_ram.j':(8,5))
+#  ttyout <- tb699 # Some('programs/test/hello_ram.j':(8,5))
+#  te879 <- 0n109/0x6du8  # Some('programs/test/hello_ram.j':(9,5))
+#  ttyout <- te879 # Some('programs/test/hello_ram.j':(9,5))
+#  te8f <- 0n95/0x5fu8  # Some('programs/test/hello_ram.j':(10,5))
+#  ttyout <- te8f # Some('programs/test/hello_ram.j':(10,5))
+#  t9c38 <- 0n82/0x52u8  # Some('programs/test/hello_ram.j':(11,5))
+#  ttyout <- t9c38 # Some('programs/test/hello_ram.j':(11,5))
+#  t3c19 <- 0n65/0x41u8  # Some('programs/test/hello_ram.j':(12,5))
+#  ttyout <- t3c19 # Some('programs/test/hello_ram.j':(12,5))
+#  t2f9f <- 0n77/0x4du8  # Some('programs/test/hello_ram.j':(13,5))
+#  ttyout <- t2f9f # Some('programs/test/hello_ram.j':(13,5))
+#  tf089 <- 0n33/0x21u8  # Some('programs/test/hello_ram.j':(14,5))
+#  ttyout <- tf089 # Some('programs/test/hello_ram.j':(14,5))
+#  td7b5 <- 0n10/0x0au8  # Some('programs/test/hello_ram.j':(15,5))
+#  ttyout <- td7b5 # Some('programs/test/hello_ram.j':(15,5))
+#  t7012 <- 0xaabbccddu32  # Some('programs/test/hello_ram.j':(16,5))
+#  return Some(t7012) # Some('programs/test/hello_ram.j':(16,5))
+#  :function_end_main # None
+#  Unreachable # None
+
 # ImageBaseAddress=0x00080400
 # entry
 # 80400 Init []

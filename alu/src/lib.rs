@@ -58,7 +58,7 @@ impl LutEntry {
 
 pub fn alu(print: bool) -> (Vec<u8>,u32) {
     if print {
-        println!("v2.0 raw");
+        println!("{}", HexFile::header());
     }
     let mut out_bytes = Vec::new();
 

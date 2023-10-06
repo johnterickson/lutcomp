@@ -9,7 +9,7 @@ extern crate strum;
 extern crate packed_struct;
 
 use common::*;
-use std::{collections::BTreeMap, convert::TryInto, fmt::Debug, io::{Read, BufReader, BufRead}, str::FromStr};
+use std::{collections::BTreeMap, convert::TryInto, fmt::Debug, str::FromStr};
 
 #[derive(Parser)]
 #[grammar = "assembly.pest"]
@@ -302,95 +302,7 @@ enum AssemblyOutputLine {
     String(String),
 }
 
-pub struct HexFile {
-    pub lines: Vec<HexFileLine>,
-}
-
-impl HexFile {
-    pub fn header() -> &'static str {
-        "v2.0 raw"
-    }
-
-    pub fn bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        for line in &self.lines {
-            match line {
-                HexFileLine::Comment(_) => {},
-                HexFileLine::Data(data) => {
-                    for data in data {
-                        match data {
-                            HexFileData::Byte(b) => bytes.push(*b),
-                            HexFileData::Run(count, b) => {
-                                for _ in 0..*count {
-                                    bytes.push(*b);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        bytes
-    }
-}
-
-pub enum HexFileLine {
-    Data(Vec<HexFileData>),
-    Comment(String),
-}
-
-pub enum HexFileData {
-    Byte(u8),
-    Run(u32,u8),
-}
-
-impl HexFile {
-    pub fn read<R: Read>(r: R) -> Result<HexFile,std::io::Error> {
-        let file = BufReader::new(r);
-        let mut lines = file.lines();
-
-        assert_eq!(HexFile::header(), lines.next().unwrap().unwrap());
-
-        let mut parsed = Vec::new();
-
-        for line in lines {
-            let line = line?;
-            let line = line.trim();
-
-            if line.starts_with("#") {
-                parsed.push(HexFileLine::Comment(line[1..].to_string()));
-                continue;
-            }
-
-            let mut data = Vec::new();
-
-            for block in line.split_whitespace() {
-                let mut tokens = block.split('*');
-                let first = tokens.next().unwrap();
-                let second = tokens.next();
-
-                data.push(if let Some(value) = second {
-                    HexFileData::Run(
-                        u32::from_str_radix(first, 10).unwrap(),
-                        u8::from_str_radix(value, 16).unwrap())
-                } else {
-                    HexFileData::Byte(u8::from_str_radix(first, 16).unwrap())
-                });
-            }
-
-            parsed.push(HexFileLine::Data(data));
-        }
-
-        Ok(HexFile {
-            lines: parsed,
-        })
-    }
-}
-
 pub fn assemble_from_str(input: &str) -> Image {
-    println!("{}", HexFile::header());
-
     {
         use pest::iterators::Pairs;
         fn dump_tree(pairs: Pairs<Rule>, indent: usize) {
@@ -428,7 +340,6 @@ pub fn assemble_from_str(input: &str) -> Image {
 }
 
 pub fn assemble(input: Vec<AssemblyInputLine>) -> Image {
-    println!("{}", HexFile::header());
     assemble_inner(input)
 }
 

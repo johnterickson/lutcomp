@@ -48,6 +48,8 @@ fn main() {
             alu(true);
         }
         Some("assemble") => {
+            println!("{}", HexFile::header());
+
             let input = {
                 let mut input = String::new();
                 let mut file = File::open(arg2.unwrap()).unwrap();
@@ -73,17 +75,7 @@ fn main() {
             let entry = get_param("entry").unwrap_or("main");
             let ctxt = create_program(file_path, entry, &input, file_path.parent().unwrap());
             let il = IlProgram::from_program(&ctxt);
-            for (name, f) in &il.functions {
-                print!("// {:?}(", name);
-                for a in &f.args {
-                    print!("{:?},", a);
-                }
-                println!(")");
-                for (il, src, _) in &f.body {
-                    println!("{:?} # {:?}", il, src);
-                }
-                println!();
-            }
+            println!("{}", il);
             if let Some("true") = get_param("sim") {
                 let (ticks, result) = il.simulate_with_ticks(&sim_args);
                 println!("# IL Result: {:?}", result);
@@ -91,6 +83,8 @@ fn main() {
             }
         }
         Some("compile") => {
+            println!("{}", HexFile::header());
+
             let file_path: &Path = Path::new(args.get(2).unwrap());
             let input = {
                 let mut input = String::new();
@@ -102,6 +96,7 @@ fn main() {
             let root = file_path.parent().unwrap();
 
             let (ctxt, il) = emit_il(file_path, entry, &input, root);
+            println!("{}", il);
 
             let (_backend, mut assembly) = emit_assembly(&ctxt, &il);
 
@@ -181,7 +176,7 @@ fn main() {
             }
         }
         Some("ascii_to_ps2") => {
-            println!("v2.0 raw");
+            println!("{}", HexFile::header());
             for (c, codes) in ASCII_TO_PS2_SCAN_CODES.iter().enumerate() {
                 if c < 0x20 || c == 0x7F {
                     println!("# ASCII 0x{:02x}", c);
@@ -205,7 +200,7 @@ fn main() {
             };
 
             if is_hex {
-                println!("v2.0 raw");
+                println!("{}", HexFile::header());
             }
 
             println!("# Table Format");
@@ -301,7 +296,7 @@ fn main() {
 
             let cgrom = &sim::lcd::CG_ROM;
 
-            println!("v2.0 raw");
+            println!("{}", HexFile::header());
             let mut addr = 0;
             for c in 0x0..=0xFFu8 {
                 print!("# @0x{:04x} ASCII 0x{:02x}", addr, c);

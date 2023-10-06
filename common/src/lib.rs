@@ -11,6 +11,9 @@ use packed_struct::prelude::*;
 #[macro_use]
 extern crate bitflags;
 
+pub mod hexfile;
+pub use hexfile::*;
+
 bitflags! {
     #[derive(Copy, Clone, PartialEq, Eq)]
     pub struct Flags: u8 {

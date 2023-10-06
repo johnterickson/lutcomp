@@ -1249,21 +1249,25 @@ impl IlFunction {
         //     }
         // }
 
-        // check for no-op adds
+        // check for no-op math
         {
             let mut to_remove = None;
             for (i, (il, _source, _ctxt)) in self.body.iter().enumerate() {
                 match il {
-                    IlInstruction::AssignBinary { 
-                        dest, 
-                        op: IlBinaryOp::Add,
-                        src1,
-                        src2: IlOperand::Number(n)
-                    } if n.as_u32() == 0 => {
-                        // println!("Removing no-op add: {:?}", il);
-                        to_remove = Some((i, dest.clone(), src1.clone()));
-                        break;
-                    },
+                    IlInstruction::AssignBinary { dest, op, src1, src2: IlOperand::Number(n)} => {
+                        match (op, n.as_u32()) {
+                            (IlBinaryOp::Add | IlBinaryOp::Subtract | IlBinaryOp::BitwiseOr, 0) |
+                            (IlBinaryOp::ShiftLeft | IlBinaryOp::ShiftRight | IlBinaryOp::RotateLeft | IlBinaryOp::RotateRight, 0) |
+                            (IlBinaryOp::Multiply, 1) => {
+                                if refs[dest].write_indices.len() == 1 {
+                                    println!("# In {:?}, removing no-op il instruction: {:?}", self.id, il);
+                                    to_remove = Some((i, dest.clone(), src1.clone()));
+                                    break;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -1718,6 +1722,22 @@ pub struct IlProgram {
     pub consts: BTreeMap<IlVarId, (IlVarInfo, Vec<u8>)>,
     pub image_base_address: u32,
     pub statics_addresses: Range<u32>,
+}
+
+impl Display for IlProgram {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (name, func) in &self.functions {
+            write!(f, "# {:?}(", name)?;
+            for a in &func.args {
+                write!(f, "{:?},", a)?;
+            }
+            writeln!(f, ")")?;
+            for (il, src, _) in &func.body {
+                writeln!(f, "#  {:?} # {:?}", il, src)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl IlProgram {

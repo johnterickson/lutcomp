@@ -474,7 +474,7 @@ impl Ucode {
 
     fn build(&mut self) -> (Vec<(u8, &'static str, u32)>,u32) {
         if self.print {
-            println!("v2.0 raw");
+            println!("{}", HexFile::header());
         }
 
         let mut hash_nibble_indices = Vec::new();
