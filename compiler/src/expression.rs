@@ -52,7 +52,7 @@ impl ArithmeticOperator {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Expression {
     Ident(String),
     Number(NumberType, u32),

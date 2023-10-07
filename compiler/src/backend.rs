@@ -331,10 +331,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
         resolved: None,
     }));
 
-    for (name, (info, bytes)) in &ctxt.il.consts {
-        lines.push(AssemblyInputLine::Label(format!(":{}", &name.0)));
+    for (name, info) in &ctxt.il.consts {
+        lines.push(AssemblyInputLine::Label(format!(":{}", &name.1)));
         lines.push(AssemblyInputLine::Comment(format!("const {:?}", info.var_type)));
-        for b in bytes {
+        for b in info.constant.as_ref().unwrap() {
             lines.push(AssemblyInputLine::Literal8(*b));
         }
     }
@@ -376,11 +376,6 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 }
             }
             ctxt.lines.push(AssemblyInputLine::Comment(comment));
-        }
-
-        for (var_name, num) in &f.consts {
-            ctxt.lines.push(AssemblyInputLine::Comment(format!("Consts {}: {:?}",
-                var_name.0, num)));
         }
 
         if f.is_isr() {
@@ -494,9 +489,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             IlOperand::Number(*n)
                         }
                         IlOperand::Var(src2) => {
-                            if let Some(n) = ctxt.f_il.consts.get(&src2) {
-                                assert_eq!(n.il_type().byte_count(), src2_size);
-                                IlOperand::Number(*n)
+                            if let Some(info) = ctxt.program.il.find_const(&f.id, src2) {
+                                let val = info.constant.as_ref().unwrap();
+                                assert_eq!(val.len() as u32, src2_size);
+                                IlOperand::Number(val.into())
                             } else {
                                 IlOperand::Var(src2.clone())
                             }
@@ -1237,7 +1233,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 },
                 IlInstruction::GetConstAddress { dest, const_name } => {
                     let dest_regs = ctxt.find_registers(dest);
-                    assert_eq!(dest_regs.len(), 4);
+                    assert_eq!(dest_regs.len(), 4, "Address of const `{const_name}` (4 bytes) does not fit in dest `{dest}`");
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                         opcode: Opcode::LoadImm32,
                         source,

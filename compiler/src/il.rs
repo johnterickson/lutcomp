@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::{BTreeMap, VecDeque, hash_map::DefaultHasher}, convert::TryFrom, fmt::{Debug, Display}, ops::Range, borrow::Cow, hash::{Hash, Hasher}};
+use std::{collections::{BTreeMap, VecDeque, hash_map::DefaultHasher, HashSet}, convert::TryFrom, fmt::{Debug, Display}, ops::Range, borrow::Cow, hash::{Hash, Hasher}};
 
 use topological_sort::TopologicalSort;
 
@@ -12,14 +12,21 @@ pub fn emit_il(path: &Path, entry: &str, input: &str, root: &Path) -> (ProgramCo
     (ctxt, p)
 }
 
-#[derive(Clone)]
-#[derive(Debug)]
+#[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum IlOperand {
     Number(IlNumber),
     Var(IlVarId)
 }
+impl IlOperand {
+    fn try_get_const<'a>(&'a self, func: &'a IlFunction) -> Option<Cow<'a, Vec<u8>>> {
+        match self {
+            IlOperand::Number(n) => Some(Cow::Owned(n.as_bytes())),
+            IlOperand::Var(ident) => func.try_get_const_var(ident).map(Cow::Borrowed),
+        }
+    }
+}
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub enum IlInstruction {
     Comment(String),
     Label(IlLabelId),
@@ -40,7 +47,19 @@ pub enum IlInstruction {
     Unreachable,
 }
 
-#[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
+impl IlInstruction {
+    pub fn has_side_effects(&self) -> bool {
+        match self {
+            IlInstruction::WriteMemory {..} | 
+            IlInstruction::Call { .. } |
+            IlInstruction::TtyIn { .. } |
+            IlInstruction::TtyOut { .. } => true,
+            _ => false
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub struct IlVarId(pub String);
 
 impl IlVarId {
@@ -74,7 +93,7 @@ pub struct IlVarInfo {
     pub constant: Option<Vec<u8>>,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub struct IlLabelId(pub String);
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
@@ -102,7 +121,6 @@ pub struct IlFunction {
     pub args: Vec<IlVarId>,
     pub body: Vec<(IlInstruction, Option<Source>, SourceContext)>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
-    pub consts: BTreeMap<IlVarId, IlNumber>,
     pub ret: Option<IlType>,
     labels: BTreeSet<IlLabelId>,
     full_expression_hashes: BTreeMap<u16,u64>,
@@ -147,7 +165,6 @@ impl IlFunction {
             body: Vec::new(),
             labels: BTreeSet::new(),
             full_expression_hashes: BTreeMap::new(),
-            consts: BTreeMap::new(),
             next_temp_num: 0,
             next_label_num: 0,
             vars_stack_size: 0,
@@ -314,7 +331,7 @@ impl IlFunction {
                         (id, size)
                     }
                     IlLocation::GlobalConst(name) => {
-                        (name.clone(), Some(ctxt.il.consts[&name].0.byte_size))
+                        (name.clone(), Some(ctxt.il.find_const(&self.id, &name).unwrap().byte_size))
                     }
                 }
             }
@@ -740,35 +757,57 @@ impl IlFunction {
         ctxt.src_ctxt.pop();
     }
 
-    fn try_get_const(&self, e: &Expression, ctxt: &IlContext, var_type: Option<&Type>) -> Option<u32> {
-        match e {
-            Expression::Ident(name) => {
-                if let (Some(var), Some(var_type)) = (self.vars.get(&IlVarId(name.clone())), var_type) {
-                    assert_eq!(var_type, &var.var_type);
-                    if let (Type::Number(_), Some(constant)) =  (var_type, &var.constant) {
-                        assert_eq!(constant.len() as u32, var_type.byte_count(ctxt.program));
-                        let mut bytes = [0u8; 4];
+    fn try_get_const(&self, e: &Expression, var_type: Option<&Type>) -> Option<u32> {
+        if let Some(val) = e.try_get_const() {
+            return Some(val);
+        }
 
-                        if constant.len() > 4 {
-                            None
-                        } else {
-                            for i in 0..=3 {
-                                if constant.len() > i {
-                                    bytes[i] = constant[i];
-                                }
+        let var_type = if let Some(var_type) = var_type { var_type } else { return None; };
+        match e {
+            Expression::AddressOf(addr_e) => {
+                let inner_type = if let Type::Ptr(inner_type) = var_type { inner_type } else { return None; };
+
+                match addr_e.as_ref() {
+                    Expression::Ident(name) => {
+                        let info = if let Some(info) = self.vars.get(&IlVarId(name.clone())) { info } else { return None; };
+                        assert_eq!(inner_type.as_ref(), &info.var_type);
+
+                        if let Some(info) = self.vars.get(&IlVarId(name.clone())) {
+                            match info.location {
+                                IlLocation::Static(addr) => Some(addr),
+                                _ => None
                             }
-                            // dbg!(&e, &var_type, &var, &constant);
-                            Some(u32::from_le_bytes(bytes))
+                        } else {
+                            None
                         }
-                    } else {
-                        None
                     }
-                } else {
-                    None
+                    _ => None
                 }
             }
+            Expression::Ident(name) => {
+                let info = if let Some(info) = self.vars.get(&IlVarId(name.clone())) { info } else { return None; };
+                assert_eq!(var_type, &info.var_type);
+                match &info.location {
+                    IlLocation::Reg(_) => None,
+                    IlLocation::FrameOffset(_) => None,
+                    IlLocation::Static(_) => None,//Some(*addr),
+                    IlLocation::GlobalConst(const_name) => {
+                        assert_eq!(name.as_str(), &const_name.0);
+                        let const_val = info.constant.as_ref().unwrap();
+                        match var_type {
+                            Type::Void => panic!(),
+                            Type::Number(nt) => {
+                                let num: IlNumber = const_val.into();
+                                assert_eq!(num.il_type().byte_count(), nt.try_byte_count().unwrap());
+                                Some(num.as_u32())
+                            },
+                            Type::Ptr(_) | Type::Struct(_) | Type::Array(_, _) => None,
+                        }
+                    },
+                }
+            },
             _ => {
-                e.try_get_const()
+                None
             }
         }
     }
@@ -779,11 +818,13 @@ impl IlFunction {
 
         let var_type = ctxt.try_emit_type(e);
 
-        let cons = self.try_get_const(e, ctxt, var_type.as_ref());
+        let cons = self.try_get_const(e, var_type.as_ref());
 
-        // if let Some(cons) = cons {
-        //     println!("# {:?} -> {}", e, cons);
-        // }
+        if let Some(cons) = cons {
+            println!("# const {:?} -> {}", e, cons);
+        } else {
+            // println!("# Not const {:?}", e);
+        }
 
         let e = match (cons, var_type, e) {
             (_, _, Expression::Number(_,_)) => Cow::Borrowed(e),
@@ -1055,7 +1096,7 @@ impl IlFunction {
             n => Some(n.try_into().unwrap())
         };
 
-        // bring global statics into scope
+        // bring global consts into scope
         for (name, (var_type, val)) in &ctxt.program.consts {
             assert!(func.vars.insert(
                 IlVarId(name.to_owned()),
@@ -1163,7 +1204,7 @@ impl IlFunction {
                 description: "Stack size negated".to_owned(),
                 location: IlLocation::Reg(IlType::U32),
                 var_type: Type::Number(NumberType::USIZE),
-                constant: Some(func.vars_stack_size.wrapping_neg().to_le_bytes().iter().cloned().collect())
+                constant: Some(func.vars_stack_size.wrapping_neg().to_le_bytes().iter().cloned().collect()),
             });
 
             func.frame_pointer_size_instruction_index = Some((stack_size.clone(), func.body.len()));
@@ -1198,32 +1239,6 @@ impl IlFunction {
         func.add_inst(ctxt, IlInstruction::Unreachable);
 
         func.optimize();
-
-        {
-            let refs = func.find_refs();
-            let mut found = true;
-            while found {
-                found = false;
-
-                for (id, refs) in &refs {
-                    if refs.write_indices.len() != 1 {
-                        continue;
-                    }
-                    // find things that are written to once
-                    let write = &func.body[*refs.write_indices.iter().next().unwrap()];
-                    let const_val = match &write.0 {
-                        IlInstruction::AssignNumber { dest, src } => {
-                            assert_eq!(id, dest);
-                            Some(src.clone())
-                        }
-                        _ => None
-                    };
-                    if let Some(const_val) = const_val {
-                        found |= func.consts.insert(id.clone(), const_val).is_none();
-                    }
-                }
-            }
-        }
         
         func
     }
@@ -1258,11 +1273,99 @@ impl IlFunction {
     fn optimze_round(&mut self) -> bool {
         // dbg!(&self.id);
 
+        if self.intrinsic.is_some() {
+            return false;
+        }
+
+        // remove unused vars
         let refs = self.find_refs();
-        for (v, refs) in &refs {
-            if refs.read_indices.is_empty() && refs.write_indices.is_empty() && !self.args.contains(v) {
-                self.vars.remove(v);
+        {
+            let mut removed = false;
+            for (v, refs) in &refs {
+                if refs.read_indices.is_empty() && refs.write_indices.is_empty() && !self.args.contains(v) {
+                    self.vars.remove(v);
+                    removed = true;
+                }
             }
+            if removed { return true; }
+        }
+
+        // remove unread vars and instructions that write to them
+        {
+            for (v, refs) in &refs {
+                if let IlLocation::Static(_) = self.vars[v].location {
+                    // writes to statics need to be visible outside the function
+                    continue;
+                }
+
+                if refs.read_indices.is_empty() {
+                    for write_index in refs.write_indices.iter().rev() {
+                        if self.body[*write_index].0.has_side_effects() {
+                            continue;
+                        }
+
+                        let removed = self.body.remove(*write_index);
+                        println!("# In {:?}, var `{}` is written to, but never read. Removing the instruction that writes to it: {:?}", self.id, v, removed);                        
+                        return true;
+                    }
+                }
+            }
+        }
+
+
+        // propogate consts
+        {
+            let mut consts_found = false;
+            let to_try: Vec<_> = self.vars.iter()
+                .filter_map(|(name,info)| 
+                    if info.constant.is_none() { 
+                        let unique_write_insts: HashSet<_> = refs[name].write_indices.iter().map(|i| &self.body[*i].0).collect();
+                        if unique_write_insts.len() == 1 { Some(name.clone()) } else { None }
+                    } else { 
+                        None 
+                    }).collect();
+            for name in &to_try {
+                let const_val = {
+                    let (only_write_instruction, _, _) = &self.body[*refs[name].write_indices.first().unwrap()];
+                    only_write_instruction.try_get_const(&self)
+                };
+                if let Some(const_val) = const_val {
+                    println!("# In {:?}, resolved the constant val `{:?}` for var `{}`.", self.id, &const_val, name);
+                    self.vars.get_mut(name).unwrap().constant = Some(const_val);
+                    consts_found = true;
+                } else {
+                    // println!("# In {:?}, could not resolve var `{}` to a constant.", self.id, name);
+                }
+            }
+
+            if consts_found {
+                return true;
+            }
+        }
+
+        // replace operations with known constants
+        {
+            let mut replaced = false;
+            for (il, _source, ctxt) in self.body.iter_mut() {
+                if let IlInstruction::AssignNumber { .. } = il {
+                    continue;
+                }
+
+                if let Some(dest) = il.var_usages().dest {
+                    if let Some(const_val) = &self.vars[dest].constant {
+                        if const_val.len() <= 4 {
+                            let new = IlInstruction::AssignNumber { dest: dest.clone(), src: const_val.into() };
+                            let msg = format!("# In {:?}, replacing `{:?}` with constant `{:?}`.", self.id, il, &new);
+                            println!("{}", &msg);
+                            ctxt.contexts.push_back(msg);
+                            *il = new;
+                            replaced = true;
+                        }
+                    }
+                }
+            }
+
+            if replaced { return true; }
         }
 
         // check for no-op math
@@ -1393,6 +1496,10 @@ impl IlFunction {
 
         false
     }
+
+    fn try_get_const_var(&self, ident: &IlVarId) -> Option<&Vec<u8>> {
+        self.vars[ident].constant.as_ref()
+    }
 }
 
 #[derive(Debug)]
@@ -1401,13 +1508,13 @@ struct VarReferences {
     write_indices: BTreeSet<usize>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub enum IlUnaryOp {
     Negate,
     BinaryInvert
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IlBinaryOp {
     Add,
     Subtract,
@@ -1436,9 +1543,68 @@ impl IlBinaryOp {
             ArithmeticOperator::RotateRight => IlBinaryOp::RotateRight,
         }
     }
+
+    pub fn eval(&self, src1: IlNumber, src2: IlNumber) -> IlNumber {
+        match (src1, src2) {
+            (IlNumber::U8(n1), IlNumber::U8(n2)) => {
+                IlNumber::U8(match self {
+                    IlBinaryOp::Add => n1.wrapping_add(n2),
+                    IlBinaryOp::Subtract => n1.wrapping_sub(n2),
+                    IlBinaryOp::Multiply => n1.wrapping_mul(n2),
+                    IlBinaryOp::Divide => {
+                        assert_ne!(0, n2);
+                        n1.wrapping_div(n2)
+                    },
+                    IlBinaryOp::BitwiseAnd => n1 & n2,
+                    IlBinaryOp::BitwiseOr => n1 | n2,
+                    IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
+                    IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
+                    IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
+                    IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
+                })
+            }
+            (IlNumber::U16(n1), IlNumber::U16(n2)) => {
+                IlNumber::U16(match self {
+                    IlBinaryOp::Add => n1.wrapping_add(n2),
+                    IlBinaryOp::Subtract => n1.wrapping_sub(n2),
+                    IlBinaryOp::Multiply => {
+                        // assert!(n1 <= 0xFF);
+                        // assert!(n2 <= 0xFF);
+                        (n1 & 0xFF).wrapping_mul(n2 & 0xFF)
+                    },
+                    IlBinaryOp::BitwiseAnd => n1 & n2,
+                    IlBinaryOp::BitwiseOr => n1 | n2,
+                    IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
+                    IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
+                    IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
+                    IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
+                    &IlBinaryOp::Divide => todo!(),
+                })
+            }
+            (IlNumber::U32(n1), IlNumber::U32(n2)) => {
+                IlNumber::U32(match self {
+                    IlBinaryOp::Add => n1.wrapping_add(n2),
+                    IlBinaryOp::Subtract => n1.wrapping_sub(n2),
+                    IlBinaryOp::Multiply => {
+                        // assert!(n1 <= 0xFF);
+                        // assert!(n2 <= 0xFF);
+                        (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF
+                    },
+                    IlBinaryOp::BitwiseAnd => n1 & n2,
+                    IlBinaryOp::BitwiseOr => n1 | n2,
+                    IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2),
+                    IlBinaryOp::ShiftRight => n1.wrapping_shr(n2),
+                    IlBinaryOp::RotateLeft => n1.rotate_left(n2),
+                    IlBinaryOp::RotateRight => n1.rotate_right(n2),
+                    &IlBinaryOp::Divide => todo!(),
+                })
+            }
+            _ => panic!(),
+        }
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub enum IlCmpOp {
     Equals,
     NotEquals,
@@ -1474,7 +1640,7 @@ impl From<ComparisonOperator> for IlCmpOp {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IlType {
     U8,
     U16,
@@ -1634,6 +1800,50 @@ impl IlInstruction {
 
         IlUsagesMut { srcs, dest }
     }
+
+    fn try_get_const(&self, func: &IlFunction) -> Option<Vec<u8>> {
+        match self {
+            IlInstruction::AssignNumber { dest:_, src } => Some(src.as_bytes()),
+            IlInstruction::AssignVar { dest:_, src, size, src_range, dest_range } => {
+                if src_range.is_some() || dest_range.is_some() {
+                    return None; // figure this out later
+                }
+                let src_info = &func.vars[src];
+                if let Some(src_const) = &src_info.constant {
+                    assert_eq!(size.byte_count(), src_const.len() as u32);
+                    Some(src_const.clone())
+                } else {
+                    None
+                }
+            }
+            IlInstruction::AssignBinary { dest: _, op, src1, src2 } => {
+                if let (Some(src1), Some(src2)) = (&func.vars[src1].constant, src2.try_get_const(func)) {
+                    let (src1, src2) = (src1.into(), src2.as_ref().into());
+                    Some(op.eval(src1, src2).as_bytes())
+                } else {
+                    None
+                }
+            }
+
+            _ => None
+
+            // IlInstruction::Comment(_) => todo!(),
+            // IlInstruction::Label(_) => todo!(),
+            // IlInstruction::GetConstAddress { dest, const_name } => todo!(),
+            // IlInstruction::AssignUnary { dest, op, src } => todo!(),
+            // IlInstruction::AssignBinary { dest, op, src1, src2 } => todo!(),
+            // IlInstruction::ReadMemory { dest, addr, size } => todo!(),
+            // IlInstruction::WriteMemory { addr, src, size } => todo!(),
+            // IlInstruction::Goto(_) => todo!(),
+            // IlInstruction::IfThenElse { left, op, right, then_label, else_label } => todo!(),
+            // IlInstruction::Call { ret, f, args } => todo!(),
+            // IlInstruction::Resize { dest, dest_size, src, src_size } => todo!(),
+            // IlInstruction::Return { val } => todo!(),
+            // IlInstruction::TtyIn { dest } => todo!(),
+            // IlInstruction::TtyOut { src } => todo!(),
+            // IlInstruction::Unreachable => todo!(),
+        }
+    }
 }
 
 impl Debug for IlInstruction {
@@ -1680,7 +1890,7 @@ impl Debug for IlInstruction {
 }
 
 
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub enum IlNumber {
     U8(u8),
     U16(u16),
@@ -1753,13 +1963,24 @@ impl From<u32> for IlNumber {
     }
 }
 
+impl From<&Vec<u8>> for IlNumber {
+    fn from(b: &Vec<u8>) -> Self {
+        match b.len() {
+            1 => IlNumber::U8(b[0]),
+            2 => IlNumber::U16(u16::from_le_bytes([b[0],b[1]])),
+            4 => IlNumber::U32(u32::from_le_bytes([b[0],b[1],b[2],b[3]])),
+            _ => panic!(),
+        } 
+    }
+}
+
 
 #[derive(Clone, Debug)]
 pub struct IlProgram {
     pub entry: IlFunctionId,
     pub functions: BTreeMap<IlFunctionId, IlFunction>,
     pub statics: BTreeMap<(Option<IlFunctionId>,IlVarId), IlVarInfo>,
-    pub consts: BTreeMap<IlVarId, (IlVarInfo, Vec<u8>)>,
+    pub consts: BTreeMap<(Option<IlFunctionId>,IlVarId), IlVarInfo>,
     pub image_base_address: u32,
     pub statics_addresses: Range<u32>,
 }
@@ -1774,6 +1995,10 @@ impl Display for IlProgram {
 }
 
 impl IlProgram {
+    pub fn find_const(&self, f: &IlFunctionId, v: &IlVarId) -> Option<&IlVarInfo> {
+        self.consts.get(&(Some(f.clone()), v.clone())).or(self.consts.get(&(None, v.clone())))
+    }
+
     pub fn from_program(ctxt: &ProgramContext) -> IlProgram {
         let mut il = IlProgram {
             entry: IlFunctionId(ctxt.entry.clone()),
@@ -1788,16 +2013,14 @@ impl IlProgram {
 
         for (name, (var_type, value)) in &ctxt.consts {
             il.consts.insert(
-                IlVarId(name.clone()),
-                (
-                    IlVarInfo {
-                        description: format!("global constant {:?}", var_type),
-                        location: IlLocation::GlobalConst(IlVarId(name.clone())),
-                        var_type: var_type.clone(),
-                        byte_size: var_type.byte_count(ctxt),
-                        constant: Some(value.clone()),
-                    },
-                    value.clone())
+                (None, IlVarId(name.clone())), // TODO consts should be scoped to functions
+                IlVarInfo {
+                    description: format!("global constant {:?}", var_type),
+                    location: IlLocation::GlobalConst(IlVarId(name.clone())),
+                    var_type: var_type.clone(),
+                    byte_size: var_type.byte_count(ctxt),
+                    constant: Some(value.clone()),
+                }
             );
         }
 
@@ -1864,6 +2087,11 @@ impl IlProgram {
             if !function_removed {
                 break;
             }
+        }
+
+        // after inlining, optimize again
+        for (_,f) in il.functions.iter_mut() {
+            f.optimize();
         }
 
         il
@@ -1944,7 +2172,6 @@ impl IlProgram {
                     }
 
                     // identity mapping for frame pointer
-
                     for (var_id, var_info) in &callee.vars {
                         if var_id == &IlVarId::frame_pointer() {
                             assert!(caller.vars.contains_key(&IlVarId::frame_pointer()));
@@ -2106,7 +2333,7 @@ impl<'a> IlContext<'a> {
             return var.clone();
         }
 
-        if let Some((info, _)) = self.il.consts.get(&n) {
+        if let Some(info) = self.il.find_const(&il_func.id, &n) {
             return info.clone();
         }
 
@@ -2244,7 +2471,7 @@ impl<'a> IlLiveness<'a> {
 
         for v1 in &l.f.args {
             for v2 in &l.f.args {
-                if v1 != v2 {
+                if v1 != v2 && l.interferes.contains_key(v1) && l.interferes.contains_key(v2) {
                     l.interferes.get_mut(v1).unwrap().insert(v2);
                     l.interferes.get_mut(v2).unwrap().insert(v1);
                 }
@@ -2328,7 +2555,6 @@ mod tests {
             next_temp_num: 0,
             vars_stack_size: 0, 
             ret: Some(IlType::U8),
-            consts: BTreeMap::new(),
             intrinsic: None,
             frame_pointer_size_instruction_index: None,
             vars,

@@ -1,4 +1,18 @@
 v2.0 raw
+# const Number(U8, 72) -> 72
+# const Number(U8, 105) -> 105
+# const Number(U8, 95) -> 95
+# const Number(U8, 102) -> 102
+# const Number(U8, 114) -> 114
+# const Number(U8, 111) -> 111
+# const Number(U8, 109) -> 109
+# const Number(U8, 95) -> 95
+# const Number(U8, 82) -> 82
+# const Number(U8, 65) -> 65
+# const Number(U8, 77) -> 77
+# const Number(U8, 33) -> 33
+# const Number(U8, 10) -> 10
+# const Number(USIZE, 2864434397) -> 2864434397
 # IlFunctionId("main")()
 #  t6100 <- 0n72/0x48u8  # Some('programs/test/hello_ram.j':(3,5))
 #  ttyout <- t6100 # Some('programs/test/hello_ram.j':(3,5))
@@ -77,18 +91,6 @@ v2.0 raw
 # Var te879 (te879 Number(U8, 109)) Reg(U8) Some([16]) [109]
 # Var te8f (te8f Number(U8, 95)) Reg(U8) Some([16]) [95]
 # Var tf089 (tf089 Number(U8, 33)) Reg(U8) Some([16]) [33]
-# Consts t2f9f: 0n77/0x4du8
-# Consts t3c19: 0n65/0x41u8
-# Consts t6100: 0n72/0x48u8
-# Consts t7012: 0xaabbccddu32
-# Consts t9c38: 0n82/0x52u8
-# Consts tb699: 0n111/0x6fu8
-# Consts tc076: 0n114/0x72u8
-# Consts tc49a: 0n105/0x69u8
-# Consts tc4b5: 0n102/0x66u8
-# Consts td7b5: 0n10/0x0au8
-# Consts te879: 0n109/0x6du8
-# Consts tf089: 0n33/0x21u8
 # t6100 <- 0n72/0x48u8  Some('programs/test/hello_ram.j':(3,5))
 # TtyOut { value: Number(U8, 72) }
 # Number(U8, 72)

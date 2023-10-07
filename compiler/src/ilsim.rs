@@ -62,7 +62,7 @@ impl IlFunction {
         let mut vars: BTreeMap<&IlVarId, IlNumber> = BTreeMap::new();
 
         let last_const_addr = ROM_MAX;
-        let const_addrs: BTreeMap<_,_> = ctxt.program.consts.iter().map(|(name,(info, _))| {
+        let const_addrs: BTreeMap<_,_> = ctxt.program.consts.iter().map(|((_,name), info)| {
             let addr = last_const_addr - info.byte_size;
             let addr = addr / 4 * 4;
             (name.clone(), addr)
@@ -196,63 +196,7 @@ impl IlFunction {
                         IlOperand::Var(src2) => *vars.get(src2)
                             .expect(&format!("Could not find {:?}.", &src2)),
                     };
-                    let result = match (src1, src2) {
-                        (IlNumber::U8(n1), IlNumber::U8(n2)) => {
-                            IlNumber::U8(match op {
-                                IlBinaryOp::Add => n1.wrapping_add(n2),
-                                IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => n1.wrapping_mul(n2),
-                                IlBinaryOp::Divide => {
-                                    assert_ne!(0, n2);
-                                    n1.wrapping_div(n2)
-                                },
-                                IlBinaryOp::BitwiseAnd => n1 & n2,
-                                IlBinaryOp::BitwiseOr => n1 | n2,
-                                IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
-                                IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
-                                IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
-                                IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
-                            })
-                        }
-                        (IlNumber::U16(n1), IlNumber::U16(n2)) => {
-                            IlNumber::U16(match op {
-                                IlBinaryOp::Add => n1.wrapping_add(n2),
-                                IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => {
-                                    // assert!(n1 <= 0xFF);
-                                    // assert!(n2 <= 0xFF);
-                                    (n1 & 0xFF).wrapping_mul(n2 & 0xFF)
-                                },
-                                IlBinaryOp::BitwiseAnd => n1 & n2,
-                                IlBinaryOp::BitwiseOr => n1 | n2,
-                                IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
-                                IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
-                                IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
-                                IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
-                                &IlBinaryOp::Divide => todo!(),
-                            })
-                        }
-                        (IlNumber::U32(n1), IlNumber::U32(n2)) => {
-                            IlNumber::U32(match op {
-                                IlBinaryOp::Add => n1.wrapping_add(n2),
-                                IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                                IlBinaryOp::Multiply => {
-                                    // assert!(n1 <= 0xFF);
-                                    // assert!(n2 <= 0xFF);
-                                    (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF
-                                },
-                                IlBinaryOp::BitwiseAnd => n1 & n2,
-                                IlBinaryOp::BitwiseOr => n1 | n2,
-                                IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2),
-                                IlBinaryOp::ShiftRight => n1.wrapping_shr(n2),
-                                IlBinaryOp::RotateLeft => n1.rotate_left(n2),
-                                IlBinaryOp::RotateRight => n1.rotate_right(n2),
-                                &IlBinaryOp::Divide => todo!(),
-                            })
-                        }
-                        _ => panic!(),
-                    };
-
+                    let result = op.eval(src1, src2);
                     vars.insert(dest, result);
                 }
                 IlInstruction::ReadMemory { dest, addr, size } => {

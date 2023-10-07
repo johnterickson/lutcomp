@@ -25,7 +25,7 @@ impl ComparisonOperator {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Comparison {
     pub op: ComparisonOperator,
     pub left: Expression,
