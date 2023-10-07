@@ -19,6 +19,19 @@ impl HexFile {
         "v2.0 raw"
     }
 
+    pub fn print_commented<T: std::fmt::Display>(x: &T) {
+        println!("{}", Self::comment_lines(&format!("{}", &x)));
+    }
+
+    pub fn comment_lines(s: &str) -> String {
+        use std::fmt::Write;
+        let mut commented = String::new();
+        for l in s.lines() {
+            writeln!(&mut commented, "# {}", &l).unwrap();
+        }
+        commented
+    }
+
     pub fn bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
         for line in &self.lines {

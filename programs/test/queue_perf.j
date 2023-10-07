@@ -3,6 +3,12 @@
 static q: Queue;
 const NUM: u8 = 10;
 
+fn queue_simple(x: u8) -> u8 {
+    queue_init(&q);
+    queue_push(&q, x);
+    return queue_pop(&q);
+}
+
 fn main() -> u8 {
     queue_init(&q);
     n: u8 = 1;

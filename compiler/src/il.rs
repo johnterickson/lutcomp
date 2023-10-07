@@ -121,6 +121,20 @@ struct TargetLocation {
     mem_size: Option<IlType>
 }
 
+impl Display for IlFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "# {:?}(", self.id)?;
+        for a in &self.args {
+            write!(f, "{:?},", a)?;
+        }
+        writeln!(f, ")")?;
+        for (il, src, _) in &self.body {
+            writeln!(f, "#  {:?} # {:?}", il, src)?;
+        }
+        Ok(())
+    }
+}
+
 impl IlFunction {
 
     fn new(id: IlFunctionId, attributes: BTreeSet<FunctionAttribute>, intrinsic: Option<Intrinsic>) -> IlFunction {
@@ -765,7 +779,13 @@ impl IlFunction {
 
         let var_type = ctxt.try_emit_type(e);
 
-        let e = match (self.try_get_const(e, ctxt, var_type.as_ref()), var_type, e) {
+        let cons = self.try_get_const(e, ctxt, var_type.as_ref());
+
+        // if let Some(cons) = cons {
+        //     println!("# {:?} -> {}", e, cons);
+        // }
+
+        let e = match (cons, var_type, e) {
             (_, _, Expression::Number(_,_)) => Cow::Borrowed(e),
             (Some(n), Some(var_type), _) => {
                 let byte_count = var_type.byte_count(ctxt.program);
@@ -1239,21 +1259,26 @@ impl IlFunction {
         // dbg!(&self.id);
 
         let refs = self.find_refs();
-        // for (var, refs) in &refs {
-        //     println!(" {var}");
-        //     for i in &refs.read_indices {
-        //         println!("  read: {} {:?}", *i, self.body[*i].0);
-        //     }
-        //     for i in &refs.write_indices {
-        //         println!("  write: {} {:?}", *i, self.body[*i].0);
-        //     }
-        // }
+        for (v, refs) in &refs {
+            if refs.read_indices.is_empty() && refs.write_indices.is_empty() && !self.args.contains(v) {
+                self.vars.remove(v);
+            }
+        }
 
         // check for no-op math
         {
             let mut to_remove = None;
             for (i, (il, _source, _ctxt)) in self.body.iter().enumerate() {
                 match il {
+                    IlInstruction::AssignVar { dest, src, size:_, src_range: None, dest_range: None } => {
+                        if refs[dest].write_indices.len() == 1 && refs[src].write_indices.len() == 0 {
+                            assert_eq!(refs[dest].write_indices.first().unwrap(), &i);
+                            println!("# In {:?}, `{}` is never written to, but is copied to `{}` - which is also never modified. \
+                                      Replacing refs to latter with the former and deleting the copy: {:?}", self.id, src, dest, il);
+                            to_remove = Some((i, dest.clone(), src.clone()));
+                            break;
+                        }
+                    }
                     IlInstruction::AssignBinary { dest, op, src1, src2: IlOperand::Number(n)} => {
                         match (op, n.as_u32()) {
                             (IlBinaryOp::Add | IlBinaryOp::Subtract | IlBinaryOp::BitwiseOr, 0) |
@@ -1273,6 +1298,21 @@ impl IlFunction {
             }
 
             if let Some((to_remove_index, to_remove_var, replace_with_var)) = to_remove {
+
+                // HexFile::print_commented(&self);
+                // println!("# {:?} VarRefs:", &self.id);
+                // for (var, refs) in &refs {
+                //     if !refs.read_indices.is_empty() || !refs.write_indices.is_empty() {
+                //         println!("#  {var}");
+                //         for i in &refs.read_indices {
+                //             println!("#   read: {} {:?}", *i, self.body[*i].0);
+                //         }
+                //         for i in &refs.write_indices {
+                //             println!("#   write: {} {:?}", *i, self.body[*i].0);
+                //         }
+                //     }
+                // }
+
                 let var_refs = &refs[&to_remove_var];
 
                 for read_index in &var_refs.read_indices {
@@ -1726,15 +1766,8 @@ pub struct IlProgram {
 
 impl Display for IlProgram {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (name, func) in &self.functions {
-            write!(f, "# {:?}(", name)?;
-            for a in &func.args {
-                write!(f, "{:?},", a)?;
-            }
-            writeln!(f, ")")?;
-            for (il, src, _) in &func.body {
-                writeln!(f, "#  {:?} # {:?}", il, src)?;
-            }
+        for (_, func) in &self.functions {
+            writeln!(f, "{}", func)?;
         }
         Ok(())
     }
