@@ -1,29 +1,29 @@
 v2.0 raw
-# const Number(USIZE, 0) -> 0
-# const Number(USIZE, 2) -> 2
-# const Number(USIZE, 2) -> 2
+# const Number(U32, 0) -> 0
+# const Number(U32, 2) -> 2
+# const Number(U32, 2) -> 2
 # In IlFunctionId("lcd_draw_char"), `i` is never written to, but is copied to `td0f3` - which is also never modified. Replacing refs to latter with the former and deleting the copy: td0f3 <- i U8
 # const Number(U8, 0) -> 0
 # const Number(U8, 0) -> 0
 # const Number(U8, 80) -> 80
 # const Number(U8, 32) -> 32
 # const Number(U8, 3) -> 3
-# const Number(USIZE, 1) -> 1
+# const Number(U32, 1) -> 1
 # const Number(U8, 3) -> 3
-# const Number(USIZE, 1) -> 1
+# const Number(U32, 1) -> 1
 # const Number(U8, 3) -> 3
-# const Number(USIZE, 1) -> 1
+# const Number(U32, 1) -> 1
 # const Number(U8, 2) -> 2
-# const Number(USIZE, 2) -> 2
+# const Number(U32, 2) -> 2
 # const Number(U8, 2) -> 2
 # const Number(U8, 8) -> 8
-# const Number(USIZE, 2) -> 2
+# const Number(U32, 2) -> 2
 # const Number(U8, 0) -> 0
 # const Number(U8, 12) -> 12
-# const Number(USIZE, 2) -> 2
+# const Number(U32, 2) -> 2
 # const Number(U8, 0) -> 0
 # const Number(U8, 1) -> 1
-# const Number(USIZE, 2) -> 2
+# const Number(U32, 2) -> 2
 # In IlFunctionId("lcd_init"), resolved the constant val `[0, 16, 15, 0]` for var `t0`.
 # const Number(U8, 10) -> 10
 # const Number(U8, 32) -> 32
@@ -369,81 +369,81 @@ v2.0 raw
 # :delay
 # Ret None
 # Arg0=x
-# Var t60ec (t60ec Number(USIZE, 0)) Reg(U32) Some([16, 17, 18, 19]) [0, 0, 0, 0]
+# Var t60ec (t60ec Number(U32, 0)) Reg(U32) Some([16, 17, 18, 19]) [0, 0, 0, 0]
 # Var tad57 (tad57 Ident("x")) Reg(U32) Some([20, 21, 22, 23])
-# Var x (Arg0 x Number(USIZE)) Reg(U32) Some([20, 21, 22, 23])
+# Var x (Arg0 x Number(U32)) Reg(U32) Some([20, 21, 22, 23])
 # 00026 Copy32 [Register(0x00), Register(0x14)]
 #       Save function parameter 'x' registers [0, 1, 2, 3] to locals [20, 21, 22, 23].
 21 00 14 
 
 # :delay_while_predicate_0 Some('/lutcomp/programs/lib/delay.j':(2,5))
-# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
+# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
 # delay_while_predicate_0
 # tad57 <- x U32 Some('/lutcomp/programs/lib/delay.j':(2,5))
-# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-# Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
+# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+# Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
 # Ident("x")
-# optimized away noop copy Instruction { source: "tad57 <- x U32 Some('/lutcomp/programs/lib/delay.j':(2,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"x\"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident(\"x\"), var_type: None, value: Arithmetic(Subtract, Ident(\"x\"), Number(USIZE, 1)) }] }\nComparison { op: NotEquals, left: Ident(\"x\"), right: Number(USIZE, 0) }\nIdent(\"x\")\n", opcode: Copy32, args: [Register(0x14), Register(0x14)], resolved: None }
+# optimized away noop copy Instruction { source: "tad57 <- x U32 Some('/lutcomp/programs/lib/delay.j':(2,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"x\"), right: Number(U32, 0) }, while_true: [Assign { target: Ident(\"x\"), var_type: None, value: Arithmetic(Subtract, Ident(\"x\"), Number(U32, 1)) }] }\nComparison { op: NotEquals, left: Ident(\"x\"), right: Number(U32, 0) }\nIdent(\"x\")\n", opcode: Copy32, args: [Register(0x14), Register(0x14)], resolved: None }
 # t60ec <- 0n0/0x00000000u32  Some('/lutcomp/programs/lib/delay.j':(2,5))
-# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-# Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
-# Number(USIZE, 0)
+# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+# Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
+# Number(U32, 0)
 # 00029 LoadImm32 [Register(0x10), Constant32(0x00000000=0)]
 #       t60ec <- 0n0/0x00000000u32  Some('/lutcomp/programs/lib/delay.j':(2,5))
-#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-#       Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
-#       Number(USIZE, 0)
+#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+#       Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
+#       Number(U32, 0)
 20 10 00 00 00 00 
 
 # if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))
-# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-# Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
+# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+# Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
 # 0002f Cmp8 [Register(0x17), Register(0x13)]
 #       if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))
-#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-#       Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
+#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+#       Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
 15 17 13 
 
 # 00032 Cmp8IfZero [Register(0x16), Register(0x12)]
 #       if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))
-#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-#       Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
+#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+#       Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
 16 16 12 
 
 # 00035 Cmp8IfZero [Register(0x15), Register(0x11)]
 #       if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))
-#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-#       Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
+#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+#       Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
 16 15 11 
 
 # 00038 Cmp8IfZero [Register(0x14), Register(0x10)]
 #       if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))
-#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-#       Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
+#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+#       Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
 16 14 10 
 
 # 0003b JzImm [Label24(delay_while_end_2)]
 #       if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))
-#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
-#       Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }
+#       While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
+#       Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }
 72 49 00 00 
 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"x\"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident(\"x\"), var_type: None, value: Arithmetic(Subtract, Ident(\"x\"), Number(USIZE, 1)) }] }\nComparison { op: NotEquals, left: Ident(\"x\"), right: Number(USIZE, 0) }\n", opcode: JmpImm, args: [Label24(delay_while_body_1)], resolved: None }
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if tad57 != t60ec then 'delay_while_body_1' else 'delay_while_end_2' Some('/lutcomp/programs/lib/delay.j':(2,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"x\"), right: Number(U32, 0) }, while_true: [Assign { target: Ident(\"x\"), var_type: None, value: Arithmetic(Subtract, Ident(\"x\"), Number(U32, 1)) }] }\nComparison { op: NotEquals, left: Ident(\"x\"), right: Number(U32, 0) }\n", opcode: JmpImm, args: [Label24(delay_while_body_1)], resolved: None }
 # :delay_while_body_1 Some('/lutcomp/programs/lib/delay.j':(2,5))
-# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(USIZE, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }] }
+# While { predicate: Comparison { op: NotEquals, left: Ident("x"), right: Number(U32, 0) }, while_true: [Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }] }
 # delay_while_body_1
 # tad57 <- x U32 Some('/lutcomp/programs/lib/delay.j':(2,5))
-# Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }
-# Arithmetic(Subtract, Ident("x"), Number(USIZE, 1))
+# Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }
+# Arithmetic(Subtract, Ident("x"), Number(U32, 1))
 # Ident("x")
-# optimized away noop copy Instruction { source: "tad57 <- x U32 Some('/lutcomp/programs/lib/delay.j':(2,5))\nAssign { target: Ident(\"x\"), var_type: None, value: Arithmetic(Subtract, Ident(\"x\"), Number(USIZE, 1)) }\nArithmetic(Subtract, Ident(\"x\"), Number(USIZE, 1))\nIdent(\"x\")\n", opcode: Copy32, args: [Register(0x14), Register(0x14)], resolved: None }
+# optimized away noop copy Instruction { source: "tad57 <- x U32 Some('/lutcomp/programs/lib/delay.j':(2,5))\nAssign { target: Ident(\"x\"), var_type: None, value: Arithmetic(Subtract, Ident(\"x\"), Number(U32, 1)) }\nArithmetic(Subtract, Ident(\"x\"), Number(U32, 1))\nIdent(\"x\")\n", opcode: Copy32, args: [Register(0x14), Register(0x14)], resolved: None }
 # x <- tad57 Subtract Number(0n1/0x00000001u32) Some('/lutcomp/programs/lib/delay.j':(2,5))
-# Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }
-# Arithmetic(Subtract, Ident("x"), Number(USIZE, 1))
+# Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }
+# Arithmetic(Subtract, Ident("x"), Number(U32, 1))
 # 0003f AddImm32IgnoreCarry [Register(0x14), Constant32(0xffffffff=4294967295)]
 #       x <- tad57 Subtract Number(0n1/0x00000001u32) Some('/lutcomp/programs/lib/delay.j':(2,5))
-#       Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(USIZE, 1)) }
-#       Arithmetic(Subtract, Ident("x"), Number(USIZE, 1))
+#       Assign { target: Ident("x"), var_type: None, value: Arithmetic(Subtract, Ident("x"), Number(U32, 1)) }
+#       Arithmetic(Subtract, Ident("x"), Number(U32, 1))
 32 14 ff ff ff ff 
 
 # goto delay_while_predicate_0 Some('/lutcomp/programs/lib/delay.j':(2,5))
@@ -477,9 +477,9 @@ v2.0 raw
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd (t1acd Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) Reg(U8) Some([26])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_t2f80 (t2f80 Index("lcd_row_start", Ident("row"))) Reg(U8) Some([27])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_t38c7 (t38c7 Arithmetic(Multiply, Ident("row"), Number(U8, 20))) Reg(U8) Some([26])
-# Var inline_lcd_draw_char_lcd_logical_to_physical_0_t50bd (t50bd Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) Reg(U32) Some([28, 29, 30, 31])
-# Var inline_lcd_draw_char_lcd_logical_to_physical_0_t9eaf (t9eaf Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }) Reg(U32) Some([28, 29, 30, 31])
-# Var inline_lcd_draw_char_lcd_logical_to_physical_0_tb1b6 (tb1b6 Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }) Reg(U32) Some([32, 33, 34, 35])
+# Var inline_lcd_draw_char_lcd_logical_to_physical_0_t50bd (t50bd Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) Reg(U32) Some([28, 29, 30, 31])
+# Var inline_lcd_draw_char_lcd_logical_to_physical_0_t9eaf (t9eaf Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }) Reg(U32) Some([28, 29, 30, 31])
+# Var inline_lcd_draw_char_lcd_logical_to_physical_0_tb1b6 (tb1b6 Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }) Reg(U32) Some([32, 33, 34, 35])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_td007 (td007 Ident("row")) Reg(U8) Some([27])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_td0f3 (td0f3 Ident("i")) Reg(U8) Some([36])
 # Var inline_lcd_draw_char_lcd_logical_to_physical_0_tfee9 (tfee9 Ident("col")) Reg(U8) Some([26])
@@ -489,7 +489,7 @@ v2.0 raw
 # Var t6e3a (t6e3a Arithmetic(Or, Number(U8, 8), Arithmetic(ShiftRight, Ident("pos"), Number(U8, 4)))) Reg(U8) Some([27])
 # Var t7d80 (t7d80 Arithmetic(And, Ident("pos"), Number(U8, 15))) Reg(U8) Some([26])
 # Var t8d12 (t8d12 Arithmetic(ShiftRight, Ident("pos"), Number(U8, 4))) Reg(U8) Some([27])
-# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([40, 41, 42, 43]) [2, 0, 0, 0]
+# Var t9498 (t9498 Number(U32, 2)) Reg(U32) Some([40, 41, 42, 43]) [2, 0, 0, 0]
 # Var tb875 (tb875 Arithmetic(Or, Number(U8, 128), Arithmetic(And, Ident("ch"), Number(U8, 15)))) Reg(U8) Some([25])
 # Var tcd38 (tcd38 Arithmetic(Or, Number(U8, 128), Arithmetic(ShiftRight, Ident("ch"), Number(U8, 4)))) Reg(U8) Some([26])
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([25])
@@ -588,18 +588,18 @@ v2.0 raw
 # Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 # Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 # Index("lcd_row_start", Ident("row"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
-# Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
+# Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }
 # Ident("lcd_row_start")
 # 00073 LoadImm32 [Register(0x20), Label32(:lcd_row_start)]
 #       inline_lcd_draw_char_lcd_logical_to_physical_0_tb1b6 <- const &lcd_row_start Some('/lutcomp/programs/lib/lcd.j':(11,5))
 #       Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 #       Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 #       Index("lcd_row_start", Ident("row"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
-#       Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
+#       Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }
 #       Ident("lcd_row_start")
 20 20 22 00 00 00 
 
@@ -607,26 +607,26 @@ v2.0 raw
 # Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 # Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 # Index("lcd_row_start", Ident("row"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }
 # Ident("row")
-# optimized away noop copy Instruction { source: "inline_lcd_draw_char_lcd_logical_to_physical_0_td007 <- inline_lcd_draw_char_lcd_logical_to_physical_0_row U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))\nReturn { value: Some(Arithmetic(Add, Index(\"lcd_row_start\", Ident(\"row\")), Ident(\"col\"))) }\nArithmetic(Add, Index(\"lcd_row_start\", Ident(\"row\")), Ident(\"col\"))\nIndex(\"lcd_row_start\", Ident(\"row\"))\nCast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident(\"lcd_row_start\") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"row\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident(\"lcd_row_start\") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"row\") })\nCast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"row\") }\nIdent(\"row\")\n", opcode: Copy8, args: [Register(0x1b), Register(0x1b)], resolved: None }
+# optimized away noop copy Instruction { source: "inline_lcd_draw_char_lcd_logical_to_physical_0_td007 <- inline_lcd_draw_char_lcd_logical_to_physical_0_row U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))\nReturn { value: Some(Arithmetic(Add, Index(\"lcd_row_start\", Ident(\"row\")), Ident(\"col\"))) }\nArithmetic(Add, Index(\"lcd_row_start\", Ident(\"row\")), Ident(\"col\"))\nIndex(\"lcd_row_start\", Ident(\"row\"))\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident(\"lcd_row_start\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"row\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident(\"lcd_row_start\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"row\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"row\") }\nIdent(\"row\")\n", opcode: Copy8, args: [Register(0x1b), Register(0x1b)], resolved: None }
 # inline_lcd_draw_char_lcd_logical_to_physical_0_t50bd U32 <- inline_lcd_draw_char_lcd_logical_to_physical_0_td007 U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))
 # Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 # Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 # Index("lcd_row_start", Ident("row"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }
 # 00079 LoadImm32 [Register(0x1c), Constant32(0x00000000=0)]
 #       Zero-pad for inline_lcd_draw_char_lcd_logical_to_physical_0_t50bd U32 <- inline_lcd_draw_char_lcd_logical_to_physical_0_td007 U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))
 #       Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 #       Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 #       Index("lcd_row_start", Ident("row"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }
 20 1c 00 00 00 00 
 
 # 0007f Copy8 [Register(0x1b), Register(0x1c)]
@@ -634,24 +634,24 @@ v2.0 raw
 #       Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 #       Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 #       Index("lcd_row_start", Ident("row"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }
 0b 1b 1c 
 
 # inline_lcd_draw_char_lcd_logical_to_physical_0_t9eaf <- inline_lcd_draw_char_lcd_logical_to_physical_0_tb1b6 Add Var(inline_lcd_draw_char_lcd_logical_to_physical_0_t50bd) Some('/lutcomp/programs/lib/lcd.j':(11,5))
 # Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 # Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 # Index("lcd_row_start", Ident("row"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+# Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
 # 00082 ClearCarry []
 #       inline_lcd_draw_char_lcd_logical_to_physical_0_t9eaf <- inline_lcd_draw_char_lcd_logical_to_physical_0_tb1b6 Add Var(inline_lcd_draw_char_lcd_logical_to_physical_0_t50bd) Some('/lutcomp/programs/lib/lcd.j':(11,5))
 #       Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 #       Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 #       Index("lcd_row_start", Ident("row"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
 03 
 
 # 00083 AddCarry32_1 [Register(0x20), Register(0x1c), Register(0x1c)]
@@ -659,8 +659,8 @@ v2.0 raw
 #       Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 #       Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 #       Index("lcd_row_start", Ident("row"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
 30 20 1c 1c 
 
 # 00087 AddCarry32_2 []
@@ -668,8 +668,8 @@ v2.0 raw
 #       Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 #       Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))
 #       Index("lcd_row_start", Ident("row"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") }) }
-#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(USIZE), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("row") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") }) }
+#       Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(4)))), new_type: Number(U32), value: Ident("lcd_row_start") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("row") })
 31 
 
 # inline_lcd_draw_char_lcd_logical_to_physical_0_t2f80 <- mem[inline_lcd_draw_char_lcd_logical_to_physical_0_t9eaf] U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))
@@ -776,23 +776,23 @@ v2.0 raw
 69 1a 
 
 # t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(19,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-# Number(USIZE, 2)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+# Number(U32, 2)
 # 000a1 LoadImm32 [Register(0x28), Constant32(0x00000002=2)]
 #       t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(19,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-#       Number(USIZE, 2)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+#       Number(U32, 2)
 20 28 02 00 00 00 
 
 # None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(19,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 # 000a7 Copy32 [Register(0x28), Register(0x00)]
 #       Arg0[x]=t9498 None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(19,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 21 28 00 
 
 # Registers used by this function: {25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43}
@@ -899,23 +899,23 @@ v2.0 raw
 69 19 
 
 # t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(23,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-# Number(USIZE, 2)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+# Number(U32, 2)
 # 000d5 LoadImm32 [Register(0x28), Constant32(0x00000002=2)]
 #       t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(23,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-#       Number(USIZE, 2)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+#       Number(U32, 2)
 20 28 02 00 00 00 
 
 # None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(23,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 # 000db Copy32 [Register(0x28), Register(0x00)]
 #       Arg0[x]=t9498 None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(23,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 21 28 00 
 
 # Registers used by this function: {25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43}
@@ -954,18 +954,18 @@ v2.0 raw
 # Ret None
 # Var i (Local i Number(U8) Reg(U8)) Reg(U8) Some([44])
 # Var t0 (static "lcd_current" addr) Reg(U32) Some([48, 49, 50, 51]) [0, 16, 15, 0]
-# Var t385d (t385d Number(USIZE, 1)) Reg(U32) Some([48, 49, 50, 51]) [1, 0, 0, 0]
+# Var t385d (t385d Number(U32, 1)) Reg(U32) Some([48, 49, 50, 51]) [1, 0, 0, 0]
 # Var t40c1 (t40c1 Number(U8, 2)) Reg(U8) Some([44]) [2]
 # Var t80a1 (t80a1 Number(U8, 12)) Reg(U8) Some([44]) [12]
 # Var t8820 (t8820 Number(U8, 3)) Reg(U8) Some([44]) [3]
 # Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([52]) [80]
-# Var t9498 (t9498 Number(USIZE, 2)) Reg(U32) Some([48, 49, 50, 51]) [2, 0, 0, 0]
-# Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) Reg(U32) Some([56, 57, 58, 59])
+# Var t9498 (t9498 Number(U32, 2)) Reg(U32) Some([48, 49, 50, 51]) [2, 0, 0, 0]
+# Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) Reg(U32) Some([56, 57, 58, 59])
 # Var t9f32 (t9f32 Number(U8, 8)) Reg(U8) Some([44]) [8]
 # Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([52]) [32]
 # Var tb36e (tb36e Number(U8, 0)) Reg(U8) Some([52]) [0]
 # Var td0f3 (td0f3 Ident("i")) Reg(U8) Some([44])
-# Var tdd66 (tdd66 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }) Reg(U32) Some([60, 61, 62, 63])
+# Var tdd66 (tdd66 Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }) Reg(U32) Some([60, 61, 62, 63])
 # Var tfcd (tfcd Number(U8, 1)) Reg(U8) Some([44]) [1]
 # t0 <- 0n987136/0x000f1000u32  Some('/lutcomp/programs/lib/lcd.j':(69,5))
 # Assign { target: Ident("lcd_current"), var_type: None, value: Number(U8, 0) }
@@ -1039,48 +1039,48 @@ v2.0 raw
 # lcd_init_while_body_1
 # td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(73,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # Ident("i")
-# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(73,5))\nAssign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Number(U8, 32) }\nCast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }) }\nArithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x2c), Register(0x2c)], resolved: None }
+# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(73,5))\nAssign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Number(U8, 32) }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }) }\nArithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x2c), Register(0x2c)], resolved: None }
 # t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(73,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # 00114 LoadImm32 [Register(0x38), Constant32(0x00000000=0)]
 #       Zero-pad for t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(73,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 20 38 00 00 00 00 
 
 # 0011a Copy8 [Register(0x2c), Register(0x38)]
 #       t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(73,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 0b 2c 38 
 
 # tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(73,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 # 0011d Copy32 [Register(0x38), Register(0x3c)]
 #       tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(73,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 21 38 3c 
 
 # 00120 AddImm32IgnoreCarry [Register(0x3c), Constant32(0x000f1004=987140)]
 #       tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(73,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 32 3c 04 10 0f 00 
 
 # tac5f <- 0n32/0x20u8  Some('/lutcomp/programs/lib/lcd.j':(73,5))
@@ -1145,23 +1145,23 @@ v2.0 raw
 69 2c 
 
 # t385d <- 0n1/0x00000001u32  Some('/lutcomp/programs/lib/lcd.j':(79,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
-# Number(USIZE, 1)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 1)] })
+# Number(U32, 1)
 # 0013c LoadImm32 [Register(0x30), Constant32(0x00000001=1)]
 #       t385d <- 0n1/0x00000001u32  Some('/lutcomp/programs/lib/lcd.j':(79,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
-#       Number(USIZE, 1)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 1)] })
+#       Number(U32, 1)
 20 30 01 00 00 00 
 
 # None <= call delay(t385d,) Some('/lutcomp/programs/lib/lcd.j':(79,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 1)] })
 # 00142 Copy32 [Register(0x30), Register(0x00)]
 #       Arg0[x]=t385d None <= call delay(t385d,) Some('/lutcomp/programs/lib/lcd.j':(79,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 1)] })
 21 30 00 
 
 # Registers used by this function: {44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 61, 62, 63}
@@ -1202,23 +1202,23 @@ v2.0 raw
 69 2c 
 
 # t385d <- 0n1/0x00000001u32  Some('/lutcomp/programs/lib/lcd.j':(81,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
-# Number(USIZE, 1)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 1)] })
+# Number(U32, 1)
 # 00160 LoadImm32 [Register(0x30), Constant32(0x00000001=1)]
 #       t385d <- 0n1/0x00000001u32  Some('/lutcomp/programs/lib/lcd.j':(81,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
-#       Number(USIZE, 1)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 1)] })
+#       Number(U32, 1)
 20 30 01 00 00 00 
 
 # None <= call delay(t385d,) Some('/lutcomp/programs/lib/lcd.j':(81,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 1)] })
 # 00166 Copy32 [Register(0x30), Register(0x00)]
 #       Arg0[x]=t385d None <= call delay(t385d,) Some('/lutcomp/programs/lib/lcd.j':(81,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 1)] })
 21 30 00 
 
 # Registers used by this function: {44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 61, 62, 63}
@@ -1259,23 +1259,23 @@ v2.0 raw
 69 2c 
 
 # t385d <- 0n1/0x00000001u32  Some('/lutcomp/programs/lib/lcd.j':(83,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
-# Number(USIZE, 1)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 1)] })
+# Number(U32, 1)
 # 00184 LoadImm32 [Register(0x30), Constant32(0x00000001=1)]
 #       t385d <- 0n1/0x00000001u32  Some('/lutcomp/programs/lib/lcd.j':(83,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
-#       Number(USIZE, 1)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 1)] })
+#       Number(U32, 1)
 20 30 01 00 00 00 
 
 # None <= call delay(t385d,) Some('/lutcomp/programs/lib/lcd.j':(83,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 1)] })
 # 0018a Copy32 [Register(0x30), Register(0x00)]
 #       Arg0[x]=t385d None <= call delay(t385d,) Some('/lutcomp/programs/lib/lcd.j':(83,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 1)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 1)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 1)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 1)] })
 21 30 00 
 
 # Registers used by this function: {44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 61, 62, 63}
@@ -1316,23 +1316,23 @@ v2.0 raw
 69 2c 
 
 # t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(86,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-# Number(USIZE, 2)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+# Number(U32, 2)
 # 001a8 LoadImm32 [Register(0x30), Constant32(0x00000002=2)]
 #       t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(86,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-#       Number(USIZE, 2)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+#       Number(U32, 2)
 20 30 02 00 00 00 
 
 # None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(86,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 # 001ae Copy32 [Register(0x30), Register(0x00)]
 #       Arg0[x]=t9498 None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(86,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 21 30 00 
 
 # Registers used by this function: {44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 61, 62, 63}
@@ -1391,23 +1391,23 @@ v2.0 raw
 69 2c 
 
 # t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(90,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-# Number(USIZE, 2)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+# Number(U32, 2)
 # 001d1 LoadImm32 [Register(0x30), Constant32(0x00000002=2)]
 #       t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(90,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-#       Number(USIZE, 2)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+#       Number(U32, 2)
 20 30 02 00 00 00 
 
 # None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(90,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 # 001d7 Copy32 [Register(0x30), Register(0x00)]
 #       Arg0[x]=t9498 None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(90,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 21 30 00 
 
 # Registers used by this function: {44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 61, 62, 63}
@@ -1466,23 +1466,23 @@ v2.0 raw
 69 2c 
 
 # t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(94,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-# Number(USIZE, 2)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+# Number(U32, 2)
 # 001fa LoadImm32 [Register(0x30), Constant32(0x00000002=2)]
 #       t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(94,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-#       Number(USIZE, 2)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+#       Number(U32, 2)
 20 30 02 00 00 00 
 
 # None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(94,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 # 00200 Copy32 [Register(0x30), Register(0x00)]
 #       Arg0[x]=t9498 None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(94,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 21 30 00 
 
 # Registers used by this function: {44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 61, 62, 63}
@@ -1541,23 +1541,23 @@ v2.0 raw
 69 2c 
 
 # t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(98,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-# Number(USIZE, 2)
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+# Number(U32, 2)
 # 00223 LoadImm32 [Register(0x30), Constant32(0x00000002=2)]
 #       t9498 <- 0n2/0x00000002u32  Some('/lutcomp/programs/lib/lcd.j':(98,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
-#       Number(USIZE, 2)
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
+#       Number(U32, 2)
 20 30 02 00 00 00 
 
 # None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(98,5))
-# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-# Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+# VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+# Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 # 00229 Copy32 [Register(0x30), Register(0x00)]
 #       Arg0[x]=t9498 None <= call delay(t9498,) Some('/lutcomp/programs/lib/lcd.j':(98,5))
-#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(USIZE, 2)] }) }
-#       Call(Call { function: "delay", parameters: [Number(USIZE, 2)] })
+#       VoidExpression { expression: Call(Call { function: "delay", parameters: [Number(U32, 2)] }) }
+#       Call(Call { function: "delay", parameters: [Number(U32, 2)] })
 21 30 00 
 
 # Registers used by this function: {44, 48, 49, 50, 51, 52, 56, 57, 58, 59, 60, 61, 62, 63}
@@ -1600,7 +1600,7 @@ v2.0 raw
 # Var t0 (static "lcd_current" addr) Reg(U32) Some([68, 69, 70, 71]) [0, 16, 15, 0]
 # Var t1 (static "lcd_current" addr) Reg(U32) Some([72, 73, 74, 75]) [0, 16, 15, 0]
 # Var t2 (static "lcd_current" addr) Reg(U32) Some([72, 73, 74, 75]) [0, 16, 15, 0]
-# Var t2878 (t2878 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }) Reg(U32) Some([72, 73, 74, 75])
+# Var t2878 (t2878 Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }) Reg(U32) Some([72, 73, 74, 75])
 # Var t3 (static "lcd_current" addr) Reg(U32) Some([72, 73, 74, 75]) [0, 16, 15, 0]
 # Var t4 (static "lcd_current" addr) Reg(U32) Some([76, 77, 78, 79]) [0, 16, 15, 0]
 # Var t4584 (t4584 Arithmetic(Add, Ident("lcd_current"), Number(U8, 1))) Reg(U8) Some([80])
@@ -1615,7 +1615,7 @@ v2.0 raw
 # Var ta5ff (ta5ff Ident("next")) Reg(U8) Some([64])
 # Var tab78 (tab78 Arithmetic(Divide, Ident("lcd_current"), Number(U8, 20))) Reg(U8) Some([64])
 # Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([80]) [32]
-# Var tad4e (tad4e Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) Reg(U32) Some([72, 73, 74, 75])
+# Var tad4e (tad4e Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) Reg(U32) Some([72, 73, 74, 75])
 # Var td7b5 (td7b5 Number(U8, 10)) Reg(U8) Some([81]) [10]
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([64])
 # 00249 Copy8 [Register(0x00), Register(0x40)]
@@ -1797,64 +1797,64 @@ v2.0 raw
 # lcd_putc_while_body_4
 # t2 <- 0n987136/0x000f1000u32  Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 # Ident("lcd_current")
 # 00288 LoadImm32 [Register(0x48), Constant32(0x000f1000=987136)]
 #       t2 <- 0n987136/0x000f1000u32  Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 #       Ident("lcd_current")
 20 48 00 10 0f 00 
 
 # t5dda <- mem[t2] U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 # Ident("lcd_current")
 # 0028e Load8 [Register(0x48), Register(0x50)]
 #       t5dda <- mem[t2] U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 #       Ident("lcd_current")
 05 48 50 
 
 # tad4e U32 <- t5dda U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 # 00291 LoadImm32 [Register(0x48), Constant32(0x00000000=0)]
 #       Zero-pad for tad4e U32 <- t5dda U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 20 48 00 00 00 00 
 
 # 00297 Copy8 [Register(0x50), Register(0x48)]
 #       tad4e U32 <- t5dda U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 0b 50 48 
 
 # t2878 <- tad4e Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
 # 0029a AddImm32IgnoreCarry [Register(0x48), Constant32(0x000f1004=987140)]
 #       t2878 <- tad4e Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
 32 48 04 10 0f 00 
 
 # tac5f <- 0n32/0x20u8  Some('/lutcomp/programs/lib/lcd.j':(51,5))
@@ -1940,64 +1940,64 @@ v2.0 raw
 # lcd_putc_if_else_0_2
 # t5 <- 0n987136/0x000f1000u32  Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 # Ident("lcd_current")
 # 002c7 LoadImm32 [Register(0x48), Constant32(0x000f1000=987136)]
 #       t5 <- 0n987136/0x000f1000u32  Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 #       Ident("lcd_current")
 20 48 00 10 0f 00 
 
 # t5dda <- mem[t5] U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 # Ident("lcd_current")
 # 002cd Load8 [Register(0x48), Register(0x50)]
 #       t5dda <- mem[t5] U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 #       Ident("lcd_current")
 05 48 50 
 
 # tad4e U32 <- t5dda U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 # 002d0 LoadImm32 [Register(0x48), Constant32(0x00000000=0)]
 #       Zero-pad for tad4e U32 <- t5dda U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 20 48 00 00 00 00 
 
 # 002d6 Copy8 [Register(0x50), Register(0x48)]
 #       tad4e U32 <- t5dda U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }
 0b 50 48 
 
 # t2878 <- tad4e Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(51,5))
 # Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
 # 002d9 AddImm32IgnoreCarry [Register(0x48), Constant32(0x000f1004=987140)]
 #       t2878 <- tad4e Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(51,5))
 #       Assign { target: Index("lcd_display", Ident("lcd_current")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("lcd_current") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("lcd_current") })
 32 48 04 10 0f 00 
 
 # tdcd9 <- ch U8 Some('/lutcomp/programs/lib/lcd.j':(51,5))
@@ -2232,19 +2232,19 @@ v2.0 raw
 # Var i (Local i Number(U8) Reg(U8)) Reg(U8) Some([83])
 # Var t0 (static "lcd_current" addr) Reg(U32) Some([84, 85, 86, 87]) [0, 16, 15, 0]
 # Var t1 (static "lcd_current" addr) Reg(U32) Some([88, 89, 90, 91]) [0, 16, 15, 0]
-# Var t1324 (t1324 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }) Reg(U32) Some([84, 85, 86, 87])
+# Var t1324 (t1324 Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }) Reg(U32) Some([84, 85, 86, 87])
 # Var t2aa3 (t2aa3 Number(U8, 60)) Reg(U8) Some([82]) [60]
 # Var t5dda (t5dda Ident("lcd_current")) Reg(U8) Some([83])
 # Var t7e9 (t7e9 Arithmetic(Add, Ident("i"), Number(U8, 20))) Reg(U8) Some([82])
 # Var t8fe0 (t8fe0 Number(U8, 80)) Reg(U8) Some([82]) [80]
-# Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) Reg(U32) Some([92, 93, 94, 95])
+# Var t9725 (t9725 Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) Reg(U32) Some([92, 93, 94, 95])
 # Var ta094 (ta094 Index("lcd_display", Ident("i"))) Reg(U8) Some([96])
 # Var tac5f (tac5f Number(U8, 32)) Reg(U8) Some([82]) [32]
 # Var tb175 (tb175 Arithmetic(Subtract, Ident("lcd_current"), Number(U8, 20))) Reg(U8) Some([83])
 # Var td0f3 (td0f3 Ident("i")) Reg(U8) Some([83])
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([82])
-# Var tdd66 (tdd66 Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }) Reg(U32) Some([92, 93, 94, 95])
-# Var tfd7d (tfd7d Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) Reg(U32) Some([84, 85, 86, 87])
+# Var tdd66 (tdd66 Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }) Reg(U32) Some([92, 93, 94, 95])
+# Var tfd7d (tfd7d Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) Reg(U32) Some([84, 85, 86, 87])
 # t0 <- 0n987136/0x000f1000u32  Some('/lutcomp/programs/lib/lcd.j':(27,5))
 # Assign { target: Ident("lcd_current"), var_type: None, value: Arithmetic(Subtract, Ident("lcd_current"), Number(U8, 20)) }
 # 00358 LoadImm32 [Register(0x54), Constant32(0x000f1000=987136)]
@@ -2346,26 +2346,26 @@ v2.0 raw
 # td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 # Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
 # Arithmetic(Add, Ident("i"), Number(U8, 20))
 # Ident("i")
-# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))\nAssign { target: Ident(\"ch\"), var_type: None, value: Index(\"lcd_display\", Arithmetic(Add, Ident(\"i\"), Number(U8, 20))) }\nIndex(\"lcd_display\", Arithmetic(Add, Ident(\"i\"), Number(U8, 20)))\nCast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident(\"i\"), Number(U8, 20)) }) }\nArithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident(\"i\"), Number(U8, 20)) })\nCast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident(\"i\"), Number(U8, 20)) }\nArithmetic(Add, Ident(\"i\"), Number(U8, 20))\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
+# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))\nAssign { target: Ident(\"ch\"), var_type: None, value: Index(\"lcd_display\", Arithmetic(Add, Ident(\"i\"), Number(U8, 20))) }\nIndex(\"lcd_display\", Arithmetic(Add, Ident(\"i\"), Number(U8, 20)))\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident(\"i\"), Number(U8, 20)) }) }\nArithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident(\"i\"), Number(U8, 20)) })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident(\"i\"), Number(U8, 20)) }\nArithmetic(Add, Ident(\"i\"), Number(U8, 20))\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
 # t7e9 <- td0f3 Add Number(0n20/0x14u8) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 # Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
 # Arithmetic(Add, Ident("i"), Number(U8, 20))
 # 0037e LoadImm8 [Register(0x00), Constant8(0x14=20)]
 #       t7e9 <- td0f3 Add Number(0n20/0x14u8) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 #       Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
 #       Arithmetic(Add, Ident("i"), Number(U8, 20))
 04 00 14 
 
@@ -2373,47 +2373,47 @@ v2.0 raw
 #       t7e9 <- td0f3 Add Number(0n20/0x14u8) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 #       Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
 #       Arithmetic(Add, Ident("i"), Number(U8, 20))
 14 53 00 52 
 
 # tfd7d U32 <- t7e9 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 # Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
 # 00385 LoadImm32 [Register(0x54), Constant32(0x00000000=0)]
 #       Zero-pad for tfd7d U32 <- t7e9 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 #       Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
 20 54 00 00 00 00 
 
 # 0038b Copy8 [Register(0x52), Register(0x54)]
 #       tfd7d U32 <- t7e9 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 #       Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }
 0b 52 54 
 
 # t1324 <- tfd7d Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 # Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
 # 0038e AddImm32IgnoreCarry [Register(0x54), Constant32(0x000f1004=987140)]
 #       t1324 <- tfd7d Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Ident("ch"), var_type: None, value: Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20))) }
 #       Index("lcd_display", Arithmetic(Add, Ident("i"), Number(U8, 20)))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Arithmetic(Add, Ident("i"), Number(U8, 20)) })
 32 54 04 10 0f 00 
 
 # ch <- mem[t1324] U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
@@ -2434,26 +2434,26 @@ v2.0 raw
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }
 # Index("lcd_display", Ident("i"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # Ident("i")
-# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"ch\"), right: Index(\"lcd_display\", Ident(\"i\")) }, [Assign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Ident(\"ch\") }, VoidExpression { expression: Call(Call { function: \"lcd_draw_char\", parameters: [Ident(\"i\"), Ident(\"ch\")] }) }])], else_block: [] }\nComparison { op: NotEquals, left: Ident(\"ch\"), right: Index(\"lcd_display\", Ident(\"i\")) }\nIndex(\"lcd_display\", Ident(\"i\"))\nCast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }) }\nArithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
+# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"ch\"), right: Index(\"lcd_display\", Ident(\"i\")) }, [Assign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Ident(\"ch\") }, VoidExpression { expression: Call(Call { function: \"lcd_draw_char\", parameters: [Ident(\"i\"), Ident(\"ch\")] }) }])], else_block: [] }\nComparison { op: NotEquals, left: Ident(\"ch\"), right: Index(\"lcd_display\", Ident(\"i\")) }\nIndex(\"lcd_display\", Ident(\"i\"))\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }) }\nArithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
 # t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }
 # Index("lcd_display", Ident("i"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # 00397 LoadImm32 [Register(0x5c), Constant32(0x00000000=0)]
 #       Zero-pad for t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }
 #       Index("lcd_display", Ident("i"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 20 5c 00 00 00 00 
 
 # 0039d Copy8 [Register(0x53), Register(0x5c)]
@@ -2461,24 +2461,24 @@ v2.0 raw
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }
 #       Index("lcd_display", Ident("i"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 0b 53 5c 
 
 # tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }
 # Index("lcd_display", Ident("i"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 # 003a0 AddImm32IgnoreCarry [Register(0x5c), Constant32(0x000f1004=987140)]
 #       tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Ident("ch")] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Index("lcd_display", Ident("i")) }
 #       Index("lcd_display", Ident("i"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 32 5c 04 10 0f 00 
 
 # ta094 <- mem[tdd66] U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
@@ -2513,41 +2513,41 @@ v2.0 raw
 # lcd_scroll_up_if_true_0_4
 # td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # Ident("i")
-# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))\nAssign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Ident(\"ch\") }\nCast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }) }\nArithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
+# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))\nAssign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Ident(\"ch\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }) }\nArithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
 # t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # 003b0 LoadImm32 [Register(0x5c), Constant32(0x00000000=0)]
 #       Zero-pad for t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 20 5c 00 00 00 00 
 
 # 003b6 Copy8 [Register(0x53), Register(0x5c)]
 #       t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 0b 53 5c 
 
 # tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 # 003b9 AddImm32IgnoreCarry [Register(0x5c), Constant32(0x000f1004=987140)]
 #       tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(31,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Ident("ch") }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 32 5c 04 10 0f 00 
 
 # tdcd9 <- ch U8 Some('/lutcomp/programs/lib/lcd.j':(31,5))
@@ -2683,26 +2683,26 @@ v2.0 raw
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }
 # Index("lcd_display", Ident("i"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # Ident("i")
-# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Index(\"lcd_display\", Ident(\"i\")), right: Number(U8, 32) }, [Assign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: \"lcd_draw_char\", parameters: [Ident(\"i\"), Number(U8, 32)] }) }])], else_block: [] }\nComparison { op: NotEquals, left: Index(\"lcd_display\", Ident(\"i\")), right: Number(U8, 32) }\nIndex(\"lcd_display\", Ident(\"i\"))\nCast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }) }\nArithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
+# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Index(\"lcd_display\", Ident(\"i\")), right: Number(U8, 32) }, [Assign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: \"lcd_draw_char\", parameters: [Ident(\"i\"), Number(U8, 32)] }) }])], else_block: [] }\nComparison { op: NotEquals, left: Index(\"lcd_display\", Ident(\"i\")), right: Number(U8, 32) }\nIndex(\"lcd_display\", Ident(\"i\"))\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }) }\nArithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
 # t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }
 # Index("lcd_display", Ident("i"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # 003f7 LoadImm32 [Register(0x5c), Constant32(0x00000000=0)]
 #       Zero-pad for t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }
 #       Index("lcd_display", Ident("i"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 20 5c 00 00 00 00 
 
 # 003fd Copy8 [Register(0x53), Register(0x5c)]
@@ -2710,24 +2710,24 @@ v2.0 raw
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }
 #       Index("lcd_display", Ident("i"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 0b 53 5c 
 
 # tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(41,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }
 # Index("lcd_display", Ident("i"))
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 # 00400 AddImm32IgnoreCarry [Register(0x5c), Constant32(0x000f1004=987140)]
 #       tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(41,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }, [Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }, VoidExpression { expression: Call(Call { function: "lcd_draw_char", parameters: [Ident("i"), Number(U8, 32)] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Index("lcd_display", Ident("i")), right: Number(U8, 32) }
 #       Index("lcd_display", Ident("i"))
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 32 5c 04 10 0f 00 
 
 # ta094 <- mem[tdd66] U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))
@@ -2773,41 +2773,41 @@ v2.0 raw
 # lcd_scroll_up_if_true_0_10
 # td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # Ident("i")
-# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))\nAssign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Number(U8, 32) }\nCast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }) }\nArithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
+# optimized away noop copy Instruction { source: "td0f3 <- i U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))\nAssign { target: Index(\"lcd_display\", Ident(\"i\")), var_type: None, value: Number(U8, 32) }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }) }\nArithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident(\"i\") }\nIdent(\"i\")\n", opcode: Copy8, args: [Register(0x53), Register(0x53)], resolved: None }
 # t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-# Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+# Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 # 00413 LoadImm32 [Register(0x5c), Constant32(0x00000000=0)]
 #       Zero-pad for t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 20 5c 00 00 00 00 
 
 # 00419 Copy8 [Register(0x53), Register(0x5c)]
 #       t9725 U32 <- td0f3 U8 Some('/lutcomp/programs/lib/lcd.j':(41,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
-#       Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
+#       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }
 0b 53 5c 
 
 # tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(41,5))
 # Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-# Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-# Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+# Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+# Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 # 0041c AddImm32IgnoreCarry [Register(0x5c), Constant32(0x000f1004=987140)]
 #       tdd66 <- t9725 Add Number(0n987140/0x000f1004u32) Some('/lutcomp/programs/lib/lcd.j':(41,5))
 #       Assign { target: Index("lcd_display", Ident("i")), var_type: None, value: Number(U8, 32) }
-#       Cast { old_type: Some(Number(USIZE)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") }) }
-#       Arithmetic(Add, Number(USIZE, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(USIZE), value: Ident("i") })
+#       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") }) }
+#       Arithmetic(Add, Number(U32, 987140), Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: Ident("i") })
 32 5c 04 10 0f 00 
 
 # tac5f <- 0n32/0x20u8  Some('/lutcomp/programs/lib/lcd.j':(41,5))

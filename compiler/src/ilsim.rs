@@ -8,14 +8,14 @@ use std::collections::btree_map::Entry;
 struct SimulationContext<'a> {
     program: &'a IlProgram,
     entry_function: &'a IlFunctionId,
-    entry_args: &'a [IlNumber],
+    entry_args: &'a [Number],
     stack_pointer: u32,
     mem: BTreeMap<u32, u8>,
     tty_in: VecDeque<u8>,
 }
 
 impl<'a> SimulationContext<'a> {
-    fn run(&mut self) -> (u64, IlNumber) {
+    fn run(&mut self) -> (u64, Number) {
         let entry = self.program.functions.get(&self.entry_function).unwrap();
         let (ticks, result) = entry.simulate(self, &self.entry_args);
         (ticks, result.unwrap())
@@ -23,7 +23,7 @@ impl<'a> SimulationContext<'a> {
 }
 
 impl IlProgram {
-    fn create_sim<'a>(&'a self, args: &'a [IlNumber]) -> SimulationContext<'a> {
+    fn create_sim<'a>(&'a self, args: &'a [Number]) -> SimulationContext<'a> {
         SimulationContext {
             program: &self,
             entry_function: &self.entry,
@@ -34,11 +34,11 @@ impl IlProgram {
         }
     }
 
-    pub fn simulate_with_ticks(&self, args: &[IlNumber]) -> (u64, IlNumber) {
+    pub fn simulate_with_ticks(&self, args: &[Number]) -> (u64, Number) {
         self.create_sim(args).run()
     }
 
-    pub fn simulate(&self, args: &[IlNumber]) -> IlNumber {
+    pub fn simulate(&self, args: &[Number]) -> Number {
         self.create_sim(args).run().1
     }
 }
@@ -58,8 +58,8 @@ impl IlFunction {
             .next()
     }
 
-    fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[IlNumber]) -> (u64, Option<IlNumber>) {
-        let mut vars: BTreeMap<&IlVarId, IlNumber> = BTreeMap::new();
+    fn simulate<'a>(&self, ctxt: &mut SimulationContext<'a>, args: &[Number]) -> (u64, Option<Number>) {
+        let mut vars: BTreeMap<&IlVarId, Number> = BTreeMap::new();
 
         let last_const_addr = ROM_MAX;
         let const_addrs: BTreeMap<_,_> = ctxt.program.consts.iter().map(|((_,name), info)| {
@@ -70,7 +70,7 @@ impl IlFunction {
 
         for (id, info) in self.vars.iter().rev() {
             if let IlLocation::Static(addr) = info.location {
-                assert!(vars.insert(id, IlNumber::U32(addr)).is_none());
+                assert!(vars.insert(id, Number::U32(addr)).is_none());
             }
         }
 
@@ -88,7 +88,7 @@ impl IlFunction {
             if let Some(fp) = vars.get(&frame_pointer) {
                 ctxt.stack_pointer = fp.as_u32();
             }
-            vars.insert(&frame_pointer, IlNumber::U32(ctxt.stack_pointer));
+            vars.insert(&frame_pointer, Number::U32(ctxt.stack_pointer));
 
             let mut inc_pc = true;
 
@@ -121,12 +121,12 @@ impl IlFunction {
 
                     let value = if let Some(src_range) = src_range {
                         match value {
-                            IlNumber::U32(n) => {
+                            Number::U32(n) => {
                                 assert_eq!(src_range.len(), 1);
                                 let b= n.to_le_bytes()[src_range.start as usize];
-                                IlNumber::U8(b.into())
+                                Number::U8(b.into())
                             }
-                            IlNumber::U8(_) | IlNumber::U16(_) => panic!(),
+                            Number::U8(_) | Number::U16(_) => panic!(),
                         }
                     } else {
                         value
@@ -146,7 +146,7 @@ impl IlFunction {
                         (Entry::Occupied(mut existing), Some(dest_range)) => {
                             assert_eq!(dest_range.len(), 1);
                             match (&value, existing.get_mut()) {
-                                (IlNumber::U8(value), &mut IlNumber::U32(ref mut n)) => {
+                                (Number::U8(value), &mut Number::U32(ref mut n)) => {
                                     let mut bytes = n.to_le_bytes();
                                     bytes[dest_range.start as usize] = *value;
                                     *n = u32::from_le_bytes(bytes);
@@ -167,20 +167,20 @@ impl IlFunction {
                 IlInstruction::AssignUnary { dest, op, src } => {
                     let src = vars.get(src).unwrap();
                     let result = match src {
-                        IlNumber::U32(n) => {
-                            IlNumber::U32(match op {
+                        Number::U32(n) => {
+                            Number::U32(match op {
                                 IlUnaryOp::Negate => n.wrapping_neg(),
                                 IlUnaryOp::BinaryInvert => !n,
                             })
                         }
-                        IlNumber::U16(n) => {
-                            IlNumber::U16(match op {
+                        Number::U16(n) => {
+                            Number::U16(match op {
                                 IlUnaryOp::Negate => n.wrapping_neg(),
                                 IlUnaryOp::BinaryInvert => !n,
                             })
                         }
-                        IlNumber::U8(n) => {
-                            IlNumber::U8(match op {
+                        Number::U8(n) => {
+                            Number::U8(match op {
                                 IlUnaryOp::Negate => n.wrapping_neg(),
                                 IlUnaryOp::BinaryInvert => !n,
                             })
@@ -201,20 +201,20 @@ impl IlFunction {
                 }
                 IlInstruction::ReadMemory { dest, addr, size } => {
                     let addr = *vars.get(addr).unwrap();
-                    if let IlNumber::U32(addr) = addr {
+                    if let Number::U32(addr) = addr {
                         match size {
-                            IlType::U8 => {
-                                vars.insert(dest, IlNumber::U8(ctxt.mem[&addr]));
+                            NumberType::U8 => {
+                                vars.insert(dest, Number::U8(ctxt.mem[&addr]));
                             }
-                            IlType::U16 => {
+                            NumberType::U16 => {
                                 assert_eq!(0, addr % 2);
                                 let r = u16::from_le_bytes([
                                     ctxt.mem[&(addr+0)],
                                     ctxt.mem[&(addr+1)],
                                 ]);
-                                vars.insert(dest, IlNumber::U16(r));
+                                vars.insert(dest, Number::U16(r));
                             }
-                            IlType::U32 => {
+                            NumberType::U32 => {
                                 assert_eq!(0, addr % 4);
                                 let r = u32::from_le_bytes([
                                     ctxt.mem[&(addr+0)],
@@ -222,7 +222,7 @@ impl IlFunction {
                                     ctxt.mem[&(addr+2)],
                                     ctxt.mem[&(addr+3)],
                                 ]);
-                                vars.insert(dest, IlNumber::U32(r));
+                                vars.insert(dest, Number::U32(r));
                             }
                         }
                     } else {
@@ -232,24 +232,24 @@ impl IlFunction {
                 IlInstruction::WriteMemory { addr, src, size} => {
                     let src = vars[src];
                     let addr = vars[addr];
-                    if let IlNumber::U32(addr) = addr {
+                    if let Number::U32(addr) = addr {
                         match src {
-                            IlNumber::U8(n) => {
-                                assert_eq!(size, &IlType::U8);
+                            Number::U8(n) => {
+                                assert_eq!(size, &NumberType::U8);
                                 ctxt.mem.insert(addr, n);
                             },
-                            IlNumber::U16(n) => {
+                            Number::U16(n) => {
                                 assert_eq!(0, addr % 2);
-                                assert_eq!(size, &IlType::U16);
+                                assert_eq!(size, &NumberType::U16);
                                 let bytes = n.to_le_bytes();
                                 for (i, b) in bytes.iter().enumerate() {
                                     let i = i as u32;
                                     ctxt.mem.insert(addr + i, *b);
                                 }
                             },
-                            IlNumber::U32(n) => {
+                            Number::U32(n) => {
                                 assert_eq!(0, addr % 4);
-                                assert_eq!(size, &IlType::U32);
+                                assert_eq!(size, &NumberType::U32);
                                 let bytes = n.to_le_bytes();
                                 for (i, b) in bytes.iter().enumerate() {
                                     let i = i as u32;
@@ -269,7 +269,7 @@ impl IlFunction {
                     let left = vars[left];
                     let right = vars[right];
                     let condition_true = match (left, right) {
-                        (IlNumber::U8(left), IlNumber::U8(right)) => {
+                        (Number::U8(left), Number::U8(right)) => {
                             match op {
                                 IlCmpOp::Equals => left == right,
                                 IlCmpOp::NotEquals => left != right,
@@ -279,7 +279,7 @@ impl IlFunction {
                                 IlCmpOp::LessThanOrEqual => left <= right,
                             }
                         }
-                        (IlNumber::U32(left), IlNumber::U32(right)) => {
+                        (Number::U32(left), Number::U32(right)) => {
                             match op {
                                 IlCmpOp::Equals => left == right,
                                 IlCmpOp::NotEquals => left != right,
@@ -303,14 +303,14 @@ impl IlFunction {
                         match i {
                             Intrinsic::Mul8_16 => {
                                 let src1 = match args[0] {
-                                    IlNumber::U8(n) => n,
+                                    Number::U8(n) => n,
                                     _ => panic!(),
                                 };
                                 let src2 = match args[1] {
-                                    IlNumber::U8(n) => n,
+                                    Number::U8(n) => n,
                                     _ => panic!(),
                                 };
-                                Some(IlNumber::U16((src1 as u16)*(src2 as u16)))
+                                Some(Number::U16((src1 as u16)*(src2 as u16)))
                             },
                             _ => todo!(),
                         }
@@ -340,13 +340,13 @@ impl IlFunction {
                             }
                         }
                     }
-                    let peek = IlNumber::U8(ctxt.tty_in.pop_front().map_or(0x00, |c| 0x80 | c));
+                    let peek = Number::U8(ctxt.tty_in.pop_front().map_or(0x00, |c| 0x80 | c));
                     match vars.entry(dest) {
                         Entry::Vacant(v) => {
                             v.insert(peek);
                         }
                         Entry::Occupied(mut existing) => {
-                            assert_eq!(existing.get().il_type(), IlType::U8);
+                            assert_eq!(existing.get().il_type(), NumberType::U8);
                             existing.insert(peek);
                         },
                     }
@@ -359,16 +359,16 @@ impl IlFunction {
                     let src = vars[src];
                     assert_eq!(&src.il_type(), src_size);
                     let n = match (dest_size, src) {
-                        (IlType::U16, IlNumber::U8(n)) => IlNumber::U16(n as u16),
-                        (IlType::U32, IlNumber::U8(n)) => IlNumber::U32(n as u32),
-                        (IlType::U8, IlNumber::U32(n)) => IlNumber::U8((n & 0xFF) as u8),
+                        (NumberType::U16, Number::U8(n)) => Number::U16(n as u16),
+                        (NumberType::U32, Number::U8(n)) => Number::U32(n as u32),
+                        (NumberType::U8, Number::U32(n)) => Number::U8((n & 0xFF) as u8),
                         _ => panic!(),
                     };
 
                     vars.insert(dest, n);
                 },
                 IlInstruction::GetConstAddress { dest, const_name } => {
-                    let addr = IlNumber::U32(const_addrs[const_name]);
+                    let addr = Number::U32(const_addrs[const_name]);
 
                     match vars.entry(dest) {
                         Entry::Vacant(v) => {
@@ -466,7 +466,7 @@ mod tests {
             "mul8_16",
             include_str!("../../programs/lib/mul.j"),
             &[
-                (vec![16u8.into(), 16u8.into()],IlNumber::U16(256).into()),
+                (vec![16u8.into(), 16u8.into()],Number::U16(256).into()),
                 (vec![0u8.into(), 0u8.into()],0u16.into()),
                 (vec![128u8.into(), 0u8.into()],0u16.into()),
                 (vec![0u8.into(), 128u8.into()],0u16.into()),
@@ -618,7 +618,7 @@ mod tests {
         test_var_inputs(
             "main",
             include_str!("../../programs/test/idfn.j"),
-            &[(vec![],TestVar::Num(IlNumber::U8(7u8)))]);
+            &[(vec![],TestVar::Num(Number::U8(7u8)))]);
     }
 
     #[test]
@@ -918,12 +918,12 @@ mod tests {
     #[test]
     fn heap_init() {
         let (ctxt, il, rom) = assemble("heap_init", include_str!("../../programs/lib/heap.j"));
-        let (_, heap_start) = run_var_input(&ctxt, &il, &rom, &vec![], IlType::U32);
-        assert_eq!(heap_start, IlNumber::U32(STATICS_START_ADDRESS));
+        let (_, heap_start) = run_var_input(&ctxt, &il, &rom, &vec![], NumberType::U32);
+        assert_eq!(heap_start, Number::U32(STATICS_START_ADDRESS));
 
         let (ctxt, il, rom) = assemble("test_get_heap_head", include_str!("../../programs/lib/heap.j"));
-        let (c, heap_entry) = run_var_input(&ctxt, &il, &rom, &vec![], IlType::U32);
-        assert_eq!(heap_entry, IlNumber::U32(STATICS_START_ADDRESS+4));
+        let (c, heap_entry) = run_var_input(&ctxt, &il, &rom, &vec![], NumberType::U32);
+        assert_eq!(heap_entry, Number::U32(STATICS_START_ADDRESS+4));
 
         let heap_type = ctxt.struct_types.get("heap").unwrap();
         let (head_offset, _) = heap_type.get_field(&ctxt, "head");
@@ -948,10 +948,10 @@ mod tests {
     #[test]
     fn heap_is_entry_bad() {
         let (ctxt, il, rom) = assemble("test_heap_is_entry_bad", include_str!("../../programs/lib/heap.j"));
-        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1u32.into()], IlType::U8);
+        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1u32.into()], NumberType::U8);
         assert_eq!(is_bad.as_u32(), 0);
 
-        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1024u32.into()], IlType::U8);
+        let (_, is_bad) = run_var_input(&ctxt, &il, &rom, &vec![1024u32.into()], NumberType::U8);
         assert_eq!(is_bad.as_u32(), 1);
     }
 
@@ -959,7 +959,7 @@ mod tests {
     fn heap_alloc() {
         let alloc_size = 4u32;
         let (ctxt, il, rom) = assemble("test_heap_alloc", include_str!("../../programs/lib/heap.j"));
-        let (c, allocated_addr) = run_var_input(&ctxt, &il, &rom, &vec![alloc_size.into()], IlType::U32);
+        let (c, allocated_addr) = run_var_input(&ctxt, &il, &rom, &vec![alloc_size.into()], NumberType::U32);
         let allocated_addr = allocated_addr.as_u32();
 
         const HEADER_SIZE : u32 = 0xc;
@@ -1127,9 +1127,9 @@ mod tests {
             "strlen",
             include_str!("../../programs/lib/strlen.j"),
             &[
-                (vec![TestVar::Ascii(b"\0")], TestVar::Num(IlNumber::U32(0))),
-                (vec![TestVar::Ascii(b"hello\0")], TestVar::Num(IlNumber::U32(5))),
-                (vec![TestVar::Ptr(long)], TestVar::Num(IlNumber::U32(expected))),
+                (vec![TestVar::Ascii(b"\0")], TestVar::Num(Number::U32(0))),
+                (vec![TestVar::Ascii(b"hello\0")], TestVar::Num(Number::U32(5))),
+                (vec![TestVar::Ptr(long)], TestVar::Num(Number::U32(expected))),
             ]
         );
     }
@@ -1148,16 +1148,16 @@ mod tests {
             "strncmp",
             include_str!("../../programs/lib/strncmp.j"),
             &[
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(0))], TestVar::Num(IlNumber::U8(0))),
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(1))], TestVar::Num(IlNumber::U8(0))),
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(IlNumber::U32(2))], TestVar::Num(IlNumber::U8(0))),
-                (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Num(IlNumber::U32(1))], TestVar::Num(IlNumber::U8(0))),
-                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Num(IlNumber::U32(1))], TestVar::Num(IlNumber::U8(0))),
-                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Num(IlNumber::U32(2))], TestVar::Num(IlNumber::U8(255))),
-                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Num(IlNumber::U32(2))], TestVar::Num(IlNumber::U8(1))),
-                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Num(IlNumber::U32(1000))], TestVar::Num(IlNumber::U8(1))),
-                (vec![TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Num(IlNumber::U32(same_len))], TestVar::Num(IlNumber::U8(0))),
-                (vec![TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Num(IlNumber::U32(same_len+1))], TestVar::Num(IlNumber::U8(255))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(Number::U32(0))], TestVar::Num(Number::U8(0))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(Number::U32(1))], TestVar::Num(Number::U8(0))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0"), TestVar::Num(Number::U32(2))], TestVar::Num(Number::U8(0))),
+                (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"a\0"), TestVar::Num(Number::U32(1))], TestVar::Num(Number::U8(0))),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Num(Number::U32(1))], TestVar::Num(Number::U8(0))),
+                (vec![TestVar::Ascii(b"aa\0"), TestVar::Ascii(b"ab\0"), TestVar::Num(Number::U32(2))], TestVar::Num(Number::U8(255))),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Num(Number::U32(2))], TestVar::Num(Number::U8(1))),
+                (vec![TestVar::Ascii(b"ab\0"), TestVar::Ascii(b"aa\0"), TestVar::Num(Number::U32(1000))], TestVar::Num(Number::U8(1))),
+                (vec![TestVar::Ptr(long1.clone()), TestVar::Ptr(long2.clone()), TestVar::Num(Number::U32(same_len))], TestVar::Num(Number::U8(0))),
+                (vec![TestVar::Ptr(long1), TestVar::Ptr(long2), TestVar::Num(Number::U32(same_len+1))], TestVar::Num(Number::U8(255))),
             ]
         );
     }
@@ -1168,13 +1168,13 @@ mod tests {
             "strstr",
             include_str!("../../programs/lib/strstr.j"),
             &[
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], TestVar::Num(IlNumber::U32(0))),
-                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], TestVar::Num(IlNumber::U32(0))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"\0")], TestVar::Num(Number::U32(0))),
+                (vec![TestVar::Ascii(b"\0"), TestVar::Ascii(b"a\0")], TestVar::Num(Number::U32(0))),
                 (vec![TestVar::Ascii(b"a\0"), TestVar::Ascii(b"\0")], TestComputer::arg_base_addr_var(0)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"h\0")], TestComputer::arg_base_addr_var(0)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"he\0")], TestComputer::arg_base_addr_var(0)),
-                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"Z\0")], TestVar::Num(IlNumber::U32(0))),
-                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"hi\0")], TestVar::Num(IlNumber::U32(0))),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"Z\0")], TestVar::Num(Number::U32(0))),
+                (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"hi\0")], TestVar::Num(Number::U32(0))),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"el\0")], TestComputer::arg_base_addr_var(1)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"ll\0")], TestComputer::arg_base_addr_var(2)),
                 (vec![TestVar::Ascii(b"hello\0"), TestVar::Ascii(b"lo\0")], TestComputer::arg_base_addr_var(3)),
@@ -1186,20 +1186,20 @@ mod tests {
     fn parse_hex_nibble() {
         let mut cases = Vec::new();
         for (i, c) in ('0'..='9').enumerate() {
-            cases.push((vec![TestVar::Num(IlNumber::U8(c as u8))], TestVar::Num(IlNumber::U8(i.try_into().unwrap()))));
+            cases.push((vec![TestVar::Num(Number::U8(c as u8))], TestVar::Num(Number::U8(i.try_into().unwrap()))));
         }
         for (i, c) in ('a'..='f').enumerate() {
             let i: u8 = i.try_into().unwrap();
-            cases.push((vec![TestVar::Num(IlNumber::U8(c as u8))], TestVar::Num(IlNumber::U8(10+i))));
-            cases.push((vec![TestVar::Num(IlNumber::U8(char::to_ascii_uppercase(&c) as u8))], TestVar::Num(IlNumber::U8(10+i))));
+            cases.push((vec![TestVar::Num(Number::U8(c as u8))], TestVar::Num(Number::U8(10+i))));
+            cases.push((vec![TestVar::Num(Number::U8(char::to_ascii_uppercase(&c) as u8))], TestVar::Num(Number::U8(10+i))));
         }
 
         test_var_inputs(
             "parseHexNibble",
             include_str!("../../programs/lib/print_hex.j"),
             &[
-                (vec![TestVar::Num(IlNumber::U8('9' as u8))], TestVar::Num(IlNumber::U8(0x9))),
-                (vec![TestVar::Num(IlNumber::U8('a' as u8))], TestVar::Num(IlNumber::U8(0xA))),
+                (vec![TestVar::Num(Number::U8('9' as u8))], TestVar::Num(Number::U8(0x9))),
+                (vec![TestVar::Num(Number::U8('a' as u8))], TestVar::Num(Number::U8(0xA))),
             ]
         );
     }
@@ -1208,8 +1208,8 @@ mod tests {
     fn parse_hex() {
         let mut cases = Vec::new();
         for i in 0..=0xFFu8 {
-            cases.push((vec![TestVar::String(format!("{:02x}", i))], TestVar::Num(IlNumber::U8(i))));
-            cases.push((vec![TestVar::String(format!("{:02X}", i))], TestVar::Num(IlNumber::U8(i))));
+            cases.push((vec![TestVar::String(format!("{:02x}", i))], TestVar::Num(Number::U8(i))));
+            cases.push((vec![TestVar::String(format!("{:02X}", i))], TestVar::Num(Number::U8(i))));
         }
         test_var_inputs(
             "parseHex",
@@ -1222,7 +1222,7 @@ mod tests {
     fn delay() {
         let find_tick_count = |delay_count| {
             let cases = vec![
-                (vec![TestVar::Num(IlNumber::U32(delay_count))], TestVar::Num(IlNumber::U8(0))),
+                (vec![TestVar::Num(Number::U32(delay_count))], TestVar::Num(Number::U8(0))),
             ];
             test_var_inputs(
                 "test_delay",
@@ -1417,7 +1417,7 @@ mod tests {
         }
 
         pub fn arg_base_addr_var(offset: u32) -> TestVar {
-            TestVar::Num(IlNumber::U32(TestComputer::arg_base_addr() + offset))
+            TestVar::Num(Number::U32(TestComputer::arg_base_addr() + offset))
         }
 
         pub fn from_rom(rom: &'a Image) -> TestComputer<'a> {
@@ -1459,7 +1459,7 @@ mod tests {
         Ascii(&'static [u8]),
         String(String),
         Ptr(Vec<u8>),
-        Num(IlNumber),
+        Num(Number),
     }
 
     impl TestVar {
@@ -1471,8 +1471,8 @@ mod tests {
         }
     }
 
-    impl From<IlNumber> for TestVar {
-        fn from(i: IlNumber) -> Self {
+    impl From<Number> for TestVar {
+        fn from(i: Number) -> Self {
             TestVar::Num(i)
         }
     }
@@ -1533,7 +1533,7 @@ mod tests {
         (ctxt, program, rom)
     }
 
-    fn check_args_by_il_type(ctxt: &ProgramContext, ins: &Vec<TestVar>, out_type: IlType) {
+    fn check_args_by_il_type(ctxt: &ProgramContext, ins: &Vec<TestVar>, out_type: NumberType) {
         check_args_inner(ctxt, (ins, out_type.byte_count()));
     }
 
@@ -1567,7 +1567,7 @@ mod tests {
         il: &'a IlProgram,
         rom: &'a Image,
         ins: &Vec<TestVar>,
-        out_type: IlType) -> (TestComputer<'a>, IlNumber)
+        out_type: NumberType) -> (TestComputer<'a>, Number)
     {
         check_args_by_il_type(ctxt, ins, out_type);
         let mut ptr = TestComputer::arg_base_addr();
@@ -1585,7 +1585,7 @@ mod tests {
                     mem.insert(ptr, *b);
                     ptr += 1;
                 }
-                args.push(IlNumber::U32(arg_base));
+                args.push(Number::U32(arg_base));
 
                 ptr = (ptr+3)/4*4; // round up
                 ptr += 4; // add buffer
@@ -1606,9 +1606,9 @@ mod tests {
         let hw_sim_args: Vec<_> = args.iter().map(|a| a.as_u32()).collect();
         let hw_result = c.run(hw_sim_args.as_slice(), il_result.il_type().byte_count());
         let hw_result = match il_result.il_type() {
-            IlType::U32 => IlNumber::U32(hw_result),
-            IlType::U16 => IlNumber::U16(hw_result.try_into().unwrap()),
-            IlType::U8 => IlNumber::U8(hw_result.try_into().unwrap()),
+            NumberType::U32 => Number::U32(hw_result),
+            NumberType::U16 => Number::U16(hw_result.try_into().unwrap()),
+            NumberType::U8 => Number::U8(hw_result.try_into().unwrap()),
         };
 
         assert_eq!(il_result, hw_result, "IL and HW have different results for {:?}", ins);
@@ -1629,7 +1629,7 @@ mod tests {
 
             let expected_type = match expected {
                 TestVar::Num(n) => n.il_type(),
-                _ => IlType::U32,
+                _ => NumberType::U32,
             };
 
             let (tc, actual) = run_var_input(&ctxt, &il, &rom, ins, expected_type);

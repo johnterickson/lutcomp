@@ -28,14 +28,14 @@ fn main() {
 
     let get_param = |k: &str| params.get(k).map(|s| s.as_str());
 
-    let mut sim_args: Vec<IlNumber> = Vec::new();
+    let mut sim_args: Vec<Number> = Vec::new();
     for i in 1..=3 {
         let param_name = format!("arg{}",i);
         if let Some(v) = get_param(&param_name) {
             if let Ok(v) = v.parse() {
-                sim_args.push(IlNumber::U8(v))
+                sim_args.push(Number::U8(v))
             } else {
-                sim_args.push(IlNumber::U32(v.parse().unwrap()))
+                sim_args.push(Number::U32(v.parse().unwrap()))
             }
         }
     }

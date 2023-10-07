@@ -33,8 +33,8 @@ mod parse;
 use parse::*;
 mod struct_def;
 use struct_def::*;
-mod types;
-use types::*;
+pub mod types;
+pub use types::*;
 
 use assemble::{AssemblyInputLine, Instruction, Value};
 use common::*;

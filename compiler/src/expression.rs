@@ -99,7 +99,7 @@ impl Expression {
                         bytes.push((*val).try_into().unwrap());
                     }
                     NumberType::U16 => todo!(),
-                    NumberType::USIZE => todo!(),
+                    NumberType::U32 => todo!(),
                 }
                 true
             }
@@ -150,7 +150,7 @@ impl Expression {
         match self {
             Expression::Ident(n) => {
                 if n == IlVarId::frame_pointer_str() {
-                    Some(Type::Number(NumberType::USIZE))
+                    Some(Type::Number(NumberType::U32))
                 } else if let Some(f) = f {
                     let (_,t) = f.find_arg_or_var(ctxt, n)
                         .expect(&format!("Cannot find {} in {:?}", n, f));
@@ -169,7 +169,7 @@ impl Expression {
                         Type::Number(nt) => {
                             match nt {
                                 NumberType::U8 | NumberType::U16 => panic!(),
-                                NumberType::USIZE => Some(Type::Number(NumberType::U8)),
+                                NumberType::U32 => Some(Type::Number(NumberType::U8)),
                             }
                         }
                         _ => panic!(),
@@ -200,7 +200,7 @@ impl Expression {
                     match (left.byte_count(ctxt),right.byte_count(ctxt)) {
                         (1,1) => Some(Type::Number(NumberType::U8)),
                         (1,2) | (2,1) | (2,2) => Some(Type::Number(NumberType::U16)),
-                        (1,4) | (4,1) | (2,4) | (4,2) | (4,4) => Some(Type::Number(NumberType::USIZE)),
+                        (1,4) | (4,1) | (2,4) | (4,2) | (4,4) => Some(Type::Number(NumberType::U32)),
                         _ => None,
                     }
                 } else {
@@ -275,7 +275,7 @@ impl Expression {
                 if number < 256 && !is_hex {
                     Expression::Number(NumberType::U8, number)
                 } else {
-                    Expression::Number(NumberType::USIZE, number)
+                    Expression::Number(NumberType::U32, number)
                 }
             }
             Rule::char_literal => {
@@ -354,7 +354,7 @@ impl Expression {
                 Expression::parse(pairs.next().unwrap())
             }
             Rule::RAM_MIN_expression => {
-                Expression::Number(NumberType::USIZE, RAM_MIN.into())
+                Expression::Number(NumberType::U32, RAM_MIN.into())
             }
             Rule::cast_expression => {
                 let mut pairs = pair.into_inner();

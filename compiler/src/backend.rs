@@ -8,12 +8,12 @@ use crate::*;
 use crate::il::*;
 use crate::optimize::optimize_assembly;
 
-impl From<IlNumber> for Value {
-    fn from(n: IlNumber) -> Self {
+impl From<Number> for Value {
+    fn from(n: Number) -> Self {
         match n {
-            IlNumber::U8(n) => Value::Constant8(n),
-            IlNumber::U16(_) => todo!(),
-            IlNumber::U32(n) => Value::Constant32(n),
+            Number::U8(n) => Value::Constant8(n),
+            Number::U16(_) => todo!(),
+            Number::U32(n) => Value::Constant32(n),
         }
     }
 }
@@ -177,7 +177,7 @@ impl<'a,'b> FunctionContext<'a,'b> {
         info.var_type.byte_count(self.program.frontend_context)
     }
 
-    fn emit_reg_to_var(&mut self, dest: &IlVarId, src_regs: &Vec<u8>, size: &IlType, source: String) {
+    fn emit_reg_to_var(&mut self, dest: &IlVarId, src_regs: &Vec<u8>, size: &NumberType, source: String) {
         let byte_count: u8 = size.byte_count().try_into().unwrap();
         assert_eq!(src_regs.len(), byte_count.into());
         let dest_regs = self.find_registers(dest);
@@ -196,7 +196,7 @@ impl<'a,'b> FunctionContext<'a,'b> {
         }));
     }
 
-    fn emit_var_to_reg(&mut self, dest_regs: &[u8], src: &IlVarId, src_range: &Option<Range<u32>>, size: &IlType, source: String) {
+    fn emit_var_to_reg(&mut self, dest_regs: &[u8], src: &IlVarId, src_range: &Option<Range<u32>>, size: &NumberType, source: String) {
         let byte_count: u8 = size.byte_count().try_into().unwrap();
         assert_eq!(byte_count as usize, dest_regs.len());
 
@@ -225,10 +225,10 @@ impl<'a,'b> FunctionContext<'a,'b> {
         }));
     }
 
-    fn emit_num_to_reg(&mut self, dest_regs: &Vec<u8>, n: &IlNumber, expected_size: &IlType, source: String) {
+    fn emit_num_to_reg(&mut self, dest_regs: &Vec<u8>, n: &Number, expected_size: &NumberType, source: String) {
         assert_eq!(&n.il_type(), expected_size);
         match n {
-            IlNumber::U8(n) => {
+            Number::U8(n) => {
                 self.lines.push(AssemblyInputLine::Instruction(
                     Instruction {
                         opcode: Opcode::LoadImm8,
@@ -237,7 +237,7 @@ impl<'a,'b> FunctionContext<'a,'b> {
                         source,
                     }));
             }
-            IlNumber::U16(n) => {
+            Number::U16(n) => {
                 self.lines.push(AssemblyInputLine::Instruction(
                     Instruction {
                         opcode: Opcode::LoadImm8,
@@ -253,7 +253,7 @@ impl<'a,'b> FunctionContext<'a,'b> {
                         source,
                     }));
             }
-            IlNumber::U32(n) => {
+            Number::U32(n) => {
                 self.lines.push(AssemblyInputLine::Instruction(
                     Instruction {
                         opcode: Opcode::LoadImm32,
@@ -502,7 +502,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     match op {
                         IlBinaryOp::ShiftLeft | IlBinaryOp::ShiftRight | IlBinaryOp::RotateLeft | IlBinaryOp::RotateRight => {
                             match size {
-                                IlType::U8 => {
+                                NumberType::U8 => {
                                     let src2_reg = match src2 {
                                         IlOperand::Number(n) => {
                                             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
@@ -546,12 +546,12 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source
                                     }));
                                 },
-                                IlType::U16 | IlType::U32 => todo!(),
+                                NumberType::U16 | NumberType::U32 => todo!(),
                             }
                         },
                         IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr | IlBinaryOp::Divide => {
                             match (op, size, src2) {
-                                (&IlBinaryOp::Add, IlType::U32, IlOperand::Number(n)) => {
+                                (&IlBinaryOp::Add, NumberType::U32, IlOperand::Number(n)) => {
                                     if dest_regs[0] != src1_regs[0] {
                                         ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                             opcode: Opcode::Copy32,
@@ -567,7 +567,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source: source.clone(),
                                     }));
                                 }
-                                (&IlBinaryOp::Add, IlType::U32, IlOperand::Var(src2)) => {
+                                (&IlBinaryOp::Add, NumberType::U32, IlOperand::Var(src2)) => {
                                     let src2_regs = ctxt.find_registers(&src2);
                                     assert_eq!(src2_size, src2_regs.len() as u32);
 
@@ -590,9 +590,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     assert_eq!(n.il_type(), size);
 
                                     let (copy_op, const_val) = match size {
-                                        IlType::U8 => (Opcode::Copy8, n.into()),
-                                        IlType::U16 => todo!(),
-                                        IlType::U32 => (Opcode::Copy32, n.into()),
+                                        NumberType::U8 => (Opcode::Copy8, n.into()),
+                                        NumberType::U16 => todo!(),
+                                        NumberType::U32 => (Opcode::Copy32, n.into()),
                                     };
 
                                     if dest_regs[0] != src1_regs[0] {
@@ -605,10 +605,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     }
 
                                     let opcode = match (op, size) {
-                                        (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::AndImm32,
-                                        (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::AndImm8,
-                                        (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::OrImm32,
-                                        (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::OrImm8,
+                                        (IlBinaryOp::BitwiseAnd, NumberType::U32) => Opcode::AndImm32,
+                                        (IlBinaryOp::BitwiseAnd, NumberType::U8) => Opcode::AndImm8,
+                                        (IlBinaryOp::BitwiseOr, NumberType::U32) => Opcode::OrImm32,
+                                        (IlBinaryOp::BitwiseOr, NumberType::U8) => Opcode::OrImm8,
                                         _ => panic!(),
                                     };
 
@@ -622,21 +622,21 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 // TODO: more *Imm* operations
                                 (op, size, src2) => {
                                     let opcode1 = match (op, size) {
-                                        (IlBinaryOp::Add, IlType::U8) => Opcode::Add8NoCarryIn,
-                                        (IlBinaryOp::BitwiseAnd, IlType::U8) => Opcode::And8,
-                                        (IlBinaryOp::BitwiseAnd, IlType::U32) => Opcode::And32,
-                                        (IlBinaryOp::BitwiseOr, IlType::U8) => Opcode::Or8,
-                                        (IlBinaryOp::BitwiseOr, IlType::U32) => Opcode::Or32,
-                                        (IlBinaryOp::Divide, IlType::U8) => Opcode::Divide8,
+                                        (IlBinaryOp::Add, NumberType::U8) => Opcode::Add8NoCarryIn,
+                                        (IlBinaryOp::BitwiseAnd, NumberType::U8) => Opcode::And8,
+                                        (IlBinaryOp::BitwiseAnd, NumberType::U32) => Opcode::And32,
+                                        (IlBinaryOp::BitwiseOr, NumberType::U8) => Opcode::Or8,
+                                        (IlBinaryOp::BitwiseOr, NumberType::U32) => Opcode::Or32,
+                                        (IlBinaryOp::Divide, NumberType::U8) => Opcode::Divide8,
                                         _ => panic!(),
                                     };
 
                                     let src2_reg_base = match src2 {
                                         IlOperand::Number(n) => {
                                             let (opcode, val) = match n.il_type() {
-                                                IlType::U8 => (Opcode::LoadImm8, Value::Constant8(n.as_u32().try_into().unwrap())),
-                                                IlType::U16 => todo!(),
-                                                IlType::U32 => (Opcode::LoadImm32, Value::Constant32(n.as_u32())),
+                                                NumberType::U8 => (Opcode::LoadImm8, Value::Constant8(n.as_u32().try_into().unwrap())),
+                                                NumberType::U16 => todo!(),
+                                                NumberType::U32 => (Opcode::LoadImm32, Value::Constant32(n.as_u32())),
                                             };
 
                                             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
@@ -667,8 +667,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         },
                         IlBinaryOp::Subtract => {
                             match (size, src2) {
-                                (IlType::U16, _) => todo!(),
-                                (IlType::U32, IlOperand::Number(n)) => {
+                                (NumberType::U16, _) => todo!(),
+                                (NumberType::U32, IlOperand::Number(n)) => {
                                     if src1_regs[0] != dest_regs[0] {
                                         ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                             opcode: Opcode::Copy32,
@@ -686,7 +686,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source: source.clone()
                                     }));
                                 }
-                                (IlType::U32, IlOperand::Var(src2)) => {
+                                (NumberType::U32, IlOperand::Var(src2)) => {
                                     let src2_regs = ctxt.find_registers(&src2);
                                     assert_eq!(src2_size, src2_regs.len() as u32);
 
@@ -736,7 +736,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
                                 }
 
-                                (IlType::U8, src2) => {
+                                (NumberType::U8, src2) => {
                                     let negated_src2_reg = match src2 {
                                         IlOperand::Number(n) => {
                                             let n = n.as_u32();
@@ -783,9 +783,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             let src2_reg_base = match src2 {
                                 IlOperand::Number(n) => {
                                     let (opcode, imm) = match size {
-                                        IlType::U8 => (Opcode::LoadImm8, Value::Constant8(n.as_u32().try_into().unwrap())),
-                                        IlType::U16 => todo!(),
-                                        IlType::U32 => (Opcode::LoadImm32, Value::Constant32(n.as_u32())),
+                                        NumberType::U8 => (Opcode::LoadImm8, Value::Constant8(n.as_u32().try_into().unwrap())),
+                                        NumberType::U16 => todo!(),
+                                        NumberType::U32 => (Opcode::LoadImm32, Value::Constant32(n.as_u32())),
                                     };
 
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
@@ -805,7 +805,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                             };
 
                             match size {
-                                IlType::U8 => {
+                                NumberType::U8 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                         opcode: Opcode::Mul8_8,
                                         args: vec![Value::Register(src1_regs[0]), Value::Register(src2_reg_base), Value::Register(dest_regs[0])],
@@ -813,7 +813,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source: source.clone()
                                     }));
                                 },
-                                IlType::U16 => {
+                                NumberType::U16 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                         opcode: Opcode::Mul8_16,
                                         args: vec![Value::Register(src1_regs[0]), Value::Register(src2_reg_base), Value::Register(dest_regs[0])],
@@ -821,7 +821,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source: source.clone()
                                     }));
                                 }
-                                IlType::U32 => {
+                                NumberType::U32 => {
                                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                         opcode: Opcode::Mul8_16,
                                         args: vec![Value::Register(src1_regs[0]), Value::Register(src2_reg_base), Value::Register(dest_regs[0])],
@@ -854,9 +854,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let first_addr_reg = addr_regs[0];
 
                     let op = match size {
-                        IlType::U8 => Opcode::Load8,
-                        IlType::U16 => todo!(),
-                        IlType::U32 => Opcode::Load32,
+                        NumberType::U8 => Opcode::Load8,
+                        NumberType::U16 => todo!(),
+                        NumberType::U32 => Opcode::Load32,
                     };
 
                     ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
@@ -875,7 +875,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     let first_addr_reg = addr_regs[0];
 
                     match size {
-                        IlType::U8 => {
+                        NumberType::U8 => {
                             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                 opcode: Opcode::Store8,
                                 args: vec![Value::Register(src_regs[0]), Value::Register(first_addr_reg)],
@@ -883,8 +883,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 source: source.clone(),
                             }));
                         },
-                        IlType::U16 => todo!(),
-                        IlType::U32 => {
+                        NumberType::U16 => todo!(),
+                        NumberType::U32 => {
                             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                 opcode: Opcode::Store32_1,
                                 args: vec![Value::Register(src_regs[0]), Value::Register(first_addr_reg)],
@@ -1052,7 +1052,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                         let arg_size = target.vars[arg_name].var_type.byte_count(ctxt.program.frontend_context);
                         let byte_count = ctxt.byte_count(arg_value);
                         assert_eq!(arg_size, byte_count);
-                        let il_type: IlType = byte_count.try_into().unwrap();
+                        let il_type: NumberType = byte_count.try_into().unwrap();
                         let i: u8 = i.try_into().unwrap();
                         let byte_count: u8 = byte_count.try_into().unwrap();
                         let dest_regs: Vec<u8> = ((4u8*i)..(4u8*i+byte_count)).collect();
@@ -1115,7 +1115,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     assert_eq!(dest_size.byte_count() as usize, dest_regs.len());
 
                     match (src_size, dest_size) {
-                        (IlType::U8, IlType::U32) => {
+                        (NumberType::U8, NumberType::U32) => {
                             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                 opcode: Opcode::LoadImm32,
                                 args: vec![Value::Register(dest_regs[0]), Value::Constant32(0)],
@@ -1123,7 +1123,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 source: format!("Zero-pad for {}", &source)
                             }));
                         }
-                        (IlType::U8, IlType::U16) => {
+                        (NumberType::U8, NumberType::U16) => {
                             ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                 opcode: Opcode::LoadImm8,
                                 args: vec![Value::Register(dest_regs[1]), Value::Constant8(0)],
@@ -1131,7 +1131,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 source: format!("Zero-pad for {}", &source)
                             }));
                         }
-                        (IlType::U32, IlType::U8) => { }
+                        (NumberType::U32, NumberType::U8) => { }
                         _ => todo!("Cast from {:?} to {:?}", &src_size, &dest_size),
                     }
 

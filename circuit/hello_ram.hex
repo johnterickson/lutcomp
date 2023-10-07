@@ -12,7 +12,7 @@ v2.0 raw
 # const Number(U8, 77) -> 77
 # const Number(U8, 33) -> 33
 # const Number(U8, 10) -> 10
-# const Number(USIZE, 2864434397) -> 2864434397
+# const Number(U32, 2864434397) -> 2864434397
 # IlFunctionId("main")()
 #  t6100 <- 0n72/0x48u8  # Some('programs/test/hello_ram.j':(3,5))
 #  ttyout <- t6100 # Some('programs/test/hello_ram.j':(3,5))
@@ -81,7 +81,7 @@ v2.0 raw
 # Var t2f9f (t2f9f Number(U8, 77)) Reg(U8) Some([16]) [77]
 # Var t3c19 (t3c19 Number(U8, 65)) Reg(U8) Some([16]) [65]
 # Var t6100 (t6100 Number(U8, 72)) Reg(U8) Some([16]) [72]
-# Var t7012 (t7012 Number(USIZE, 2864434397)) Reg(U32) Some([20, 21, 22, 23]) [221, 204, 187, 170]
+# Var t7012 (t7012 Number(U32, 2864434397)) Reg(U32) Some([20, 21, 22, 23]) [221, 204, 187, 170]
 # Var t9c38 (t9c38 Number(U8, 82)) Reg(U8) Some([16]) [82]
 # Var tb699 (tb699 Number(U8, 111)) Reg(U8) Some([16]) [111]
 # Var tc076 (tc076 Number(U8, 114)) Reg(U8) Some([16]) [114]
@@ -300,19 +300,19 @@ v2.0 raw
 68 10 
 
 # t7012 <- 0xaabbccddu32  Some('programs/test/hello_ram.j':(16,5))
-# Return { value: Some(Number(USIZE, 2864434397)) }
-# Number(USIZE, 2864434397)
+# Return { value: Some(Number(U32, 2864434397)) }
+# Number(U32, 2864434397)
 # 80463 LoadImm32 [Register(0x14), Constant32(0xaabbccdd=2864434397)]
 #       t7012 <- 0xaabbccddu32  Some('programs/test/hello_ram.j':(16,5))
-#       Return { value: Some(Number(USIZE, 2864434397)) }
-#       Number(USIZE, 2864434397)
+#       Return { value: Some(Number(U32, 2864434397)) }
+#       Number(U32, 2864434397)
 20 14 dd cc bb aa 
 
 # return Some(t7012) Some('programs/test/hello_ram.j':(16,5))
-# Return { value: Some(Number(USIZE, 2864434397)) }
+# Return { value: Some(Number(U32, 2864434397)) }
 # 80469 Copy32 [Register(0x14), Register(0x00)]
 #       return Some(t7012) Some('programs/test/hello_ram.j':(16,5))
-#       Return { value: Some(Number(USIZE, 2864434397)) }
+#       Return { value: Some(Number(U32, 2864434397)) }
 21 14 00 
 
 # 8046c JmpMem [Register(0x0c)]

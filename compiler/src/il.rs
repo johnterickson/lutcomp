@@ -14,7 +14,7 @@ pub fn emit_il(path: &Path, entry: &str, input: &str, root: &Path) -> (ProgramCo
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub enum IlOperand {
-    Number(IlNumber),
+    Number(Number),
     Var(IlVarId)
 }
 impl IlOperand {
@@ -31,16 +31,16 @@ pub enum IlInstruction {
     Comment(String),
     Label(IlLabelId),
     GetConstAddress{ dest: IlVarId, const_name: IlVarId },
-    AssignNumber{ dest: IlVarId, src: IlNumber },
-    AssignVar{ dest: IlVarId, src: IlVarId, size: IlType, src_range: Option<Range<u32>>, dest_range: Option<Range<u32>>},
+    AssignNumber{ dest: IlVarId, src: Number },
+    AssignVar{ dest: IlVarId, src: IlVarId, size: NumberType, src_range: Option<Range<u32>>, dest_range: Option<Range<u32>>},
     AssignUnary{ dest: IlVarId, op: IlUnaryOp, src: IlVarId },
     AssignBinary { dest: IlVarId, op: IlBinaryOp, src1: IlVarId, src2: IlOperand },
-    ReadMemory {dest: IlVarId, addr: IlVarId, size: IlType},
-    WriteMemory {addr: IlVarId, src: IlVarId, size: IlType},
+    ReadMemory {dest: IlVarId, addr: IlVarId, size: NumberType},
+    WriteMemory {addr: IlVarId, src: IlVarId, size: NumberType},
     Goto(IlLabelId),
     IfThenElse {left: IlVarId, op: IlCmpOp, right: IlVarId, then_label: IlLabelId, else_label: IlLabelId},
     Call {ret: Option<IlVarId>, f: IlFunctionId, args: Vec<IlVarId> },
-    Resize {dest: IlVarId, dest_size: IlType, src:IlVarId, src_size: IlType},
+    Resize {dest: IlVarId, dest_size: NumberType, src:IlVarId, src_size: NumberType},
     Return { val: Option<IlVarId> },
     TtyIn { dest: IlVarId },
     TtyOut { src: IlVarId },
@@ -121,7 +121,7 @@ pub struct IlFunction {
     pub args: Vec<IlVarId>,
     pub body: Vec<(IlInstruction, Option<Source>, SourceContext)>,
     pub vars: BTreeMap<IlVarId, IlVarInfo>,
-    pub ret: Option<IlType>,
+    pub ret: Option<NumberType>,
     labels: BTreeSet<IlLabelId>,
     full_expression_hashes: BTreeMap<u16,u64>,
     end_label: IlLabelId,
@@ -136,7 +136,7 @@ pub struct IlFunction {
 struct TargetLocation {
     target: IlVarId,
     target_subrange: Option<Range<u32>>,
-    mem_size: Option<IlType>
+    mem_size: Option<NumberType>
 }
 
 impl Display for IlFunction {
@@ -194,7 +194,7 @@ impl IlFunction {
                 assert_eq!(dest, stack_size_var);
                 assert_eq!(src.as_u32(), self.vars_stack_size);
                 self.vars_stack_size += additional_bytes;
-                *src = IlNumber::U32(self.vars_stack_size);
+                *src = Number::U32(self.vars_stack_size);
             },
             _ => panic!(),
         }
@@ -223,8 +223,8 @@ impl IlFunction {
             None => {
                 let t = e.try_emit_type(ctxt.program, Some(ctxt.func_def))
                     .unwrap_or_else(|| panic!("Could not determine type for '{:?}'.", e));
-                let il_type: IlType = match t.byte_count(ctxt.program) {
-                    0 => IlType::U8,
+                let il_type: NumberType = match t.byte_count(ctxt.program) {
+                    0 => NumberType::U8,
                     n => n.try_into().unwrap()
                 };
                 let location = IlLocation::Reg(il_type);
@@ -276,14 +276,14 @@ impl IlFunction {
         let var_type = Type::Ptr(Box::new(info.var_type.clone()));
         let addr_var = self.alloc_tmp(IlVarInfo {
             description: format!("static {:?} addr", &name),
-            location: IlLocation::Reg(IlType::U32),
+            location: IlLocation::Reg(NumberType::U32),
             byte_size: var_type.byte_count(ctxt.program),
             var_type,
             constant: None,
         });
         self.add_inst(ctxt, IlInstruction::AssignNumber {
                 dest: addr_var.clone(),
-                src: IlNumber::U32(addr),
+                src: Number::U32(addr),
             });
         addr_var
     }
@@ -320,7 +320,7 @@ impl IlFunction {
                         let addr = Expression::Arithmetic(
                             ArithmeticOperator::Add,
                             Box::new(Expression::frame_pointer()),
-                            Box::new(Expression::Number(NumberType::USIZE, offset))
+                            Box::new(Expression::Number(NumberType::U32, offset))
                         );
                         let (id, _) = self.alloc_tmp_and_emit_value(ctxt, &addr);
                         (id, None)
@@ -348,11 +348,11 @@ impl IlFunction {
                             NumberType::U8 | NumberType::U16 => {
                                 Box::new(Expression::Cast {
                                     old_type: Some(index_type),
-                                    new_type: Type::Number(NumberType::USIZE),
+                                    new_type: Type::Number(NumberType::U32),
                                     value: index.clone()
                                 })
                             },
-                            NumberType::USIZE => {
+                            NumberType::U32 => {
                                 index.clone()
                             },
                         }
@@ -366,16 +366,16 @@ impl IlFunction {
                     Box::new(Expression::Arithmetic(
                         ArithmeticOperator::Multiply,
                         index.clone(),
-                        Box::new(Expression::Number(NumberType::USIZE, element_size))
+                        Box::new(Expression::Number(NumberType::U32, element_size))
                     ))
                 };
 
                 let base_addr_num_expression = match info.location {
-                    IlLocation::Static(addr) => Expression::Number(NumberType::USIZE, addr),
+                    IlLocation::Static(addr) => Expression::Number(NumberType::U32, addr),
                     IlLocation::Reg(_) => {
                         Expression::Cast {
                             old_type: Some(ptr_type.clone()),
-                            new_type: Type::Number(NumberType::USIZE),
+                            new_type: Type::Number(NumberType::U32),
                             value: Box::new(Expression::Ident(var.clone())),
                         }
                     },
@@ -387,7 +387,7 @@ impl IlFunction {
                             Expression::Arithmetic(
                                 ArithmeticOperator::Add,
                                 Box::new(frame),
-                                Box::new(Expression::Number(NumberType::USIZE, offset))
+                                Box::new(Expression::Number(NumberType::U32, offset))
                             )
                         }
                     },
@@ -399,7 +399,7 @@ impl IlFunction {
                         };
                         Expression::Cast {
                             old_type: Some(ptr_type),
-                            new_type: Type::Number(NumberType::USIZE),
+                            new_type: Type::Number(NumberType::U32),
                             value: Box::new(Expression::Ident(var.clone())),
                         }
                     },
@@ -413,7 +413,7 @@ impl IlFunction {
 
                 let addr_expression = Expression::Cast{
                     value: Box::new(addr_expression),
-                    old_type: Some(Type::Number(NumberType::USIZE)),
+                    old_type: Some(Type::Number(NumberType::U32)),
                     new_type: Type::Ptr(Box::new(element_type.clone())),
                 };
 
@@ -433,7 +433,7 @@ impl IlFunction {
                 let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();
 
                 let base_expression = match info.location {
-                    IlLocation::Static(addr) => Expression::Number(NumberType::USIZE, addr),
+                    IlLocation::Static(addr) => Expression::Number(NumberType::U32, addr),
                     IlLocation::Reg(_) => todo!(),
                     IlLocation::FrameOffset(offset) => {
                         let frame = Expression::frame_pointer();
@@ -443,7 +443,7 @@ impl IlFunction {
                             Expression::Arithmetic(
                                 ArithmeticOperator::Add,
                                 Box::new(frame),
-                                Box::new(Expression::Number(NumberType::USIZE, offset)))
+                                Box::new(Expression::Number(NumberType::U32, offset)))
                         }
                     },
                     IlLocation::GlobalConst(_) => todo!(),
@@ -455,13 +455,13 @@ impl IlFunction {
                     Expression::Arithmetic(
                         ArithmeticOperator::Add,
                         Box::new(base_expression),
-                        Box::new(Expression::Number(NumberType::USIZE, byte_offset)),
+                        Box::new(Expression::Number(NumberType::U32, byte_offset)),
                     )
                 };
 
                 let addr_expression = Expression::Cast {
                     value: Box::new(addr_expression),
-                    old_type: Some(Type::Number(NumberType::USIZE)),
+                    old_type: Some(Type::Number(NumberType::U32)),
                     new_type: Type::Ptr(Box::new(field_type.clone()))
                 };
 
@@ -491,7 +491,7 @@ impl IlFunction {
                     IlLocation::Reg(_) => {
                         Expression::Cast {
                             old_type: Some(ptr_type.clone()),
-                            new_type: Type::Number(NumberType::USIZE),
+                            new_type: Type::Number(NumberType::U32),
                             value: Box::new(Expression::Ident(n.clone())),
                         }
                     },
@@ -505,13 +505,13 @@ impl IlFunction {
                     Expression::Arithmetic(
                         ArithmeticOperator::Add,
                         Box::new(base_expression),
-                        Box::new(Expression::Number(NumberType::USIZE, byte_offset)),
+                        Box::new(Expression::Number(NumberType::U32, byte_offset)),
                     )
                 };
 
                 let addr_expression = Expression::Cast {
                     value: Box::new(addr_expression),
-                    old_type: Some(Type::Number(NumberType::USIZE)),
+                    old_type: Some(Type::Number(NumberType::U32)),
                     new_type: Type::Ptr(Box::new(field_type.clone()))
                 };
 
@@ -573,10 +573,10 @@ impl IlFunction {
                 let info = ctxt.find_arg_or_var(&self, n);
 
                 match (&info.location, info.var_type) {
-                    (IlLocation::Reg(IlType::U32), Type::Number(NumberType::USIZE)) => {
+                    (IlLocation::Reg(NumberType::U32), Type::Number(NumberType::U32)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
-                            (IlLocation::Reg(IlType::U32), Some(index)) => {
+                            (IlLocation::Reg(NumberType::U32), Some(index)) => {
                                 TargetLocation {
                                     target: IlVarId(n.clone()),
                                     target_subrange: Some(index..(index+1)),
@@ -644,7 +644,7 @@ impl IlFunction {
                         self.vars[&target].var_type.clone()
                     }
                     TargetLocation {target, target_subrange: Some(dest_subrange), mem_size: None} => {
-                        let size: IlType = (dest_subrange.end - dest_subrange.start).try_into().unwrap();
+                        let size: NumberType = (dest_subrange.end - dest_subrange.start).try_into().unwrap();
                         let (tmp, tmp_info) = self.alloc_tmp_and_emit_value(ctxt, value);
                         assert_eq!(size.byte_count(), tmp_info.byte_size);
 
@@ -743,7 +743,7 @@ impl IlFunction {
                         dest: IlVarId::frame_pointer(),
                         op: IlBinaryOp::Add,
                         src1: IlVarId::frame_pointer(),
-                        src2: IlOperand::Number(IlNumber::U32(self.vars_stack_size)),
+                        src2: IlOperand::Number(Number::U32(self.vars_stack_size)),
                     });
                 }
                 
@@ -797,7 +797,7 @@ impl IlFunction {
                         match var_type {
                             Type::Void => panic!(),
                             Type::Number(nt) => {
-                                let num: IlNumber = const_val.into();
+                                let num: Number = const_val.into();
                                 assert_eq!(num.il_type().byte_count(), nt.try_byte_count().unwrap());
                                 Some(num.as_u32())
                             },
@@ -833,7 +833,7 @@ impl IlFunction {
                 let nt = match byte_count {
                     1 => Some(NumberType::U8),
                     2 => Some(NumberType::U16),
-                    4 => Some(NumberType::USIZE),
+                    4 => Some(NumberType::U32),
                     _ => None,
                 };
                 if let Some(nt) = nt {
@@ -895,9 +895,9 @@ impl IlFunction {
             },
             Expression::Number(num_type, val) => {
                 let src = match num_type {
-                    NumberType::U8 => IlNumber::U8((*val).try_into().unwrap()),
-                    NumberType::U16 => IlNumber::U16((*val).try_into().unwrap()),
-                    NumberType::USIZE => IlNumber::U32(*val)
+                    NumberType::U8 => Number::U8((*val).try_into().unwrap()),
+                    NumberType::U16 => Number::U16((*val).try_into().unwrap()),
+                    NumberType::U32 => Number::U32(*val)
                 };
                 self.add_inst(ctxt, IlInstruction::AssignNumber{dest, src});
             },
@@ -921,15 +921,15 @@ impl IlFunction {
                 let promote = |side: &Box<Expression>, side_type| {
                     if promo_needed && side_type == NumberType::U8 {
                         let val = if let Some(c) = side.try_get_const() {
-                            Expression::Number(NumberType::USIZE, c)
+                            Expression::Number(NumberType::U32, c)
                         } else {
                             Expression::Cast {
                                 value: side.clone(),
                                 old_type: Some(Type::Number(side_type)),
-                                new_type: Type::Number(NumberType::USIZE)
+                                new_type: Type::Number(NumberType::U32)
                             }
                         };
-                        (val, NumberType::USIZE)
+                        (val, NumberType::U32)
                     } else {
                         (*(side.clone()), side_type)
                     }
@@ -941,13 +941,13 @@ impl IlFunction {
                 assert_eq!(promoted_num_type, promoted_num_type_right);
 
                 let (left_tmp, left_info) = self.alloc_tmp_and_emit_value(ctxt, &left);
-                assert_eq!(promoted_num_type.byte_count(ctxt.program), left_info.var_type.byte_count(ctxt.program));
+                assert_eq!(promoted_num_type.byte_count(), left_info.var_type.byte_count(ctxt.program));
 
                 let right_operand = if let Some(constant) = right.try_get_const() {
                     let right_val = match promoted_num_type {
-                        NumberType::U8 => IlNumber::U8(constant.try_into().unwrap()),
-                        NumberType::U16 => IlNumber::U16(constant.try_into().unwrap()),
-                        NumberType::USIZE => IlNumber::U32(constant.try_into().unwrap()),
+                        NumberType::U8 => Number::U8(constant.try_into().unwrap()),
+                        NumberType::U16 => Number::U16(constant.try_into().unwrap()),
+                        NumberType::U32 => Number::U32(constant.try_into().unwrap()),
                     };
                     assert_eq!(left_info.byte_size, right_val.il_type().byte_count());
 
@@ -990,7 +990,7 @@ impl IlFunction {
                 self.add_inst(ctxt, IlInstruction::AssignVar {
                     dest,
                     src: addr,
-                    size: IlType::U32,
+                    size: NumberType::U32,
                     src_range: None,
                     dest_range: None,
                 });
@@ -999,16 +999,16 @@ impl IlFunction {
                 let info = ctxt.find_arg_or_var(&self, n);
                 // dbg!(&info);
                 match (&info.location, info.var_type) {
-                    (IlLocation::Reg(IlType::U32), Type::Number(NumberType::USIZE)) => {
+                    (IlLocation::Reg(NumberType::U32), Type::Number(NumberType::U32)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
-                            (IlLocation::Reg(IlType::U32), Some(index)) => {
+                            (IlLocation::Reg(NumberType::U32), Some(index)) => {
                                 self.add_inst(ctxt, IlInstruction::AssignVar {
                                     dest,
                                     dest_range: None,
                                     src: IlVarId(n.clone()),
                                     src_range: Some(index..index+1),
-                                    size: IlType::U8,
+                                    size: NumberType::U8,
                                 });
                             }
                             _ => todo!(),
@@ -1193,8 +1193,8 @@ impl IlFunction {
                 IlVarId::frame_pointer_str().to_owned(),
                 IlVarInfo {
                     description: IlVarId::frame_pointer_str().to_owned(),
-                    location: IlLocation::Reg(IlType::U32),
-                    var_type: Type::Number(NumberType::USIZE),
+                    location: IlLocation::Reg(NumberType::U32),
+                    var_type: Type::Number(NumberType::U32),
                     byte_size: 4,
                     constant: None,
                 });
@@ -1202,8 +1202,8 @@ impl IlFunction {
             let stack_size = func.alloc_tmp(IlVarInfo {
                 byte_size: 4,
                 description: "Stack size negated".to_owned(),
-                location: IlLocation::Reg(IlType::U32),
-                var_type: Type::Number(NumberType::USIZE),
+                location: IlLocation::Reg(NumberType::U32),
+                var_type: Type::Number(NumberType::U32),
                 constant: Some(func.vars_stack_size.wrapping_neg().to_le_bytes().iter().cloned().collect()),
             });
 
@@ -1212,7 +1212,7 @@ impl IlFunction {
                 dest: IlVarId::frame_pointer(),
                 op: IlBinaryOp::Add,
                 src1: IlVarId::frame_pointer(),
-                src2: IlOperand::Number(IlNumber::U32(func.vars_stack_size.wrapping_neg())),
+                src2: IlOperand::Number(Number::U32(func.vars_stack_size.wrapping_neg())),
             });
         }
 
@@ -1544,10 +1544,10 @@ impl IlBinaryOp {
         }
     }
 
-    pub fn eval(&self, src1: IlNumber, src2: IlNumber) -> IlNumber {
+    pub fn eval(&self, src1: Number, src2: Number) -> Number {
         match (src1, src2) {
-            (IlNumber::U8(n1), IlNumber::U8(n2)) => {
-                IlNumber::U8(match self {
+            (Number::U8(n1), Number::U8(n2)) => {
+                Number::U8(match self {
                     IlBinaryOp::Add => n1.wrapping_add(n2),
                     IlBinaryOp::Subtract => n1.wrapping_sub(n2),
                     IlBinaryOp::Multiply => n1.wrapping_mul(n2),
@@ -1563,8 +1563,8 @@ impl IlBinaryOp {
                     IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
                 })
             }
-            (IlNumber::U16(n1), IlNumber::U16(n2)) => {
-                IlNumber::U16(match self {
+            (Number::U16(n1), Number::U16(n2)) => {
+                Number::U16(match self {
                     IlBinaryOp::Add => n1.wrapping_add(n2),
                     IlBinaryOp::Subtract => n1.wrapping_sub(n2),
                     IlBinaryOp::Multiply => {
@@ -1581,8 +1581,8 @@ impl IlBinaryOp {
                     &IlBinaryOp::Divide => todo!(),
                 })
             }
-            (IlNumber::U32(n1), IlNumber::U32(n2)) => {
-                IlNumber::U32(match self {
+            (Number::U32(n1), Number::U32(n2)) => {
+                Number::U32(match self {
                     IlBinaryOp::Add => n1.wrapping_add(n2),
                     IlBinaryOp::Subtract => n1.wrapping_sub(n2),
                     IlBinaryOp::Multiply => {
@@ -1640,66 +1640,9 @@ impl From<ComparisonOperator> for IlCmpOp {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum IlType {
-    U8,
-    U16,
-    U32,
-}
-
-impl TryFrom<u32> for IlType {
-    type Error = ();
-
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(IlType::U8),
-            2 => Ok(IlType::U16),
-            4 => Ok(IlType::U32),
-            _ => Err(())
-        }
-    }
-}
-
-impl TryFrom<IlLocation> for IlType {
-    type Error = ();
-
-    fn try_from(value: IlLocation) -> Result<Self, Self::Error> {
-        match value {
-            IlLocation::Reg(il_type) => Ok(il_type),
-            _ => Err(())
-        }
-    }
-}
-
-impl From<&NumberType> for IlType {
-    fn from(nt: &NumberType) -> Self {
-        match nt {
-            NumberType::U8 => IlType::U8,
-            NumberType::U16 => IlType::U16,
-            NumberType::USIZE => IlType::U32,
-        }
-    }
-}
-
-impl ByteSize for IlType {
-    fn byte_count(&self, _ctxt: &ProgramContext) -> u32 {
-        self.byte_count()
-    }
-}
-
-impl IlType {
-    pub fn byte_count(&self) -> u32 {
-        match self {
-            IlType::U8 => 1,
-            IlType::U16 => 2,
-            IlType::U32 => 4,
-        }
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IlLocation {
-    Reg(IlType),
+    Reg(NumberType),
     FrameOffset(u32),
     Static(u32),
     GlobalConst(IlVarId),
@@ -1711,6 +1654,17 @@ impl TryFrom<u32> for IlLocation {
     fn try_from(value: u32) -> Result<Self, Self::Error> {
         value.try_into()
             .map(|il_type| IlLocation::Reg(il_type))
+    }
+}
+
+impl TryFrom<IlLocation> for NumberType {
+    type Error = ();
+
+    fn try_from(value: IlLocation) -> Result<Self, Self::Error> {
+        match value {
+            IlLocation::Reg(il_type) => Ok(il_type),
+            _ => Err(())
+        }
     }
 }
 
@@ -1888,92 +1842,6 @@ impl Debug for IlInstruction {
         }
     }
 }
-
-
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub enum IlNumber {
-    U8(u8),
-    U16(u16),
-    U32(u32),
-}
-
-impl IlNumber {
-    pub fn il_type(&self) -> IlType {
-        match self {
-            IlNumber::U8(_) => IlType::U8,
-            IlNumber::U16(_) => IlType::U16,
-            IlNumber::U32(_) => IlType::U32,
-        }
-    }
-
-    pub fn as_bytes(&self) -> Vec<u8> {
-        match self {
-            IlNumber::U8(n) => vec![*n],
-            IlNumber::U16(n) => n.to_le_bytes().iter().cloned().collect(),
-            IlNumber::U32(n) => n.to_le_bytes().iter().cloned().collect(),
-        }
-    }
-
-    pub fn as_u32(&self) -> u32 {
-        match self {
-            IlNumber::U8(n) => (*n).into(),
-            IlNumber::U16(n) => (*n).into(),
-            IlNumber::U32(n) => *n,
-        }
-    }
-
-    pub fn cast_checked(&self, promoted: IlType) -> IlNumber {
-        match promoted {
-            IlType::U8 => IlNumber::U8(self.as_u32().try_into().unwrap()),
-            IlType::U16 => IlNumber::U16(self.as_u32().try_into().unwrap()),
-            IlType::U32 => IlNumber::U32(self.as_u32().try_into().unwrap()),
-        }
-    }
-}
-
-impl Debug for IlNumber {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::U8(arg0) => write!(f, "0n{}/0x{:02x}u8", arg0, arg0),
-            Self::U16(arg0) => write!(f, "0n{}/0x{:04x}u16", arg0, arg0),
-            Self::U32(arg0) => if *arg0 >= 0x80000000 {
-                write!(f, "0x{:08x}u32", arg0)
-            } else {
-                write!(f, "0n{}/0x{:08x}u32", arg0, arg0)
-            }
-        }
-    }
-}
-
-impl From<u8> for IlNumber {
-    fn from(x: u8) -> Self {
-        IlNumber::U8(x)
-    }
-}
-
-impl From<u16> for IlNumber {
-    fn from(x: u16) -> Self {
-        IlNumber::U16(x)
-    }
-}
-
-impl From<u32> for IlNumber {
-    fn from(x: u32) -> Self {
-        IlNumber::U32(x)
-    }
-}
-
-impl From<&Vec<u8>> for IlNumber {
-    fn from(b: &Vec<u8>) -> Self {
-        match b.len() {
-            1 => IlNumber::U8(b[0]),
-            2 => IlNumber::U16(u16::from_le_bytes([b[0],b[1]])),
-            4 => IlNumber::U32(u32::from_le_bytes([b[0],b[1],b[2],b[3]])),
-            _ => panic!(),
-        } 
-    }
-}
-
 
 #[derive(Clone, Debug)]
 pub struct IlProgram {
@@ -2538,7 +2406,7 @@ mod tests {
                 IlVarInfo {
                     byte_size: 1,
                     description: v.0.to_owned(),
-                    location: IlLocation::Reg(IlType::U8),
+                    location: IlLocation::Reg(NumberType::U8),
                     var_type: Type::Number(NumberType::U8),
                     constant: None,
                 }
@@ -2554,7 +2422,7 @@ mod tests {
             next_label_num: 0,
             next_temp_num: 0,
             vars_stack_size: 0, 
-            ret: Some(IlType::U8),
+            ret: Some(NumberType::U8),
             intrinsic: None,
             frame_pointer_size_instruction_index: None,
             vars,
@@ -2562,19 +2430,19 @@ mod tests {
             full_expression_hashes: BTreeMap::new(),
             end_label: IlLabelId("end".to_owned()),
             body : [
-                IlInstruction::AssignNumber {dest: one.clone(), src: IlNumber::U8(1)},
-                IlInstruction::AssignNumber {dest: a.clone(), src: IlNumber::U8(0)},
-                IlInstruction::AssignNumber {dest: b.clone(), src: IlNumber::U8(1)},
-                IlInstruction::AssignNumber {dest: z.clone(), src: IlNumber::U8(0)},
+                IlInstruction::AssignNumber {dest: one.clone(), src: Number::U8(1)},
+                IlInstruction::AssignNumber {dest: a.clone(), src: Number::U8(0)},
+                IlInstruction::AssignNumber {dest: b.clone(), src: Number::U8(1)},
+                IlInstruction::AssignNumber {dest: z.clone(), src: Number::U8(0)},
                 IlInstruction::Label(loop_label.clone()),
                 IlInstruction::IfThenElse {left: n.clone(), op: IlCmpOp::Equals, right: z.clone(), 
                     then_label: end_label.clone(), else_label: body_label.clone() },
                 IlInstruction::Label(body_label.clone()),
                 IlInstruction::AssignBinary { dest: t.clone(), op: IlBinaryOp::Add, src1: a.clone(), src2: IlOperand::Var(b.clone()) },
-                IlInstruction::AssignVar { dest: a.clone(), src: b.clone(), size: IlType::U8, dest_range: None, src_range: None },
-                IlInstruction::AssignVar { dest: b.clone(), src: t.clone(), size: IlType::U8, dest_range: None, src_range: None },
+                IlInstruction::AssignVar { dest: a.clone(), src: b.clone(), size: NumberType::U8, dest_range: None, src_range: None },
+                IlInstruction::AssignVar { dest: b.clone(), src: t.clone(), size: NumberType::U8, dest_range: None, src_range: None },
                 IlInstruction::AssignBinary { dest: n.clone(), op: IlBinaryOp::Subtract, src1: n.clone(), src2: IlOperand::Var(one.clone()) },
-                IlInstruction::AssignNumber {dest: z.clone(), src: IlNumber::U8(0)},
+                IlInstruction::AssignNumber {dest: z.clone(), src: Number::U8(0)},
                 IlInstruction::Goto(loop_label.clone()),
                 IlInstruction::Label(end_label.clone()),
                 IlInstruction::Return{val: Some(a.clone())},

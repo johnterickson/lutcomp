@@ -1,39 +1,153 @@
+use std::convert::TryFrom;
+
 use super::*;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum NumberType {
     U8,
     U16,
-    USIZE,
+    U32,
 }
 
-impl NumberType {
-    pub fn try_parse(s: &str) -> Option<NumberType> {
-        match  s {
-            "u8" | "char" => Some(NumberType::U8),
-            "u16" => Some(NumberType::U16),
-            "usize" => Some(NumberType::USIZE),
-            _ => None
+impl TryFrom<u32> for NumberType {
+    type Error = ();
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            1 => Ok(NumberType::U8),
+            2 => Ok(NumberType::U16),
+            4 => Ok(NumberType::U32),
+            _ => Err(())
         }
     }
-    fn parse(s: &str) -> NumberType {
-        Self::try_parse(s).expect(&format!("Not a number type: {}", s))
+}
+
+impl From<&NumberType> for NumberType {
+    fn from(nt: &NumberType) -> Self {
+        match nt {
+            NumberType::U8 => NumberType::U8,
+            NumberType::U16 => NumberType::U16,
+            NumberType::U32 => NumberType::U32,
+        }
     }
 }
 
 impl ByteSize for NumberType {
     fn byte_count(&self, _ctxt: &ProgramContext) -> u32 {
-        self.try_byte_count().unwrap()
+        self.byte_count()
+    }
+}
+
+impl NumberType {
+    pub fn byte_count(&self) -> u32 {
+        match self {
+            NumberType::U8 => 1,
+            NumberType::U16 => 2,
+            NumberType::U32 => 4,
+        }
+    }
+
+    pub fn try_parse(s: &str) -> Option<Self> {
+        match  s {
+            "u8" | "char" => Some(Self::U8),
+            "u16" => Some(Self::U16),
+            "usize" => Some(Self::U32),
+            _ => None
+        }
+    }
+    
+    fn parse(s: &str) -> Self {
+        Self::try_parse(s).expect(&format!("Not a number type: {}", s))
+    }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+pub enum Number {
+    U8(u8),
+    U16(u16),
+    U32(u32),
+}
+
+impl Number {
+    pub fn il_type(&self) -> NumberType {
+        match self {
+            Number::U8(_) => NumberType::U8,
+            Number::U16(_) => NumberType::U16,
+            Number::U32(_) => NumberType::U32,
+        }
+    }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+        match self {
+            Number::U8(n) => vec![*n],
+            Number::U16(n) => n.to_le_bytes().iter().cloned().collect(),
+            Number::U32(n) => n.to_le_bytes().iter().cloned().collect(),
+        }
+    }
+
+    pub fn as_u32(&self) -> u32 {
+        match self {
+            Number::U8(n) => (*n).into(),
+            Number::U16(n) => (*n).into(),
+            Number::U32(n) => *n,
+        }
+    }
+
+    pub fn cast_checked(&self, promoted: NumberType) -> Number {
+        match promoted {
+            NumberType::U8 => Number::U8(self.as_u32().try_into().unwrap()),
+            NumberType::U16 => Number::U16(self.as_u32().try_into().unwrap()),
+            NumberType::U32 => Number::U32(self.as_u32().try_into().unwrap()),
+        }
+    }
+}
+
+impl std::fmt::Debug for Number {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::U8(arg0) => write!(f, "0n{}/0x{:02x}u8", arg0, arg0),
+            Self::U16(arg0) => write!(f, "0n{}/0x{:04x}u16", arg0, arg0),
+            Self::U32(arg0) => if *arg0 >= 0x80000000 {
+                write!(f, "0x{:08x}u32", arg0)
+            } else {
+                write!(f, "0n{}/0x{:08x}u32", arg0, arg0)
+            }
+        }
+    }
+}
+
+impl From<u8> for Number {
+    fn from(x: u8) -> Self {
+        Number::U8(x)
+    }
+}
+
+impl From<u16> for Number {
+    fn from(x: u16) -> Self {
+        Number::U16(x)
+    }
+}
+
+impl From<u32> for Number {
+    fn from(x: u32) -> Self {
+        Number::U32(x)
+    }
+}
+
+impl From<&Vec<u8>> for Number {
+    fn from(b: &Vec<u8>) -> Self {
+        match b.len() {
+            1 => Number::U8(b[0]),
+            2 => Number::U16(u16::from_le_bytes([b[0],b[1]])),
+            4 => Number::U32(u32::from_le_bytes([b[0],b[1],b[2],b[3]])),
+            _ => panic!(),
+        } 
     }
 }
 
 impl TryByteSize for NumberType {
     fn try_byte_count(&self) -> Option<u32> {
-        Some(match self {
-            NumberType::U8 => 1,
-            NumberType::U16 => 2,
-            NumberType::USIZE => 4,
-        })
+        Some(self.byte_count())
     }
 }
 
@@ -57,8 +171,8 @@ impl Type {
     pub fn get_number_type(&self) -> Option<NumberType> {
         match self {
             Type::Number(nt) => Some(*nt),
-            Type::Ptr(_) => Some(NumberType::USIZE),
-            Type::Array(_,_) => Some(NumberType::USIZE),
+            Type::Ptr(_) => Some(NumberType::U32),
+            Type::Array(_,_) => Some(NumberType::U32),
             _ => None,
         }
     }
@@ -124,7 +238,7 @@ impl ByteSize for Type {
     fn byte_count(&self, ctxt: &ProgramContext ) -> u32 {
         match self {
             Type::Void => 0,
-            Type::Number(nt) => nt.byte_count(ctxt),
+            Type::Number(nt) => nt.byte_count(),
             Type::Ptr(_) => 4,
             Type::Struct(struct_name) => ctxt.struct_types.get(struct_name)
                 .expect(&format!("Could not find struct definition for '{}'.", struct_name))
