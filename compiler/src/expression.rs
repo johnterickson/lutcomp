@@ -336,8 +336,7 @@ impl Expression {
                         }
                         _ => panic!("Not a struct: {:?}", struct_type)
                     };
-                    let (_, field_type) = struct_type.get_field(ctxt, field);
-                    Some(field_type.clone())
+                    Some(struct_type.fields[field].var_type.clone())
                 } else {
                     None
                 }
@@ -353,8 +352,7 @@ impl Expression {
                         }
                         _ => panic!()
                     };
-                    let (_, field_type) = struct_type.get_field(ctxt, field);
-                    Some(field_type.clone())
+                    Some(struct_type.fields[field].var_type.clone())
                 } else {
                     None
                 }

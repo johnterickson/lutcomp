@@ -184,16 +184,18 @@ pub enum Type {
     Ptr(Box<Type>),
     Struct(String),
     Array(Box<Type>,Option<u32>),
+    Aligned(u32, Box<Type>)
 }
 
 impl Type {
     pub fn alignment(&self, ctxt: &ProgramContext) -> u32 {
         match self {
-            Type::Void => todo!(),
+            Type::Void => 0,
             Type::Number(n) => n.byte_count(),
             Type::Ptr(_) => 4,
-            Type::Struct(type_name) => ctxt.struct_types[type_name].alignment.unwrap_or(4),
+            Type::Struct(type_name) => ctxt.struct_types[type_name].alignment,
             Type::Array(inner, _) => std::cmp::max(inner.alignment(ctxt), 4),
+            Type::Aligned(alignment, _) => *alignment,
         }
     }
     pub fn get_number_type(&self) -> Option<NumberType> {
@@ -271,7 +273,8 @@ impl ByteSize for Type {
             Type::Struct(struct_name) => ctxt.struct_types.get(struct_name)
                 .expect(&format!("Could not find struct definition for '{}'.", struct_name))
                 .byte_count(ctxt),
-            Type::Array(nt, count) => nt.byte_count(ctxt) * count.unwrap()
+            Type::Array(nt, count) => nt.byte_count(ctxt) * count.unwrap(),
+            Type::Aligned(_, inner) => inner.byte_count(ctxt)
         }
     }
 }
@@ -284,6 +287,7 @@ impl TryByteSize for Type {
             Type::Ptr(_) => Some(4),
             Type::Struct(_) => None,
             Type::Array(nt, count) => nt.try_byte_count().map(|s| s * count.unwrap()),
+            Type::Aligned(_, inner) => inner.try_byte_count()
         }
     }
 }

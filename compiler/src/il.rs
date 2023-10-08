@@ -50,10 +50,11 @@ pub enum IlInstruction {
 impl IlInstruction {
     pub fn has_side_effects(&self) -> bool {
         match self {
+            IlInstruction::ReadMemory {..} | 
             IlInstruction::WriteMemory {..} | 
-            IlInstruction::Call { .. } |
-            IlInstruction::TtyIn { .. } |
-            IlInstruction::TtyOut { .. } => true,
+            IlInstruction::Call {..} |
+            IlInstruction::TtyIn {..} |
+            IlInstruction::TtyOut {..} => true,
             _ => false
         }
     }
@@ -90,6 +91,7 @@ pub struct IlVarInfo {
     pub location: IlLocation,
     pub var_type: Type,
     pub byte_size: u32,
+    pub alignment: u32,
     pub constant: Option<Constant>,
 }
 
@@ -231,6 +233,7 @@ impl IlFunction {
                 let var_type = e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap();
                 let byte_size = var_type.byte_count(ctxt.program);
                 let constant = e.try_get_const();
+                let alignment = var_type.alignment(ctxt.program);
                 if let Some(constant) = &constant {
                     assert_eq!(byte_size, constant.byte_count())
                 }
@@ -239,6 +242,7 @@ impl IlFunction {
                     byte_size,
                     var_type,
                     location,
+                    alignment,
                     constant,
                 };
                 if Some(&info) != self.vars.get(&id) {
@@ -278,11 +282,13 @@ impl IlFunction {
 
     fn alloc_tmp_and_emit_static_address(&mut self, ctxt: &IlContext, addr: u32, name: &str, info: &IlVarInfo) -> IlVarId {
         let var_type = Type::Ptr(Box::new(info.var_type.clone()));
+        let alignment = var_type.alignment(ctxt.program);
         let addr_var = self.alloc_tmp(IlVarInfo {
             description: format!("static {:?} addr", &name),
             location: IlLocation::Reg(NumberType::U32),
             byte_size: var_type.byte_count(ctxt.program),
             var_type,
+            alignment,
             constant: None,
         });
         self.add_inst(ctxt, IlInstruction::AssignNumber {
@@ -341,27 +347,32 @@ impl IlFunction {
             }
             Expression::Index(var, index) => {
                 let info = ctxt.find_arg_or_var(&self, var);
-                let ptr_type = info.var_type;
+                let ptr_type = &info.var_type;
                 let element_type = ptr_type.get_element_type().unwrap();
                 let element_size = element_type.byte_count(ctxt.program);
+                let index_type = ctxt.try_emit_type(index).unwrap().get_number_type().unwrap();
 
-                let index_type = ctxt.try_emit_type(index).unwrap();
-                let index = match index_type {
-                    Type::Number(nt) => {
-                        match nt {
-                            NumberType::U8 | NumberType::U16 => {
-                                Box::new(Expression::Cast {
-                                    old_type: Some(index_type),
-                                    new_type: Type::Number(NumberType::U32),
-                                    value: index.clone()
-                                })
-                            },
-                            NumberType::U32 => {
-                                index.clone()
-                            },
-                        }
-                    }
-                    _ => panic!(),
+                // dbg!(&index, &value, &info, info.alignment);
+
+                let can_u8_add = info.alignment >= 0x100 && info.alignment % 0x100 == 0 && index_type.byte_count() == 1;
+
+                if can_u8_add {
+                    // dbg!(&value);
+                }
+
+                let index = match (can_u8_add, index_type) {
+                    (true, NumberType::U8) | (_,NumberType::U32) => {
+                        index.clone()
+                    },
+                    (true, NumberType::U16) | // TODO this later
+                    (false, NumberType::U8 | NumberType::U16) => {
+                        Box::new(Expression::Cast {
+                            old_type: Some(Type::Number(index_type)),
+                            new_type: Type::Number(NumberType::U32),
+                            value: index.clone()
+                        })
+                    },
+                    
                 };
 
                 let byte_index_expression = if element_size == 1 {
@@ -409,17 +420,31 @@ impl IlFunction {
                     },
                 };
 
-                let addr_expression = Expression::Arithmetic(
-                    BinaryOp::Add,
-                    Box::new(base_addr_num_expression),
-                    byte_index_expression,
-                );
+                let addr_expression = if can_u8_add {
+                    let (base_addr, _) = self.alloc_tmp_and_emit_value(ctxt, &base_addr_num_expression);
+
+                    let addr = Expression::Arithmetic(
+                        BinaryOp::Add,
+                        Box::new(Expression::Index(base_addr.0.clone(), Box::new(Expression::Number(Number::U32(3))))),
+                        byte_index_expression);
+
+                    println!("# Because {var} is aligned to 256 bytes and the index is byte-sized ({:?}), a one-byte addition can be used: {:?}", &index, &addr);
+
+                    addr
+                
+                } else {
+                    Expression::Arithmetic(
+                        BinaryOp::Add,
+                        Box::new(base_addr_num_expression),
+                        byte_index_expression,
+                    )
+                };
 
                 let addr_expression = Expression::Cast{
                     value: Box::new(addr_expression),
                     old_type: Some(Type::Number(NumberType::U32)),
                     new_type: Type::Ptr(Box::new(element_type.clone())),
-                };
+                };    
 
                 let (addr, _) = self.alloc_tmp_and_emit_value(ctxt, &addr_expression);
 
@@ -433,7 +458,9 @@ impl IlFunction {
                     }
                     t => panic!("Expected Struct but found {:?}", t)
                 };
-                let (byte_offset, field_type) = struct_type.get_field(ctxt.program, field);
+
+                let field_info = &struct_type.fields[field];
+                let (byte_offset, field_type) = (field_info.struct_offset, &field_info.var_type);
                 let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();
 
                 let base_expression = match info.location {
@@ -485,7 +512,8 @@ impl IlFunction {
                     }
                     _ => panic!()
                 };
-                let (byte_offset, field_type) = struct_type.get_field(ctxt.program, field);
+                let field_info = &struct_type.fields[field];
+                let (byte_offset, field_type) = (field_info.struct_offset, &field_info.var_type);
                 let field_bytes = field_type.byte_count(ctxt.program).try_into().ok();
 
                 let base_expression = match info.location {
@@ -809,6 +837,7 @@ impl IlFunction {
                                 Some(num.into())
                             },
                             Type::Ptr(_) | Type::Struct(_) | Type::Array(_, _) => None,
+                            Type::Aligned(_, _) => None
                         }
                     },
                 }
@@ -1101,6 +1130,7 @@ impl IlFunction {
                     location: IlLocation::GlobalConst(IlVarId(name.to_owned())),
                     byte_size: var_type.byte_count(ctxt.program),
                     var_type: var_type.clone(),
+                    alignment: var_type.alignment(ctxt.program),
                     constant: Some(val.clone()),
                 }).is_none());
         }
@@ -1117,6 +1147,7 @@ impl IlFunction {
                     location: info.location.clone(),
                     byte_size: info.byte_size,
                     var_type: info.var_type.clone(),
+                    alignment: info.alignment,
                     constant: None,
                 }).is_none());
         }
@@ -1131,6 +1162,7 @@ impl IlFunction {
                     location,
                     var_type: var_type.clone(),
                     byte_size,
+                    alignment: var_type.alignment(ctxt.program),
                     constant: None,
                 });
             func.args.push(id);
@@ -1161,6 +1193,7 @@ impl IlFunction {
                                 var_type: var_type.clone(),
                                 description: format!("function-local static {} addr", name),
                                 byte_size: var_type.byte_count(ctxt.program),
+                                alignment: var_type.alignment(ctxt.program),
                                 constant: None,
                             }
                         ).is_none()
@@ -1177,18 +1210,22 @@ impl IlFunction {
                     description: format!("Local {} {:?} {:?}", name, var_type, size),
                     var_type: var_type.clone(),
                     byte_size: var_type.byte_count(ctxt.program),
+                    alignment: var_type.alignment(ctxt.program),
                     constant: None,
                 });
         }
 
         if func.vars_stack_size > 0 {
+            let var_type = Type::Number(NumberType::U32);
+            let alignment = var_type.alignment(ctxt.program);
             func.alloc_named(
                 IlVarId::frame_pointer_str().to_owned(),
                 IlVarInfo {
                     description: IlVarId::frame_pointer_str().to_owned(),
                     location: IlLocation::Reg(NumberType::U32),
-                    var_type: Type::Number(NumberType::U32),
+                    var_type: var_type.clone(),
                     byte_size: 4,
+                    alignment,
                     constant: None,
                 });
 
@@ -1196,7 +1233,8 @@ impl IlFunction {
                 byte_size: 4,
                 description: "Stack size negated".to_owned(),
                 location: IlLocation::Reg(NumberType::U32),
-                var_type: Type::Number(NumberType::U32),
+                var_type,
+                alignment,
                 constant: Some(Number::U32(func.vars_stack_size.wrapping_neg()).into()),
             });
 
@@ -1800,6 +1838,7 @@ impl IlProgram {
                     location: IlLocation::GlobalConst(IlVarId(name.clone())),
                     var_type: var_type.clone(),
                     byte_size: var_type.byte_count(ctxt),
+                    alignment: var_type.alignment(ctxt),
                     constant: Some(value.clone()),
                 }
             );
@@ -1816,6 +1855,7 @@ impl IlProgram {
                     location: IlLocation::Static(addr),
                     var_type: var_type.clone(),
                     byte_size: var_type.byte_count(ctxt),
+                    alignment: var_type.alignment(ctxt),
                     constant: None,
                 }
             );
@@ -2318,6 +2358,7 @@ mod tests {
                     description: v.0.to_owned(),
                     location: IlLocation::Reg(NumberType::U8),
                     var_type: Type::Number(NumberType::U8),
+                    alignment: 1,
                     constant: None,
                 }
             );

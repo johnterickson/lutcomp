@@ -199,19 +199,44 @@ fn parse_file(path: &Path, input: &str, ctxt: &mut ProgramContext) {
                     pair = pairs.next().unwrap();
                 }
 
+                let struct_alignment = alignment.unwrap_or(4);
+                let mut current_alignment = Some(struct_alignment);
+
                 assert_eq!(pair.as_rule(), Rule::ident);
                 let name = pair.as_str().to_owned();
 
-                let mut fields = Vec::new();
+                let mut current_offset = 0;
+                let mut fields = BTreeMap::new();
                 for arg in pairs.next().unwrap().into_inner() {
                     let mut field_tokens = arg.into_inner();
                     let mut field_tokens = field_tokens.next().unwrap().into_inner();
                     let field_name = field_tokens.next().unwrap().as_str().to_owned();
-                    let field_type = Type::parse(field_tokens.next().unwrap(), true);
-                    fields.push((field_name, field_type));
+                    let mut field_type = Type::parse(field_tokens.next().unwrap(), true);
+                    let field_size = field_type.byte_count(ctxt);
+                    let field_alignment = field_type.alignment(ctxt);
+
+                    current_offset = round_up(current_offset, field_alignment);
+
+                    if let Some(current_alignment) = current_alignment {
+                        assert!(current_alignment >= field_alignment);
+                        assert_eq!(current_alignment % field_alignment, 0);
+                        field_type = Type::Aligned(current_alignment, Box::new(field_type));
+                    }
+
+                    fields.insert(
+                        field_name.clone(), 
+                        StructField {
+                            name: field_name,
+                            var_type: field_type,
+                            struct_offset: current_offset,
+                            implied_alignment: current_alignment,
+                        });
+
+                    current_alignment = None;
+                    current_offset += field_size;
                 }
 
-                ctxt.struct_types.insert(name, StructDefinition{fields, alignment});
+                ctxt.struct_types.insert(name, StructDefinition{fields, alignment: struct_alignment, total_size: current_offset});
             },
             Rule::function => {
                 let f = FunctionDefinition::parse(path, &ctxt, pair);

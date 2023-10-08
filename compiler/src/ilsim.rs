@@ -926,7 +926,7 @@ mod tests {
         assert_eq!(heap_entry, Number::U32(STATICS_START_ADDRESS+4));
 
         let heap_type = ctxt.struct_types.get("heap").unwrap();
-        let (head_offset, _) = heap_type.get_field(&ctxt, "head");
+        let head_offset = heap_type.fields["head"].struct_offset;
         let heap_entry_type = ctxt.struct_types.get("heap_entry").unwrap();
 
         let header_size = heap_entry_type.byte_count(&ctxt);
