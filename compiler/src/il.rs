@@ -18,10 +18,10 @@ pub enum IlOperand {
     Var(IlVarId)
 }
 impl IlOperand {
-    fn try_get_const<'a>(&'a self, func: &'a IlFunction) -> Option<Cow<'a, Vec<u8>>> {
+    fn try_get_const<'a>(&'a self, func: &'a IlFunction) -> Option<Cow<Constant>> {
         match self {
-            IlOperand::Number(n) => Some(Cow::Owned(n.as_bytes())),
-            IlOperand::Var(ident) => func.try_get_const_var(ident).map(Cow::Borrowed),
+            IlOperand::Number(n) => Some(Cow::Owned((*n).into())),
+            IlOperand::Var(ident) => func.try_get_const_var(ident).map(|c| Cow::Borrowed(c)),
         }
     }
 }
@@ -34,7 +34,7 @@ pub enum IlInstruction {
     AssignNumber{ dest: IlVarId, src: Number },
     AssignVar{ dest: IlVarId, src: IlVarId, size: NumberType, src_range: Option<Range<u32>>, dest_range: Option<Range<u32>>},
     AssignUnary{ dest: IlVarId, op: IlUnaryOp, src: IlVarId },
-    AssignBinary { dest: IlVarId, op: IlBinaryOp, src1: IlVarId, src2: IlOperand },
+    AssignBinary { dest: IlVarId, op: BinaryOp, src1: IlVarId, src2: IlOperand },
     ReadMemory {dest: IlVarId, addr: IlVarId, size: NumberType},
     WriteMemory {addr: IlVarId, src: IlVarId, size: NumberType},
     Goto(IlLabelId),
@@ -90,7 +90,7 @@ pub struct IlVarInfo {
     pub location: IlLocation,
     pub var_type: Type,
     pub byte_size: u32,
-    pub constant: Option<Vec<u8>>,
+    pub constant: Option<Constant>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
@@ -230,12 +230,16 @@ impl IlFunction {
                 let location = IlLocation::Reg(il_type);
                 let var_type = e.try_emit_type(ctxt.program, Some(ctxt.func_def)).unwrap();
                 let byte_size = var_type.byte_count(ctxt.program);
+                let constant = e.try_get_const();
+                if let Some(constant) = &constant {
+                    assert_eq!(byte_size, constant.byte_count())
+                }
                 let info = IlVarInfo {
                     description: format!("{} {:?}", &id.0, e),
                     byte_size,
                     var_type,
                     location,
-                    constant: e.try_get_const().map(|c| c.to_le_bytes().iter().take(byte_size as usize).cloned().collect()),
+                    constant,
                 };
                 if Some(&info) != self.vars.get(&id) {
                     assert!(self.vars.insert(id.clone(), info.clone()).is_none(),
@@ -318,9 +322,9 @@ impl IlFunction {
                     ,
                     IlLocation::FrameOffset(offset) => {
                         let addr = Expression::Arithmetic(
-                            ArithmeticOperator::Add,
+                            BinaryOp::Add,
                             Box::new(Expression::frame_pointer()),
-                            Box::new(Expression::Number(NumberType::U32, offset))
+                            Box::new(Expression::Number(Number::U32(offset))),
                         );
                         let (id, _) = self.alloc_tmp_and_emit_value(ctxt, &addr);
                         (id, None)
@@ -364,14 +368,14 @@ impl IlFunction {
                     index.clone()
                 } else {
                     Box::new(Expression::Arithmetic(
-                        ArithmeticOperator::Multiply,
+                        BinaryOp::Multiply,
                         index.clone(),
-                        Box::new(Expression::Number(NumberType::U32, element_size))
+                        Box::new(Expression::Number(Number::U32(element_size))),
                     ))
                 };
 
                 let base_addr_num_expression = match info.location {
-                    IlLocation::Static(addr) => Expression::Number(NumberType::U32, addr),
+                    IlLocation::Static(addr) => Expression::Number(Number::U32(addr)),
                     IlLocation::Reg(_) => {
                         Expression::Cast {
                             old_type: Some(ptr_type.clone()),
@@ -385,9 +389,9 @@ impl IlFunction {
                             frame
                         } else {
                             Expression::Arithmetic(
-                                ArithmeticOperator::Add,
+                                BinaryOp::Add,
                                 Box::new(frame),
-                                Box::new(Expression::Number(NumberType::U32, offset))
+                                Box::new(Expression::Number(Number::U32(offset))),
                             )
                         }
                     },
@@ -406,7 +410,7 @@ impl IlFunction {
                 };
 
                 let addr_expression = Expression::Arithmetic(
-                    ArithmeticOperator::Add,
+                    BinaryOp::Add,
                     Box::new(base_addr_num_expression),
                     byte_index_expression,
                 );
@@ -433,7 +437,7 @@ impl IlFunction {
                 let field_bytes = field_type.byte_count(ctxt.program).try_into().unwrap();
 
                 let base_expression = match info.location {
-                    IlLocation::Static(addr) => Expression::Number(NumberType::U32, addr),
+                    IlLocation::Static(addr) => Expression::Number(Number::U32(addr)),
                     IlLocation::Reg(_) => todo!(),
                     IlLocation::FrameOffset(offset) => {
                         let frame = Expression::frame_pointer();
@@ -441,9 +445,9 @@ impl IlFunction {
                             frame
                         } else {
                             Expression::Arithmetic(
-                                ArithmeticOperator::Add,
+                                BinaryOp::Add,
                                 Box::new(frame),
-                                Box::new(Expression::Number(NumberType::U32, offset)))
+                                Box::new(Expression::Number(Number::U32(offset))))
                         }
                     },
                     IlLocation::GlobalConst(_) => todo!(),
@@ -453,9 +457,9 @@ impl IlFunction {
                     base_expression
                 } else {
                     Expression::Arithmetic(
-                        ArithmeticOperator::Add,
+                        BinaryOp::Add,
                         Box::new(base_expression),
-                        Box::new(Expression::Number(NumberType::U32, byte_offset)),
+                        Box::new(Expression::Number(Number::U32(byte_offset))),
                     )
                 };
 
@@ -503,9 +507,9 @@ impl IlFunction {
                     base_expression
                 } else {
                     Expression::Arithmetic(
-                        ArithmeticOperator::Add,
+                        BinaryOp::Add,
                         Box::new(base_expression),
-                        Box::new(Expression::Number(NumberType::U32, byte_offset)),
+                        Box::new(Expression::Number(Number::U32(byte_offset))),
                     )
                 };
 
@@ -576,7 +580,8 @@ impl IlFunction {
                     (IlLocation::Reg(NumberType::U32), Type::Number(NumberType::U32)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
-                            (IlLocation::Reg(NumberType::U32), Some(index)) => {
+                            (IlLocation::Reg(NumberType::U32), Some(Constant::Number(index))) => {
+                                let index = index.as_u32();
                                 TargetLocation {
                                     target: IlVarId(n.clone()),
                                     target_subrange: Some(index..(index+1)),
@@ -741,7 +746,7 @@ impl IlFunction {
                 if self.vars_stack_size > 0 {
                     self.add_inst(ctxt, IlInstruction::AssignBinary {
                         dest: IlVarId::frame_pointer(),
-                        op: IlBinaryOp::Add,
+                        op: BinaryOp::Add,
                         src1: IlVarId::frame_pointer(),
                         src2: IlOperand::Number(Number::U32(self.vars_stack_size)),
                     });
@@ -757,7 +762,7 @@ impl IlFunction {
         ctxt.src_ctxt.pop();
     }
 
-    fn try_get_const(&self, e: &Expression, var_type: Option<&Type>) -> Option<u32> {
+    fn try_get_const<'a, 'b>(&self, e: &'a Expression, var_type: Option<&'b Type>) -> Option<Constant> {
         if let Some(val) = e.try_get_const() {
             return Some(val);
         }
@@ -774,7 +779,7 @@ impl IlFunction {
 
                         if let Some(info) = self.vars.get(&IlVarId(name.clone())) {
                             match info.location {
-                                IlLocation::Static(addr) => Some(addr),
+                                IlLocation::Static(addr) => Some(Number::U32(addr).into()),
                                 _ => None
                             }
                         } else {
@@ -793,13 +798,15 @@ impl IlFunction {
                     IlLocation::Static(_) => None,//Some(*addr),
                     IlLocation::GlobalConst(const_name) => {
                         assert_eq!(name.as_str(), &const_name.0);
-                        let const_val = info.constant.as_ref().unwrap();
                         match var_type {
                             Type::Void => panic!(),
                             Type::Number(nt) => {
-                                let num: Number = const_val.into();
-                                assert_eq!(num.il_type().byte_count(), nt.try_byte_count().unwrap());
-                                Some(num.as_u32())
+                                let num = match info.constant.as_ref() {
+                                    Some(Constant::Number(n)) => *n,
+                                    c => panic!("unexpected {:?}", c)
+                                };
+                                assert_eq!(num.num_type().byte_count(), nt.try_byte_count().unwrap());
+                                Some(num.into())
                             },
                             Type::Ptr(_) | Type::Struct(_) | Type::Array(_, _) => None,
                         }
@@ -820,50 +827,41 @@ impl IlFunction {
 
         let cons = self.try_get_const(e, var_type.as_ref());
 
-        if let Some(cons) = cons {
-            println!("# const {:?} -> {}", e, cons);
-        } else {
-            // println!("# Not const {:?}", e);
-        }
+        // if let Some(cons) = &cons {
+        //     println!("# const {:?} -> {:?}", e, cons);
+        // } else {
+        //     // println!("# Not const {:?}", e);
+        // }
 
         let e = match (cons, var_type, e) {
-            (_, _, Expression::Number(_,_)) => Cow::Borrowed(e),
-            (Some(n), Some(var_type), _) => {
+            (_, _, Expression::Number(_)) => Cow::Borrowed(e),
+            (Some(Constant::Number(n)), Some(var_type), _) => {
                 let byte_count = var_type.byte_count(ctxt.program);
-                let nt = match byte_count {
-                    1 => Some(NumberType::U8),
-                    2 => Some(NumberType::U16),
-                    4 => Some(NumberType::U32),
-                    _ => None,
-                };
-                if let Some(nt) = nt {
+                assert_eq!(byte_count, n.num_type().byte_count());
 
-                    let same_type = if let Type::Number(nt2) = var_type {
-                        if nt == nt2 {
-                            Some(Expression::Number(nt, n))
-                        } else {
-                            None
-                        }
+                let same_type = if let Type::Number(nt2) = var_type {
+                    if n.num_type() == nt2 {
+                        Some(Expression::Number(n))
                     } else {
                         None
-                    };
-
-                    let const_exp = Cow::Owned(if let Some(same_type) = same_type {
-                        same_type
-                    } else {
-                        Expression::Cast {
-                            old_type: Some(Type::Number(nt)),
-                            new_type: var_type,
-                            value: Box::new(Expression::Number(nt, n))
-                        }
-                    });
-
-                    // println!("CONST {:?} -> {:?}", e, const_exp);
-
-                    const_exp
+                    }
                 } else {
-                    Cow::Borrowed(e)
-                }
+                    None
+                };
+
+                let const_exp = Cow::Owned(if let Some(same_type) = same_type {
+                    same_type
+                } else {
+                    Expression::Cast {
+                        old_type: Some(Type::Number(n.num_type())),
+                        new_type: var_type,
+                        value: Box::new(Expression::Number(n))
+                    }
+                });
+
+                // println!("CONST {:?} -> {:?}", e, const_exp);
+
+                const_exp
             }
             _=> Cow::Borrowed(e),
         };
@@ -893,12 +891,8 @@ impl IlFunction {
                     }
                 }
             },
-            Expression::Number(num_type, val) => {
-                let src = match num_type {
-                    NumberType::U8 => Number::U8((*val).try_into().unwrap()),
-                    NumberType::U16 => Number::U16((*val).try_into().unwrap()),
-                    NumberType::U32 => Number::U32(*val)
-                };
+            Expression::Number(n) => {
+                let src = n.clone();
                 self.add_inst(ctxt, IlInstruction::AssignNumber{dest, src});
             },
             Expression::TtyIn() => {
@@ -920,8 +914,8 @@ impl IlFunction {
 
                 let promote = |side: &Box<Expression>, side_type| {
                     if promo_needed && side_type == NumberType::U8 {
-                        let val = if let Some(c) = side.try_get_const() {
-                            Expression::Number(NumberType::U32, c)
+                        let val = if let Some(Constant::Number(c)) = side.try_get_const() {
+                            Expression::Number(c)
                         } else {
                             Expression::Cast {
                                 value: side.clone(),
@@ -943,13 +937,14 @@ impl IlFunction {
                 let (left_tmp, left_info) = self.alloc_tmp_and_emit_value(ctxt, &left);
                 assert_eq!(promoted_num_type.byte_count(), left_info.var_type.byte_count(ctxt.program));
 
-                let right_operand = if let Some(constant) = right.try_get_const() {
+                let right_operand = if let Some(Constant::Number(constant)) = right.try_get_const() {
+                    let constant = constant.as_u32();
                     let right_val = match promoted_num_type {
                         NumberType::U8 => Number::U8(constant.try_into().unwrap()),
                         NumberType::U16 => Number::U16(constant.try_into().unwrap()),
                         NumberType::U32 => Number::U32(constant.try_into().unwrap()),
                     };
-                    assert_eq!(left_info.byte_size, right_val.il_type().byte_count());
+                    assert_eq!(left_info.byte_size, right_val.num_type().byte_count());
 
                     IlOperand::Number(right_val)
                 } else {
@@ -961,7 +956,7 @@ impl IlFunction {
 
                 self.add_inst(ctxt, IlInstruction::AssignBinary {
                     dest,
-                    op: IlBinaryOp::from(op),
+                    op: BinaryOp::from(*op),
                     src1: left_tmp.clone(),
                     src2: right_operand,
                 });
@@ -1002,7 +997,8 @@ impl IlFunction {
                     (IlLocation::Reg(NumberType::U32), Type::Number(NumberType::U32)) => {
                         let index = index.try_get_const();
                         match (info.location, index) {
-                            (IlLocation::Reg(NumberType::U32), Some(index)) => {
+                            (IlLocation::Reg(NumberType::U32), Some(Constant::Number(index))) => {
+                                let index = index.as_u32();
                                 self.add_inst(ctxt, IlInstruction::AssignVar {
                                     dest,
                                     dest_range: None,
@@ -1204,13 +1200,13 @@ impl IlFunction {
                 description: "Stack size negated".to_owned(),
                 location: IlLocation::Reg(NumberType::U32),
                 var_type: Type::Number(NumberType::U32),
-                constant: Some(func.vars_stack_size.wrapping_neg().to_le_bytes().iter().cloned().collect()),
+                constant: Some(Number::U32(func.vars_stack_size.wrapping_neg()).into()),
             });
 
             func.frame_pointer_size_instruction_index = Some((stack_size.clone(), func.body.len()));
             func.add_inst(ctxt, IlInstruction::AssignBinary {
                 dest: IlVarId::frame_pointer(),
-                op: IlBinaryOp::Add,
+                op: BinaryOp::Add,
                 src1: IlVarId::frame_pointer(),
                 src2: IlOperand::Number(Number::U32(func.vars_stack_size.wrapping_neg())),
             });
@@ -1352,15 +1348,13 @@ impl IlFunction {
                 }
 
                 if let Some(dest) = il.var_usages().dest {
-                    if let Some(const_val) = &self.vars[dest].constant {
-                        if const_val.len() <= 4 {
-                            let new = IlInstruction::AssignNumber { dest: dest.clone(), src: const_val.into() };
-                            let msg = format!("# In {:?}, replacing `{:?}` with constant `{:?}`.", self.id, il, &new);
-                            println!("{}", &msg);
-                            ctxt.contexts.push_back(msg);
-                            *il = new;
-                            replaced = true;
-                        }
+                    if let Some(Constant::Number(const_val)) = &self.vars[dest].constant {
+                        let new = IlInstruction::AssignNumber { dest: dest.clone(), src: *const_val };
+                        let msg = format!("# In {:?}, replacing `{:?}` with constant `{:?}`.", self.id, il, &new);
+                        println!("{}", &msg);
+                        ctxt.contexts.push_back(msg);
+                        *il = new;
+                        replaced = true;
                     }
                 }
             }
@@ -1384,9 +1378,9 @@ impl IlFunction {
                     }
                     IlInstruction::AssignBinary { dest, op, src1, src2: IlOperand::Number(n)} => {
                         match (op, n.as_u32()) {
-                            (IlBinaryOp::Add | IlBinaryOp::Subtract | IlBinaryOp::BitwiseOr, 0) |
-                            (IlBinaryOp::ShiftLeft | IlBinaryOp::ShiftRight | IlBinaryOp::RotateLeft | IlBinaryOp::RotateRight, 0) |
-                            (IlBinaryOp::Multiply, 1) => {
+                            (BinaryOp::Add | BinaryOp::Subtract | BinaryOp::BitwiseOr, 0) |
+                            (BinaryOp::ShiftLeft | BinaryOp::ShiftRight | BinaryOp::RotateLeft | BinaryOp::RotateRight, 0) |
+                            (BinaryOp::Multiply, 1) => {
                                 if refs[dest].write_indices.len() == 1 {
                                     println!("# In {:?}, removing no-op il instruction: {:?}", self.id, il);
                                     to_remove = Some((i, dest.clone(), src1.clone()));
@@ -1497,7 +1491,7 @@ impl IlFunction {
         false
     }
 
-    fn try_get_const_var(&self, ident: &IlVarId) -> Option<&Vec<u8>> {
+    fn try_get_const_var(&self, ident: &IlVarId) -> Option<&Constant> {
         self.vars[ident].constant.as_ref()
     }
 }
@@ -1512,96 +1506,6 @@ struct VarReferences {
 pub enum IlUnaryOp {
     Negate,
     BinaryInvert
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum IlBinaryOp {
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    BitwiseAnd,
-    BitwiseOr,
-    ShiftLeft,
-    ShiftRight,
-    RotateLeft,
-    RotateRight,
-}
-
-impl IlBinaryOp {
-    fn from(op: &ArithmeticOperator) -> IlBinaryOp {
-        match op {
-            ArithmeticOperator::Add => IlBinaryOp::Add,
-            ArithmeticOperator::Subtract => IlBinaryOp::Subtract,
-            ArithmeticOperator::Multiply => IlBinaryOp::Multiply,
-            ArithmeticOperator::Divide => IlBinaryOp::Divide,
-            ArithmeticOperator::Or => IlBinaryOp::BitwiseOr,
-            ArithmeticOperator::And => IlBinaryOp::BitwiseAnd,
-            ArithmeticOperator::ShiftLeft => IlBinaryOp::ShiftLeft,
-            ArithmeticOperator::ShiftRight => IlBinaryOp::ShiftRight,
-            ArithmeticOperator::RotateLeft => IlBinaryOp::RotateLeft,
-            ArithmeticOperator::RotateRight => IlBinaryOp::RotateRight,
-        }
-    }
-
-    pub fn eval(&self, src1: Number, src2: Number) -> Number {
-        match (src1, src2) {
-            (Number::U8(n1), Number::U8(n2)) => {
-                Number::U8(match self {
-                    IlBinaryOp::Add => n1.wrapping_add(n2),
-                    IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                    IlBinaryOp::Multiply => n1.wrapping_mul(n2),
-                    IlBinaryOp::Divide => {
-                        assert_ne!(0, n2);
-                        n1.wrapping_div(n2)
-                    },
-                    IlBinaryOp::BitwiseAnd => n1 & n2,
-                    IlBinaryOp::BitwiseOr => n1 | n2,
-                    IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
-                    IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
-                    IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
-                    IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
-                })
-            }
-            (Number::U16(n1), Number::U16(n2)) => {
-                Number::U16(match self {
-                    IlBinaryOp::Add => n1.wrapping_add(n2),
-                    IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                    IlBinaryOp::Multiply => {
-                        // assert!(n1 <= 0xFF);
-                        // assert!(n2 <= 0xFF);
-                        (n1 & 0xFF).wrapping_mul(n2 & 0xFF)
-                    },
-                    IlBinaryOp::BitwiseAnd => n1 & n2,
-                    IlBinaryOp::BitwiseOr => n1 | n2,
-                    IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
-                    IlBinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
-                    IlBinaryOp::RotateLeft => n1.rotate_left(n2.into()),
-                    IlBinaryOp::RotateRight => n1.rotate_right(n2.into()),
-                    &IlBinaryOp::Divide => todo!(),
-                })
-            }
-            (Number::U32(n1), Number::U32(n2)) => {
-                Number::U32(match self {
-                    IlBinaryOp::Add => n1.wrapping_add(n2),
-                    IlBinaryOp::Subtract => n1.wrapping_sub(n2),
-                    IlBinaryOp::Multiply => {
-                        // assert!(n1 <= 0xFF);
-                        // assert!(n2 <= 0xFF);
-                        (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF
-                    },
-                    IlBinaryOp::BitwiseAnd => n1 & n2,
-                    IlBinaryOp::BitwiseOr => n1 | n2,
-                    IlBinaryOp::ShiftLeft => n1.wrapping_shl(n2),
-                    IlBinaryOp::ShiftRight => n1.wrapping_shr(n2),
-                    IlBinaryOp::RotateLeft => n1.rotate_left(n2),
-                    IlBinaryOp::RotateRight => n1.rotate_right(n2),
-                    &IlBinaryOp::Divide => todo!(),
-                })
-            }
-            _ => panic!(),
-        }
-    }
 }
 
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -1755,25 +1659,28 @@ impl IlInstruction {
         IlUsagesMut { srcs, dest }
     }
 
-    fn try_get_const(&self, func: &IlFunction) -> Option<Vec<u8>> {
+    fn try_get_const(&self, func: &IlFunction) -> Option<Constant> {
         match self {
-            IlInstruction::AssignNumber { dest:_, src } => Some(src.as_bytes()),
+            IlInstruction::AssignNumber { dest:_, src } => Some((*src).into()),
             IlInstruction::AssignVar { dest:_, src, size, src_range, dest_range } => {
                 if src_range.is_some() || dest_range.is_some() {
                     return None; // figure this out later
                 }
                 let src_info = &func.vars[src];
                 if let Some(src_const) = &src_info.constant {
-                    assert_eq!(size.byte_count(), src_const.len() as u32);
+                    assert_eq!(size.byte_count(), src_const.byte_count());
                     Some(src_const.clone())
                 } else {
                     None
                 }
             }
             IlInstruction::AssignBinary { dest: _, op, src1, src2 } => {
-                if let (Some(src1), Some(src2)) = (&func.vars[src1].constant, src2.try_get_const(func)) {
-                    let (src1, src2) = (src1.into(), src2.as_ref().into());
-                    Some(op.eval(src1, src2).as_bytes())
+                if let (Some(Constant::Number(src1)), Some(src2)) = (&func.vars[src1].constant, src2.try_get_const(func)) {
+                    if let Constant::Number(src2) = src2.as_ref() {
+                        Some(op.eval(*src1, *src2).into())
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
@@ -2438,10 +2345,10 @@ mod tests {
                 IlInstruction::IfThenElse {left: n.clone(), op: IlCmpOp::Equals, right: z.clone(), 
                     then_label: end_label.clone(), else_label: body_label.clone() },
                 IlInstruction::Label(body_label.clone()),
-                IlInstruction::AssignBinary { dest: t.clone(), op: IlBinaryOp::Add, src1: a.clone(), src2: IlOperand::Var(b.clone()) },
+                IlInstruction::AssignBinary { dest: t.clone(), op: BinaryOp::Add, src1: a.clone(), src2: IlOperand::Var(b.clone()) },
                 IlInstruction::AssignVar { dest: a.clone(), src: b.clone(), size: NumberType::U8, dest_range: None, src_range: None },
                 IlInstruction::AssignVar { dest: b.clone(), src: t.clone(), size: NumberType::U8, dest_range: None, src_range: None },
-                IlInstruction::AssignBinary { dest: n.clone(), op: IlBinaryOp::Subtract, src1: n.clone(), src2: IlOperand::Var(one.clone()) },
+                IlInstruction::AssignBinary { dest: n.clone(), op: BinaryOp::Subtract, src1: n.clone(), src2: IlOperand::Var(one.clone()) },
                 IlInstruction::AssignNumber {dest: z.clone(), src: Number::U8(0)},
                 IlInstruction::Goto(loop_label.clone()),
                 IlInstruction::Label(end_label.clone()),

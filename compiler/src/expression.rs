@@ -1,53 +1,167 @@
+use std::borrow::Cow;
+
 use crate::il::IlVarId;
 
 use super::*;
 use super::parse::*;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub enum ArithmeticOperator {
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum BinaryOp {
     Add,
     Subtract,
     Multiply,
     Divide,
-    Or,
-    And,
+    BitwiseAnd,
+    BitwiseOr,
     ShiftLeft,
     ShiftRight,
     RotateLeft,
     RotateRight,
 }
 
-impl ArithmeticOperator {
-    fn parse(pair: pest::iterators::Pair<Rule>) -> ArithmeticOperator {
+impl BinaryOp {
+    pub fn eval(&self, src1: Number, src2: Number) -> Number {
+        match (src1, src2) {
+            (Number::U8(n1), Number::U8(n2)) => {
+                Number::U8(match self {
+                    BinaryOp::Add => n1.wrapping_add(n2),
+                    BinaryOp::Subtract => n1.wrapping_sub(n2),
+                    BinaryOp::Multiply => n1.wrapping_mul(n2),
+                    BinaryOp::Divide => {
+                        assert_ne!(0, n2);
+                        n1.wrapping_div(n2)
+                    },
+                    BinaryOp::BitwiseAnd => n1 & n2,
+                    BinaryOp::BitwiseOr => n1 | n2,
+                    BinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
+                    BinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
+                    BinaryOp::RotateLeft => n1.rotate_left(n2.into()),
+                    BinaryOp::RotateRight => n1.rotate_right(n2.into()),
+                })
+            }
+            (Number::U16(n1), Number::U16(n2)) => {
+                Number::U16(match self {
+                    BinaryOp::Add => n1.wrapping_add(n2),
+                    BinaryOp::Subtract => n1.wrapping_sub(n2),
+                    BinaryOp::Multiply => {
+                        // assert!(n1 <= 0xFF);
+                        // assert!(n2 <= 0xFF);
+                        (n1 & 0xFF).wrapping_mul(n2 & 0xFF)
+                    },
+                    BinaryOp::BitwiseAnd => n1 & n2,
+                    BinaryOp::BitwiseOr => n1 | n2,
+                    BinaryOp::ShiftLeft => n1.wrapping_shl(n2.into()),
+                    BinaryOp::ShiftRight => n1.wrapping_shr(n2.into()),
+                    BinaryOp::RotateLeft => n1.rotate_left(n2.into()),
+                    BinaryOp::RotateRight => n1.rotate_right(n2.into()),
+                    &BinaryOp::Divide => todo!(),
+                })
+            }
+            (Number::U32(n1), Number::U32(n2)) => {
+                Number::U32(match self {
+                    BinaryOp::Add => n1.wrapping_add(n2),
+                    BinaryOp::Subtract => n1.wrapping_sub(n2),
+                    BinaryOp::Multiply => {
+                        // assert!(n1 <= 0xFF);
+                        // assert!(n2 <= 0xFF);
+                        (n1 & 0xFF).wrapping_mul(n2 & 0xFF) & 0xFFFF
+                    },
+                    BinaryOp::BitwiseAnd => n1 & n2,
+                    BinaryOp::BitwiseOr => n1 | n2,
+                    BinaryOp::ShiftLeft => n1.wrapping_shl(n2),
+                    BinaryOp::ShiftRight => n1.wrapping_shr(n2),
+                    BinaryOp::RotateLeft => n1.rotate_left(n2),
+                    BinaryOp::RotateRight => n1.rotate_right(n2),
+                    &BinaryOp::Divide => todo!(),
+                })
+            }
+            _ => panic!(),
+        }
+    }
+
+    fn parse(pair: pest::iterators::Pair<Rule>) -> Self {
         match pair.as_str() {
-            "+" => ArithmeticOperator::Add,
-            "-" => ArithmeticOperator::Subtract,
-            "*" => ArithmeticOperator::Multiply,
-            "/" => ArithmeticOperator::Divide,
-            "|" => ArithmeticOperator::Or,
-            "&" => ArithmeticOperator::And,
-            "<<" => ArithmeticOperator::ShiftLeft,
-            ">>" => ArithmeticOperator::ShiftRight,
-            "<ROR<" => ArithmeticOperator::RotateLeft,
-            ">ROR>" => ArithmeticOperator::RotateRight,
+            "+" => Self::Add,
+            "-" => Self::Subtract,
+            "*" => Self::Multiply,
+            "/" => Self::Divide,
+            "|" => Self::BitwiseOr,
+            "&" => Self::BitwiseAnd,
+            "<<" => Self::ShiftLeft,
+            ">>" => Self::ShiftRight,
+            "<ROR<" => Self::RotateLeft,
+            ">ROR>" => Self::RotateRight,
             op => panic!("Unknown op: {}", op),
         }
     }
 
     pub fn is_commutative(&self) -> bool {
         match self {
-            ArithmeticOperator::Add |
-            ArithmeticOperator::Multiply |
-            ArithmeticOperator::Or |
-            ArithmeticOperator::And 
+            Self::Add |
+            Self::Multiply |
+            Self::BitwiseOr |
+            Self::BitwiseAnd 
                 => true,
-            ArithmeticOperator::Subtract |
-            ArithmeticOperator::Divide |
-            ArithmeticOperator::ShiftLeft |
-            ArithmeticOperator::ShiftRight |
-            ArithmeticOperator::RotateLeft |
-            ArithmeticOperator::RotateRight 
+            Self::Subtract |
+            Self::Divide |
+            Self::ShiftLeft |
+            Self::ShiftRight |
+            Self::RotateLeft |
+            Self::RotateRight 
                 => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub enum Constant {
+    Number(Number),
+    ByteArray(Vec<u8>)
+}
+
+impl Constant {
+    pub fn as_bytes(&self) -> Cow<Vec<u8>> {
+        match self {
+            Constant::Number(n) => Cow::Owned(n.as_bytes()),
+            Constant::ByteArray(ba) => Cow::Borrowed(ba),
+        }
+    }
+
+    pub fn byte_count(&self) -> u32 {
+        match self {
+            Constant::Number(n) => n.num_type().byte_count(),
+            Constant::ByteArray(ba) => ba.len() as u32,
+        }
+    }
+}
+
+impl From<Number> for Constant {
+    fn from(value: Number) -> Self {
+        Constant::Number(value)
+    }
+}
+
+impl From<Vec<u8>> for Constant {
+    fn from(value: Vec<u8>) -> Self {
+        Constant::ByteArray(value)
+    }
+}
+
+impl<'a> From<&'a Constant> for Vec<u8> {
+    fn from(value: &'a Constant) -> Self {
+        match value {
+            Constant::Number(n) => n.as_bytes(),
+            Constant::ByteArray(ba) => ba.clone(),
+        }
+    }
+}
+
+impl<'a> From<&'a Constant> for Cow<'a,Vec<u8>> {
+    fn from(value: &'a Constant) -> Self {
+        match value {
+            Constant::Number(n) => Cow::Owned(n.as_bytes()),
+            Constant::ByteArray(ba) => Cow::Borrowed(ba),
         }
     }
 }
@@ -55,10 +169,10 @@ impl ArithmeticOperator {
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Expression {
     Ident(String),
-    Number(NumberType, u32),
+    Number(Number),
     TtyIn(),
     Array(Vec<Expression>),
-    Arithmetic(ArithmeticOperator, Box<Expression>, Box<Expression>),
+    Arithmetic(BinaryOp, Box<Expression>, Box<Expression>),
     Comparison(Box<Comparison>),
     Deref(Box<Expression>),
     LocalFieldDeref(String,String),
@@ -74,12 +188,17 @@ impl Expression {
         Expression::Ident(IlVarId::frame_pointer_str().to_owned())
     }
 
-    pub fn try_get_const_bytes(&self) -> Option<Vec<u8>> {
-        let mut bytes = Vec::new();
-        if self.try_get_const_bytes_inner(&mut bytes) {
-            Some(bytes)
-        } else {
-            None
+    pub fn try_get_const_bytes(&self) -> Option<Constant> {
+        match self {
+            Expression::Number(n) => Some(Constant::Number(*n)),
+            _ => {
+                let mut bytes = Vec::new();
+                if self.try_get_const_bytes_inner(&mut bytes) {
+                    Some(Constant::ByteArray(bytes))
+                } else {
+                    None
+                }
+            }
         }
     }
 
@@ -93,13 +212,9 @@ impl Expression {
                 }
                 true
             }
-            Expression::Number(nt, val) => {
-                match nt {
-                    NumberType::U8 => {
-                        bytes.push((*val).try_into().unwrap());
-                    }
-                    NumberType::U16 => todo!(),
-                    NumberType::U32 => todo!(),
+            Expression::Number(n) => {
+                for b in n.as_bytes() {
+                    bytes.push(b);
                 }
                 true
             }
@@ -107,35 +222,29 @@ impl Expression {
         }
     }
 
-    pub fn try_get_const(&self) -> Option<u32> {
+    pub fn try_get_const(&self) -> Option<Constant> {
         match self {
-            Expression::Number(_, val) => Some(*val),
+            Expression::Number(n) => Some(Constant::Number(*n)),
             Expression::Cast{old_type: _, new_type, value} => {
                 if let (Some(v), Some(new_size)) = (value.try_get_const(), new_type.try_byte_count()) {
-                    Some(v & match new_size {
-                        1 => 0xFF,
-                        2 => 0xFFFF,
-                        4 => 0xFFFFFFFF,
-                        _ => panic!(),
-                    })
+                    match v {
+                        Constant::Number(v) => {
+                            let v = v.as_bytes();
+                            let mut new_v = vec![0u8; new_size as usize];
+                            new_v.as_mut_slice()[0..v.len()].copy_from_slice(v.as_slice());
+                            Some(Constant::Number(new_v.as_slice().try_into().unwrap()))
+                        },
+                        Constant::ByteArray(ba) => {
+                            panic!("Trying to cast a byte array (of length {}) to size {}.", ba.len(), new_size);
+                        },
+                    }
                 } else {
                     None
                 }
             },
             Expression::Arithmetic(op, left, right) => {
-                if let (Some(left), Some(right)) = (left.try_get_const(), right.try_get_const()) {
-                    Some(match op {
-                        ArithmeticOperator::Add => left.wrapping_add(right),
-                        ArithmeticOperator::Subtract => left.wrapping_sub(right),
-                        ArithmeticOperator::Multiply => left.wrapping_mul(right),
-                        ArithmeticOperator::Divide => left.wrapping_div(right),
-                        ArithmeticOperator::Or => left | right,
-                        ArithmeticOperator::And => left & right,
-                        ArithmeticOperator::ShiftLeft => left.wrapping_shl(right),
-                        ArithmeticOperator::ShiftRight => left.wrapping_shr(right),
-                        ArithmeticOperator::RotateLeft => left.rotate_left(right),
-                        ArithmeticOperator::RotateRight => left.rotate_right(right),
-                    })
+                if let (Some(Constant::Number(left)), Some(Constant::Number(right))) = (left.try_get_const(), right.try_get_const()) {
+                    Some(Constant::Number(op.eval(left, right)))
                 }
                 else
                 {
@@ -178,7 +287,7 @@ impl Expression {
                     None
                 }
             }
-            Expression::Number(nt, _) => Some(Type::Number(nt.clone())),
+            Expression::Number(n) => Some(Type::Number(n.num_type())),
             Expression::AddressOf(inner) => {
                 if let Some(inner_type) = inner.try_emit_type(ctxt, f) {
                     Some(Type::Ptr(Box::new(inner_type)))
@@ -273,14 +382,14 @@ impl Expression {
                 let number = u32::from_str_radix(number, radix)
                     .expect(&format!("Couldn't parse integer '{}'", number));
                 if number < 256 && !is_hex {
-                    Expression::Number(NumberType::U8, number)
+                    Expression::Number(Number::U8(number as u8))
                 } else {
-                    Expression::Number(NumberType::U32, number)
+                    Expression::Number(Number::U32(number))
                 }
             }
             Rule::char_literal => {
                 let number = number.into_inner().next().unwrap();
-                Expression::Number(NumberType::U8, number.as_str().chars().next().unwrap() as u8 as u32)
+                Expression::Number(Number::U8(number.as_str().chars().next().unwrap() as u8))
             }
             r => panic!("unexpected {:?}", &r)
         }
@@ -333,7 +442,7 @@ impl Expression {
             Rule::arithmetic_expression => {
                 let mut pairs = pair.into_inner();
                 let left = Expression::parse(pairs.next().unwrap());
-                let op = ArithmeticOperator::parse(pairs.next().unwrap());
+                let op = BinaryOp::parse(pairs.next().unwrap());
                 let right = Expression::parse(pairs.next().unwrap());
                 Expression::Arithmetic(op, Box::new(left), Box::new(right))
             },
@@ -354,7 +463,7 @@ impl Expression {
                 Expression::parse(pairs.next().unwrap())
             }
             Rule::RAM_MIN_expression => {
-                Expression::Number(NumberType::U32, RAM_MIN.into())
+                Expression::Number(Number::U32(RAM_MIN))
             }
             Rule::cast_expression => {
                 let mut pairs = pair.into_inner();

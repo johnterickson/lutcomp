@@ -226,7 +226,7 @@ impl<'a,'b> FunctionContext<'a,'b> {
     }
 
     fn emit_num_to_reg(&mut self, dest_regs: &Vec<u8>, n: &Number, expected_size: &NumberType, source: String) {
-        assert_eq!(&n.il_type(), expected_size);
+        assert_eq!(&n.num_type(), expected_size);
         match n {
             Number::U8(n) => {
                 self.lines.push(AssemblyInputLine::Instruction(
@@ -334,7 +334,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
     for (name, info) in &ctxt.il.consts {
         lines.push(AssemblyInputLine::Label(format!(":{}", &name.1)));
         lines.push(AssemblyInputLine::Comment(format!("const {:?}", info.var_type)));
-        for b in info.constant.as_ref().unwrap() {
+        for b in info.constant.as_ref().unwrap().as_bytes().as_slice() {
             lines.push(AssemblyInputLine::Literal8(*b));
         }
     }
@@ -369,8 +369,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 "Var {} ({}) {:?} {:?}",
                 var_name.0, var_info.description, var_info.location, reg_assignment);
             if let Some(constant) = &var_info.constant {
-                if constant.len() > 8 {
-                    write!(&mut comment, " [0..8]={:?} of {}", &constant[0..8], constant.len()).unwrap();
+                if constant.byte_count() > 8 {
+                    write!(&mut comment, " [0..8]={:?} of {}", &constant.as_bytes().as_slice()[0..8], constant.byte_count()).unwrap();
                 } else {
                     write!(&mut comment, " {:?}", constant).unwrap();
                 }
@@ -448,7 +448,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                 },
                 IlInstruction::AssignNumber { dest, src} => {
                     let dest_regs = ctxt.find_registers(dest);
-                    ctxt.emit_num_to_reg(&dest_regs, src, &src.il_type(), source);
+                    ctxt.emit_num_to_reg(&dest_regs, src, &src.num_type(), source);
                 }
                 
                 IlInstruction::AssignVar { dest, src, size, src_range, dest_range} => {
@@ -475,7 +475,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     assert_eq!(dest_regs.len(), dest_size as usize);
 
                     let src2_size = match src2 {
-                        IlOperand::Number(n) => n.il_type().byte_count(),
+                        IlOperand::Number(n) => n.num_type().byte_count(),
                         IlOperand::Var(v) => ctxt.byte_count(v),
                     };
                     assert_eq!(byte_count, src2_size);
@@ -485,14 +485,19 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
 
                     let src2 = match src2 {
                         IlOperand::Number(n) => {
-                            assert_eq!(n.il_type().byte_count(), src2_size);
+                            assert_eq!(n.num_type().byte_count(), src2_size);
                             IlOperand::Number(*n)
                         }
                         IlOperand::Var(src2) => {
                             if let Some(info) = ctxt.program.il.find_const(&f.id, src2) {
                                 let val = info.constant.as_ref().unwrap();
-                                assert_eq!(val.len() as u32, src2_size);
-                                IlOperand::Number(val.into())
+                                match val {
+                                    Constant::Number(n) => {
+                                        assert_eq!(n.num_type().byte_count(), src2_size);
+                                        IlOperand::Number(*n)
+                                    },
+                                    Constant::ByteArray(_) => todo!(),
+                                }
                             } else {
                                 IlOperand::Var(src2.clone())
                             }
@@ -500,7 +505,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                     }; 
 
                     match op {
-                        IlBinaryOp::ShiftLeft | IlBinaryOp::ShiftRight | IlBinaryOp::RotateLeft | IlBinaryOp::RotateRight => {
+                        BinaryOp::ShiftLeft | BinaryOp::ShiftRight | BinaryOp::RotateLeft | BinaryOp::RotateRight => {
                             match size {
                                 NumberType::U8 => {
                                     let src2_reg = match src2 {
@@ -524,13 +529,13 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     };
 
                                     let mode = match op {
-                                        IlBinaryOp::RotateLeft | &IlBinaryOp::RotateRight => ShiftMode::Rotate,
-                                        IlBinaryOp::ShiftLeft | &IlBinaryOp::ShiftRight => ShiftMode::Logical,
+                                        BinaryOp::RotateLeft | &BinaryOp::RotateRight => ShiftMode::Rotate,
+                                        BinaryOp::ShiftLeft | &BinaryOp::ShiftRight => ShiftMode::Logical,
                                         _ => panic!(),
                                     };
                                     let dir = match op {
-                                        IlBinaryOp::RotateLeft | &IlBinaryOp::ShiftLeft => ShiftDirection::Left,
-                                        IlBinaryOp::RotateRight | &IlBinaryOp::ShiftRight => ShiftDirection::Right,
+                                        BinaryOp::RotateLeft | &BinaryOp::ShiftLeft => ShiftDirection::Left,
+                                        BinaryOp::RotateRight | &BinaryOp::ShiftRight => ShiftDirection::Right,
                                         _ => panic!(),
                                     };
                                     let command = ShiftCommand { mode, dir };
@@ -549,9 +554,9 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 NumberType::U16 | NumberType::U32 => todo!(),
                             }
                         },
-                        IlBinaryOp::Add | IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr | IlBinaryOp::Divide => {
+                        BinaryOp::Add | BinaryOp::BitwiseAnd | BinaryOp::BitwiseOr | BinaryOp::Divide => {
                             match (op, size, src2) {
-                                (&IlBinaryOp::Add, NumberType::U32, IlOperand::Number(n)) => {
+                                (&BinaryOp::Add, NumberType::U32, IlOperand::Number(n)) => {
                                     if dest_regs[0] != src1_regs[0] {
                                         ctxt.lines.push(AssemblyInputLine::Instruction(Instruction {
                                             opcode: Opcode::Copy32,
@@ -567,7 +572,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         source: source.clone(),
                                     }));
                                 }
-                                (&IlBinaryOp::Add, NumberType::U32, IlOperand::Var(src2)) => {
+                                (&BinaryOp::Add, NumberType::U32, IlOperand::Var(src2)) => {
                                     let src2_regs = ctxt.find_registers(&src2);
                                     assert_eq!(src2_size, src2_regs.len() as u32);
 
@@ -586,8 +591,8 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                         opcode: Opcode::AddCarry32_2, args: vec![], resolved: None, source
                                     }));
                                 },
-                                (IlBinaryOp::BitwiseAnd | IlBinaryOp::BitwiseOr, size, IlOperand::Number(n)) => {
-                                    assert_eq!(n.il_type(), size);
+                                (BinaryOp::BitwiseAnd | BinaryOp::BitwiseOr, size, IlOperand::Number(n)) => {
+                                    assert_eq!(n.num_type(), size);
 
                                     let (copy_op, const_val) = match size {
                                         NumberType::U8 => (Opcode::Copy8, n.into()),
@@ -605,10 +610,10 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                     }
 
                                     let opcode = match (op, size) {
-                                        (IlBinaryOp::BitwiseAnd, NumberType::U32) => Opcode::AndImm32,
-                                        (IlBinaryOp::BitwiseAnd, NumberType::U8) => Opcode::AndImm8,
-                                        (IlBinaryOp::BitwiseOr, NumberType::U32) => Opcode::OrImm32,
-                                        (IlBinaryOp::BitwiseOr, NumberType::U8) => Opcode::OrImm8,
+                                        (BinaryOp::BitwiseAnd, NumberType::U32) => Opcode::AndImm32,
+                                        (BinaryOp::BitwiseAnd, NumberType::U8) => Opcode::AndImm8,
+                                        (BinaryOp::BitwiseOr, NumberType::U32) => Opcode::OrImm32,
+                                        (BinaryOp::BitwiseOr, NumberType::U8) => Opcode::OrImm8,
                                         _ => panic!(),
                                     };
 
@@ -622,18 +627,18 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 // TODO: more *Imm* operations
                                 (op, size, src2) => {
                                     let opcode1 = match (op, size) {
-                                        (IlBinaryOp::Add, NumberType::U8) => Opcode::Add8NoCarryIn,
-                                        (IlBinaryOp::BitwiseAnd, NumberType::U8) => Opcode::And8,
-                                        (IlBinaryOp::BitwiseAnd, NumberType::U32) => Opcode::And32,
-                                        (IlBinaryOp::BitwiseOr, NumberType::U8) => Opcode::Or8,
-                                        (IlBinaryOp::BitwiseOr, NumberType::U32) => Opcode::Or32,
-                                        (IlBinaryOp::Divide, NumberType::U8) => Opcode::Divide8,
+                                        (BinaryOp::Add, NumberType::U8) => Opcode::Add8NoCarryIn,
+                                        (BinaryOp::BitwiseAnd, NumberType::U8) => Opcode::And8,
+                                        (BinaryOp::BitwiseAnd, NumberType::U32) => Opcode::And32,
+                                        (BinaryOp::BitwiseOr, NumberType::U8) => Opcode::Or8,
+                                        (BinaryOp::BitwiseOr, NumberType::U32) => Opcode::Or32,
+                                        (BinaryOp::Divide, NumberType::U8) => Opcode::Divide8,
                                         _ => panic!(),
                                     };
 
                                     let src2_reg_base = match src2 {
                                         IlOperand::Number(n) => {
-                                            let (opcode, val) = match n.il_type() {
+                                            let (opcode, val) = match n.num_type() {
                                                 NumberType::U8 => (Opcode::LoadImm8, Value::Constant8(n.as_u32().try_into().unwrap())),
                                                 NumberType::U16 => todo!(),
                                                 NumberType::U32 => (Opcode::LoadImm32, Value::Constant32(n.as_u32())),
@@ -665,7 +670,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 }
                             }
                         },
-                        IlBinaryOp::Subtract => {
+                        BinaryOp::Subtract => {
                             match (size, src2) {
                                 (NumberType::U16, _) => todo!(),
                                 (NumberType::U32, IlOperand::Number(n)) => {
@@ -779,7 +784,7 @@ fn emit_assembly_inner(ctxt: &mut BackendProgram) -> Vec<AssemblyInputLine> {
                                 }
                             }
                         },
-                        IlBinaryOp::Multiply => {
+                        BinaryOp::Multiply => {
                             let src2_reg_base = match src2 {
                                 IlOperand::Number(n) => {
                                     let (opcode, imm) = match size {

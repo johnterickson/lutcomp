@@ -140,7 +140,7 @@ impl IlFunction {
                             emtpy.insert(value);
                         },
                         (Entry::Occupied(mut existing), None) => {
-                            assert_eq!(existing.get().il_type(), *size);
+                            assert_eq!(existing.get().num_type(), *size);
                             existing.insert(value);
                         },
                         (Entry::Occupied(mut existing), Some(dest_range)) => {
@@ -159,7 +159,7 @@ impl IlFunction {
                 IlInstruction::AssignNumber { dest, src} => {
 
                     if let Some(n) = vars.get(dest) {
-                        assert_eq!(n.il_type(), src.il_type());
+                        assert_eq!(n.num_type(), src.num_type());
                     }
 
                     vars.insert(dest, *src);
@@ -346,7 +346,7 @@ impl IlFunction {
                             v.insert(peek);
                         }
                         Entry::Occupied(mut existing) => {
-                            assert_eq!(existing.get().il_type(), NumberType::U8);
+                            assert_eq!(existing.get().num_type(), NumberType::U8);
                             existing.insert(peek);
                         },
                     }
@@ -357,7 +357,7 @@ impl IlFunction {
                 },
                 IlInstruction::Resize { dest, dest_size, src, src_size } => {
                     let src = vars[src];
-                    assert_eq!(&src.il_type(), src_size);
+                    assert_eq!(&src.num_type(), src_size);
                     let n = match (dest_size, src) {
                         (NumberType::U16, Number::U8(n)) => Number::U16(n as u16),
                         (NumberType::U32, Number::U8(n)) => Number::U32(n as u32),
@@ -375,7 +375,7 @@ impl IlFunction {
                             v.insert(addr);
                         }
                         Entry::Occupied(mut existing) => {
-                            assert_eq!(existing.get().il_type(), addr.il_type());
+                            assert_eq!(existing.get().num_type(), addr.num_type());
                             existing.insert(addr);
                         },
                     }
@@ -1466,7 +1466,7 @@ mod tests {
         fn byte_count(&self) -> u32 {
             match self {
                 TestVar::String(_) | TestVar::Ascii(_) | TestVar::Ptr(_) => 4,
-                TestVar::Num(n) => n.il_type().byte_count(),
+                TestVar::Num(n) => n.num_type().byte_count(),
             }
         }
     }
@@ -1604,8 +1604,8 @@ mod tests {
 
         // run in HW simulator
         let hw_sim_args: Vec<_> = args.iter().map(|a| a.as_u32()).collect();
-        let hw_result = c.run(hw_sim_args.as_slice(), il_result.il_type().byte_count());
-        let hw_result = match il_result.il_type() {
+        let hw_result = c.run(hw_sim_args.as_slice(), il_result.num_type().byte_count());
+        let hw_result = match il_result.num_type() {
             NumberType::U32 => Number::U32(hw_result),
             NumberType::U16 => Number::U16(hw_result.try_into().unwrap()),
             NumberType::U8 => Number::U8(hw_result.try_into().unwrap()),
@@ -1628,7 +1628,7 @@ mod tests {
             let (ins, expected) = case;
 
             let expected_type = match expected {
-                TestVar::Num(n) => n.il_type(),
+                TestVar::Num(n) => n.num_type(),
                 _ => NumberType::U32,
             };
 

@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, borrow::Cow};
 
 use super::*;
 
@@ -29,6 +29,12 @@ impl From<&NumberType> for NumberType {
             NumberType::U16 => NumberType::U16,
             NumberType::U32 => NumberType::U32,
         }
+    }
+}
+
+impl TryByteSize for NumberType {
+    fn try_byte_count(&self) -> Option<u32> {
+        Some(self.byte_count())
     }
 }
 
@@ -69,7 +75,7 @@ pub enum Number {
 }
 
 impl Number {
-    pub fn il_type(&self) -> NumberType {
+    pub fn num_type(&self) -> NumberType {
         match self {
             Number::U8(_) => NumberType::U8,
             Number::U16(_) => NumberType::U16,
@@ -134,20 +140,34 @@ impl From<u32> for Number {
     }
 }
 
-impl From<&Vec<u8>> for Number {
-    fn from(b: &Vec<u8>) -> Self {
+impl TryFrom<&[u8]> for Number {
+    type Error = String;
+
+    fn try_from(b: &[u8]) -> Result<Self, Self::Error> {
         match b.len() {
-            1 => Number::U8(b[0]),
-            2 => Number::U16(u16::from_le_bytes([b[0],b[1]])),
-            4 => Number::U32(u32::from_le_bytes([b[0],b[1],b[2],b[3]])),
-            _ => panic!(),
+            1 => Ok(Number::U8(b[0])),
+            2 => Ok(Number::U16(u16::from_le_bytes([b[0],b[1]]))),
+            4 => Ok(Number::U32(u32::from_le_bytes([b[0],b[1],b[2],b[3]]))),
+            _ => Err(format!("Const size of {} bytes does not match a number type.", b.len())),
         } 
     }
 }
 
-impl TryByteSize for NumberType {
-    fn try_byte_count(&self) -> Option<u32> {
-        Some(self.byte_count())
+impl TryFrom<&Vec<u8>> for Number {
+    type Error = String;
+
+    fn try_from(b: &Vec<u8>) -> Result<Self, Self::Error> {
+        let b: &[u8] = b.as_ref();
+        b.try_into()
+    }
+}
+
+impl<'a> TryFrom<Cow<'a,Vec<u8>>> for Number {
+    type Error = String;
+
+    fn try_from(b: Cow<'a,Vec<u8>>) -> Result<Self, Self::Error> {
+        let b: &[u8] = b.as_ref();
+        b.try_into()
     }
 }
 
@@ -156,7 +176,6 @@ pub enum Scope {
     Local,
     Static,
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Type {
@@ -212,10 +231,10 @@ impl Type {
 
                 let count = tokens.next().map(|count_token| {
                     let count_exp = Expression::parse(count_token);
-                    let count = count_exp.try_get_const()
-                        .expect(&format!("Could not evaluate array size as a constant value: {:?}", count_exp));
-                    let count = count.try_into()
-                        .expect(&format!("Could not fit array size into 32-bit integer {}", count));
+                    let count = match count_exp.try_get_const() {
+                        Some(Constant::Number(n)) => n.as_u32(),
+                        _ => panic!("Could not evaluate array size as a constant value: {:?}", count_exp),
+                    };
                     assert!(tokens.next().is_none());
                     count
                 });

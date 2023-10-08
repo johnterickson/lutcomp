@@ -128,7 +128,10 @@ fn parse_file(path: &Path, input: &str, ctxt: &mut ProgramContext) {
                 let hex_number = pairs.next().unwrap();
                 assert_eq!(hex_number.as_rule(), Rule::expression);
                 let hex_number = Expression::parse(hex_number);
-                let hex_number : u32 = hex_number.try_get_const().expect("Could not resolve base address as constant.");
+                let hex_number = match hex_number.try_get_const() {
+                    Some(Constant::Number(n)) => n.as_u32(),
+                    _ => panic!("Could not resolve base address as constant."),
+                };
                 match rule {
                     Rule::image_base_address => { ctxt.image_base_address = hex_number; }
                     Rule::statics_base_address => { ctxt.statics_base_address = hex_number; }
@@ -202,11 +205,12 @@ fn parse_file(path: &Path, input: &str, ctxt: &mut ProgramContext) {
                 let var_type = match unresolved_var_type {
                     Type::Array(et, None) => {
                         let element_size = et.byte_count(&ctxt);
-                        let element_count = round_up(const_value.len() as u32, element_size);
+                        let element_count = round_up(const_value.byte_count(), element_size);
                         Type::Array(et, Some(element_count))
                     }
                     _ => unresolved_var_type,
                 };
+
                 ctxt.consts.insert(var_name, (var_type, const_value));
             }
             Rule::global_static_value => {
