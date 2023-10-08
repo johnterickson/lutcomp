@@ -1504,6 +1504,50 @@ impl IlFunction {
             }
         }
 
+        // merge vars with the same const
+        {
+            let mut var_to_replacement = BTreeMap::new();
+            let mut consts: BTreeMap<&Constant, &IlVarId> = BTreeMap::new();
+            for (name, info) in &self.vars {
+                if let Some(ref c) = info.constant {
+                    if let Some(existing) = consts.get(c) {
+                        assert!(var_to_replacement.insert(name.clone(), (*existing).clone()).is_none());
+                    } else {
+                        assert!(consts.insert(c, name).is_none());
+                    }
+                }
+            }
+
+            for (orig_var, replacement_var) in &var_to_replacement {
+                for var_ref_index in refs[orig_var].read_indices.iter().chain(refs[orig_var].write_indices.iter()) {
+                    let original = self.body[*var_ref_index].0.clone();
+                    let mut replaced = original.clone();
+                    let vars = replaced.var_usages_mut();
+                    for usage in vars.srcs{
+                        if usage == orig_var {
+                            *usage = replacement_var.clone();
+                        }
+                    }
+                    if let Some(usage) = vars.dest {
+                        if usage == orig_var {
+                            *usage = replacement_var.clone();
+                        }
+                    }
+                    let msg = format!("# In {:?}, at #{}, replacing reference to {} with {} as they share the same const value: {:?}. {:?} -> {:?}", 
+                        self.id, var_ref_index, orig_var, replacement_var, self.vars[orig_var].constant.as_ref().unwrap(), &original, &replaced);
+                    println!("{}", &msg);
+                    
+                    let (il, _, src_ctxt) = self.body.get_mut(*var_ref_index).unwrap();
+                    *il = replaced;
+                    src_ctxt.contexts.push_back(msg);
+                }
+            }
+
+            if !var_to_replacement.is_empty() {
+                return true;
+            }
+        }
+
         // for offset in [0,1] {
         //     for pair in self.body.as_mut_slice()[offset..].chunks_mut(2) {
         //         if pair.len() != 2 { continue; }

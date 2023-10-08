@@ -114,7 +114,7 @@ impl BinaryOp {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Constant {
     Number(Number),
     ByteArray(Vec<u8>)

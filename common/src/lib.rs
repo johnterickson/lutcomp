@@ -736,7 +736,7 @@ impl NumberType {
     }
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub enum Number {
     U8(u8),
     U16(u16),
