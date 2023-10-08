@@ -1236,10 +1236,6 @@ impl IlFunction {
         func
     }
 
-    fn optimize(&mut self) {
-        while self.optimze_round() {}
-    }
-
     fn find_refs(&mut self) -> BTreeMap<IlVarId, VarReferences> {
         let mut refs = BTreeMap::new();
 
@@ -1261,6 +1257,10 @@ impl IlFunction {
         }
 
         refs
+    }
+    
+    fn optimize(&mut self) {
+        while self.optimze_round() {}
     }
 
     fn optimze_round(&mut self) -> bool {
@@ -1423,34 +1423,27 @@ impl IlFunction {
             }
         }
 
-        // for (var, refs) in &refs {
-        //     if refs.writes.len() == 1 && refs.reads.len() == 1 {
-        //         let (read, write) = (refs.reads.iter().next().unwrap(), refs.writes.iter().next().unwrap());
-        //         if read != write {
-        //             let var_to_remove = var;
+        // remove no-op jmps
+        {
+            let mut no_op_goto_indices = Vec::new();
+            for (goto_index, pair) in self.body.as_slice().windows(2).enumerate() {
+                match (&pair[0].0, &pair[1].0) {
+                    (IlInstruction::Goto(target), IlInstruction::Label(label)) if (target == label) => {
+                        no_op_goto_indices.push(goto_index);
+                    }
+                    _ => {}
+                }
+            }
 
-        //             if let Some(write_src) = match &self.body[*write].0 {
-        //                 IlInstruction::AssignVar {dest, src, size:_, src_range: None, dest_range: None } => {
-        //                     assert_eq!(dest, var_to_remove);
-        //                     Some(src.clone())
-        //                 }
-        //                 _ => None,
-        //             } {
-        //                 // dbg!((&self.body[*write], &self.body[*read]));
-        //                 for src in self.body[*read].0.var_usages_mut().srcs {
-        //                     if src == var_to_remove {
-        //                         *src = write_src.clone();
-        //                     }
-        //                 }
-        //                 // dbg!(&self.body[*read]);
+            for goto_index in no_op_goto_indices.iter().rev() {
+                let removed = self.body.remove(*goto_index).0;
+                println!("# In {:?}, removing no-op goto instruction #{}: {:?}", self.id, goto_index, removed);
+            }
 
-        //                 self.body.remove(*write);
-        //                 self.vars.remove(var_to_remove);
-        //                 return true;
-        //             }
-        //         }
-        //     }
-        // }
+            if !no_op_goto_indices.is_empty() {
+                return true;
+            }
+        }
 
         // for offset in [0,1] {
         //     for pair in self.body.as_mut_slice()[offset..].chunks_mut(2) {

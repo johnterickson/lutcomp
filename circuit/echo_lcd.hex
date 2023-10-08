@@ -15,6 +15,7 @@ v2.0 raw
 # In IlFunctionId("lcd_scroll_up"), resolved the constant val `Number(0n987136/0x000f1000u32)` for var `t1`.
 # In IlFunctionId("test_delay"), `x` is never written to, but is copied to `tad57` - which is also never modified. Replacing refs to latter with the former and deleting the copy: tad57 <- x U32
 # In IlFunctionId("lcd_draw_char"), `i` is never written to, but is copied to `inline_lcd_draw_char_lcd_logical_to_physical_0_i` - which is also never modified. Replacing refs to latter with the former and deleting the copy: inline_lcd_draw_char_lcd_logical_to_physical_0_i <- i U8
+# In IlFunctionId("lcd_draw_char"), removing no-op goto instruction #14: goto inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical
 # IlFunctionId("delay")(x,)
 #  :delay_while_predicate_0 # Some('/lutcomp/programs/lib/delay.j':(2,5))
 #  tad57 <- x U32 # Some('/lutcomp/programs/lib/delay.j':(2,5))
@@ -50,7 +51,6 @@ v2.0 raw
 #  inline_lcd_draw_char_lcd_logical_to_physical_0_tfee9 <- inline_lcd_draw_char_lcd_logical_to_physical_0_col U8 # Some('/lutcomp/programs/lib/lcd.j':(11,5))
 #  inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd <- inline_lcd_draw_char_lcd_logical_to_physical_0_t2f80 Add Var(inline_lcd_draw_char_lcd_logical_to_physical_0_tfee9) # Some('/lutcomp/programs/lib/lcd.j':(11,5))
 #  pos <- inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd U8 # Some('/lutcomp/programs/lib/lcd.j':(11,5))
-#  goto inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical # Some('/lutcomp/programs/lib/lcd.j':(11,5))
 #  :inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical # None
 #  t136d <- pos U8 # Some('/lutcomp/programs/lib/lcd.j':(17,5))
 #  t1730 <- t136d ShiftRight Number(0n4/0x04u8) # Some('/lutcomp/programs/lib/lcd.j':(17,5))
@@ -650,9 +650,6 @@ v2.0 raw
 # pos <- inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))
 # Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 # optimized away noop copy Instruction { source: "pos <- inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))\nReturn { value: Some(Arithmetic(Add, Index(\"lcd_row_start\", Ident(\"row\")), Ident(\"col\"))) }\n", opcode: Copy8, args: [Register(0x1a), Register(0x1a)], resolved: None }
-# goto inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical Some('/lutcomp/programs/lib/lcd.j':(11,5))
-# Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical Some('/lutcomp/programs/lib/lcd.j':(11,5))\nReturn { value: Some(Arithmetic(Add, Index(\"lcd_row_start\", Ident(\"row\")), Ident(\"col\"))) }\n", opcode: JmpImm, args: [Label24(inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical)], resolved: None }
 # :inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical None
 # inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical
 # t136d <- pos U8 Some('/lutcomp/programs/lib/lcd.j':(17,5))

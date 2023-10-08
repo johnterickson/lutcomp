@@ -29,7 +29,7 @@ fn main() {
     let get_param = |k: &str| params.get(k).map(|s| s.as_str());
 
     let mut sim_args: Vec<Number> = Vec::new();
-    for i in 1..=3 {
+    for i in 0..=3 {
         let param_name = format!("arg{}",i);
         if let Some(v) = get_param(&param_name) {
             if let Ok(v) = v.parse() {
@@ -115,14 +115,16 @@ fn main() {
             let rom = assemble::assemble(assembly);
 
             if let Some("true") = get_param("sim") {
-                if !sim_args.is_empty() {
-                    todo!();
-                }
-
                 let trace_ucode = Some("true") == get_param("trace_ucode");
                 let trace_pc = Some("true") == get_param("trace_pc");
 
                 let mut c = Computer::from_image(Cow::Borrowed(&rom), trace_ucode);
+
+                for (argi, val) in sim_args.iter().enumerate() {
+                    let argi = argi as u8;
+                    c.reg_u32_set(4*argi, val.as_u32());
+                }
+
                 if let Some("true") = get_param("profile") {
                     c.pc_hit_count = Some(BTreeMap::new());
                 }

@@ -77,6 +77,8 @@ v2.0 raw
 # In IlFunctionId("handle_ps2"), var `tbb6d` is written to, but never read. Removing the instruction that writes to it: (tbb6d <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(43,5)), SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: NotEquals, left: PtrFieldDeref(\"g\", \"release_in_progress\"), right: Number(0n0/0x00u8) }, [Assign { target: PtrFieldDeref(\"g\", \"shift_held\"), var_type: None, value: Number(0n0/0x00u8) }])], else_block: [Assign { target: PtrFieldDeref(\"g\", \"shift_held\"), var_type: None, value: Number(0n1/0x01u8) }] }", "Comparison { op: NotEquals, left: PtrFieldDeref(\"g\", \"release_in_progress\"), right: Number(0n0/0x00u8) }", "PtrFieldDeref(\"g\", \"release_in_progress\")", "PtrFieldDeref(\"g\", \"release_in_progress\")", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32))", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Ident(\"g\")", "# In IlFunctionId(\"handle_ps2\"), replacing `tbb6d <- g U32` with constant `tbb6d <- 0n987656/0x000f1208u32 `."] })
 # In IlFunctionId("handle_ps2"), var `tbb6d` is written to, but never read. Removing the instruction that writes to it: (tbb6d <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(35,5)), SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref(\"g\", \"release_in_progress\"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\")), Ident(\"ch\")] }) }])], else_block: [] }", "Comparison { op: Equals, left: PtrFieldDeref(\"g\", \"release_in_progress\"), right: Number(0n0/0x00u8) }", "PtrFieldDeref(\"g\", \"release_in_progress\")", "PtrFieldDeref(\"g\", \"release_in_progress\")", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32))", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Ident(\"g\")", "# In IlFunctionId(\"handle_ps2\"), replacing `tbb6d <- g U32` with constant `tbb6d <- 0n987656/0x000f1208u32 `."] })
 # In IlFunctionId("handle_ps2"), var `tbb6d` is written to, but never read. Removing the instruction that writes to it: (tbb6d <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(29,5)), SourceContext { contexts: ["IfElse { if_blocks: [(Comparison { op: NotEquals, left: PtrFieldDeref(\"g\", \"shift_held\"), right: Number(0n0/0x00u8) }, [Assign { target: Ident(\"ch\"), var_type: None, value: Index(\"PS2_SCAN_CODE_TO_ASCII\", Arithmetic(Add, Ident(\"index\"), Number(0n1/0x00000001u32))) }])], else_block: [Assign { target: Ident(\"ch\"), var_type: None, value: Index(\"PS2_SCAN_CODE_TO_ASCII\", Ident(\"index\")) }] }", "Comparison { op: NotEquals, left: PtrFieldDeref(\"g\", \"shift_held\"), right: Number(0n0/0x00u8) }", "PtrFieldDeref(\"g\", \"shift_held\")", "PtrFieldDeref(\"g\", \"shift_held\")", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n264/0x00000108u32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n264/0x00000108u32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n264/0x00000108u32))", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Ident(\"g\")", "# In IlFunctionId(\"handle_ps2\"), replacing `tbb6d <- g U32` with constant `tbb6d <- 0n987656/0x000f1208u32 `."] })
+# In IlFunctionId("handle_ps2"), removing no-op goto instruction #41: goto inline_handle_ps2_queue_push_25_function_end_queue_push
+# In IlFunctionId("handle_ps2"), removing no-op goto instruction #0: goto inline_handle_ps2_globals_1_function_end_globals
 # In IlFunctionId("handle_tty"), resolved the constant val `Number(0n987656/0x000f1208u32)` for var `g`.
 # In IlFunctionId("handle_tty"), resolved the constant val `Number(0n987656/0x000f1208u32)` for var `t7d0e`.
 # In IlFunctionId("handle_tty"), resolved the constant val `Number(0n987656/0x000f1208u32)` for var `t938b`.
@@ -100,6 +102,8 @@ v2.0 raw
 # In IlFunctionId("handle_tty"), var `inline_handle_tty_queue_push_26_t4d4f` is written to, but never read. Removing the instruction that writes to it: (inline_handle_tty_queue_push_26_t4d4f <- 0n987656/0x000f1208u32 , Some('/lutcomp/programs/lib/Queue.j':(25,5)), SourceContext { contexts: ["Assign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })", "Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }", "Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }", "PtrFieldDeref(\"s\", \"last\")", "PtrFieldDeref(\"s\", \"last\")", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Ident(\"s\")", "# In IlFunctionId(\"handle_tty\"), replacing `inline_handle_tty_queue_push_26_t4d4f <- inline_handle_tty_queue_push_26_s U32` with constant `inline_handle_tty_queue_push_26_t4d4f <- 0n987656/0x000f1208u32 `."] })
 # In IlFunctionId("handle_tty"), var `t7d0e` is written to, but never read. Removing the instruction that writes to it: (t7d0e <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(71,5)), SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\")), TtyIn] }) }", "Call(Call { function: \"queue_push\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\")), TtyIn] })", "Call(Call { function: \"queue_push\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\")), TtyIn] })", "AddressOf(PtrFieldDeref(\"g\", \"stdin\"))", "AddressOf(PtrFieldDeref(\"g\", \"stdin\"))", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Struct(\"Queue\")), value: Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") } }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Struct(\"Queue\")), value: Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") } }", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Ident(\"g\")", "# In IlFunctionId(\"handle_tty\"), replacing `t7d0e <- g U32` with constant `t7d0e <- 0n987656/0x000f1208u32 `."] })
 # In IlFunctionId("handle_tty"), var `t938b` is written to, but never read. Removing the instruction that writes to it: (t938b <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(71,5)), SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\")), TtyIn] }) }", "Call(Call { function: \"queue_push\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\")), TtyIn] })", "Call(Call { function: \"queue_push\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\")), TtyIn] })", "AddressOf(PtrFieldDeref(\"g\", \"stdin\"))", "AddressOf(PtrFieldDeref(\"g\", \"stdin\"))", "# In IlFunctionId(\"handle_tty\"), replacing `t938b <- t7d0e U32` with constant `t938b <- 0n987656/0x000f1208u32 `."] })
+# In IlFunctionId("handle_tty"), removing no-op goto instruction #15: goto inline_handle_tty_queue_push_26_function_end_queue_push
+# In IlFunctionId("handle_tty"), removing no-op goto instruction #0: goto inline_handle_tty_globals_2_function_end_globals
 # In IlFunctionId("main"), resolved the constant val `Number(0n987656/0x000f1208u32)` for var `g`.
 # In IlFunctionId("main"), resolved the constant val `Number(0n987656/0x000f1208u32)` for var `inline_main_getc_19_g`.
 # In IlFunctionId("main"), resolved the constant val `Number(0n987656/0x000f1208u32)` for var `inline_main_getc_19_t7d0e`.
@@ -191,6 +195,14 @@ v2.0 raw
 # In IlFunctionId("main"), var `t938b` is written to, but never read. Removing the instruction that writes to it: (t938b <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(98,5)), SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"queue_init\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\"))] }) }", "Call(Call { function: \"queue_init\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\"))] })", "Call(Call { function: \"queue_init\", parameters: [AddressOf(PtrFieldDeref(\"g\", \"stdin\"))] })", "AddressOf(PtrFieldDeref(\"g\", \"stdin\"))", "AddressOf(PtrFieldDeref(\"g\", \"stdin\"))", "# In IlFunctionId(\"main\"), replacing `t938b <- t7d0e U32` with constant `t938b <- 0n987656/0x000f1208u32 `."] })
 # In IlFunctionId("main"), var `tbb6d` is written to, but never read. Removing the instruction that writes to it: (tbb6d <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(97,5)), SourceContext { contexts: ["Assign { target: PtrFieldDeref(\"g\", \"release_in_progress\"), var_type: None, value: Number(0n0/0x00u8) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n268/0x0000010cu32))", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Ident(\"g\")", "# In IlFunctionId(\"main\"), replacing `tbb6d <- g U32` with constant `tbb6d <- 0n987656/0x000f1208u32 `."] })
 # In IlFunctionId("main"), var `tbb6d` is written to, but never read. Removing the instruction that writes to it: (tbb6d <- 0n987656/0x000f1208u32 , Some('programs/test/keyboard_isr.j':(96,5)), SourceContext { contexts: ["Assign { target: PtrFieldDeref(\"g\", \"shift_held\"), var_type: None, value: Number(0n0/0x00u8) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n264/0x00000108u32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n264/0x00000108u32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }, Number(0n264/0x00000108u32))", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Cast { old_type: Some(Ptr(Struct(\"Globals\"))), new_type: Number(U32), value: Ident(\"g\") }", "Ident(\"g\")", "# In IlFunctionId(\"main\"), replacing `tbb6d <- g U32` with constant `tbb6d <- 0n987656/0x000f1208u32 `."] })
+# In IlFunctionId("main"), removing no-op goto instruction #98: goto inline_main_getc_20_function_end_getc
+# In IlFunctionId("main"), removing no-op goto instruction #93: goto inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop
+# In IlFunctionId("main"), removing no-op goto instruction #65: goto inline_main_getc_20_inline_getc_globals_0_function_end_globals
+# In IlFunctionId("main"), removing no-op goto instruction #52: goto inline_main_getc_19_function_end_getc
+# In IlFunctionId("main"), removing no-op goto instruction #47: goto inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop
+# In IlFunctionId("main"), removing no-op goto instruction #19: goto inline_main_getc_19_inline_getc_globals_0_function_end_globals
+# In IlFunctionId("main"), removing no-op goto instruction #14: goto inline_main_queue_init_16_function_end_queue_init
+# In IlFunctionId("main"), removing no-op goto instruction #0: goto inline_main_globals_3_function_end_globals
 # IlFunctionId("disable_interrupts")()
 #  Unreachable # None
 #  return None # None
@@ -204,7 +216,6 @@ v2.0 raw
 #  Unreachable # None
 
 # IlFunctionId("handle_ps2")()
-#  goto inline_handle_ps2_globals_1_function_end_globals # Some('programs/test/keyboard_isr.j':(14,5))
 #  :inline_handle_ps2_globals_1_function_end_globals # None
 #  Some(code) <= call io_read2() # Some('programs/test/keyboard_isr.j':(24,5))
 #  tf68c <- code U8 # Some('programs/test/keyboard_isr.j':(28,5))
@@ -245,7 +256,6 @@ v2.0 raw
 #  inline_handle_ps2_queue_push_25_t3ee <- mem[inline_handle_ps2_queue_push_25_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  inline_handle_ps2_queue_push_25_tf3c4 <- inline_handle_ps2_queue_push_25_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  mem[inline_handle_ps2_queue_push_25_tc1ff] <- inline_handle_ps2_queue_push_25_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-#  goto inline_handle_ps2_queue_push_25_function_end_queue_push # None
 #  :inline_handle_ps2_queue_push_25_function_end_queue_push # None
 #  goto handle_ps2_if_end_3 # Some('programs/test/keyboard_isr.j':(35,5))
 #  :handle_ps2_if_else_0_5 # Some('programs/test/keyboard_isr.j':(35,5))
@@ -297,7 +307,6 @@ v2.0 raw
 #  Unreachable # None
 
 # IlFunctionId("handle_tty")()
-#  goto inline_handle_tty_globals_2_function_end_globals # Some('programs/test/keyboard_isr.j':(14,5))
 #  :inline_handle_tty_globals_2_function_end_globals # None
 #  tb816 <- ttyin # Some('programs/test/keyboard_isr.j':(71,5))
 #  inline_handle_tty_queue_push_26_s <- 0n987656/0x000f1208u32  # Some('programs/test/keyboard_isr.j':(71,5))
@@ -312,7 +321,6 @@ v2.0 raw
 #  inline_handle_tty_queue_push_26_t3ee <- mem[inline_handle_tty_queue_push_26_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  inline_handle_tty_queue_push_26_tf3c4 <- inline_handle_tty_queue_push_26_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  mem[inline_handle_tty_queue_push_26_tc1ff] <- inline_handle_tty_queue_push_26_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-#  goto inline_handle_tty_queue_push_26_function_end_queue_push # None
 #  :inline_handle_tty_queue_push_26_function_end_queue_push # None
 #  return None # None
 #  :function_end_handle_tty # None
@@ -353,7 +361,6 @@ v2.0 raw
 #  Unreachable # None
 
 # IlFunctionId("main")()
-#  goto inline_main_globals_3_function_end_globals # Some('programs/test/keyboard_isr.j':(14,5))
 #  :inline_main_globals_3_function_end_globals # None
 #  tb70e <- 0n987920/0x000f1310u32  # Some('programs/test/keyboard_isr.j':(96,5))
 #  ta97f <- 0n0/0x00u8  # Some('programs/test/keyboard_isr.j':(96,5))
@@ -367,12 +374,10 @@ v2.0 raw
 #  inline_main_queue_init_16_tc1ff <- 0n987916/0x000f130cu32  # Some('/lutcomp/programs/lib/Queue.j':(9,5))
 #  inline_main_queue_init_16_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(9,5))
 #  mem[inline_main_queue_init_16_tc1ff] <- inline_main_queue_init_16_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(9,5))
-#  goto inline_main_queue_init_16_function_end_queue_init # None
 #  :inline_main_queue_init_16_function_end_queue_init # None
 #  None <= call enable_interrupts() # Some('programs/test/keyboard_isr.j':(100,5))
 #  :main_while_predicate_0 # Some('programs/test/keyboard_isr.j':(102,5))
 #  t5eeb <- 0n97/0x61u8  # Some('programs/test/keyboard_isr.j':(102,5))
-#  goto inline_main_getc_19_inline_getc_globals_0_function_end_globals # Some('programs/test/keyboard_isr.j':(14,5))
 #  :inline_main_getc_19_inline_getc_globals_0_function_end_globals # None
 #  None <= call disable_interrupts() # Some('programs/test/keyboard_isr.j':(88,5))
 #  inline_main_getc_19_inline_getc_queue_pop_18_s <- 0n987656/0x000f1208u32  # Some('programs/test/keyboard_isr.j':(89,5))
@@ -400,12 +405,10 @@ v2.0 raw
 #  mem[inline_main_getc_19_inline_getc_queue_pop_18_tb702] <- inline_main_getc_19_inline_getc_queue_pop_18_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #  inline_main_getc_19_inline_getc_queue_pop_18_t44ed <- inline_main_getc_19_inline_getc_queue_pop_18_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
 #  inline_main_getc_19_ch <- inline_main_getc_19_inline_getc_queue_pop_18_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-#  goto inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(20,5))
 #  :inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop # None
 #  None <= call enable_interrupts() # Some('programs/test/keyboard_isr.j':(90,5))
 #  inline_main_getc_19_tdcd9 <- inline_main_getc_19_ch U8 # Some('programs/test/keyboard_isr.j':(91,5))
 #  t4d24 <- inline_main_getc_19_tdcd9 U8 # Some('programs/test/keyboard_isr.j':(91,5))
-#  goto inline_main_getc_19_function_end_getc # Some('programs/test/keyboard_isr.j':(91,5))
 #  :inline_main_getc_19_function_end_getc # None
 #  if t5eeb != t4d24 then 'main_while_body_1' else 'main_while_end_2' # Some('programs/test/keyboard_isr.j':(102,5))
 #  :main_while_body_1 # Some('programs/test/keyboard_isr.j':(102,5))
@@ -418,7 +421,6 @@ v2.0 raw
 #  ta97f <- 0n0/0x00u8  # Some('programs/test/keyboard_isr.j':(107,5))
 #  if ta97f == ta97f then 'main_while_body_4' else 'main_while_end_5' # Some('programs/test/keyboard_isr.j':(107,5))
 #  :main_while_body_4 # Some('programs/test/keyboard_isr.j':(107,5))
-#  goto inline_main_getc_20_inline_getc_globals_0_function_end_globals # Some('programs/test/keyboard_isr.j':(14,5))
 #  :inline_main_getc_20_inline_getc_globals_0_function_end_globals # None
 #  None <= call disable_interrupts() # Some('programs/test/keyboard_isr.j':(88,5))
 #  inline_main_getc_20_inline_getc_queue_pop_18_s <- 0n987656/0x000f1208u32  # Some('programs/test/keyboard_isr.j':(89,5))
@@ -446,12 +448,10 @@ v2.0 raw
 #  mem[inline_main_getc_20_inline_getc_queue_pop_18_tb702] <- inline_main_getc_20_inline_getc_queue_pop_18_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #  inline_main_getc_20_inline_getc_queue_pop_18_t44ed <- inline_main_getc_20_inline_getc_queue_pop_18_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
 #  inline_main_getc_20_ch <- inline_main_getc_20_inline_getc_queue_pop_18_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-#  goto inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(20,5))
 #  :inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop # None
 #  None <= call enable_interrupts() # Some('programs/test/keyboard_isr.j':(90,5))
 #  inline_main_getc_20_tdcd9 <- inline_main_getc_20_ch U8 # Some('programs/test/keyboard_isr.j':(91,5))
 #  ch <- inline_main_getc_20_tdcd9 U8 # Some('programs/test/keyboard_isr.j':(91,5))
-#  goto inline_main_getc_20_function_end_getc # Some('programs/test/keyboard_isr.j':(91,5))
 #  :inline_main_getc_20_function_end_getc # None
 #  tdcd9 <- ch U8 # Some('programs/test/keyboard_isr.j':(107,5))
 #  ta97f <- 0n0/0x00u8  # Some('programs/test/keyboard_isr.j':(107,5))
@@ -1580,9 +1580,6 @@ ff
 # Var te5cf (te5cf Arithmetic(Add, Ident("index"), Number(0n2/0x00000002u32))) Reg(U32) Some([24, 25, 26, 27])
 # Var ted94 (ted94 Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Array(Number(U8), Some(1025)))), new_type: Number(U32), value: Ident("PS2_SCAN_CODE_TO_ASCII") }, Arithmetic(Add, Ident("index"), Number(0n2/0x00000002u32))) }) Reg(U32) Some([40, 41, 42, 43])
 # Var tf68c (tf68c Ident("code")) Reg(U8) Some([16])
-# goto inline_handle_ps2_globals_1_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))
-# Return { value: Some(AddressOf(Ident("g"))) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_handle_ps2_globals_1_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))\nReturn { value: Some(AddressOf(Ident(\"g\"))) }\n", opcode: JmpImm, args: [Label24(inline_handle_ps2_globals_1_function_end_globals)], resolved: None }
 # :inline_handle_ps2_globals_1_function_end_globals None
 # inline_handle_ps2_globals_1_function_end_globals
 # Some(code) <= call io_read2() Some('programs/test/keyboard_isr.j':(24,5))
@@ -2094,9 +2091,6 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
 06 10 24 
 
-# goto inline_handle_ps2_queue_push_25_function_end_queue_push None
-# Return { value: None }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_handle_ps2_queue_push_25_function_end_queue_push None\nReturn { value: None }\n", opcode: JmpImm, args: [Label24(inline_handle_ps2_queue_push_25_function_end_queue_push)], resolved: None }
 # :inline_handle_ps2_queue_push_25_function_end_queue_push None
 # inline_handle_ps2_queue_push_25_function_end_queue_push
 # goto handle_ps2_if_end_3 Some('programs/test/keyboard_isr.j':(35,5))
@@ -2580,9 +2574,6 @@ ff
 # Var inline_handle_tty_queue_push_26_tc1ff (tc1ff Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }) Reg(U32) Some([60, 61, 62, 63]) Number(0n987916/0x000f130cu32)
 # Var inline_handle_tty_queue_push_26_tf3c4 (tf3c4 Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8))) Reg(U8) Some([45])
 # Var tb816 (tb816 TtyIn) Reg(U8) Some([45])
-# goto inline_handle_tty_globals_2_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))
-# Return { value: Some(AddressOf(Ident("g"))) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_handle_tty_globals_2_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))\nReturn { value: Some(AddressOf(Ident(\"g\"))) }\n", opcode: JmpImm, args: [Label24(inline_handle_tty_globals_2_function_end_globals)], resolved: None }
 # :inline_handle_tty_globals_2_function_end_globals None
 # inline_handle_tty_globals_2_function_end_globals
 # tb816 <- ttyin Some('programs/test/keyboard_isr.j':(71,5))
@@ -2763,9 +2754,6 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
 06 2d 3c 
 
-# goto inline_handle_tty_queue_push_26_function_end_queue_push None
-# Return { value: None }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_handle_tty_queue_push_26_function_end_queue_push None\nReturn { value: None }\n", opcode: JmpImm, args: [Label24(inline_handle_tty_queue_push_26_function_end_queue_push)], resolved: None }
 # :inline_handle_tty_queue_push_26_function_end_queue_push None
 # inline_handle_tty_queue_push_26_function_end_queue_push
 # return None None
@@ -3036,9 +3024,6 @@ ff
 # Var td3f9 (td3f9 Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Globals"))), new_type: Number(U32), value: Ident("g") }, Number(0n268/0x0000010cu32)) }) Reg(U32) Some([68, 69, 70, 71]) Number(0n987924/0x000f1314u32)
 # Var tdcd9 (tdcd9 Ident("ch")) Reg(U8) Some([67])
 # Var tdf6e (tdf6e Number(0n113/0x71u8)) Reg(U8) Some([72]) Number(0n113/0x71u8)
-# goto inline_main_globals_3_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))
-# Return { value: Some(AddressOf(Ident("g"))) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_globals_3_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))\nReturn { value: Some(AddressOf(Ident(\"g\"))) }\n", opcode: JmpImm, args: [Label24(inline_main_globals_3_function_end_globals)], resolved: None }
 # :inline_main_globals_3_function_end_globals None
 # inline_main_globals_3_function_end_globals
 # tb70e <- 0n987920/0x000f1310u32  Some('programs/test/keyboard_isr.j':(96,5))
@@ -3157,9 +3142,6 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Number(0n0/0x00u8) }
 06 43 4c 
 
-# goto inline_main_queue_init_16_function_end_queue_init None
-# Return { value: None }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_queue_init_16_function_end_queue_init None\nReturn { value: None }\n", opcode: JmpImm, args: [Label24(inline_main_queue_init_16_function_end_queue_init)], resolved: None }
 # :inline_main_queue_init_16_function_end_queue_init None
 # inline_main_queue_init_16_function_end_queue_init
 # None <= call enable_interrupts() Some('programs/test/keyboard_isr.j':(100,5))
@@ -3183,9 +3165,6 @@ ff
 #       Number(0n97/0x61u8)
 04 52 61 
 
-# goto inline_main_getc_19_inline_getc_globals_0_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))
-# Return { value: Some(AddressOf(Ident("g"))) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_getc_19_inline_getc_globals_0_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))\nReturn { value: Some(AddressOf(Ident(\"g\"))) }\n", opcode: JmpImm, args: [Label24(inline_main_getc_19_inline_getc_globals_0_function_end_globals)], resolved: None }
 # :inline_main_getc_19_inline_getc_globals_0_function_end_globals None
 # inline_main_getc_19_inline_getc_globals_0_function_end_globals
 # None <= call disable_interrupts() Some('programs/test/keyboard_isr.j':(88,5))
@@ -3303,7 +3282,7 @@ ff
 # 0067b JmpImm [Label24(inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop)]
 #       goto inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
-70 be 06 00 
+70 ba 06 00 
 
 # goto inline_main_getc_19_inline_getc_queue_pop_18_queue_pop_if_end_0 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # 0067f JmpImm [Label24(inline_main_getc_19_inline_getc_queue_pop_18_queue_pop_if_end_0)]
@@ -3491,19 +3470,12 @@ ff
 # inline_main_getc_19_ch <- inline_main_getc_19_inline_getc_queue_pop_18_t44ed U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))
 # Return { value: Some(Ident("value")) }
 # optimized away noop copy Instruction { source: "inline_main_getc_19_ch <- inline_main_getc_19_inline_getc_queue_pop_18_t44ed U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))\nReturn { value: Some(Ident(\"value\")) }\n", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
-# goto inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# Return { value: Some(Ident("value")) }
-# 006ba JmpImm [Label24(inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop)]
-#       goto inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(20,5))
-#       Return { value: Some(Ident("value")) }
-70 be 06 00 
-
 # :inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop None
 # inline_main_getc_19_inline_getc_queue_pop_18_function_end_queue_pop
 # None <= call enable_interrupts() Some('programs/test/keyboard_isr.j':(90,5))
 # VoidExpression { expression: Call(Call { function: "enable_interrupts", parameters: [] }) }
 # Call(Call { function: "enable_interrupts", parameters: [] })
-# 006be EnableInterrupts []
+# 006ba EnableInterrupts []
 #       EnableInterrupts
 76 
 
@@ -3514,25 +3486,22 @@ ff
 # t4d24 <- inline_main_getc_19_tdcd9 U8 Some('programs/test/keyboard_isr.j':(91,5))
 # Return { value: Some(Ident("ch")) }
 # optimized away noop copy Instruction { source: "t4d24 <- inline_main_getc_19_tdcd9 U8 Some('programs/test/keyboard_isr.j':(91,5))\nReturn { value: Some(Ident(\"ch\")) }\n", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
-# goto inline_main_getc_19_function_end_getc Some('programs/test/keyboard_isr.j':(91,5))
-# Return { value: Some(Ident("ch")) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_getc_19_function_end_getc Some('programs/test/keyboard_isr.j':(91,5))\nReturn { value: Some(Ident(\"ch\")) }\n", opcode: JmpImm, args: [Label24(inline_main_getc_19_function_end_getc)], resolved: None }
 # :inline_main_getc_19_function_end_getc None
 # inline_main_getc_19_function_end_getc
 # if t5eeb != t4d24 then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/keyboard_isr.j':(102,5))
 # While { predicate: Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }, while_true: [] }
 # Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }
-# 006bf Cmp8 [Register(0x52), Register(0x43)]
+# 006bb Cmp8 [Register(0x52), Register(0x43)]
 #       if t5eeb != t4d24 then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/keyboard_isr.j':(102,5))
 #       While { predicate: Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }, while_true: [] }
 #       Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }
 15 52 43 
 
-# 006c2 JzImm [Label24(main_while_end_2)]
+# 006be JzImm [Label24(main_while_end_2)]
 #       if t5eeb != t4d24 then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/keyboard_isr.j':(102,5))
 #       While { predicate: Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }, while_true: [] }
 #       Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }
-72 ca 06 00 
+72 c6 06 00 
 
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if t5eeb != t4d24 then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/keyboard_isr.j':(102,5))\nWhile { predicate: Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: \"getc\", parameters: [] }) }, while_true: [] }\nComparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: \"getc\", parameters: [] }) }\n", opcode: JmpImm, args: [Label24(main_while_body_1)], resolved: None }
 # :main_while_body_1 Some('programs/test/keyboard_isr.j':(102,5))
@@ -3540,7 +3509,7 @@ ff
 # main_while_body_1
 # goto main_while_predicate_0 Some('programs/test/keyboard_isr.j':(102,5))
 # While { predicate: Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }, while_true: [] }
-# 006c6 JmpImm [Label24(main_while_predicate_0)]
+# 006c2 JmpImm [Label24(main_while_predicate_0)]
 #       goto main_while_predicate_0 Some('programs/test/keyboard_isr.j':(102,5))
 #       While { predicate: Comparison { op: NotEquals, left: Number(0n97/0x61u8), right: Call(Call { function: "getc", parameters: [] }) }, while_true: [] }
 70 51 06 00 
@@ -3551,7 +3520,7 @@ ff
 # t5eeb <- 0n97/0x61u8  Some('programs/test/keyboard_isr.j':(105,5))
 # TtyOut { value: Number(0n97/0x61u8) }
 # Number(0n97/0x61u8)
-# 006ca LoadImm8 [Register(0x52), Constant8(0x61=97)]
+# 006c6 LoadImm8 [Register(0x52), Constant8(0x61=97)]
 #       t5eeb <- 0n97/0x61u8  Some('programs/test/keyboard_isr.j':(105,5))
 #       TtyOut { value: Number(0n97/0x61u8) }
 #       Number(0n97/0x61u8)
@@ -3559,7 +3528,7 @@ ff
 
 # ttyout <- t5eeb Some('programs/test/keyboard_isr.j':(105,5))
 # TtyOut { value: Number(0n97/0x61u8) }
-# 006cd Out0 [Register(0x52)]
+# 006c9 Out0 [Register(0x52)]
 #       ttyout <- t5eeb Some('programs/test/keyboard_isr.j':(105,5))
 #       TtyOut { value: Number(0n97/0x61u8) }
 68 52 
@@ -3571,7 +3540,7 @@ ff
 # While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 # Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
 # Number(0n0/0x00u8)
-# 006cf LoadImm8 [Register(0x48), Constant8(0x00=0)]
+# 006cb LoadImm8 [Register(0x48), Constant8(0x00=0)]
 #       ta97f <- 0n0/0x00u8  Some('programs/test/keyboard_isr.j':(107,5))
 #       While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 #       Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
@@ -3582,7 +3551,7 @@ ff
 # While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 # Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
 # Number(0n0/0x00u8)
-# 006d2 LoadImm8 [Register(0x48), Constant8(0x00=0)]
+# 006ce LoadImm8 [Register(0x48), Constant8(0x00=0)]
 #       ta97f <- 0n0/0x00u8  Some('programs/test/keyboard_isr.j':(107,5))
 #       While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 #       Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
@@ -3592,36 +3561,33 @@ ff
 # if ta97f == ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/keyboard_isr.j':(107,5))
 # While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 # Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
-# 006d5 Cmp8 [Register(0x48), Register(0x48)]
+# 006d1 Cmp8 [Register(0x48), Register(0x48)]
 #       if ta97f == ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/keyboard_isr.j':(107,5))
 #       While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 #       Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
 15 48 48 
 
-# 006d8 JzImm [Label24(main_while_body_4)]
+# 006d4 JzImm [Label24(main_while_body_4)]
 #       if ta97f == ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/keyboard_isr.j':(107,5))
 #       While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 #       Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
-72 e0 06 00 
+72 dc 06 00 
 
-# 006dc JmpImm [Label24(main_while_end_5)]
+# 006d8 JmpImm [Label24(main_while_end_5)]
 #       if ta97f == ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/keyboard_isr.j':(107,5))
 #       While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 #       Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
-70 79 07 00 
+70 71 07 00 
 
 # :main_while_body_4 Some('programs/test/keyboard_isr.j':(107,5))
 # While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getc", parameters: [] }) }, IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }] }
 # main_while_body_4
-# goto inline_main_getc_20_inline_getc_globals_0_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))
-# Return { value: Some(AddressOf(Ident("g"))) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_getc_20_inline_getc_globals_0_function_end_globals Some('programs/test/keyboard_isr.j':(14,5))\nReturn { value: Some(AddressOf(Ident(\"g\"))) }\n", opcode: JmpImm, args: [Label24(inline_main_getc_20_inline_getc_globals_0_function_end_globals)], resolved: None }
 # :inline_main_getc_20_inline_getc_globals_0_function_end_globals None
 # inline_main_getc_20_inline_getc_globals_0_function_end_globals
 # None <= call disable_interrupts() Some('programs/test/keyboard_isr.j':(88,5))
 # VoidExpression { expression: Call(Call { function: "disable_interrupts", parameters: [] }) }
 # Call(Call { function: "disable_interrupts", parameters: [] })
-# 006e0 DisableInterrupts []
+# 006dc DisableInterrupts []
 #       DisableInterrupts
 77 
 
@@ -3629,7 +3595,7 @@ ff
 # Assign { target: Ident("ch"), var_type: Some(Number(U8)), value: Call(Call { function: "queue_pop", parameters: [AddressOf(PtrFieldDeref("g", "stdin"))] }) }
 # Call(Call { function: "queue_pop", parameters: [AddressOf(PtrFieldDeref("g", "stdin"))] })
 # # In IlFunctionId("main"), replacing `inline_main_getc_20_inline_getc_queue_pop_18_s <- inline_main_getc_20_t938b U32` with constant `inline_main_getc_20_inline_getc_queue_pop_18_s <- 0n987656/0x000f1208u32 `.
-# 006e1 LoadImm32 [Register(0x44), Constant32(0x000f1208=987656)]
+# 006dd LoadImm32 [Register(0x44), Constant32(0x000f1208=987656)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_s <- 0n987656/0x000f1208u32  Some('programs/test/keyboard_isr.j':(89,5))
 #       Assign { target: Ident("ch"), var_type: Some(Number(U8)), value: Call(Call { function: "queue_pop", parameters: [AddressOf(PtrFieldDeref("g", "stdin"))] }) }
 #       Call(Call { function: "queue_pop", parameters: [AddressOf(PtrFieldDeref("g", "stdin"))] })
@@ -3643,7 +3609,7 @@ ff
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- inline_main_getc_20_inline_getc_queue_pop_18_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32 `.
-# 006e7 LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
+# 006e3 LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -3657,7 +3623,7 @@ ff
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 # PtrFieldDeref("s", "first")
-# 006ed Load8 [Register(0x4c), Register(0x50)]
+# 006e9 Load8 [Register(0x4c), Register(0x50)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb6dd <- mem[inline_main_getc_20_inline_getc_queue_pop_18_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -3671,7 +3637,7 @@ ff
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32))
 # # In IlFunctionId("main"), replacing `inline_main_getc_20_inline_getc_queue_pop_18_tc1ff <- inline_main_getc_20_inline_getc_queue_pop_18_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_getc_20_inline_getc_queue_pop_18_tc1ff <- 0n987916/0x000f130cu32 `.
-# 006f0 LoadImm32 [Register(0x4c), Constant32(0x000f130c=987916)]
+# 006ec LoadImm32 [Register(0x4c), Constant32(0x000f130c=987916)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tc1ff <- 0n987916/0x000f130cu32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -3685,7 +3651,7 @@ ff
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 # PtrFieldDeref("s", "last")
-# 006f6 Load8 [Register(0x4c), Register(0x48)]
+# 006f2 Load8 [Register(0x4c), Register(0x48)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_t3ee <- mem[inline_main_getc_20_inline_getc_queue_pop_18_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
@@ -3695,23 +3661,23 @@ ff
 # if inline_main_getc_20_inline_getc_queue_pop_18_tb6dd == inline_main_getc_20_inline_getc_queue_pop_18_t3ee then 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_true_0_1' else 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2' Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
-# 006f9 Cmp8 [Register(0x50), Register(0x48)]
+# 006f5 Cmp8 [Register(0x50), Register(0x48)]
 #       if inline_main_getc_20_inline_getc_queue_pop_18_tb6dd == inline_main_getc_20_inline_getc_queue_pop_18_t3ee then 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_true_0_1' else 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2' Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 15 50 48 
 
-# 006fc JzImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_true_0_1)]
+# 006f8 JzImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_true_0_1)]
 #       if inline_main_getc_20_inline_getc_queue_pop_18_tb6dd == inline_main_getc_20_inline_getc_queue_pop_18_t3ee then 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_true_0_1' else 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2' Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
-72 04 07 00 
+72 00 07 00 
 
-# 00700 JmpImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2)]
+# 006fc JmpImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2)]
 #       if inline_main_getc_20_inline_getc_queue_pop_18_tb6dd == inline_main_getc_20_inline_getc_queue_pop_18_t3ee then 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_true_0_1' else 'inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2' Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
-70 0f 07 00 
+70 0b 07 00 
 
 # :inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_true_0_1 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
@@ -3719,7 +3685,7 @@ ff
 # inline_main_getc_20_inline_getc_queue_pop_18_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
 # Number(0n0/0x00u8)
-# 00704 LoadImm8 [Register(0x43), Constant8(0x00=0)]
+# 00700 LoadImm8 [Register(0x43), Constant8(0x00=0)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
 #       Number(0n0/0x00u8)
@@ -3730,15 +3696,15 @@ ff
 # optimized away noop copy Instruction { source: "inline_main_getc_20_ch <- inline_main_getc_20_inline_getc_queue_pop_18_ta97f U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))\nReturn { value: Some(Number(0n0/0x00u8)) }\n", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
 # goto inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
-# 00707 JmpImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop)]
+# 00703 JmpImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop)]
 #       goto inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
-70 4a 07 00 
+70 42 07 00 
 
 # goto inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_end_0 Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 0070b JmpImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_end_0)]
+# 00707 JmpImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_end_0)]
 #       goto inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_end_0 Some('/lutcomp/programs/lib/Queue.j':(13,5))
-70 0f 07 00 
+70 0b 07 00 
 
 # :inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # inline_main_getc_20_inline_getc_queue_pop_18_queue_pop_if_else_0_2
@@ -3754,7 +3720,7 @@ ff
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- inline_main_getc_20_inline_getc_queue_pop_18_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32 `.
-# 0070f LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
+# 0070b LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32  Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3774,7 +3740,7 @@ ff
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 # Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }
 # PtrFieldDeref("s", "first")
-# 00715 Load8 [Register(0x4c), Register(0x50)]
+# 00711 Load8 [Register(0x4c), Register(0x50)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb6dd <- mem[inline_main_getc_20_inline_getc_queue_pop_18_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3790,7 +3756,7 @@ ff
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 # Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }
-# 00718 LoadImm32 [Register(0x4c), Constant32(0x00000000=0)]
+# 00714 LoadImm32 [Register(0x4c), Constant32(0x00000000=0)]
 #       Zero-pad for inline_main_getc_20_inline_getc_queue_pop_18_tb469 U32 <- inline_main_getc_20_inline_getc_queue_pop_18_tb6dd U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3799,7 +3765,7 @@ ff
 #       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }
 20 4c 00 00 00 00 
 
-# 0071e Copy8 [Register(0x50), Register(0x4c)]
+# 0071a Copy8 [Register(0x50), Register(0x4c)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb469 U32 <- inline_main_getc_20_inline_getc_queue_pop_18_tb6dd U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3813,7 +3779,7 @@ ff
 # Index("values", PtrFieldDeref("s", "first"))
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
-# 00721 ClearCarry []
+# 0071d ClearCarry []
 #       inline_main_getc_20_inline_getc_queue_pop_18_tae11 <- inline_main_getc_20_inline_getc_queue_pop_18_s Add Var(inline_main_getc_20_inline_getc_queue_pop_18_tb469) Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3821,7 +3787,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 03 
 
-# 00722 AddCarry32_1 [Register(0x44), Register(0x4c), Register(0x44)]
+# 0071e AddCarry32_1 [Register(0x44), Register(0x4c), Register(0x44)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tae11 <- inline_main_getc_20_inline_getc_queue_pop_18_s Add Var(inline_main_getc_20_inline_getc_queue_pop_18_tb469) Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3829,7 +3795,7 @@ ff
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 30 44 4c 44 
 
-# 00726 AddCarry32_2 []
+# 00722 AddCarry32_2 []
 #       inline_main_getc_20_inline_getc_queue_pop_18_tae11 <- inline_main_getc_20_inline_getc_queue_pop_18_s Add Var(inline_main_getc_20_inline_getc_queue_pop_18_tb469) Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3840,7 +3806,7 @@ ff
 # inline_main_getc_20_inline_getc_queue_pop_18_value <- mem[inline_main_getc_20_inline_getc_queue_pop_18_tae11] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
 # Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 # Index("values", PtrFieldDeref("s", "first"))
-# 00727 Load8 [Register(0x44), Register(0x51)]
+# 00723 Load8 [Register(0x44), Register(0x51)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_value <- mem[inline_main_getc_20_inline_getc_queue_pop_18_tae11] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
@@ -3851,7 +3817,7 @@ ff
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- inline_main_getc_20_inline_getc_queue_pop_18_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32 `.
-# 0072a LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
+# 00726 LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32  Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
@@ -3866,7 +3832,7 @@ ff
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- inline_main_getc_20_inline_getc_queue_pop_18_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32 `.
-# 00730 LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
+# 0072c LoadImm32 [Register(0x4c), Constant32(0x000f1308=987912)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb702 <- 0n987912/0x000f1308u32  Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
@@ -3880,7 +3846,7 @@ ff
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 # Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
 # PtrFieldDeref("s", "first")
-# 00736 Load8 [Register(0x4c), Register(0x50)]
+# 00732 Load8 [Register(0x4c), Register(0x50)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_tb6dd <- mem[inline_main_getc_20_inline_getc_queue_pop_18_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
@@ -3890,13 +3856,13 @@ ff
 # inline_main_getc_20_inline_getc_queue_pop_18_te468 <- inline_main_getc_20_inline_getc_queue_pop_18_tb6dd Add Number(0n1/0x01u8) Some('/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 # Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
-# 00739 LoadImm8 [Register(0x00), Constant8(0x01=1)]
+# 00735 LoadImm8 [Register(0x00), Constant8(0x01=1)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_te468 <- inline_main_getc_20_inline_getc_queue_pop_18_tb6dd Add Number(0n1/0x01u8) Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
 04 00 01 
 
-# 0073c Add8NoCarryIn [Register(0x50), Register(0x00), Register(0x43)]
+# 00738 Add8NoCarryIn [Register(0x50), Register(0x00), Register(0x43)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_te468 <- inline_main_getc_20_inline_getc_queue_pop_18_tb6dd Add Number(0n1/0x01u8) Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
@@ -3904,7 +3870,7 @@ ff
 
 # mem[inline_main_getc_20_inline_getc_queue_pop_18_tb702] <- inline_main_getc_20_inline_getc_queue_pop_18_te468 U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
-# 00740 Store8 [Register(0x43), Register(0x4c)]
+# 0073c Store8 [Register(0x43), Register(0x4c)]
 #       mem[inline_main_getc_20_inline_getc_queue_pop_18_tb702] <- inline_main_getc_20_inline_getc_queue_pop_18_te468 U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 06 43 4c 
@@ -3912,7 +3878,7 @@ ff
 # inline_main_getc_20_inline_getc_queue_pop_18_t44ed <- inline_main_getc_20_inline_getc_queue_pop_18_value U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))
 # Return { value: Some(Ident("value")) }
 # Ident("value")
-# 00743 Copy8 [Register(0x51), Register(0x43)]
+# 0073f Copy8 [Register(0x51), Register(0x43)]
 #       inline_main_getc_20_inline_getc_queue_pop_18_t44ed <- inline_main_getc_20_inline_getc_queue_pop_18_value U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))
 #       Return { value: Some(Ident("value")) }
 #       Ident("value")
@@ -3921,19 +3887,12 @@ ff
 # inline_main_getc_20_ch <- inline_main_getc_20_inline_getc_queue_pop_18_t44ed U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))
 # Return { value: Some(Ident("value")) }
 # optimized away noop copy Instruction { source: "inline_main_getc_20_ch <- inline_main_getc_20_inline_getc_queue_pop_18_t44ed U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))\nReturn { value: Some(Ident(\"value\")) }\n", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
-# goto inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# Return { value: Some(Ident("value")) }
-# 00746 JmpImm [Label24(inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop)]
-#       goto inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(20,5))
-#       Return { value: Some(Ident("value")) }
-70 4a 07 00 
-
 # :inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop None
 # inline_main_getc_20_inline_getc_queue_pop_18_function_end_queue_pop
 # None <= call enable_interrupts() Some('programs/test/keyboard_isr.j':(90,5))
 # VoidExpression { expression: Call(Call { function: "enable_interrupts", parameters: [] }) }
 # Call(Call { function: "enable_interrupts", parameters: [] })
-# 0074a EnableInterrupts []
+# 00742 EnableInterrupts []
 #       EnableInterrupts
 76 
 
@@ -3944,9 +3903,6 @@ ff
 # ch <- inline_main_getc_20_tdcd9 U8 Some('programs/test/keyboard_isr.j':(91,5))
 # Return { value: Some(Ident("ch")) }
 # optimized away noop copy Instruction { source: "ch <- inline_main_getc_20_tdcd9 U8 Some('programs/test/keyboard_isr.j':(91,5))\nReturn { value: Some(Ident(\"ch\")) }\n", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
-# goto inline_main_getc_20_function_end_getc Some('programs/test/keyboard_isr.j':(91,5))
-# Return { value: Some(Ident("ch")) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_getc_20_function_end_getc Some('programs/test/keyboard_isr.j':(91,5))\nReturn { value: Some(Ident(\"ch\")) }\n", opcode: JmpImm, args: [Label24(inline_main_getc_20_function_end_getc)], resolved: None }
 # :inline_main_getc_20_function_end_getc None
 # inline_main_getc_20_function_end_getc
 # tdcd9 <- ch U8 Some('programs/test/keyboard_isr.j':(107,5))
@@ -3958,7 +3914,7 @@ ff
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }
 # Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }
 # Number(0n0/0x00u8)
-# 0074b LoadImm8 [Register(0x48), Constant8(0x00=0)]
+# 00743 LoadImm8 [Register(0x48), Constant8(0x00=0)]
 #       ta97f <- 0n0/0x00u8  Some('programs/test/keyboard_isr.j':(107,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }
@@ -3968,17 +3924,17 @@ ff
 # if tdcd9 != ta97f then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/keyboard_isr.j':(107,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }
 # Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }
-# 0074e Cmp8 [Register(0x43), Register(0x48)]
+# 00746 Cmp8 [Register(0x43), Register(0x48)]
 #       if tdcd9 != ta97f then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/keyboard_isr.j':(107,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }
 15 43 48 
 
-# 00751 JzImm [Label24(main_if_else_0_8)]
+# 00749 JzImm [Label24(main_if_else_0_8)]
 #       if tdcd9 != ta97f then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/keyboard_isr.j':(107,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident("ch") }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n0/0x00u8) }
-72 75 07 00 
+72 6d 07 00 
 
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if tdcd9 != ta97f then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/keyboard_isr.j':(107,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(0n0/0x00u8) }, [IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }, TtyOut { value: Ident(\"ch\") }])], else_block: [] }\nComparison { op: NotEquals, left: Ident(\"ch\"), right: Number(0n0/0x00u8) }\n", opcode: JmpImm, args: [Label24(main_if_true_0_7)], resolved: None }
 # :main_if_true_0_7 Some('programs/test/keyboard_isr.j':(107,5))
@@ -3993,7 +3949,7 @@ ff
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
 # Number(0n113/0x71u8)
-# 00755 LoadImm8 [Register(0x48), Constant8(0x71=113)]
+# 0074d LoadImm8 [Register(0x48), Constant8(0x71=113)]
 #       tdf6e <- 0n113/0x71u8  Some('programs/test/keyboard_isr.j':(107,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
@@ -4003,23 +3959,23 @@ ff
 # if tdcd9 == tdf6e then 'main_if_true_0_10' else 'main_if_else_0_11' Some('programs/test/keyboard_isr.j':(107,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
-# 00758 Cmp8 [Register(0x43), Register(0x48)]
+# 00750 Cmp8 [Register(0x43), Register(0x48)]
 #       if tdcd9 == tdf6e then 'main_if_true_0_10' else 'main_if_else_0_11' Some('programs/test/keyboard_isr.j':(107,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
 15 43 48 
 
-# 0075b JzImm [Label24(main_if_true_0_10)]
+# 00753 JzImm [Label24(main_if_true_0_10)]
 #       if tdcd9 == tdf6e then 'main_if_true_0_10' else 'main_if_else_0_11' Some('programs/test/keyboard_isr.j':(107,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
-72 63 07 00 
+72 5b 07 00 
 
-# 0075f JmpImm [Label24(main_if_else_0_11)]
+# 00757 JmpImm [Label24(main_if_else_0_11)]
 #       if tdcd9 == tdf6e then 'main_if_true_0_10' else 'main_if_else_0_11' Some('programs/test/keyboard_isr.j':(107,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
-70 6f 07 00 
+70 67 07 00 
 
 # :main_if_true_0_10 Some('programs/test/keyboard_isr.j':(107,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
@@ -4027,7 +3983,7 @@ ff
 # ta97f <- 0n0/0x00u8  Some('programs/test/keyboard_isr.j':(107,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
 # Number(0n0/0x00u8)
-# 00763 LoadImm8 [Register(0x48), Constant8(0x00=0)]
+# 0075b LoadImm8 [Register(0x48), Constant8(0x00=0)]
 #       ta97f <- 0n0/0x00u8  Some('programs/test/keyboard_isr.j':(107,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
 #       Number(0n0/0x00u8)
@@ -4035,19 +3991,19 @@ ff
 
 # return Some(ta97f) Some('programs/test/keyboard_isr.j':(107,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
-# 00766 Copy8 [Register(0x48), Register(0x00)]
+# 0075e Copy8 [Register(0x48), Register(0x00)]
 #       return Some(ta97f) Some('programs/test/keyboard_isr.j':(107,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
 0b 48 00 
 
-# 00769 JmpMem [Register(0x0c)]
+# 00761 JmpMem [Register(0x0c)]
 #       PseudoReturn
 75 0c 
 
 # goto main_if_end_9 Some('programs/test/keyboard_isr.j':(107,5))
-# 0076b JmpImm [Label24(main_if_end_9)]
+# 00763 JmpImm [Label24(main_if_end_9)]
 #       goto main_if_end_9 Some('programs/test/keyboard_isr.j':(107,5))
-70 6f 07 00 
+70 67 07 00 
 
 # :main_if_else_0_11 Some('programs/test/keyboard_isr.j':(107,5))
 # main_if_else_0_11
@@ -4059,31 +4015,31 @@ ff
 # optimized away noop copy Instruction { source: "tdcd9 <- ch U8 Some('programs/test/keyboard_isr.j':(107,5))\nTtyOut { value: Ident(\"ch\") }\nIdent(\"ch\")\n", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
 # ttyout <- tdcd9 Some('programs/test/keyboard_isr.j':(107,5))
 # TtyOut { value: Ident("ch") }
-# 0076f Out0 [Register(0x43)]
+# 00767 Out0 [Register(0x43)]
 #       ttyout <- tdcd9 Some('programs/test/keyboard_isr.j':(107,5))
 #       TtyOut { value: Ident("ch") }
 68 43 
 
 # goto main_if_end_6 Some('programs/test/keyboard_isr.j':(107,5))
-# 00771 JmpImm [Label24(main_if_end_6)]
+# 00769 JmpImm [Label24(main_if_end_6)]
 #       goto main_if_end_6 Some('programs/test/keyboard_isr.j':(107,5))
-70 75 07 00 
+70 6d 07 00 
 
 # :main_if_else_0_8 Some('programs/test/keyboard_isr.j':(107,5))
 # main_if_else_0_8
 # :main_if_end_6 Some('programs/test/keyboard_isr.j':(107,5))
 # main_if_end_6
 # goto main_while_predicate_3 Some('programs/test/keyboard_isr.j':(107,5))
-# 00775 JmpImm [Label24(main_while_predicate_3)]
+# 0076d JmpImm [Label24(main_while_predicate_3)]
 #       goto main_while_predicate_3 Some('programs/test/keyboard_isr.j':(107,5))
-70 cf 06 00 
+70 cb 06 00 
 
 # :main_while_end_5 Some('programs/test/keyboard_isr.j':(107,5))
 # main_while_end_5
 # :function_end_main None
 # function_end_main
 # Unreachable None
-# 00779 Halt [Constant32(0x10000000=268435456)]
+# 00771 Halt [Constant32(0x10000000=268435456)]
 #       Unreachable None
 7e 00 00 00 10 
 

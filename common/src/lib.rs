@@ -4,7 +4,7 @@ extern crate strum_macros;
 
 extern crate packed_struct;
 extern crate packed_struct_codegen;
-use std::{collections::{BTreeMap, BTreeSet}, fmt::Display};
+use std::{collections::{BTreeMap, BTreeSet}, fmt::Display, convert::{TryFrom, TryInto}, borrow::Cow};
 
 use packed_struct::prelude::*;
 
@@ -690,6 +690,155 @@ pub const INTERRUPT_PREVIOUS_FLAGS: u32 = INTERRUPT_PREVIOUS_PC-4;
 pub const INITIAL_STACK: u32 = 0x0F0F00;
 
 pub const STATICS_START_ADDRESS: u32 = round_up(INTERRUPT_ISR, 0x1000);
+
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum NumberType {
+    U8,
+    U16,
+    U32,
+}
+
+impl TryFrom<u32> for NumberType {
+    type Error = ();
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            1 => Ok(NumberType::U8),
+            2 => Ok(NumberType::U16),
+            4 => Ok(NumberType::U32),
+            _ => Err(())
+        }
+    }
+}
+
+
+impl NumberType {
+    pub fn byte_count(&self) -> u32 {
+        match self {
+            NumberType::U8 => 1,
+            NumberType::U16 => 2,
+            NumberType::U32 => 4,
+        }
+    }
+
+    pub fn try_parse(s: &str) -> Option<Self> {
+        match  s {
+            "u8" | "char" => Some(Self::U8),
+            "u16" => Some(Self::U16),
+            "usize" => Some(Self::U32),
+            _ => None
+        }
+    }
+    
+    pub fn parse(s: &str) -> Self {
+        Self::try_parse(s).expect(&format!("Not a number type: {}", s))
+    }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+pub enum Number {
+    U8(u8),
+    U16(u16),
+    U32(u32),
+}
+
+impl Number {
+    pub fn num_type(&self) -> NumberType {
+        match self {
+            Number::U8(_) => NumberType::U8,
+            Number::U16(_) => NumberType::U16,
+            Number::U32(_) => NumberType::U32,
+        }
+    }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+        match self {
+            Number::U8(n) => vec![*n],
+            Number::U16(n) => n.to_le_bytes().iter().cloned().collect(),
+            Number::U32(n) => n.to_le_bytes().iter().cloned().collect(),
+        }
+    }
+
+    pub fn as_u32(&self) -> u32 {
+        match self {
+            Number::U8(n) => (*n).into(),
+            Number::U16(n) => (*n).into(),
+            Number::U32(n) => *n,
+        }
+    }
+
+    pub fn cast_checked(&self, promoted: NumberType) -> Number {
+        match promoted {
+            NumberType::U8 => Number::U8(self.as_u32().try_into().unwrap()),
+            NumberType::U16 => Number::U16(self.as_u32().try_into().unwrap()),
+            NumberType::U32 => Number::U32(self.as_u32().try_into().unwrap()),
+        }
+    }
+}
+
+impl std::fmt::Debug for Number {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::U8(arg0) => write!(f, "0n{}/0x{:02x}u8", arg0, arg0),
+            Self::U16(arg0) => write!(f, "0n{}/0x{:04x}u16", arg0, arg0),
+            Self::U32(arg0) => if *arg0 >= 0x80000000 {
+                write!(f, "0x{:08x}u32", arg0)
+            } else {
+                write!(f, "0n{}/0x{:08x}u32", arg0, arg0)
+            }
+        }
+    }
+}
+
+impl From<u8> for Number {
+    fn from(x: u8) -> Self {
+        Number::U8(x)
+    }
+}
+
+impl From<u16> for Number {
+    fn from(x: u16) -> Self {
+        Number::U16(x)
+    }
+}
+
+impl From<u32> for Number {
+    fn from(x: u32) -> Self {
+        Number::U32(x)
+    }
+}
+
+impl TryFrom<&[u8]> for Number {
+    type Error = String;
+
+    fn try_from(b: &[u8]) -> Result<Self, Self::Error> {
+        match b.len() {
+            1 => Ok(Number::U8(b[0])),
+            2 => Ok(Number::U16(u16::from_le_bytes([b[0],b[1]]))),
+            4 => Ok(Number::U32(u32::from_le_bytes([b[0],b[1],b[2],b[3]]))),
+            _ => Err(format!("Const size of {} bytes does not match a number type.", b.len())),
+        } 
+    }
+}
+
+impl TryFrom<&Vec<u8>> for Number {
+    type Error = String;
+
+    fn try_from(b: &Vec<u8>) -> Result<Self, Self::Error> {
+        let b: &[u8] = b.as_ref();
+        b.try_into()
+    }
+}
+
+impl<'a> TryFrom<Cow<'a,Vec<u8>>> for Number {
+    type Error = String;
+
+    fn try_from(b: Cow<'a,Vec<u8>>) -> Result<Self, Self::Error> {
+        let b: &[u8] = b.as_ref();
+        b.try_into()
+    }
+}
 
 
 #[derive(Clone,Debug,Default)]

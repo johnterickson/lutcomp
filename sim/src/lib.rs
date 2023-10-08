@@ -86,15 +86,36 @@ impl<'a> Debug for Computer<'a> {
         write!(f, " addr:{:05x}", u32::from_le_bytes(self.addr))?;
         write!(f, " ir0_pc:{:02x}", self.ir0_pc.unwrap_or_default())?;
         write!(f, " ir0:{:02x}", self.ir0)?;
-        if let (Some(pc), Some(o)) = (self.ir0_pc, Opcode::from_primitive(self.ir0)) {
-            for (i, _) in o.expected_arg_sizes().iter().enumerate() {
-                write!(f, " arg{}:{:02x}", i, self.mem_byte(pc + i as u32))?;
-            }
-        }
-        write!(f, " op:{:?}", Opcode::from_primitive(self.ir0))?;
+        write!(f, "{:?}", CurrentInstruction(self))?;
         write!(f, " in1:{:02x}", self.in1)?;
         write!(f, " flags:[{:?}]", self.flags)?;
         write!(f, " ticks:{}", self.tick_count)?;
+        Ok(())
+    }
+}
+
+pub struct CurrentInstruction<'a>(pub &'a Computer<'a>);
+
+impl<'a> Debug for CurrentInstruction<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let (Some(pc), Some(o)) = (self.0.ir0_pc, Opcode::from_primitive(self.0.ir0)) {
+            write!(f, " op:{:?}", o)?;
+            let mut addr = pc + 1;
+            for (i, size) in o.expected_arg_sizes().iter().enumerate() {
+                let num: Number = match size {
+                    1 => self.0.mem_byte(addr).into(),
+                    2 => self.0.mem_u16_unaligned(addr).into(),
+                    3 => (self.0.mem_word_unaligned(addr) & 0xFFFFFF).into(),
+                    4 => self.0.mem_word_unaligned(addr).into(),
+                    _ => panic!("unexpected arg size: {}", size),
+                };
+
+                write!(f, " arg{}:{:?}", i, num)?;
+                
+                addr += *size;
+            }
+        }
+
         Ok(())
     }
 }
@@ -285,6 +306,10 @@ impl<'a> Computer<'a> {
         if addr % 2 != 0 {
             panic!("Access of {:08x} is not aligned.", addr);
         }
+        self.mem_u16_unaligned(addr)
+    }
+
+    pub fn mem_u16_unaligned(&self, addr: u32) -> u16 {
         u16::from_le_bytes(self.mem_slice(addr,2).try_into().unwrap())
     }
 
@@ -292,6 +317,10 @@ impl<'a> Computer<'a> {
         if addr % 4 != 0 {
             panic!("Access of {:08x} is not word-aligned.", addr);
         }
+        self.mem_word_unaligned(addr)
+    }
+
+    pub fn mem_word_unaligned(&self, addr: u32) -> u32 {
         u32::from_le_bytes(self.mem_slice(addr,4).try_into().unwrap())
     }
 

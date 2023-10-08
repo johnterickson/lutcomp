@@ -8,16 +8,6 @@ use crate::*;
 use crate::il::*;
 use crate::optimize::optimize_assembly;
 
-impl From<Number> for Value {
-    fn from(n: Number) -> Self {
-        match n {
-            Number::U8(n) => Value::Constant8(n),
-            Number::U16(_) => todo!(),
-            Number::U32(n) => Value::Constant32(n),
-        }
-    }
-}
-
 pub struct BackendProgram<'a> {
     pub frontend_context: &'a ProgramContext,
     pub il: &'a IlProgram,

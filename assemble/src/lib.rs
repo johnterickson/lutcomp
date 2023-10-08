@@ -46,6 +46,16 @@ impl From<Register> for Value {
     }
 }
 
+impl From<Number> for Value {
+    fn from(n: Number) -> Self {
+        match n {
+            Number::U8(n) => Value::Constant8(n),
+            Number::U16(_) => todo!(),
+            Number::U32(n) => Value::Constant32(n),
+        }
+    }
+}
+
 impl Value {
     pub fn size(&self) -> u32 {
         match self {

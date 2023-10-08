@@ -1420,6 +1420,31 @@ mod tests {
             TestVar::Num(Number::U32(TestComputer::arg_base_addr() + offset))
         }
 
+        pub fn setup_args(ins: &Vec<TestVar>) -> (Vec<Number>, BTreeMap<u32,u8>) {
+            let mut ptr = Self::arg_base_addr();
+            let mut args = Vec::new();
+            let mut mem = BTreeMap::new();
+            for input in ins {
+                if let Some(bytes) = match input {
+                    TestVar::Ascii(s) => Some(*s),
+                    TestVar::String(s) => Some(s.as_bytes()),
+                    TestVar::Ptr(s) => Some(s.as_slice()),
+                    TestVar::Num(n) => { args.push(*n); None}
+                } {
+                    let arg_base = ptr;
+                    for b in bytes {
+                        mem.insert(ptr, *b);
+                        ptr += 1;
+                    }
+                    args.push(Number::U32(arg_base));
+
+                    ptr = (ptr+3)/4*4; // round up
+                    ptr += 4; // add buffer
+                }
+            }
+            (args, mem)
+        }
+
         pub fn from_rom(rom: &'a Image) -> TestComputer<'a> {
             TestComputer{
                 comp: Computer::from_image(Cow::Borrowed(&rom), false),
@@ -1570,27 +1595,7 @@ mod tests {
         out_type: NumberType) -> (TestComputer<'a>, Number)
     {
         check_args_by_il_type(ctxt, ins, out_type);
-        let mut ptr = TestComputer::arg_base_addr();
-        let mut args = Vec::new();
-        let mut mem = BTreeMap::new();
-        for input in ins {
-            if let Some(bytes) = match input {
-                TestVar::Ascii(s) => Some(*s),
-                TestVar::String(s) => Some(s.as_bytes()),
-                TestVar::Ptr(s) => Some(s.as_slice()),
-                TestVar::Num(n) => { args.push(*n); None}
-            } {
-                let arg_base = ptr;
-                for b in bytes {
-                    mem.insert(ptr, *b);
-                    ptr += 1;
-                }
-                args.push(Number::U32(arg_base));
-
-                ptr = (ptr+3)/4*4; // round up
-                ptr += 4; // add buffer
-            }
-        }
+        let (args, mut mem) = TestComputer::setup_args(ins);
 
         let mut c = TestComputer::from_rom(&rom);
         for (addr, b) in &mem {

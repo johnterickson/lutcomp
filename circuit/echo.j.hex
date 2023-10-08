@@ -42,6 +42,7 @@ v2.0 raw
 # In IlFunctionId("Keyboard_poll"), var `inline_Keyboard_poll_queue_push_5_t4d4f` is written to, but never read. Removing the instruction that writes to it: (inline_Keyboard_poll_queue_push_5_t4d4f <- 0n987392/0x000f1100u32 , Some('/lutcomp/programs/lib/Queue.j':(26,5)), SourceContext { contexts: ["Assign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Ident(\"s\")", "# In IlFunctionId(\"Keyboard_poll\"), replacing `inline_Keyboard_poll_queue_push_5_t4d4f <- inline_Keyboard_poll_queue_push_5_s U32` with constant `inline_Keyboard_poll_queue_push_5_t4d4f <- 0n987392/0x000f1100u32 `."] })
 # In IlFunctionId("Keyboard_poll"), var `inline_Keyboard_poll_queue_push_5_t4d4f` is written to, but never read. Removing the instruction that writes to it: (inline_Keyboard_poll_queue_push_5_t4d4f <- 0n987392/0x000f1100u32 , Some('/lutcomp/programs/lib/Queue.j':(25,5)), SourceContext { contexts: ["Assign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })", "Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }", "Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }", "PtrFieldDeref(\"s\", \"last\")", "PtrFieldDeref(\"s\", \"last\")", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Ident(\"s\")", "# In IlFunctionId(\"Keyboard_poll\"), replacing `inline_Keyboard_poll_queue_push_5_t4d4f <- inline_Keyboard_poll_queue_push_5_s U32` with constant `inline_Keyboard_poll_queue_push_5_t4d4f <- 0n987392/0x000f1100u32 `."] })
 # In IlFunctionId("Keyboard_poll"), var `tfff6` is written to, but never read. Removing the instruction that writes to it: (tfff6 <- 0n987392/0x000f1100u32 , Some('/lutcomp/programs/lib/Keyboard.j':(31,5)), SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"stdin\")), Ident(\"c\")] }) }", "Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"stdin\")), Ident(\"c\")] })", "Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"stdin\")), Ident(\"c\")] })", "AddressOf(Ident(\"stdin\"))", "AddressOf(Ident(\"stdin\"))", "Number(0n987392/0x000f1100u32)"] })
+# In IlFunctionId("Keyboard_poll"), removing no-op goto instruction #48: goto inline_Keyboard_poll_queue_push_5_function_end_queue_push
 # In IlFunctionId("main"), resolved the constant val `Number(0n987392/0x000f1100u32)` for var `inline_main_getchar_7_inline_getchar_queue_pop_4_s`.
 # In IlFunctionId("main"), resolved the constant val `Number(0n987392/0x000f1100u32)` for var `inline_main_getchar_7_inline_getchar_queue_pop_4_t4d4f`.
 # In IlFunctionId("main"), resolved the constant val `Number(0n987648/0x000f1200u32)` for var `inline_main_getchar_7_inline_getchar_queue_pop_4_tb702`.
@@ -77,6 +78,9 @@ v2.0 raw
 # In IlFunctionId("main"), var `inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f` is written to, but never read. Removing the instruction that writes to it: (inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f <- 0n987392/0x000f1100u32 , Some('/lutcomp/programs/lib/Queue.j':(25,5)), SourceContext { contexts: ["Assign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })", "Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }", "Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }", "PtrFieldDeref(\"s\", \"last\")", "PtrFieldDeref(\"s\", \"last\")", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }", "Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }", "Ident(\"s\")", "# In IlFunctionId(\"main\"), replacing `inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f <- inline_main_getchar_7_inline_getchar_queue_push_6_s U32` with constant `inline_main_getchar_7_inline_getchar_queue_push_6_t4d4f <- 0n987392/0x000f1100u32 `."] })
 # In IlFunctionId("main"), var `inline_main_getchar_7_tfff6` is written to, but never read. Removing the instruction that writes to it: (inline_main_getchar_7_tfff6 <- 0n987392/0x000f1100u32 , Some('/lutcomp/programs/lib/stdio.j':(21,5)), SourceContext { contexts: ["Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"stdin\"))] }) }", "Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"stdin\"))] })", "AddressOf(Ident(\"stdin\"))", "AddressOf(Ident(\"stdin\"))", "Number(0n987392/0x000f1100u32)"] })
 # In IlFunctionId("main"), var `inline_main_getchar_7_tfff6` is written to, but never read. Removing the instruction that writes to it: (inline_main_getchar_7_tfff6 <- 0n987392/0x000f1100u32 , Some('/lutcomp/programs/lib/stdio.j':(21,5)), SourceContext { contexts: ["VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"stdin\")), TtyIn] }) }", "Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"stdin\")), TtyIn] })", "Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"stdin\")), TtyIn] })", "AddressOf(Ident(\"stdin\"))", "AddressOf(Ident(\"stdin\"))", "Number(0n987392/0x000f1100u32)"] })
+# In IlFunctionId("main"), removing no-op goto instruction #92: goto inline_main_getchar_7_function_end_getchar
+# In IlFunctionId("main"), removing no-op goto instruction #86: goto inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop
+# In IlFunctionId("main"), removing no-op goto instruction #48: goto inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push
 # IlFunctionId("Keyboard_poll")()
 #  Some(t861f) <= call io_ready_to_read() # Some('/lutcomp/programs/lib/Keyboard.j':(16,5))
 #  t5ea1 <- t861f BitwiseAnd Number(0n4/0x04u8) # Some('/lutcomp/programs/lib/Keyboard.j':(16,5))
@@ -126,7 +130,6 @@ v2.0 raw
 #  inline_Keyboard_poll_queue_push_5_t3ee <- mem[inline_Keyboard_poll_queue_push_5_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  inline_Keyboard_poll_queue_push_5_tf3c4 <- inline_Keyboard_poll_queue_push_5_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  mem[inline_Keyboard_poll_queue_push_5_tc1ff] <- inline_Keyboard_poll_queue_push_5_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-#  goto inline_Keyboard_poll_queue_push_5_function_end_queue_push # None
 #  :inline_Keyboard_poll_queue_push_5_function_end_queue_push # None
 #  goto Keyboard_poll_if_end_6 # Some('/lutcomp/programs/lib/Keyboard.j':(31,5))
 #  :Keyboard_poll_if_else_0_8 # Some('/lutcomp/programs/lib/Keyboard.j':(31,5))
@@ -236,7 +239,6 @@ v2.0 raw
 #  inline_main_getchar_7_inline_getchar_queue_push_6_t3ee <- mem[inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  inline_main_getchar_7_inline_getchar_queue_push_6_tf3c4 <- inline_main_getchar_7_inline_getchar_queue_push_6_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #  mem[inline_main_getchar_7_inline_getchar_queue_push_6_tc1ff] <- inline_main_getchar_7_inline_getchar_queue_push_6_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-#  goto inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push # None
 #  :inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push # None
 #  goto inline_main_getchar_7_getchar_if_end_3 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
 #  :inline_main_getchar_7_getchar_if_else_0_5 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
@@ -274,13 +276,11 @@ v2.0 raw
 #  mem[inline_main_getchar_7_inline_getchar_queue_pop_4_tb702] <- inline_main_getchar_7_inline_getchar_queue_pop_4_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #  inline_main_getchar_7_inline_getchar_queue_pop_4_t44ed <- inline_main_getchar_7_inline_getchar_queue_pop_4_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
 #  inline_main_getchar_7_ch <- inline_main_getchar_7_inline_getchar_queue_pop_4_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-#  goto inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(20,5))
 #  :inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop # None
 #  goto inline_main_getchar_7_getchar_while_predicate_0 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
 #  :inline_main_getchar_7_getchar_while_end_2 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
 #  inline_main_getchar_7_tdcd9 <- inline_main_getchar_7_ch U8 # Some('/lutcomp/programs/lib/stdio.j':(31,5))
 #  ch <- inline_main_getchar_7_tdcd9 U8 # Some('/lutcomp/programs/lib/stdio.j':(31,5))
-#  goto inline_main_getchar_7_function_end_getchar # Some('/lutcomp/programs/lib/stdio.j':(31,5))
 #  :inline_main_getchar_7_function_end_getchar # None
 #  tdcd9 <- ch U8 # Some('programs/test/echo.j':(9,5))
 #  ttyout <- tdcd9 # Some('programs/test/echo.j':(9,5))
@@ -1973,9 +1973,6 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
 06 10 24 
 
-# goto inline_Keyboard_poll_queue_push_5_function_end_queue_push None
-# Return { value: None }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_Keyboard_poll_queue_push_5_function_end_queue_push None\nReturn { value: None }\n", opcode: JmpImm, args: [Label24(inline_Keyboard_poll_queue_push_5_function_end_queue_push)], resolved: None }
 # :inline_Keyboard_poll_queue_push_5_function_end_queue_push None
 # inline_Keyboard_poll_queue_push_5_function_end_queue_push
 # goto Keyboard_poll_if_end_6 Some('/lutcomp/programs/lib/Keyboard.j':(31,5))
@@ -2594,7 +2591,7 @@ ff
 #       if ta97f == ta97f then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/echo.j':(9,5))
 #       While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [TtyOut { value: Number(0n62/0x3eu8) }, TtyOut { value: Number(0n58/0x3au8) }, Assign { target: Ident("ch"), var_type: None, value: Number(0n0/0x00u8) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n10/0x0au8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }] }] }
 #       Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }
-70 eb 06 00 
+70 e7 06 00 
 
 # :main_while_body_1 Some('programs/test/echo.j':(9,5))
 # While { predicate: Comparison { op: Equals, left: Number(0n0/0x00u8), right: Number(0n0/0x00u8) }, while_true: [TtyOut { value: Number(0n62/0x3eu8) }, TtyOut { value: Number(0n58/0x3au8) }, Assign { target: Ident("ch"), var_type: None, value: Number(0n0/0x00u8) }, While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n10/0x0au8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }] }] }
@@ -2678,7 +2675,7 @@ ff
 #       if tdcd9 != t25ee then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/echo.j':(9,5))
 #       While { predicate: Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n10/0x0au8) }, while_true: [Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "getchar", parameters: [] }) }, TtyOut { value: Ident("ch") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }] }
 #       Comparison { op: NotEquals, left: Ident("ch"), right: Number(0n10/0x0au8) }
-72 e7 06 00 
+72 e3 06 00 
 
 # Optimized away unconditional jump to the next instruction: Instruction { source: "if tdcd9 != t25ee then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/echo.j':(9,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"ch\"), right: Number(0n10/0x0au8) }, while_true: [Assign { target: Ident(\"ch\"), var_type: None, value: Call(Call { function: \"getchar\", parameters: [] }) }, TtyOut { value: Ident(\"ch\") }, IfElse { if_blocks: [(Comparison { op: Equals, left: Ident(\"ch\"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }] }\nComparison { op: NotEquals, left: Ident(\"ch\"), right: Number(0n10/0x0au8) }\n", opcode: JmpImm, args: [Label24(main_while_body_4)], resolved: None }
 # :main_while_body_4 Some('programs/test/echo.j':(9,5))
@@ -2731,7 +2728,7 @@ ff
 #       if inline_main_getchar_7_tdcd9 == inline_main_getchar_7_ta97f then 'inline_main_getchar_7_getchar_while_body_1' else 'inline_main_getchar_7_getchar_while_end_2' Some('/lutcomp/programs/lib/stdio.j':(21,5))
 #       While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(BitwiseAnd, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(0n1/0x01u8)), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }]), (Comparison { op: NotEquals, left: Ident("keyboard_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }])], else_block: [] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n0/0x00u8) }
-70 c1 06 00 
+70 bd 06 00 
 
 # :inline_main_getchar_7_getchar_while_body_1 Some('/lutcomp/programs/lib/stdio.j':(21,5))
 # While { predicate: Comparison { op: Equals, left: Ident("ch"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Arithmetic(BitwiseAnd, Call(Call { function: "io_ready_to_read", parameters: [] }), Number(0n1/0x01u8)), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("stdin")), TtyIn] }) }]), (Comparison { op: NotEquals, left: Ident("keyboard_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "Keyboard_poll", parameters: [] }) }])], else_block: [] }, Assign { target: Ident("ch"), var_type: None, value: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("stdin"))] }) }] }
@@ -2964,9 +2961,6 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
 06 2d 44 
 
-# goto inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push None
-# Return { value: None }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push None\nReturn { value: None }\n", opcode: JmpImm, args: [Label24(inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push)], resolved: None }
 # :inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push None
 # inline_main_getchar_7_inline_getchar_queue_push_6_function_end_queue_push
 # goto inline_main_getchar_7_getchar_if_end_3 Some('/lutcomp/programs/lib/stdio.j':(21,5))
@@ -3157,7 +3151,7 @@ ff
 # 0067a JmpImm [Label24(inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop)]
 #       goto inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
-70 bd 06 00 
+70 b9 06 00 
 
 # goto inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_end_0 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # 0067e JmpImm [Label24(inline_main_getchar_7_inline_getchar_queue_pop_4_queue_pop_if_end_0)]
@@ -3345,17 +3339,10 @@ ff
 # inline_main_getchar_7_ch <- inline_main_getchar_7_inline_getchar_queue_pop_4_t44ed U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))
 # Return { value: Some(Ident("value")) }
 # optimized away noop copy Instruction { source: "inline_main_getchar_7_ch <- inline_main_getchar_7_inline_getchar_queue_pop_4_t44ed U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))\nReturn { value: Some(Ident(\"value\")) }\n", opcode: Copy8, args: [Register(0x2d), Register(0x2d)], resolved: None }
-# goto inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# Return { value: Some(Ident("value")) }
-# 006b9 JmpImm [Label24(inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop)]
-#       goto inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(20,5))
-#       Return { value: Some(Ident("value")) }
-70 bd 06 00 
-
 # :inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop None
 # inline_main_getchar_7_inline_getchar_queue_pop_4_function_end_queue_pop
 # goto inline_main_getchar_7_getchar_while_predicate_0 Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 006bd JmpImm [Label24(inline_main_getchar_7_getchar_while_predicate_0)]
+# 006b9 JmpImm [Label24(inline_main_getchar_7_getchar_while_predicate_0)]
 #       goto inline_main_getchar_7_getchar_while_predicate_0 Some('/lutcomp/programs/lib/stdio.j':(21,5))
 70 ca 05 00 
 
@@ -3368,15 +3355,12 @@ ff
 # ch <- inline_main_getchar_7_tdcd9 U8 Some('/lutcomp/programs/lib/stdio.j':(31,5))
 # Return { value: Some(Ident("ch")) }
 # optimized away noop copy Instruction { source: "ch <- inline_main_getchar_7_tdcd9 U8 Some('/lutcomp/programs/lib/stdio.j':(31,5))\nReturn { value: Some(Ident(\"ch\")) }\n", opcode: Copy8, args: [Register(0x2d), Register(0x2d)], resolved: None }
-# goto inline_main_getchar_7_function_end_getchar Some('/lutcomp/programs/lib/stdio.j':(31,5))
-# Return { value: Some(Ident("ch")) }
-# Optimized away unconditional jump to the next instruction: Instruction { source: "goto inline_main_getchar_7_function_end_getchar Some('/lutcomp/programs/lib/stdio.j':(31,5))\nReturn { value: Some(Ident(\"ch\")) }\n", opcode: JmpImm, args: [Label24(inline_main_getchar_7_function_end_getchar)], resolved: None }
 # :inline_main_getchar_7_function_end_getchar None
 # inline_main_getchar_7_function_end_getchar
 # tdcd9 <- ch U8 Some('programs/test/echo.j':(9,5))
 # TtyOut { value: Ident("ch") }
 # Ident("ch")
-# 006c1 Copy8 [Register(0x2d), Register(0x34)]
+# 006bd Copy8 [Register(0x2d), Register(0x34)]
 #       tdcd9 <- ch U8 Some('programs/test/echo.j':(9,5))
 #       TtyOut { value: Ident("ch") }
 #       Ident("ch")
@@ -3384,7 +3368,7 @@ ff
 
 # ttyout <- tdcd9 Some('programs/test/echo.j':(9,5))
 # TtyOut { value: Ident("ch") }
-# 006c4 Out0 [Register(0x34)]
+# 006c0 Out0 [Register(0x34)]
 #       ttyout <- tdcd9 Some('programs/test/echo.j':(9,5))
 #       TtyOut { value: Ident("ch") }
 68 34 
@@ -3393,7 +3377,7 @@ ff
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
 # Ident("ch")
-# 006c6 Copy8 [Register(0x2d), Register(0x34)]
+# 006c2 Copy8 [Register(0x2d), Register(0x34)]
 #       tdcd9 <- ch U8 Some('programs/test/echo.j':(9,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
@@ -3404,7 +3388,7 @@ ff
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
 # Number(0n113/0x71u8)
-# 006c9 LoadImm8 [Register(0x3c), Constant8(0x71=113)]
+# 006c5 LoadImm8 [Register(0x3c), Constant8(0x71=113)]
 #       tdf6e <- 0n113/0x71u8  Some('programs/test/echo.j':(9,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
@@ -3414,23 +3398,23 @@ ff
 # if tdcd9 == tdf6e then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/echo.j':(9,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
-# 006cc Cmp8 [Register(0x34), Register(0x3c)]
+# 006c8 Cmp8 [Register(0x34), Register(0x3c)]
 #       if tdcd9 == tdf6e then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/echo.j':(9,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
 15 34 3c 
 
-# 006cf JzImm [Label24(main_if_true_0_7)]
+# 006cb JzImm [Label24(main_if_true_0_7)]
 #       if tdcd9 == tdf6e then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/echo.j':(9,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
-72 d7 06 00 
+72 d3 06 00 
 
-# 006d3 JmpImm [Label24(main_if_else_0_8)]
+# 006cf JmpImm [Label24(main_if_else_0_8)]
 #       if tdcd9 == tdf6e then 'main_if_true_0_7' else 'main_if_else_0_8' Some('programs/test/echo.j':(9,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }
-70 e3 06 00 
+70 df 06 00 
 
 # :main_if_true_0_7 Some('programs/test/echo.j':(9,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: Ident("ch"), right: Number(0n113/0x71u8) }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
@@ -3438,7 +3422,7 @@ ff
 # ta97f <- 0n0/0x00u8  Some('programs/test/echo.j':(9,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
 # Number(0n0/0x00u8)
-# 006d7 LoadImm8 [Register(0x2d), Constant8(0x00=0)]
+# 006d3 LoadImm8 [Register(0x2d), Constant8(0x00=0)]
 #       ta97f <- 0n0/0x00u8  Some('programs/test/echo.j':(9,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
 #       Number(0n0/0x00u8)
@@ -3446,33 +3430,33 @@ ff
 
 # return Some(ta97f) Some('programs/test/echo.j':(9,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
-# 006da Copy8 [Register(0x2d), Register(0x00)]
+# 006d6 Copy8 [Register(0x2d), Register(0x00)]
 #       return Some(ta97f) Some('programs/test/echo.j':(9,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
 0b 2d 00 
 
-# 006dd JmpMem [Register(0x0c)]
+# 006d9 JmpMem [Register(0x0c)]
 #       PseudoReturn
 75 0c 
 
 # goto main_if_end_6 Some('programs/test/echo.j':(9,5))
-# 006df JmpImm [Label24(main_if_end_6)]
+# 006db JmpImm [Label24(main_if_end_6)]
 #       goto main_if_end_6 Some('programs/test/echo.j':(9,5))
-70 e3 06 00 
+70 df 06 00 
 
 # :main_if_else_0_8 Some('programs/test/echo.j':(9,5))
 # main_if_else_0_8
 # :main_if_end_6 Some('programs/test/echo.j':(9,5))
 # main_if_end_6
 # goto main_while_predicate_3 Some('programs/test/echo.j':(9,5))
-# 006e3 JmpImm [Label24(main_while_predicate_3)]
+# 006df JmpImm [Label24(main_while_predicate_3)]
 #       goto main_while_predicate_3 Some('programs/test/echo.j':(9,5))
 70 ba 05 00 
 
 # :main_while_end_5 Some('programs/test/echo.j':(9,5))
 # main_while_end_5
 # goto main_while_predicate_0 Some('programs/test/echo.j':(9,5))
-# 006e7 JmpImm [Label24(main_while_predicate_0)]
+# 006e3 JmpImm [Label24(main_while_predicate_0)]
 #       goto main_while_predicate_0 Some('programs/test/echo.j':(9,5))
 70 9c 05 00 
 
@@ -3481,7 +3465,7 @@ ff
 # :function_end_main None
 # function_end_main
 # Unreachable None
-# 006eb Halt [Constant32(0x10000000=268435456)]
+# 006e7 Halt [Constant32(0x10000000=268435456)]
 #       Unreachable None
 7e 00 00 00 10 
 

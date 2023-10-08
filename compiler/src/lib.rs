@@ -1,7 +1,6 @@
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
-use packed_struct::PrimitiveEnum;
 use pest::Parser;
 
 extern crate strum;
@@ -44,7 +43,6 @@ use sim::*;
 pub fn print_state(c: &Computer) {
     let pc = u32::from_le_bytes(c.pc);
     //let pc_byte = *c.mem_byte_mut(pc);
-    let op = Opcode::from_primitive(c.ir0);
     print!("pc:{:05x}", pc);
 
     if (0..4).into_iter().all(|i| c.regs_written[(REG_SP+i) as usize]) {
@@ -86,14 +84,8 @@ pub fn print_state(c: &Computer) {
         }
         
     }
-    if let Some(pc) = c.ir0_pc {
-        print!(" ir0:{:?}", &op);
-        if let Some(o) = Opcode::from_primitive(c.ir0) {
-            for (i, _size) in o.expected_arg_sizes().iter().enumerate() {
-                print!(" arg{}:{:x}", i, c.mem_byte(pc + 1 + i as u32));
-            }
-        }
-    }
+    print!("{:?}", CurrentInstruction(&c));
+    
     println!();
     // println!(
     //     " r0:{:08x} r4:{:08x} r8:{:08x} r10:{:08x} r14:{:08x} ir0:{:?}",
