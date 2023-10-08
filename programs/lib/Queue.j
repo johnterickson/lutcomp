@@ -1,4 +1,4 @@
-struct Queue {
+struct [align 0x100] Queue {
     values: u8[0x100];
     first: u8;
     last: u8;

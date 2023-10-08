@@ -187,6 +187,15 @@ pub enum Type {
 }
 
 impl Type {
+    pub fn alignment(&self, ctxt: &ProgramContext) -> u32 {
+        match self {
+            Type::Void => todo!(),
+            Type::Number(n) => n.byte_count(),
+            Type::Ptr(_) => 4,
+            Type::Struct(type_name) => ctxt.struct_types[type_name].alignment.unwrap_or(4),
+            Type::Array(inner, _) => std::cmp::max(inner.alignment(ctxt), 4),
+        }
+    }
     pub fn get_number_type(&self) -> Option<NumberType> {
         match self {
             Type::Number(nt) => Some(*nt),

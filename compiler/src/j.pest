@@ -91,17 +91,20 @@ statement = {
     }
 
 inline_attribute = { "inline" }
-attribute = { inline_attribute }
-attributes = { ("[" ~ attribute ~ "]")* }
+function_attribute = { inline_attribute }
+function_attributes = { ("[" ~ function_attribute ~ "]")* }
 
 body = { (statement)+ }
 parameters = { variable_decl? ~ ("," ~ variable_decl)* }
 function_return_type = {"->" ~ variable_type}
-function = {"fn " ~ attributes ~ ident ~ "(" ~ parameters ~ ")" ~ function_return_type? ~ "{" ~ body ~ "}"}
+function = {"fn " ~ function_attributes ~ ident ~ "(" ~ parameters ~ ")" ~ function_return_type? ~ "{" ~ body ~ "}"}
 
+align_attribute = { "align" ~ hex_number }
+struct_attribute = { align_attribute }
+struct_attributes = { ("[" ~ struct_attribute ~ "]")* }
 field = { variable_decl }
 fields = { (field ~ ";")+ }
-struct_decl = {"struct" ~ ident ~ "{" ~ fields ~ "}"}
+struct_decl = {"struct" ~ struct_attributes ~ ident ~ "{" ~ fields ~ "}"}
 
 include_path = { (!"'" ~ ANY)+ }
 include = { "!include" ~ "'" ~ include_path ~ "'" }

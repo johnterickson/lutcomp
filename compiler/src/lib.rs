@@ -175,7 +175,32 @@ fn parse_file(path: &Path, input: &str, ctxt: &mut ProgramContext) {
             Rule::struct_decl => {
                 let mut pairs = pair.into_inner();
 
-                let name = pairs.next().unwrap().as_str().to_owned();
+                let mut alignment = None;
+                let mut pair = pairs.next().unwrap();
+
+                if pair.as_rule() == Rule::struct_attributes {
+                    for pair in pair.into_inner() {
+                        assert_eq!(pair.as_rule(), Rule::struct_attribute);
+                        for pair in pair.into_inner() {
+                            match pair.as_rule() {
+                                Rule::align_attribute => {
+                                    let hex_number = pair.into_inner().next().unwrap();
+                                    let hex_number = Expression::parse_number(hex_number);
+                                    alignment = Some(match hex_number.try_get_const() {
+                                        Some(Constant::Number(n)) => n.as_u32(),
+                                        _ => panic!("Could not resolve alignment as constant."),
+                                    });
+                                },
+                                r => panic!("unexpected {:?}", r)
+                            }
+                        }
+                    }
+
+                    pair = pairs.next().unwrap();
+                }
+
+                assert_eq!(pair.as_rule(), Rule::ident);
+                let name = pair.as_str().to_owned();
 
                 let mut fields = Vec::new();
                 for arg in pairs.next().unwrap().into_inner() {
@@ -186,7 +211,7 @@ fn parse_file(path: &Path, input: &str, ctxt: &mut ProgramContext) {
                     fields.push((field_name, field_type));
                 }
 
-                ctxt.struct_types.insert(name, StructDefinition{fields});
+                ctxt.struct_types.insert(name, StructDefinition{fields, alignment});
             },
             Rule::function => {
                 let f = FunctionDefinition::parse(path, &ctxt, pair);

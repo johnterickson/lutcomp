@@ -1151,7 +1151,8 @@ impl IlFunction {
                     }
                 },
                 Scope::Static => {
-                    let location = IlLocation::Static(ctxt.next_static_addr);
+                    let addr = IlProgram::alloc_static(&mut ctxt.next_static_addr, var_type, ctxt.program);
+                    let location = IlLocation::Static(addr);
                     assert!(
                         ctxt.il.statics.insert(
                             (Some(id.clone()), IlVarId(name.clone())),
@@ -1164,10 +1165,6 @@ impl IlFunction {
                             }
                         ).is_none()
                     );
-                    ctxt.next_static_addr += size;
-                    ctxt.next_static_addr += 3;
-                    ctxt.next_static_addr /= 4;
-                    ctxt.next_static_addr *= 4;
                     location
                 },
             };
@@ -1774,6 +1771,15 @@ impl IlProgram {
         self.consts.get(&(Some(f.clone()), v.clone())).or(self.consts.get(&(None, v.clone())))
     }
 
+    fn alloc_static(next_static_addr: &mut u32, var_type: &Type, ctxt: &ProgramContext) -> u32 {
+        let alignment = var_type.alignment(ctxt);
+        let addr = round_up(*next_static_addr, alignment);
+        
+        let byte_count = var_type.byte_count(ctxt);
+        *next_static_addr = addr + byte_count;
+        addr        
+    }
+
     pub fn from_program(ctxt: &ProgramContext) -> IlProgram {
         let mut il = IlProgram {
             entry: IlFunctionId(ctxt.entry.clone()),
@@ -1800,11 +1806,8 @@ impl IlProgram {
         }
 
         for (name, var_type) in &ctxt.statics {
-            let byte_count = var_type.byte_count(ctxt);
-            let space_reserved = round_up(byte_count, 4);
 
-            let addr = next_static_addr;
-            next_static_addr += space_reserved;
+            let addr = Self::alloc_static(&mut next_static_addr, var_type, ctxt);
 
             il.statics.insert(
                 (None, IlVarId(name.clone())),
@@ -1812,7 +1815,7 @@ impl IlProgram {
                     description: format!("global static {:?}", var_type),
                     location: IlLocation::Static(addr),
                     var_type: var_type.clone(),
-                    byte_size: byte_count,
+                    byte_size: var_type.byte_count(ctxt),
                     constant: None,
                 }
             );

@@ -2,7 +2,8 @@ use super::*;
 
 #[derive(Debug)]
 pub struct StructDefinition {
-    pub fields: Vec<(String,Type)>
+    pub fields: Vec<(String,Type)>,
+    pub alignment: Option<u32>,
 }
 
 impl StructDefinition {

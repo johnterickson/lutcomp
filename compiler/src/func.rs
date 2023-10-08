@@ -120,7 +120,7 @@ impl FunctionDefinition {
 
         let mut pair = pairs.next().unwrap();
 
-        if pair.as_rule() == Rule::attributes {
+        if pair.as_rule() == Rule::function_attributes {
             for pair in pair.into_inner() {
                 attributes.insert(FunctionAttribute::parse(pair.as_str()).unwrap());
             }
