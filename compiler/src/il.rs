@@ -48,6 +48,12 @@ pub enum IlInstruction {
 }
 
 impl IlInstruction {
+    pub fn is_branch(&self) -> bool {
+        match self {
+            IlInstruction::Goto(..) | IlInstruction::Call { .. } => true,
+            _ => false,
+        }
+    }
     pub fn has_side_effects(&self) -> bool {
         match self {
             IlInstruction::WriteMemory {..} | 
@@ -1260,7 +1266,11 @@ impl IlFunction {
     }
     
     fn optimize(&mut self) {
-        while self.optimze_round() {}
+        let mut round = 0;
+        while self.optimze_round() {
+            println!("# In {:?}, optimizing round #{}", self.id, round);
+            round += 1;
+        }
     }
 
     fn optimze_round(&mut self) -> bool {
@@ -1441,6 +1451,55 @@ impl IlFunction {
             }
 
             if !no_op_goto_indices.is_empty() {
+                return true;
+            }
+        }
+
+        // remove duplicate writes of consts within a block
+        {
+            let mut to_remove_indices = BTreeSet::new();
+            let mut block_start = 0;
+            for (i, (il, _, _)) in self.body.iter().enumerate() {
+                if !il.is_branch() {
+                    continue;
+                }
+
+                let block_end = i;
+
+                for (v, info) in &self.vars {
+                    if info.constant.is_none() {
+                        continue;
+                    }
+
+                    let writes_in_block: BTreeSet<_> = refs[v].write_indices.iter()
+                        .filter(|i| block_start <= **i && **i <= block_end)
+                        .cloned()
+                        .collect();
+                    if writes_in_block.len() < 2 {
+                        continue;
+                    }
+                    let mut previous_write_index: Option<usize> = None;
+                    for write_index in writes_in_block {
+                        if let Some(prev) = previous_write_index {
+                            if self.body[prev].0 == self.body[write_index].0 {
+                                println!("# In {:?}, in block from {}..={}, removing repetitive write at {} because it is the same as at {}: {:?}", 
+                                    self.id, block_start, block_end, write_index, prev, self.body[write_index].0);
+                                to_remove_indices.insert(write_index);
+                            }
+                        }
+
+                        previous_write_index = Some(write_index);
+                    }
+                }
+
+                block_start = i;
+            }
+
+            for index in to_remove_indices.iter().rev() {
+                let _ = self.body.remove(*index);
+            }
+
+            if !to_remove_indices.is_empty() {
                 return true;
             }
         }
