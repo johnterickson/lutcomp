@@ -48,12 +48,13 @@ pub enum IlInstruction {
 }
 
 impl IlInstruction {
-    pub fn is_branch(&self) -> bool {
+    pub fn is_branch_or_label(&self) -> bool {
         match self {
-            IlInstruction::Goto(..) | IlInstruction::Call { .. } => true,
+            IlInstruction::Goto(..) | IlInstruction::IfThenElse { .. } | IlInstruction::Label(_) => true,
             _ => false,
         }
     }
+
     pub fn has_side_effects(&self) -> bool {
         match self {
             IlInstruction::WriteMemory {..} | 
@@ -152,8 +153,8 @@ impl Display for IlFunction {
             write!(f, "{:?},", a)?;
         }
         writeln!(f, ")")?;
-        for (il, src, _) in &self.body {
-            writeln!(f, "#  {:?} # {:?}", il, src)?;
+        for (i, (il, src, _)) in self.body.iter().enumerate() {
+            writeln!(f, "# {:02}: {:?} # {:?}", i, il, src)?;
         }
         Ok(())
     }
@@ -1455,16 +1456,66 @@ impl IlFunction {
             }
         }
 
+        // merge back-to-back labels
+        {
+            let mut duplicate_label_indices = Vec::new();
+            for (first_index, pair) in self.body.as_slice().windows(2).enumerate() {
+                match (&pair[0].0, &pair[1].0) {
+                    (IlInstruction::Label(_), IlInstruction::Label(_)) => {
+                        duplicate_label_indices.push(first_index);
+                    }
+                    _ => {}
+                }
+            }
+
+            for first_index in duplicate_label_indices.iter().rev() {
+                let old_labels = [
+                    self.body[*first_index + 0].0.labels_mut()[0].clone(),
+                    self.body[*first_index + 1].0.labels_mut()[0].clone(),
+                ];
+                let new_label = if old_labels.iter().any(|l| l == &self.end_label) {
+                    self.end_label.clone()
+                } else if old_labels[0].0.len() < old_labels[1].0.len() {
+                    old_labels[0].clone()
+                } else if old_labels[0].0.len() > old_labels[1].0.len() {
+                    old_labels[1].clone()
+                } else {
+                    IlLabelId(format!("{}_MERGED_{}", old_labels[0].0, old_labels[1].0))
+                };
+
+                println!("# In {:?}, merging duplicate labels at #{} && #{}: '{:?}' and '{:?}' to '{:?}'",
+                    self.id, first_index, first_index + 1, old_labels[0], old_labels[1], &new_label);
+                for (inst, _, _) in self.body.iter_mut() {
+                    for l in inst.labels_mut() {
+                        if old_labels.iter().any(|old| old == l) {
+                            *l = new_label.clone();
+                        }
+                    }
+                }
+
+                self.body.remove(*first_index + 1);
+                self.labels.remove(&old_labels[0]);
+                self.labels.remove(&old_labels[1]);
+                self.labels.insert(new_label);
+            }
+
+            if !duplicate_label_indices.is_empty() {
+                return true;
+            }
+        }
+
         // remove duplicate writes of consts within a block
         {
             let mut to_remove_indices = BTreeSet::new();
             let mut block_start = 0;
             for (i, (il, _, _)) in self.body.iter().enumerate() {
-                if !il.is_branch() {
+                if !il.is_branch_or_label() {
                     continue;
                 }
 
                 let block_end = i;
+
+                // println!("# found block {}..={}", block_start, block_end);
 
                 for (v, info) in &self.vars {
                     if info.constant.is_none() {
@@ -1678,6 +1729,16 @@ pub struct IlUsagesMut<'a> {
 }
 
 impl IlInstruction {
+    pub fn labels_mut(&mut self) -> Vec<&mut IlLabelId> {
+        match self {
+            IlInstruction::Label(l) |
+            IlInstruction::Goto(l) => vec![l],
+            IlInstruction::IfThenElse { left: _, op: _, right: _, then_label, else_label } => 
+                vec![then_label, else_label],
+            _ => vec![],                
+        }
+    }
+
     pub fn var_usages(&self) -> IlUsages {
         let (srcs, dest) = match self {
             IlInstruction::Unreachable | IlInstruction::Comment(_) => (vec![], None),
