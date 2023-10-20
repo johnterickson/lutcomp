@@ -17,7 +17,7 @@ v2.0 raw
 # In IlFunctionId("main"), removing no-op goto instruction #28: goto main_if_end_6
 # In IlFunctionId("main"), optimizing round #6
 # In IlFunctionId("queue_init"), optimizing round #0
-# In IlFunctionId("queue_init"), in block from 0..=9, removing repetitive write at 6 because it is the same as at 2: ta97f <- 0n0/0x00u8 
+# In IlFunctionId("queue_init"), in block from 0..9, removing repetitive write at 6 because it is the same as at 2: ta97f <- 0n0/0x00u8 
 # In IlFunctionId("queue_init"), optimizing round #1
 # In IlFunctionId("queue_pop"), optimizing round #0
 # In IlFunctionId("queue_pop"), `s` is never written to, but is copied to `t565a` - which is also never modified. Replacing refs to latter with the former and deleting the copy: t565a <- s U32
@@ -52,8 +52,8 @@ v2.0 raw
 # In IlFunctionId("queue_simple"), `x` is never written to, but is copied to `tad57` - which is also never modified. Replacing refs to latter with the former and deleting the copy: tad57 <- x U8
 # In IlFunctionId("queue_simple"), optimizing round #2
 # In IlFunctionId("queue_simple"), optimizing round #3
-# In IlFunctionId("queue_simple"), in block from 0..=7, removing repetitive write at 2 because it is the same as at 0: t5cf6 <- 0n987136/0x000f1000u32 
-# In IlFunctionId("queue_simple"), in block from 0..=7, removing repetitive write at 4 because it is the same as at 2: t5cf6 <- 0n987136/0x000f1000u32 
+# In IlFunctionId("queue_simple"), in block from 0..7, removing repetitive write at 2 because it is the same as at 0: t5cf6 <- 0n987136/0x000f1000u32 
+# In IlFunctionId("queue_simple"), in block from 0..7, removing repetitive write at 4 because it is the same as at 2: t5cf6 <- 0n987136/0x000f1000u32 
 # In IlFunctionId("queue_simple"), optimizing round #4
 # In IlFunctionId("main"), resolved the constant val `Number(0n987136/0x000f1000u32)` for var `inline_main_queue_init_0_s`.
 # In IlFunctionId("main"), resolved the constant val `Number(0n987136/0x000f1000u32)` for var `inline_main_queue_init_0_t4d4f`.
@@ -157,143 +157,144 @@ v2.0 raw
 # In IlFunctionId("main"), removing no-op goto instruction #26: goto inline_main_queue_push_5_function_end_queue_push
 # In IlFunctionId("main"), removing no-op goto instruction #5: goto inline_main_queue_init_0_function_end_queue_init
 # In IlFunctionId("main"), optimizing round #28
-# In IlFunctionId("main"), in block from 11..=25, removing repetitive write at 20 because it is the same as at 15: inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 
-# In IlFunctionId("main"), in block from 11..=25, removing repetitive write at 21 because it is the same as at 20: inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 
-# In IlFunctionId("main"), in block from 47..=60, removing repetitive write at 53 because it is the same as at 48: inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 
-# In IlFunctionId("main"), in block from 47..=60, removing repetitive write at 54 because it is the same as at 53: inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 
-# In IlFunctionId("main"), in block from 81..=94, removing repetitive write at 87 because it is the same as at 82: inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 
-# In IlFunctionId("main"), in block from 81..=94, removing repetitive write at 88 because it is the same as at 87: inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), removing unreferenced label: :inline_main_queue_init_0_function_end_queue_init
+# In IlFunctionId("main"), removing unreferenced label: :inline_main_queue_push_5_function_end_queue_push
 # In IlFunctionId("main"), optimizing round #29
-# In IlFunctionId("main"), at #43, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_2_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
-# In IlFunctionId("main"), at #42, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_2_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
-# In IlFunctionId("main"), at #37, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
-# In IlFunctionId("main"), at #47, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
-# In IlFunctionId("main"), at #51, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
-# In IlFunctionId("main"), at #53, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_2_tb702] <- inline_main_queue_pop_2_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8
-# In IlFunctionId("main"), at #36, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
-# In IlFunctionId("main"), at #46, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
-# In IlFunctionId("main"), at #39, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_pop_2_tc1ff] U8 -> inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
-# In IlFunctionId("main"), at #38, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
-# In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
-# In IlFunctionId("main"), at #67, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
-# In IlFunctionId("main"), at #75, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_3_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
-# In IlFunctionId("main"), at #74, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_3_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
-# In IlFunctionId("main"), at #69, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
-# In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
-# In IlFunctionId("main"), at #83, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
-# In IlFunctionId("main"), at #85, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_3_tb702] <- inline_main_queue_pop_3_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8
-# In IlFunctionId("main"), at #68, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
-# In IlFunctionId("main"), at #78, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
-# In IlFunctionId("main"), at #71, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_pop_3_tc1ff] U8 -> inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
-# In IlFunctionId("main"), at #70, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
-# In IlFunctionId("main"), at #18, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
-# In IlFunctionId("main"), at #13, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
-# In IlFunctionId("main"), at #16, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
-# In IlFunctionId("main"), at #20, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
-# In IlFunctionId("main"), at #22, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8
-# In IlFunctionId("main"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
-# In IlFunctionId("main"), at #32, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
-# In IlFunctionId("main"), at #89, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
-# In IlFunctionId("main"), at #31, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
-# In IlFunctionId("main"), at #66, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# In IlFunctionId("main"), in block from 10..27, removing repetitive write at 19 because it is the same as at 14: inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 
+# In IlFunctionId("main"), in block from 10..27, removing repetitive write at 20 because it is the same as at 19: inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 
+# In IlFunctionId("main"), in block from 45..58, removing repetitive write at 51 because it is the same as at 46: inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), in block from 45..58, removing repetitive write at 52 because it is the same as at 51: inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), in block from 79..92, removing repetitive write at 85 because it is the same as at 80: inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), in block from 79..92, removing repetitive write at 86 because it is the same as at 85: inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 
 # In IlFunctionId("main"), optimizing round #30
+# In IlFunctionId("main"), at #41, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_2_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
+# In IlFunctionId("main"), at #40, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_2_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# In IlFunctionId("main"), at #35, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# In IlFunctionId("main"), at #45, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# In IlFunctionId("main"), at #49, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# In IlFunctionId("main"), at #51, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_2_tb702] <- inline_main_queue_pop_2_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8
+# In IlFunctionId("main"), at #34, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), at #44, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), at #37, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_pop_2_tc1ff] U8 -> inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# In IlFunctionId("main"), at #36, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+# In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
+# In IlFunctionId("main"), at #65, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
+# In IlFunctionId("main"), at #73, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_3_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
+# In IlFunctionId("main"), at #72, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_3_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# In IlFunctionId("main"), at #67, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# In IlFunctionId("main"), at #77, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# In IlFunctionId("main"), at #83, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_3_tb702] <- inline_main_queue_pop_3_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8
+# In IlFunctionId("main"), at #66, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), at #76, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# In IlFunctionId("main"), at #69, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_pop_3_tc1ff] U8 -> inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# In IlFunctionId("main"), at #68, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+# In IlFunctionId("main"), at #17, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
+# In IlFunctionId("main"), at #12, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
+# In IlFunctionId("main"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# In IlFunctionId("main"), at #19, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# In IlFunctionId("main"), at #21, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8
+# In IlFunctionId("main"), at #14, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+# In IlFunctionId("main"), at #30, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
+# In IlFunctionId("main"), at #87, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
+# In IlFunctionId("main"), at #29, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# In IlFunctionId("main"), at #64, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 # In IlFunctionId("main"), optimizing round #31
+# In IlFunctionId("main"), optimizing round #32
 # IlFunctionId("main")()
 # 00: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(8,5))
 # 01: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(8,5))
 # 02: mem[inline_main_queue_init_0_tb702] <- inline_main_queue_init_0_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(8,5))
 # 03: inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  # Some('/lutcomp/programs/lib/Queue.j':(9,5))
 # 04: mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_init_0_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(9,5))
-# 05: :inline_main_queue_init_0_function_end_queue_init # None
-# 06: n <- 0n1/0x01u8  # Some('programs/test/queue_perf.j':(14,5))
-# 07: :main_while_predicate_0 # Some('programs/test/queue_perf.j':(15,5))
-# 08: t531d <- n U8 # Some('programs/test/queue_perf.j':(15,5))
-# 09: tc7a7 <- 0n11/0x0bu8  # Some('programs/test/queue_perf.j':(15,5))
-# 10: if t531d != tc7a7 then 'main_while_body_1' else 'main_while_end_2' # Some('programs/test/queue_perf.j':(15,5))
-# 11: :main_while_body_1 # Some('programs/test/queue_perf.j':(15,5))
-# 12: t531d <- n U8 # Some('programs/test/queue_perf.j':(15,5))
-# 13: inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  # Some('programs/test/queue_perf.j':(15,5))
-# 14: inline_main_queue_push_5_n <- t531d U8 # Some('programs/test/queue_perf.j':(15,5))
-# 15: inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  # Some('/lutcomp/programs/lib/Queue.j':(25,5))
-# 16: inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(25,5))
-# 17: inline_main_queue_push_5_t5bb7 U32 <- inline_main_queue_push_5_t3ee U8 # Some('/lutcomp/programs/lib/Queue.j':(25,5))
-# 18: inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7) # Some('/lutcomp/programs/lib/Queue.j':(25,5))
-# 19: mem[inline_main_queue_push_5_t2187] <- inline_main_queue_push_5_n U8 # Some('/lutcomp/programs/lib/Queue.j':(25,5))
-# 20: inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-# 21: inline_main_queue_push_5_tf3c4 <- inline_main_queue_push_5_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-# 22: mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-# 23: :inline_main_queue_push_5_function_end_queue_push # None
-# 24: t531d <- n U8 # Some('programs/test/queue_perf.j':(15,5))
-# 25: n <- t531d Add Number(0n1/0x01u8) # Some('programs/test/queue_perf.j':(15,5))
-# 26: goto main_while_predicate_0 # Some('programs/test/queue_perf.j':(15,5))
-# 27: :main_while_end_2 # Some('programs/test/queue_perf.j':(15,5))
-# 28: n <- 0n10/0x0au8  # Some('programs/test/queue_perf.j':(19,5))
-# 29: :main_while_predicate_3 # Some('programs/test/queue_perf.j':(20,5))
-# 30: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
-# 31: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('programs/test/queue_perf.j':(20,5))
-# 32: if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5' # Some('programs/test/queue_perf.j':(20,5))
-# 33: :main_while_body_4 # Some('programs/test/queue_perf.j':(20,5))
-# 34: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
-# 35: inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  # Some('programs/test/queue_perf.j':(20,5))
-# 36: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 37: inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 38: inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 39: inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 40: if inline_main_queue_pop_2_tb6dd == inline_main_queue_pop_2_t3ee then 'inline_main_queue_pop_2_queue_pop_if_true_0_1' else 'inline_main_queue_pop_2_queue_pop_if_end_0' # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 41: :inline_main_queue_pop_2_queue_pop_if_true_0_1 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 42: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 43: t24cd <- inline_main_queue_init_0_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 44: goto inline_main_queue_pop_2_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 45: :inline_main_queue_pop_2_queue_pop_if_end_0 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 46: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 47: inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 48: inline_main_queue_pop_2_tb469 U32 <- inline_main_queue_pop_2_tb6dd U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 49: inline_main_queue_pop_2_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_2_tb469) # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 50: inline_main_queue_pop_2_value <- mem[inline_main_queue_pop_2_tae11] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 51: inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 52: inline_main_queue_pop_2_te468 <- inline_main_queue_pop_2_tb6dd Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 53: mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 54: inline_main_queue_pop_2_t44ed <- inline_main_queue_pop_2_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# 55: t24cd <- inline_main_queue_pop_2_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# 56: :inline_main_queue_pop_2_function_end_queue_pop # None
-# 57: if t531d != t24cd then 'main_if_true_0_7' else 'main_if_end_6' # Some('programs/test/queue_perf.j':(20,5))
-# 58: :main_if_true_0_7 # Some('programs/test/queue_perf.j':(20,5))
-# 59: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
-# 60: return Some(t531d) # Some('programs/test/queue_perf.j':(20,5))
-# 61: :main_if_end_6 # Some('programs/test/queue_perf.j':(20,5))
-# 62: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
-# 63: n <- t531d Subtract Number(0n1/0x01u8) # Some('programs/test/queue_perf.j':(20,5))
-# 64: goto main_while_predicate_3 # Some('programs/test/queue_perf.j':(20,5))
-# 65: :main_while_end_5 # Some('programs/test/queue_perf.j':(20,5))
-# 66: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('programs/test/queue_perf.j':(27,5))
-# 67: inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  # Some('programs/test/queue_perf.j':(27,5))
-# 68: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 69: inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 70: inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 71: inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 72: if inline_main_queue_pop_3_tb6dd == inline_main_queue_pop_3_t3ee then 'inline_main_queue_pop_3_queue_pop_if_true_0_1' else 'inline_main_queue_pop_3_queue_pop_if_end_0' # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 73: :inline_main_queue_pop_3_queue_pop_if_true_0_1 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 74: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 75: t24cd <- inline_main_queue_init_0_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 76: goto inline_main_queue_pop_3_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 77: :inline_main_queue_pop_3_queue_pop_if_end_0 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 78: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 79: inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 80: inline_main_queue_pop_3_tb469 U32 <- inline_main_queue_pop_3_tb6dd U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 81: inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469) # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 82: inline_main_queue_pop_3_value <- mem[inline_main_queue_pop_3_tae11] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 83: inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 84: inline_main_queue_pop_3_te468 <- inline_main_queue_pop_3_tb6dd Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 85: mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 86: inline_main_queue_pop_3_t44ed <- inline_main_queue_pop_3_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# 87: t24cd <- inline_main_queue_pop_3_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# 88: :inline_main_queue_pop_3_function_end_queue_pop # None
-# 89: if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' # Some('programs/test/queue_perf.j':(27,5))
-# 90: :main_if_true_0_10 # Some('programs/test/queue_perf.j':(27,5))
-# 91: t52a0 <- 0n255/0xffu8  # Some('programs/test/queue_perf.j':(27,5))
-# 92: return Some(t52a0) # Some('programs/test/queue_perf.j':(27,5))
-# 93: :function_end_main # Some('programs/test/queue_perf.j':(27,5))
-# 94: Unreachable # None
+# 05: n <- 0n1/0x01u8  # Some('programs/test/queue_perf.j':(14,5))
+# 06: :main_while_predicate_0 # Some('programs/test/queue_perf.j':(15,5))
+# 07: t531d <- n U8 # Some('programs/test/queue_perf.j':(15,5))
+# 08: tc7a7 <- 0n11/0x0bu8  # Some('programs/test/queue_perf.j':(15,5))
+# 09: if t531d != tc7a7 then 'main_while_body_1' else 'main_while_end_2' # Some('programs/test/queue_perf.j':(15,5))
+# 10: :main_while_body_1 # Some('programs/test/queue_perf.j':(15,5))
+# 11: t531d <- n U8 # Some('programs/test/queue_perf.j':(15,5))
+# 12: inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  # Some('programs/test/queue_perf.j':(15,5))
+# 13: inline_main_queue_push_5_n <- t531d U8 # Some('programs/test/queue_perf.j':(15,5))
+# 14: inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  # Some('/lutcomp/programs/lib/Queue.j':(25,5))
+# 15: inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(25,5))
+# 16: inline_main_queue_push_5_t5bb7 U32 <- inline_main_queue_push_5_t3ee U8 # Some('/lutcomp/programs/lib/Queue.j':(25,5))
+# 17: inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7) # Some('/lutcomp/programs/lib/Queue.j':(25,5))
+# 18: mem[inline_main_queue_push_5_t2187] <- inline_main_queue_push_5_n U8 # Some('/lutcomp/programs/lib/Queue.j':(25,5))
+# 19: inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
+# 20: inline_main_queue_push_5_tf3c4 <- inline_main_queue_push_5_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
+# 21: mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
+# 22: t531d <- n U8 # Some('programs/test/queue_perf.j':(15,5))
+# 23: n <- t531d Add Number(0n1/0x01u8) # Some('programs/test/queue_perf.j':(15,5))
+# 24: goto main_while_predicate_0 # Some('programs/test/queue_perf.j':(15,5))
+# 25: :main_while_end_2 # Some('programs/test/queue_perf.j':(15,5))
+# 26: n <- 0n10/0x0au8  # Some('programs/test/queue_perf.j':(19,5))
+# 27: :main_while_predicate_3 # Some('programs/test/queue_perf.j':(20,5))
+# 28: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
+# 29: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('programs/test/queue_perf.j':(20,5))
+# 30: if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5' # Some('programs/test/queue_perf.j':(20,5))
+# 31: :main_while_body_4 # Some('programs/test/queue_perf.j':(20,5))
+# 32: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
+# 33: inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  # Some('programs/test/queue_perf.j':(20,5))
+# 34: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 35: inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 36: inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 37: inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 38: if inline_main_queue_pop_2_tb6dd == inline_main_queue_pop_2_t3ee then 'inline_main_queue_pop_2_queue_pop_if_true_0_1' else 'inline_main_queue_pop_2_queue_pop_if_end_0' # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 39: :inline_main_queue_pop_2_queue_pop_if_true_0_1 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 40: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 41: t24cd <- inline_main_queue_init_0_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 42: goto inline_main_queue_pop_2_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 43: :inline_main_queue_pop_2_queue_pop_if_end_0 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 44: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 45: inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 46: inline_main_queue_pop_2_tb469 U32 <- inline_main_queue_pop_2_tb6dd U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 47: inline_main_queue_pop_2_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_2_tb469) # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 48: inline_main_queue_pop_2_value <- mem[inline_main_queue_pop_2_tae11] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 49: inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 50: inline_main_queue_pop_2_te468 <- inline_main_queue_pop_2_tb6dd Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 51: mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 52: inline_main_queue_pop_2_t44ed <- inline_main_queue_pop_2_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
+# 53: t24cd <- inline_main_queue_pop_2_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
+# 54: :inline_main_queue_pop_2_function_end_queue_pop # None
+# 55: if t531d != t24cd then 'main_if_true_0_7' else 'main_if_end_6' # Some('programs/test/queue_perf.j':(20,5))
+# 56: :main_if_true_0_7 # Some('programs/test/queue_perf.j':(20,5))
+# 57: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
+# 58: return Some(t531d) # Some('programs/test/queue_perf.j':(20,5))
+# 59: :main_if_end_6 # Some('programs/test/queue_perf.j':(20,5))
+# 60: t531d <- n U8 # Some('programs/test/queue_perf.j':(20,5))
+# 61: n <- t531d Subtract Number(0n1/0x01u8) # Some('programs/test/queue_perf.j':(20,5))
+# 62: goto main_while_predicate_3 # Some('programs/test/queue_perf.j':(20,5))
+# 63: :main_while_end_5 # Some('programs/test/queue_perf.j':(20,5))
+# 64: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('programs/test/queue_perf.j':(27,5))
+# 65: inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  # Some('programs/test/queue_perf.j':(27,5))
+# 66: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 67: inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 68: inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 69: inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 70: if inline_main_queue_pop_3_tb6dd == inline_main_queue_pop_3_t3ee then 'inline_main_queue_pop_3_queue_pop_if_true_0_1' else 'inline_main_queue_pop_3_queue_pop_if_end_0' # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 71: :inline_main_queue_pop_3_queue_pop_if_true_0_1 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 72: inline_main_queue_init_0_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 73: t24cd <- inline_main_queue_init_0_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 74: goto inline_main_queue_pop_3_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 75: :inline_main_queue_pop_3_queue_pop_if_end_0 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 76: inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 77: inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 78: inline_main_queue_pop_3_tb469 U32 <- inline_main_queue_pop_3_tb6dd U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 79: inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469) # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 80: inline_main_queue_pop_3_value <- mem[inline_main_queue_pop_3_tae11] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 81: inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 82: inline_main_queue_pop_3_te468 <- inline_main_queue_pop_3_tb6dd Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 83: mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 84: inline_main_queue_pop_3_t44ed <- inline_main_queue_pop_3_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
+# 85: t24cd <- inline_main_queue_pop_3_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
+# 86: :inline_main_queue_pop_3_function_end_queue_pop # None
+# 87: if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' # Some('programs/test/queue_perf.j':(27,5))
+# 88: :main_if_true_0_10 # Some('programs/test/queue_perf.j':(27,5))
+# 89: t52a0 <- 0n255/0xffu8  # Some('programs/test/queue_perf.j':(27,5))
+# 90: return Some(t52a0) # Some('programs/test/queue_perf.j':(27,5))
+# 91: :function_end_main # Some('programs/test/queue_perf.j':(27,5))
+# 92: Unreachable # None
 
 
 # ImageBaseAddress=0x00000000
@@ -408,8 +409,6 @@ v2.0 raw
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Number(0n0/0x00u8) }
 06 10 14 
 
-# :inline_main_queue_init_0_function_end_queue_init None
-# inline_main_queue_init_0_function_end_queue_init
 # n <- 0n1/0x01u8  Some('programs/test/queue_perf.j':(14,5))
 # Assign { target: Ident("n"), var_type: Some(Number(U8)), value: Number(0n1/0x01u8) }
 # Number(0n1/0x01u8)
@@ -468,13 +467,13 @@ v2.0 raw
 # VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("q")), Ident("n")] }) }
 # Call(Call { function: "queue_push", parameters: [AddressOf(Ident("q")), Ident("n")] })
 # # In IlFunctionId("main"), replacing `inline_main_queue_push_5_s <- t5cf6 U32` with constant `inline_main_queue_push_5_s <- 0n987136/0x000f1000u32 `.
-# # In IlFunctionId("main"), at #13, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
+# # In IlFunctionId("main"), at #12, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
 # 00045 LoadImm32 [Register(0x18), Constant32(0x000f1000=987136)]
 #       inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  Some('programs/test/queue_perf.j':(15,5))
 #       VoidExpression { expression: Call(Call { function: "queue_push", parameters: [AddressOf(Ident("q")), Ident("n")] }) }
 #       Call(Call { function: "queue_push", parameters: [AddressOf(Ident("q")), Ident("n")] })
 #       # In IlFunctionId("main"), replacing `inline_main_queue_push_5_s <- t5cf6 U32` with constant `inline_main_queue_push_5_s <- 0n987136/0x000f1000u32 `.
-#       # In IlFunctionId("main"), at #13, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
+#       # In IlFunctionId("main"), at #12, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
 20 18 00 10 0f 00 
 
 # inline_main_queue_push_5_n <- t531d U8 Some('programs/test/queue_perf.j':(15,5))
@@ -495,7 +494,7 @@ v2.0 raw
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32))
 # # In IlFunctionId("main"), replacing `inline_main_queue_push_5_tc1ff <- inline_main_queue_push_5_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 `.
-# # In IlFunctionId("main"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+# # In IlFunctionId("main"), at #14, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
 # 0004e LoadImm32 [Register(0x14), Constant32(0x000f1104=987396)]
 #       inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
@@ -506,7 +505,7 @@ v2.0 raw
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32))
 #       # In IlFunctionId("main"), replacing `inline_main_queue_push_5_tc1ff <- inline_main_queue_push_5_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 `.
-#       # In IlFunctionId("main"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+#       # In IlFunctionId("main"), at #14, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
 20 14 04 11 0f 00 
 
 # inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))
@@ -515,7 +514,7 @@ v2.0 raw
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") })
 # Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") }
 # PtrFieldDeref("s", "last")
-# # In IlFunctionId("main"), at #16, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# # In IlFunctionId("main"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 # 00054 Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
@@ -523,7 +522,7 @@ v2.0 raw
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "last")
-#       # In IlFunctionId("main"), at #16, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+#       # In IlFunctionId("main"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 05 14 20 
 
 # inline_main_queue_push_5_t5bb7 U32 <- inline_main_queue_push_5_t3ee U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))
@@ -551,13 +550,13 @@ v2.0 raw
 # Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") }) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") })
-# # In IlFunctionId("main"), at #18, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
+# # In IlFunctionId("main"), at #17, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
 # 00060 ClearCarry []
 #       inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7) Some('/lutcomp/programs/lib/Queue.j':(25,5))
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") })
-#       # In IlFunctionId("main"), at #18, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
+#       # In IlFunctionId("main"), at #17, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
 03 
 
 # 00061 AddCarry32_1 [Register(0x18), Register(0x24), Register(0x18)]
@@ -565,7 +564,7 @@ v2.0 raw
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") })
-#       # In IlFunctionId("main"), at #18, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
+#       # In IlFunctionId("main"), at #17, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
 30 18 24 18 
 
 # 00065 AddCarry32_2 []
@@ -573,7 +572,7 @@ v2.0 raw
 #       Assign { target: Index("values", PtrFieldDeref("s", "last")), var_type: None, value: Ident("n") }
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "last") })
-#       # In IlFunctionId("main"), at #18, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
+#       # In IlFunctionId("main"), at #17, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)
 31 
 
 # mem[inline_main_queue_push_5_t2187] <- inline_main_queue_push_5_n U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))
@@ -587,13 +586,13 @@ v2.0 raw
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
 # Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8))
 # PtrFieldDeref("s", "last")
-# # In IlFunctionId("main"), at #20, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# # In IlFunctionId("main"), at #19, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 # 00069 Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8))
 #       PtrFieldDeref("s", "last")
-#       # In IlFunctionId("main"), at #20, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+#       # In IlFunctionId("main"), at #19, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 05 14 20 
 
 # inline_main_queue_push_5_tf3c4 <- inline_main_queue_push_5_t3ee Add Number(0n1/0x01u8) Some('/lutcomp/programs/lib/Queue.j':(26,5))
@@ -613,15 +612,13 @@ v2.0 raw
 
 # mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))
 # Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
-# # In IlFunctionId("main"), at #22, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8
+# # In IlFunctionId("main"), at #21, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8
 # 00073 Store8 [Register(0x10), Register(0x14)]
 #       mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
-#       # In IlFunctionId("main"), at #22, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8
+#       # In IlFunctionId("main"), at #21, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8
 06 10 14 
 
-# :inline_main_queue_push_5_function_end_queue_push None
-# inline_main_queue_push_5_function_end_queue_push
 # t531d <- n U8 Some('programs/test/queue_perf.j':(15,5))
 # Assign { target: Ident("n"), var_type: None, value: Arithmetic(Add, Ident("n"), Number(0n1/0x01u8)) }
 # Arithmetic(Add, Ident("n"), Number(0n1/0x01u8))
@@ -670,34 +667,34 @@ v2.0 raw
 # While { predicate: Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("n"), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Ident("n")) }])], else_block: [] }, Assign { target: Ident("n"), var_type: None, value: Arithmetic(Subtract, Ident("n"), Number(0n1/0x01u8)) }] }
 # Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }
 # Number(0n0/0x00u8)
-# # In IlFunctionId("main"), at #31, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# # In IlFunctionId("main"), at #29, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 # 00084 LoadImm8 [Register(0x10), Constant8(0x00=0)]
 #       inline_main_queue_init_0_ta97f <- 0n0/0x00u8  Some('programs/test/queue_perf.j':(20,5))
 #       While { predicate: Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("n"), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Ident("n")) }])], else_block: [] }, Assign { target: Ident("n"), var_type: None, value: Arithmetic(Subtract, Ident("n"), Number(0n1/0x01u8)) }] }
 #       Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }
 #       Number(0n0/0x00u8)
-#       # In IlFunctionId("main"), at #31, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+#       # In IlFunctionId("main"), at #29, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 04 10 00 
 
 # if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/queue_perf.j':(20,5))
 # While { predicate: Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("n"), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Ident("n")) }])], else_block: [] }, Assign { target: Ident("n"), var_type: None, value: Arithmetic(Subtract, Ident("n"), Number(0n1/0x01u8)) }] }
 # Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }
-# # In IlFunctionId("main"), at #32, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
+# # In IlFunctionId("main"), at #30, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
 # 00087 Cmp8 [Register(0x28), Register(0x10)]
 #       if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/queue_perf.j':(20,5))
 #       While { predicate: Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("n"), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Ident("n")) }])], else_block: [] }, Assign { target: Ident("n"), var_type: None, value: Arithmetic(Subtract, Ident("n"), Number(0n1/0x01u8)) }] }
 #       Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }
-#       # In IlFunctionId("main"), at #32, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
+#       # In IlFunctionId("main"), at #30, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
 15 28 10 
 
 # 0008a JzImm [Label24(main_while_end_5)]
 #       if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/queue_perf.j':(20,5))
 #       While { predicate: Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("n"), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Ident("n")) }])], else_block: [] }, Assign { target: Ident("n"), var_type: None, value: Arithmetic(Subtract, Ident("n"), Number(0n1/0x01u8)) }] }
 #       Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }
-#       # In IlFunctionId("main"), at #32, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
+#       # In IlFunctionId("main"), at #30, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'
 72 00 01 00 
 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/queue_perf.j':(20,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"n\"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"n\"), right: Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"q\"))] }) }, [Return { value: Some(Ident(\"n\")) }])], else_block: [] }, Assign { target: Ident(\"n\"), var_type: None, value: Arithmetic(Subtract, Ident(\"n\"), Number(0n1/0x01u8)) }] }\nComparison { op: NotEquals, left: Ident(\"n\"), right: Number(0n0/0x00u8) }\n# In IlFunctionId(\"main\"), at #32, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'\n", opcode: JmpImm, args: [Label24(main_while_body_4)], resolved: None }
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5' Some('programs/test/queue_perf.j':(20,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"n\"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"n\"), right: Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"q\"))] }) }, [Return { value: Some(Ident(\"n\")) }])], else_block: [] }, Assign { target: Ident(\"n\"), var_type: None, value: Arithmetic(Subtract, Ident(\"n\"), Number(0n1/0x01u8)) }] }\nComparison { op: NotEquals, left: Ident(\"n\"), right: Number(0n0/0x00u8) }\n# In IlFunctionId(\"main\"), at #30, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if t531d != ta97f then 'main_while_body_4' else 'main_while_end_5' -> if t531d != inline_main_queue_init_0_ta97f then 'main_while_body_4' else 'main_while_end_5'\n", opcode: JmpImm, args: [Label24(main_while_body_4)], resolved: None }
 # :main_while_body_4 Some('programs/test/queue_perf.j':(20,5))
 # While { predicate: Comparison { op: NotEquals, left: Ident("n"), right: Number(0n0/0x00u8) }, while_true: [IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("n"), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Ident("n")) }])], else_block: [] }, Assign { target: Ident("n"), var_type: None, value: Arithmetic(Subtract, Ident("n"), Number(0n1/0x01u8)) }] }
 # main_while_body_4
@@ -726,7 +723,7 @@ v2.0 raw
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_queue_pop_2_tb702 <- inline_main_queue_pop_2_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 `.
-# # In IlFunctionId("main"), at #36, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# # In IlFunctionId("main"), at #34, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 # 00094 LoadImm32 [Register(0x14), Constant32(0x000f1100=987392)]
 #       inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
@@ -735,20 +732,20 @@ v2.0 raw
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 #       # In IlFunctionId("main"), replacing `inline_main_queue_pop_2_tb702 <- inline_main_queue_pop_2_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 `.
-#       # In IlFunctionId("main"), at #36, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+#       # In IlFunctionId("main"), at #34, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 20 14 00 11 0f 00 
 
 # inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 # PtrFieldDeref("s", "first")
-# # In IlFunctionId("main"), at #37, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# # In IlFunctionId("main"), at #35, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 # 0009a Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "first")
-#       # In IlFunctionId("main"), at #37, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+#       # In IlFunctionId("main"), at #35, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 05 14 20 
 
 # inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
@@ -758,7 +755,7 @@ v2.0 raw
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32))
 # # In IlFunctionId("main"), replacing `inline_main_queue_pop_2_tc1ff <- inline_main_queue_pop_2_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32 `.
-# # In IlFunctionId("main"), at #38, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+# # In IlFunctionId("main"), at #36, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
 # 0009d LoadImm32 [Register(0x14), Constant32(0x000f1104=987396)]
 #       inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
@@ -767,20 +764,20 @@ v2.0 raw
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32))
 #       # In IlFunctionId("main"), replacing `inline_main_queue_pop_2_tc1ff <- inline_main_queue_pop_2_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32 `.
-#       # In IlFunctionId("main"), at #38, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+#       # In IlFunctionId("main"), at #36, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
 20 14 04 11 0f 00 
 
 # inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 # PtrFieldDeref("s", "last")
-# # In IlFunctionId("main"), at #39, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_pop_2_tc1ff] U8 -> inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# # In IlFunctionId("main"), at #37, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_pop_2_tc1ff] U8 -> inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 # 000a3 Load8 [Register(0x14), Register(0x10)]
 #       inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "last")
-#       # In IlFunctionId("main"), at #39, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_pop_2_tc1ff] U8 -> inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+#       # In IlFunctionId("main"), at #37, replacing reference to inline_main_queue_pop_2_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_pop_2_tc1ff] U8 -> inline_main_queue_pop_2_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 05 14 10 
 
 # if inline_main_queue_pop_2_tb6dd == inline_main_queue_pop_2_t3ee then 'inline_main_queue_pop_2_queue_pop_if_true_0_1' else 'inline_main_queue_pop_2_queue_pop_if_end_0' Some('/lutcomp/programs/lib/Queue.j':(13,5))
@@ -810,21 +807,21 @@ v2.0 raw
 # inline_main_queue_init_0_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
 # Number(0n0/0x00u8)
-# # In IlFunctionId("main"), at #42, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_2_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# # In IlFunctionId("main"), at #40, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_2_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 # 000b1 LoadImm8 [Register(0x10), Constant8(0x00=0)]
 #       inline_main_queue_init_0_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
 #       Number(0n0/0x00u8)
-#       # In IlFunctionId("main"), at #42, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_2_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+#       # In IlFunctionId("main"), at #40, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_2_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 04 10 00 
 
 # t24cd <- inline_main_queue_init_0_ta97f U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
-# # In IlFunctionId("main"), at #43, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_2_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
+# # In IlFunctionId("main"), at #41, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_2_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
 # 000b4 Copy8 [Register(0x10), Register(0x22)]
 #       t24cd <- inline_main_queue_init_0_ta97f U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
-#       # In IlFunctionId("main"), at #43, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_2_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
+#       # In IlFunctionId("main"), at #41, replacing reference to inline_main_queue_pop_2_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_2_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
 0b 10 22 
 
 # goto inline_main_queue_pop_2_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(13,5))
@@ -846,7 +843,7 @@ v2.0 raw
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_queue_pop_2_tb702 <- inline_main_queue_pop_2_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 `.
-# # In IlFunctionId("main"), at #46, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# # In IlFunctionId("main"), at #44, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 # 000bb LoadImm32 [Register(0x14), Constant32(0x000f1100=987392)]
 #       inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -858,7 +855,7 @@ v2.0 raw
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 #       # In IlFunctionId("main"), replacing `inline_main_queue_pop_2_tb702 <- inline_main_queue_pop_2_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32 `.
-#       # In IlFunctionId("main"), at #46, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+#       # In IlFunctionId("main"), at #44, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 20 14 00 11 0f 00 
 
 # inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
@@ -868,7 +865,7 @@ v2.0 raw
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 # Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }
 # PtrFieldDeref("s", "first")
-# # In IlFunctionId("main"), at #47, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# # In IlFunctionId("main"), at #45, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 # 000c1 Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -877,7 +874,7 @@ v2.0 raw
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }
 #       PtrFieldDeref("s", "first")
-#       # In IlFunctionId("main"), at #47, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+#       # In IlFunctionId("main"), at #45, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 05 14 20 
 
 # inline_main_queue_pop_2_tb469 U32 <- inline_main_queue_pop_2_tb6dd U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
@@ -946,13 +943,13 @@ v2.0 raw
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 # Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
 # PtrFieldDeref("s", "first")
-# # In IlFunctionId("main"), at #51, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# # In IlFunctionId("main"), at #49, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 # 000d6 Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
 #       PtrFieldDeref("s", "first")
-#       # In IlFunctionId("main"), at #51, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+#       # In IlFunctionId("main"), at #49, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_pop_2_tb702] U8 -> inline_main_queue_pop_2_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 05 14 20 
 
 # inline_main_queue_pop_2_te468 <- inline_main_queue_pop_2_tb6dd Add Number(0n1/0x01u8) Some('/lutcomp/programs/lib/Queue.j':(19,5))
@@ -972,11 +969,11 @@ v2.0 raw
 
 # mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
-# # In IlFunctionId("main"), at #53, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_2_tb702] <- inline_main_queue_pop_2_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8
+# # In IlFunctionId("main"), at #51, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_2_tb702] <- inline_main_queue_pop_2_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8
 # 000e0 Store8 [Register(0x10), Register(0x14)]
 #       mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
-#       # In IlFunctionId("main"), at #53, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_2_tb702] <- inline_main_queue_pop_2_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8
+#       # In IlFunctionId("main"), at #51, replacing reference to inline_main_queue_pop_2_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_2_tb702] <- inline_main_queue_pop_2_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_2_te468 U8
 06 10 14 
 
 # inline_main_queue_pop_2_t44ed <- inline_main_queue_pop_2_value U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))
@@ -1064,13 +1061,13 @@ v2.0 raw
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }
 # Number(0n0/0x00u8)
-# # In IlFunctionId("main"), at #66, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# # In IlFunctionId("main"), at #64, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 # 00100 LoadImm8 [Register(0x10), Constant8(0x00=0)]
 #       inline_main_queue_init_0_ta97f <- 0n0/0x00u8  Some('programs/test/queue_perf.j':(27,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }
 #       Number(0n0/0x00u8)
-#       # In IlFunctionId("main"), at #66, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+#       # In IlFunctionId("main"), at #64, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 04 10 00 
 
 # inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  Some('programs/test/queue_perf.j':(27,5))
@@ -1078,14 +1075,14 @@ v2.0 raw
 # Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }
 # Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] })
 # # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_s <- t5cf6 U32` with constant `inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32 `.
-# # In IlFunctionId("main"), at #67, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
+# # In IlFunctionId("main"), at #65, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
 # 00103 LoadImm32 [Register(0x18), Constant32(0x000f1000=987136)]
 #       inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  Some('programs/test/queue_perf.j':(27,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }
 #       Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] })
 #       # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_s <- t5cf6 U32` with constant `inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32 `.
-#       # In IlFunctionId("main"), at #67, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
+#       # In IlFunctionId("main"), at #65, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 
 20 18 00 10 0f 00 
 
 # inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
@@ -1095,7 +1092,7 @@ v2.0 raw
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_tb702 <- inline_main_queue_pop_3_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 `.
-# # In IlFunctionId("main"), at #68, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# # In IlFunctionId("main"), at #66, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 # 00109 LoadImm32 [Register(0x14), Constant32(0x000f1100=987392)]
 #       inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
@@ -1104,20 +1101,20 @@ v2.0 raw
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 #       # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_tb702 <- inline_main_queue_pop_3_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 `.
-#       # In IlFunctionId("main"), at #68, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+#       # In IlFunctionId("main"), at #66, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 20 14 00 11 0f 00 
 
 # inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 # PtrFieldDeref("s", "first")
-# # In IlFunctionId("main"), at #69, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# # In IlFunctionId("main"), at #67, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 # 0010f Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "first")
-#       # In IlFunctionId("main"), at #69, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+#       # In IlFunctionId("main"), at #67, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 05 14 20 
 
 # inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
@@ -1127,7 +1124,7 @@ v2.0 raw
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32))
 # # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_tc1ff <- inline_main_queue_pop_3_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32 `.
-# # In IlFunctionId("main"), at #70, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+# # In IlFunctionId("main"), at #68, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
 # 00112 LoadImm32 [Register(0x14), Constant32(0x000f1104=987396)]
 #       inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
@@ -1136,20 +1133,20 @@ v2.0 raw
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n260/0x00000104u32))
 #       # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_tc1ff <- inline_main_queue_pop_3_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32 `.
-#       # In IlFunctionId("main"), at #70, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
+#       # In IlFunctionId("main"), at #68, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 
 20 14 04 11 0f 00 
 
 # inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 # Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 # PtrFieldDeref("s", "last")
-# # In IlFunctionId("main"), at #71, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_pop_3_tc1ff] U8 -> inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+# # In IlFunctionId("main"), at #69, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_pop_3_tc1ff] U8 -> inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 # 00118 Load8 [Register(0x14), Register(0x22)]
 #       inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       IfElse { if_blocks: [(Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }, [Return { value: Some(Number(0n0/0x00u8)) }])], else_block: [] }
 #       Comparison { op: Equals, left: PtrFieldDeref("s", "first"), right: PtrFieldDeref("s", "last") }
 #       PtrFieldDeref("s", "last")
-#       # In IlFunctionId("main"), at #71, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_pop_3_tc1ff] U8 -> inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
+#       # In IlFunctionId("main"), at #69, replacing reference to inline_main_queue_pop_3_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_pop_3_tc1ff] U8 -> inline_main_queue_pop_3_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8
 05 14 22 
 
 # if inline_main_queue_pop_3_tb6dd == inline_main_queue_pop_3_t3ee then 'inline_main_queue_pop_3_queue_pop_if_true_0_1' else 'inline_main_queue_pop_3_queue_pop_if_end_0' Some('/lutcomp/programs/lib/Queue.j':(13,5))
@@ -1179,21 +1176,21 @@ v2.0 raw
 # inline_main_queue_init_0_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
 # Number(0n0/0x00u8)
-# # In IlFunctionId("main"), at #74, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_3_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+# # In IlFunctionId("main"), at #72, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_3_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 # 00126 LoadImm8 [Register(0x10), Constant8(0x00=0)]
 #       inline_main_queue_init_0_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
 #       Number(0n0/0x00u8)
-#       # In IlFunctionId("main"), at #74, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_3_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
+#       # In IlFunctionId("main"), at #72, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_queue_pop_3_ta97f <- 0n0/0x00u8  -> inline_main_queue_init_0_ta97f <- 0n0/0x00u8 
 04 10 00 
 
 # t24cd <- inline_main_queue_init_0_ta97f U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 # Return { value: Some(Number(0n0/0x00u8)) }
-# # In IlFunctionId("main"), at #75, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_3_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
+# # In IlFunctionId("main"), at #73, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_3_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
 # 00129 Copy8 [Register(0x10), Register(0x22)]
 #       t24cd <- inline_main_queue_init_0_ta97f U8 Some('/lutcomp/programs/lib/Queue.j':(13,5))
 #       Return { value: Some(Number(0n0/0x00u8)) }
-#       # In IlFunctionId("main"), at #75, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_3_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
+#       # In IlFunctionId("main"), at #73, replacing reference to inline_main_queue_pop_3_ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). t24cd <- inline_main_queue_pop_3_ta97f U8 -> t24cd <- inline_main_queue_init_0_ta97f U8
 0b 10 22 
 
 # goto inline_main_queue_pop_3_function_end_queue_pop Some('/lutcomp/programs/lib/Queue.j':(13,5))
@@ -1215,7 +1212,7 @@ v2.0 raw
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 # # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_tb702 <- inline_main_queue_pop_3_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 `.
-# # In IlFunctionId("main"), at #78, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+# # In IlFunctionId("main"), at #76, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 # 00130 LoadImm32 [Register(0x14), Constant32(0x000f1100=987392)]
 #       inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32  Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -1227,7 +1224,7 @@ v2.0 raw
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32)) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Struct("Queue"))), new_type: Number(U32), value: Ident("s") }, Number(0n256/0x00000100u32))
 #       # In IlFunctionId("main"), replacing `inline_main_queue_pop_3_tb702 <- inline_main_queue_pop_3_t4d4f Add Number(0n256/0x00000100u32)` with constant `inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32 `.
-#       # In IlFunctionId("main"), at #78, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
+#       # In IlFunctionId("main"), at #76, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb702 <- 0n987392/0x000f1100u32  -> inline_main_queue_init_0_tb702 <- 0n987392/0x000f1100u32 
 20 14 00 11 0f 00 
 
 # inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
@@ -1237,7 +1234,7 @@ v2.0 raw
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 # Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }
 # PtrFieldDeref("s", "first")
-# # In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# # In IlFunctionId("main"), at #77, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 # 00136 Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
@@ -1246,7 +1243,7 @@ v2.0 raw
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
 #       Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }
 #       PtrFieldDeref("s", "first")
-#       # In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+#       # In IlFunctionId("main"), at #77, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 05 14 20 
 
 # inline_main_queue_pop_3_tb469 U32 <- inline_main_queue_pop_3_tb6dd U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
@@ -1278,14 +1275,14 @@ v2.0 raw
 # Index("values", PtrFieldDeref("s", "first"))
 # Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }) }
 # Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
-# # In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
+# # In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
 # 00142 ClearCarry []
 #       inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469) Some('/lutcomp/programs/lib/Queue.j':(18,5))
 #       Assign { target: Ident("value"), var_type: Some(Number(U8)), value: Index("values", PtrFieldDeref("s", "first")) }
 #       Index("values", PtrFieldDeref("s", "first"))
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
-#       # In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
+#       # In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
 03 
 
 # 00143 AddCarry32_1 [Register(0x18), Register(0x24), Register(0x18)]
@@ -1294,7 +1291,7 @@ v2.0 raw
 #       Index("values", PtrFieldDeref("s", "first"))
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
-#       # In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
+#       # In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
 30 18 24 18 
 
 # 00147 AddCarry32_2 []
@@ -1303,7 +1300,7 @@ v2.0 raw
 #       Index("values", PtrFieldDeref("s", "first"))
 #       Cast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") }) }
 #       Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident("values") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref("s", "first") })
-#       # In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
+#       # In IlFunctionId("main"), at #79, replacing reference to inline_main_queue_pop_3_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_3_s Add Var(inline_main_queue_pop_3_tb469) -> inline_main_queue_pop_3_tae11 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_pop_3_tb469)
 31 
 
 # inline_main_queue_pop_3_value <- mem[inline_main_queue_pop_3_tae11] U8 Some('/lutcomp/programs/lib/Queue.j':(18,5))
@@ -1319,13 +1316,13 @@ v2.0 raw
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 # Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
 # PtrFieldDeref("s", "first")
-# # In IlFunctionId("main"), at #83, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+# # In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 # 0014b Load8 [Register(0x14), Register(0x20)]
 #       inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
 #       Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8))
 #       PtrFieldDeref("s", "first")
-#       # In IlFunctionId("main"), at #83, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
+#       # In IlFunctionId("main"), at #81, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_pop_3_tb702] U8 -> inline_main_queue_pop_3_tb6dd <- mem[inline_main_queue_init_0_tb702] U8
 05 14 20 
 
 # inline_main_queue_pop_3_te468 <- inline_main_queue_pop_3_tb6dd Add Number(0n1/0x01u8) Some('/lutcomp/programs/lib/Queue.j':(19,5))
@@ -1345,11 +1342,11 @@ v2.0 raw
 
 # mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 # Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
-# # In IlFunctionId("main"), at #85, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_3_tb702] <- inline_main_queue_pop_3_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8
+# # In IlFunctionId("main"), at #83, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_3_tb702] <- inline_main_queue_pop_3_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8
 # 00155 Store8 [Register(0x21), Register(0x14)]
 #       mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8 Some('/lutcomp/programs/lib/Queue.j':(19,5))
 #       Assign { target: PtrFieldDeref("s", "first"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "first"), Number(0n1/0x01u8)) }
-#       # In IlFunctionId("main"), at #85, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_3_tb702] <- inline_main_queue_pop_3_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8
+#       # In IlFunctionId("main"), at #83, replacing reference to inline_main_queue_pop_3_tb702 with inline_main_queue_init_0_tb702 as they share the same const value: Number(0n987392/0x000f1100u32). mem[inline_main_queue_pop_3_tb702] <- inline_main_queue_pop_3_te468 U8 -> mem[inline_main_queue_init_0_tb702] <- inline_main_queue_pop_3_te468 U8
 06 21 14 
 
 # inline_main_queue_pop_3_t44ed <- inline_main_queue_pop_3_value U8 Some('/lutcomp/programs/lib/Queue.j':(20,5))
@@ -1369,22 +1366,22 @@ v2.0 raw
 # if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' Some('programs/test/queue_perf.j':(27,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }
-# # In IlFunctionId("main"), at #89, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
+# # In IlFunctionId("main"), at #87, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
 # 0015b Cmp8 [Register(0x10), Register(0x22)]
 #       if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' Some('programs/test/queue_perf.j':(27,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }
-#       # In IlFunctionId("main"), at #89, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
+#       # In IlFunctionId("main"), at #87, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
 15 10 22 
 
 # 0015e JzImm [Label24(function_end_main)]
 #       if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' Some('programs/test/queue_perf.j':(27,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }
-#       # In IlFunctionId("main"), at #89, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
+#       # In IlFunctionId("main"), at #87, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'
 72 6a 01 00 
 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' Some('programs/test/queue_perf.j':(27,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"q\"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }\nComparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"q\"))] }) }\n# In IlFunctionId(\"main\"), at #89, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'\n", opcode: JmpImm, args: [Label24(main_if_true_0_10)], resolved: None }
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' Some('programs/test/queue_perf.j':(27,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"q\"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }\nComparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: \"queue_pop\", parameters: [AddressOf(Ident(\"q\"))] }) }\n# In IlFunctionId(\"main\"), at #87, replacing reference to ta97f with inline_main_queue_init_0_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main' -> if inline_main_queue_init_0_ta97f != t24cd then 'main_if_true_0_10' else 'function_end_main'\n", opcode: JmpImm, args: [Label24(main_if_true_0_10)], resolved: None }
 # :main_if_true_0_10 Some('programs/test/queue_perf.j':(27,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Call(Call { function: "queue_pop", parameters: [AddressOf(Ident("q"))] }) }, [Return { value: Some(Number(0n255/0xffu8)) }])], else_block: [] }
 # main_if_true_0_10
@@ -1416,9 +1413,9 @@ v2.0 raw
 7e 00 00 00 10 
 
 # hits:470 pc:00061=main+0x3e
-# Instruction(Instruction { source: "inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7) Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\n# In IlFunctionId(\"main\"), at #18, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)\n", opcode: AddCarry32_1, args: [Register(0x18), Register(0x24), Register(0x18)], resolved: None })
+# Instruction(Instruction { source: "inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7) Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\n# In IlFunctionId(\"main\"), at #17, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)\n", opcode: AddCarry32_1, args: [Register(0x18), Register(0x24), Register(0x18)], resolved: None })
 # hits:320 pc:00065=main+0x42
-# Instruction(Instruction { source: "inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7) Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\n# In IlFunctionId(\"main\"), at #18, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)\n", opcode: AddCarry32_2, args: [], resolved: None })
+# Instruction(Instruction { source: "inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7) Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\n# In IlFunctionId(\"main\"), at #17, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_t2187 <- inline_main_queue_push_5_s Add Var(inline_main_queue_push_5_t5bb7) -> inline_main_queue_push_5_t2187 <- inline_main_queue_pop_2_s Add Var(inline_main_queue_push_5_t5bb7)\n", opcode: AddCarry32_2, args: [], resolved: None })
 # hits:280 pc:00045=main+0x22
 # Comment("Optimized away unconditional jump to the next instruction: Instruction { source: \"if t531d != tc7a7 then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/queue_perf.j':(15,5))\\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\\\"n\\\"), right: Arithmetic(Add, Ident(\\\"NUM\\\"), Number(0n1/0x01u8)) }, while_true: [VoidExpression { expression: Call(Call { function: \\\"queue_push\\\", parameters: [AddressOf(Ident(\\\"q\\\")), Ident(\\\"n\\\")] }) }, Assign { target: Ident(\\\"n\\\"), var_type: None, value: Arithmetic(Add, Ident(\\\"n\\\"), Number(0n1/0x01u8)) }] }\\nComparison { op: NotEquals, left: Ident(\\\"n\\\"), right: Arithmetic(Add, Ident(\\\"NUM\\\"), Number(0n1/0x01u8)) }\\n\", opcode: JmpImm, args: [Label24(main_while_body_1)], resolved: None }")
 # Comment(":main_while_body_1 Some('programs/test/queue_perf.j':(15,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"n\"), right: Arithmetic(Add, Ident(\"NUM\"), Number(0n1/0x01u8)) }, while_true: [VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }, Assign { target: Ident(\"n\"), var_type: None, value: Arithmetic(Add, Ident(\"n\"), Number(0n1/0x01u8)) }] }\n")
@@ -1426,11 +1423,11 @@ v2.0 raw
 # Comment("main_while_body_1")
 # Comment("t531d <- n U8 Some('programs/test/queue_perf.j':(15,5))\nVoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }\nCall(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] })\nIdent(\"n\")\n")
 # Comment("optimized away noop copy Instruction { source: \"t531d <- n U8 Some('programs/test/queue_perf.j':(15,5))\\nVoidExpression { expression: Call(Call { function: \\\"queue_push\\\", parameters: [AddressOf(Ident(\\\"q\\\")), Ident(\\\"n\\\")] }) }\\nCall(Call { function: \\\"queue_push\\\", parameters: [AddressOf(Ident(\\\"q\\\")), Ident(\\\"n\\\")] })\\nIdent(\\\"n\\\")\\n\", opcode: Copy8, args: [Register(0x28), Register(0x28)], resolved: None }")
-# Comment("inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  Some('programs/test/queue_perf.j':(15,5))\nVoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }\nCall(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] })\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_s <- t5cf6 U32` with constant `inline_main_queue_push_5_s <- 0n987136/0x000f1000u32 `.\n# In IlFunctionId(\"main\"), at #13, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 \n")
-# Instruction(Instruction { source: "inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  Some('programs/test/queue_perf.j':(15,5))\nVoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }\nCall(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] })\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_s <- t5cf6 U32` with constant `inline_main_queue_push_5_s <- 0n987136/0x000f1000u32 `.\n# In IlFunctionId(\"main\"), at #13, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 \n", opcode: LoadImm32, args: [Register(0x18), Constant32(0x000f1000=987136)], resolved: None })
+# Comment("inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  Some('programs/test/queue_perf.j':(15,5))\nVoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }\nCall(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] })\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_s <- t5cf6 U32` with constant `inline_main_queue_push_5_s <- 0n987136/0x000f1000u32 `.\n# In IlFunctionId(\"main\"), at #12, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 \n")
+# Instruction(Instruction { source: "inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32  Some('programs/test/queue_perf.j':(15,5))\nVoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }\nCall(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] })\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_s <- t5cf6 U32` with constant `inline_main_queue_push_5_s <- 0n987136/0x000f1000u32 `.\n# In IlFunctionId(\"main\"), at #12, replacing reference to inline_main_queue_push_5_s with inline_main_queue_pop_2_s as they share the same const value: Number(0n987136/0x000f1000u32). inline_main_queue_push_5_s <- 0n987136/0x000f1000u32  -> inline_main_queue_pop_2_s <- 0n987136/0x000f1000u32 \n", opcode: LoadImm32, args: [Register(0x18), Constant32(0x000f1000=987136)], resolved: None })
 # hits:280 pc:0004e=main+0x2b
-# Comment("inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_tc1ff <- inline_main_queue_push_5_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 `.\n# In IlFunctionId(\"main\"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 \n")
-# Instruction(Instruction { source: "inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_tc1ff <- inline_main_queue_push_5_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 `.\n# In IlFunctionId(\"main\"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 \n", opcode: LoadImm32, args: [Register(0x14), Constant32(0x000f1104=987396)], resolved: None })
+# Comment("inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_tc1ff <- inline_main_queue_push_5_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 `.\n# In IlFunctionId(\"main\"), at #14, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 \n")
+# Instruction(Instruction { source: "inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32  Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32)) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Struct(\"Queue\"))), new_type: Number(U32), value: Ident(\"s\") }, Number(0n260/0x00000104u32))\n# In IlFunctionId(\"main\"), replacing `inline_main_queue_push_5_tc1ff <- inline_main_queue_push_5_t4d4f Add Number(0n260/0x00000104u32)` with constant `inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32 `.\n# In IlFunctionId(\"main\"), at #14, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_tc1ff <- 0n987396/0x000f1104u32  -> inline_main_queue_init_0_tc1ff <- 0n987396/0x000f1104u32 \n", opcode: LoadImm32, args: [Register(0x14), Constant32(0x000f1104=987396)], resolved: None })
 # hits:280 pc:00057=main+0x34
 # Comment("inline_main_queue_push_5_t5bb7 U32 <- inline_main_queue_push_5_t3ee U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\n")
 # Instruction(Instruction { source: "Zero-pad for inline_main_queue_push_5_t5bb7 U32 <- inline_main_queue_push_5_t3ee U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\n", opcode: LoadImm32, args: [Register(0x24), Constant32(0x00000000=0)], resolved: None })
@@ -1438,15 +1435,15 @@ v2.0 raw
 # Comment("if t531d != tc7a7 then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/queue_perf.j':(15,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"n\"), right: Arithmetic(Add, Ident(\"NUM\"), Number(0n1/0x01u8)) }, while_true: [VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }, Assign { target: Ident(\"n\"), var_type: None, value: Arithmetic(Add, Ident(\"n\"), Number(0n1/0x01u8)) }] }\nComparison { op: NotEquals, left: Ident(\"n\"), right: Arithmetic(Add, Ident(\"NUM\"), Number(0n1/0x01u8)) }\n")
 # Instruction(Instruction { source: "if t531d != tc7a7 then 'main_while_body_1' else 'main_while_end_2' Some('programs/test/queue_perf.j':(15,5))\nWhile { predicate: Comparison { op: NotEquals, left: Ident(\"n\"), right: Arithmetic(Add, Ident(\"NUM\"), Number(0n1/0x01u8)) }, while_true: [VoidExpression { expression: Call(Call { function: \"queue_push\", parameters: [AddressOf(Ident(\"q\")), Ident(\"n\")] }) }, Assign { target: Ident(\"n\"), var_type: None, value: Arithmetic(Add, Ident(\"n\"), Number(0n1/0x01u8)) }] }\nComparison { op: NotEquals, left: Ident(\"n\"), right: Arithmetic(Add, Ident(\"NUM\"), Number(0n1/0x01u8)) }\n", opcode: Cmp8, args: [Register(0x28), Register(0x10)], resolved: None })
 # hits:240 pc:00054=main+0x31
-# Comment("inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #16, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n")
-# Instruction(Instruction { source: "inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #16, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n", opcode: Load8, args: [Register(0x14), Register(0x20)], resolved: None })
+# Comment("inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n")
+# Instruction(Instruction { source: "inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\nCast { old_type: Some(Number(U32)), new_type: Ptr(Number(U8)), value: Arithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }) }\nArithmetic(Add, Cast { old_type: Some(Ptr(Number(U8))), new_type: Number(U32), value: Ident(\"values\") }, Cast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") })\nCast { old_type: Some(Number(U8)), new_type: Number(U32), value: PtrFieldDeref(\"s\", \"last\") }\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #15, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n", opcode: Load8, args: [Register(0x14), Register(0x20)], resolved: None })
 # hits:240 pc:00069=main+0x46
-# Comment("inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\nArithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8))\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #20, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n")
-# Instruction(Instruction { source: "inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\nArithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8))\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #20, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n", opcode: Load8, args: [Register(0x14), Register(0x20)], resolved: None })
+# Comment("inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\nArithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8))\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #19, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n")
+# Instruction(Instruction { source: "inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\nArithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8))\nPtrFieldDeref(\"s\", \"last\")\n# In IlFunctionId(\"main\"), at #19, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). inline_main_queue_push_5_t3ee <- mem[inline_main_queue_push_5_tc1ff] U8 -> inline_main_queue_push_5_t3ee <- mem[inline_main_queue_init_0_tc1ff] U8\n", opcode: Load8, args: [Register(0x14), Register(0x20)], resolved: None })
 # hits:220 pc:00066=main+0x43
 # Comment("mem[inline_main_queue_push_5_t2187] <- inline_main_queue_push_5_n U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\n")
 # Instruction(Instruction { source: "mem[inline_main_queue_push_5_t2187] <- inline_main_queue_push_5_n U8 Some('/lutcomp/programs/lib/Queue.j':(25,5))\nAssign { target: Index(\"values\", PtrFieldDeref(\"s\", \"last\")), var_type: None, value: Ident(\"n\") }\n", opcode: Store8, args: [Register(0x10), Register(0x18)], resolved: None })
 # hits:220 pc:00073=main+0x50
-# Comment("mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\n# In IlFunctionId(\"main\"), at #22, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8\n")
-# Instruction(Instruction { source: "mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\n# In IlFunctionId(\"main\"), at #22, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8\n", opcode: Store8, args: [Register(0x10), Register(0x14)], resolved: None })
+# Comment("mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\n# In IlFunctionId(\"main\"), at #21, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8\n")
+# Instruction(Instruction { source: "mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 Some('/lutcomp/programs/lib/Queue.j':(26,5))\nAssign { target: PtrFieldDeref(\"s\", \"last\"), var_type: None, value: Arithmetic(Add, PtrFieldDeref(\"s\", \"last\"), Number(0n1/0x01u8)) }\n# In IlFunctionId(\"main\"), at #21, replacing reference to inline_main_queue_push_5_tc1ff with inline_main_queue_init_0_tc1ff as they share the same const value: Number(0n987396/0x000f1104u32). mem[inline_main_queue_push_5_tc1ff] <- inline_main_queue_push_5_tf3c4 U8 -> mem[inline_main_queue_init_0_tc1ff] <- inline_main_queue_push_5_tf3c4 U8\n", opcode: Store8, args: [Register(0x10), Register(0x14)], resolved: None })
 # Tick Count: 39480

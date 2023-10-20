@@ -48,9 +48,16 @@ pub enum IlInstruction {
 }
 
 impl IlInstruction {
-    pub fn is_branch_or_label(&self) -> bool {
+    pub fn is_branch(&self) -> bool {
         match self {
-            IlInstruction::Goto(..) | IlInstruction::IfThenElse { .. } | IlInstruction::Label(_) => true,
+            IlInstruction::Goto(..) | IlInstruction::IfThenElse { .. } | IlInstruction::Return { .. } => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_label(&self) -> bool {
+        match self {
+            IlInstruction::Label(_) => true,
             _ => false,
         }
     }
@@ -1243,14 +1250,52 @@ impl IlFunction {
         func
     }
 
-    fn find_refs(&mut self) -> BTreeMap<IlVarId, VarReferences> {
+
+    fn find_blocks(&self) -> BTreeMap<usize, Block> {
+        let mut labels = BTreeMap::new();
+        for (i, (il, _, _)) in self.body.iter().enumerate() {
+            if let IlInstruction::Label(label) = il {
+                labels.insert(label, i);
+            }
+        }
+
+        let mut blocks = BTreeMap::new();
+        let mut block_start = 0;
+        for (i, (il, _, _)) in self.body.iter().enumerate() {
+            let range = if il.is_branch() {
+                block_start..(i+1)
+            } else if il.is_label() {
+                block_start..i
+            } else {
+                continue;
+            };
+
+            blocks.insert(
+                block_start,
+                Block { stmt_indices: range.clone(), outgoing_blocks: vec![]});
+
+            block_start = range.end;
+        }
+
+        for b in blocks.values_mut() {
+            for i in b.stmt_indices.clone() {
+                if let (IlInstruction::Goto(label), _, _) = &self.body[i] {
+                    b.outgoing_blocks.push(labels[&label]);
+                }
+            } 
+        }
+
+        blocks
+    }
+
+    fn find_refs(&self) -> BTreeMap<IlVarId, VarReferences> {
         let mut refs = BTreeMap::new();
 
         for v in self.vars.keys() {
             refs.insert(v.clone(), VarReferences { read_indices: BTreeSet::new(), write_indices: BTreeSet::new()});
         }
 
-        for (index, usages) in self.body.iter_mut().map(|s| s.0.var_usages_mut()).enumerate() {
+        for (index, usages) in self.body.iter().map(|s| s.0.var_usages()).enumerate() {
             
             if let Some(dest) = usages.dest {
                 let refs = refs.get_mut(dest).unwrap();
@@ -1456,6 +1501,40 @@ impl IlFunction {
             }
         }
 
+        // remove unreferenced labels
+        {
+            let mut unreferenced = self.labels.clone();
+            unreferenced.remove(&self.end_label);
+            for (il, _, _) in self.body.iter() {
+                if let IlInstruction::Label(_) = &il {
+                    // these don't count
+                } else {
+                    for l in il.labels() {
+                        unreferenced.remove(l);
+                    }
+                }
+            }
+
+            if unreferenced.len() > 0 {
+                let id = self.id.clone();
+                self.body.retain_mut(|(il,_,_)| {
+                    if let IlInstruction::Label(l) = &il {
+                        if unreferenced.contains(l) {
+                            println!("# In {:?}, removing unreferenced label: {:?}", id, il);
+                            false
+                        } else {
+                            true
+                        }
+                    } else {
+                        true
+                    }
+                });
+
+                self.labels.retain(|l| !unreferenced.contains(l));
+                return true;
+            }
+        }
+
         // merge back-to-back labels
         {
             let mut duplicate_label_indices = Vec::new();
@@ -1504,17 +1583,12 @@ impl IlFunction {
             }
         }
 
+        let blocks = self.find_blocks();
+
         // remove duplicate writes of consts within a block
         {
             let mut to_remove_indices = BTreeSet::new();
-            let mut block_start = 0;
-            for (i, (il, _, _)) in self.body.iter().enumerate() {
-                if !il.is_branch_or_label() {
-                    continue;
-                }
-
-                let block_end = i;
-
+            for (_, b) in blocks {
                 // println!("# found block {}..={}", block_start, block_end);
 
                 for (v, info) in &self.vars {
@@ -1523,7 +1597,7 @@ impl IlFunction {
                     }
 
                     let writes_in_block: BTreeSet<_> = refs[v].write_indices.iter()
-                        .filter(|i| block_start <= **i && **i <= block_end)
+                        .filter(|i| b.stmt_indices.contains(*i))
                         .cloned()
                         .collect();
                     if writes_in_block.len() < 2 {
@@ -1533,8 +1607,8 @@ impl IlFunction {
                     for write_index in writes_in_block {
                         if let Some(prev) = previous_write_index {
                             if self.body[prev].0 == self.body[write_index].0 {
-                                println!("# In {:?}, in block from {}..={}, removing repetitive write at {} because it is the same as at {}: {:?}", 
-                                    self.id, block_start, block_end, write_index, prev, self.body[write_index].0);
+                                println!("# In {:?}, in block from {:?}, removing repetitive write at {} because it is the same as at {}: {:?}", 
+                                    self.id, b.stmt_indices, write_index, prev, self.body[write_index].0);
                                 to_remove_indices.insert(write_index);
                             }
                         }
@@ -1542,8 +1616,6 @@ impl IlFunction {
                         previous_write_index = Some(write_index);
                     }
                 }
-
-                block_start = i;
             }
 
             for index in to_remove_indices.iter().rev() {
@@ -1646,6 +1718,12 @@ struct VarReferences {
     write_indices: BTreeSet<usize>,
 }
 
+#[derive(Debug)]
+struct Block {
+    stmt_indices: Range<usize>,
+    outgoing_blocks: Vec<usize>,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub enum IlUnaryOp {
     Negate,
@@ -1729,6 +1807,16 @@ pub struct IlUsagesMut<'a> {
 }
 
 impl IlInstruction {
+    pub fn labels(&self) -> Vec<&IlLabelId> {
+        match self {
+            IlInstruction::Label(l) |
+            IlInstruction::Goto(l) => vec![l],
+            IlInstruction::IfThenElse { left: _, op: _, right: _, then_label, else_label } => 
+                vec![then_label, else_label],
+            _ => vec![],                
+        }
+    }
+
     pub fn labels_mut(&mut self) -> Vec<&mut IlLabelId> {
         match self {
             IlInstruction::Label(l) |

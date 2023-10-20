@@ -1,6 +1,6 @@
 v2.0 raw
 # In IlFunctionId("KeyBoard_init"), optimizing round #0
-# In IlFunctionId("KeyBoard_init"), in block from 0..=7, removing repetitive write at 4 because it is the same as at 1: ta97f <- 0n0/0x00u8 
+# In IlFunctionId("KeyBoard_init"), in block from 0..7, removing repetitive write at 4 because it is the same as at 1: ta97f <- 0n0/0x00u8 
 # In IlFunctionId("KeyBoard_init"), optimizing round #1
 # In IlFunctionId("Keyboard_poll"), optimizing round #0
 # In IlFunctionId("Keyboard_poll"), resolved the constant val `Number(0n987392/0x000f1100u32)` for var `tfff6`.
@@ -28,20 +28,20 @@ v2.0 raw
 # In IlFunctionId("lcd_draw_char"), `i` is never written to, but is copied to `td0f3` - which is also never modified. Replacing refs to latter with the former and deleting the copy: td0f3 <- i U8
 # In IlFunctionId("lcd_draw_char"), optimizing round #1
 # In IlFunctionId("lcd_draw_char"), optimizing round #2
-# In IlFunctionId("lcd_draw_char"), in block from 0..=21, removing repetitive write at 18 because it is the same as at 8: t9498 <- 0n2/0x00000002u32 
+# In IlFunctionId("lcd_draw_char"), in block from 0..21, removing repetitive write at 18 because it is the same as at 8: t9498 <- 0n2/0x00000002u32 
 # In IlFunctionId("lcd_draw_char"), optimizing round #3
 # In IlFunctionId("lcd_init"), optimizing round #0
 # In IlFunctionId("lcd_init"), resolved the constant val `Number(0n987145/0x000f1009u32)` for var `t0`.
 # In IlFunctionId("lcd_init"), optimizing round #1
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 24 because it is the same as at 20: t385d <- 0n1/0x00000001u32 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 28 because it is the same as at 24: t385d <- 0n1/0x00000001u32 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 22 because it is the same as at 18: t3d69 <- 0n3/0x03u8 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 26 because it is the same as at 22: t3d69 <- 0n3/0x03u8 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 38 because it is the same as at 32: t9498 <- 0n2/0x00000002u32 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 44 because it is the same as at 38: t9498 <- 0n2/0x00000002u32 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 50 because it is the same as at 44: t9498 <- 0n2/0x00000002u32 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 34 because it is the same as at 30: t9f48 <- 0n2/0x02u8 
-# In IlFunctionId("lcd_init"), in block from 17..=53, removing repetitive write at 46 because it is the same as at 40: ta97f <- 0n0/0x00u8 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 24 because it is the same as at 20: t385d <- 0n1/0x00000001u32 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 28 because it is the same as at 24: t385d <- 0n1/0x00000001u32 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 22 because it is the same as at 18: t3d69 <- 0n3/0x03u8 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 26 because it is the same as at 22: t3d69 <- 0n3/0x03u8 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 38 because it is the same as at 32: t9498 <- 0n2/0x00000002u32 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 44 because it is the same as at 38: t9498 <- 0n2/0x00000002u32 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 50 because it is the same as at 44: t9498 <- 0n2/0x00000002u32 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 34 because it is the same as at 30: t9f48 <- 0n2/0x02u8 
+# In IlFunctionId("lcd_init"), in block from 17..53, removing repetitive write at 46 because it is the same as at 40: ta97f <- 0n0/0x00u8 
 # In IlFunctionId("lcd_init"), optimizing round #2
 # In IlFunctionId("lcd_logical_to_physical"), optimizing round #0
 # In IlFunctionId("lcd_putc"), optimizing round #0
@@ -80,11 +80,11 @@ v2.0 raw
 # In IlFunctionId("lcd_putc"), at #46, replacing reference to t9 with t0 as they share the same const value: Number(0n987145/0x000f1009u32). t9 <- 0n987145/0x000f1009u32  -> t0 <- 0n987145/0x000f1009u32 
 # In IlFunctionId("lcd_putc"), optimizing round #4
 # In IlFunctionId("lcd_putc"), optimizing round #5
-# In IlFunctionId("lcd_putc"), in block from 14..=26, removing repetitive write at 21 because it is the same as at 15: t0 <- 0n987145/0x000f1009u32 
-# In IlFunctionId("lcd_putc"), in block from 14..=26, removing repetitive write at 22 because it is the same as at 21: t0 <- 0n987145/0x000f1009u32 
-# In IlFunctionId("lcd_putc"), in block from 29..=45, removing repetitive write at 36 because it is the same as at 30: t0 <- 0n987145/0x000f1009u32 
-# In IlFunctionId("lcd_putc"), in block from 29..=45, removing repetitive write at 40 because it is the same as at 36: t0 <- 0n987145/0x000f1009u32 
-# In IlFunctionId("lcd_putc"), in block from 29..=45, removing repetitive write at 41 because it is the same as at 40: t0 <- 0n987145/0x000f1009u32 
+# In IlFunctionId("lcd_putc"), in block from 14..27, removing repetitive write at 21 because it is the same as at 15: t0 <- 0n987145/0x000f1009u32 
+# In IlFunctionId("lcd_putc"), in block from 14..27, removing repetitive write at 22 because it is the same as at 21: t0 <- 0n987145/0x000f1009u32 
+# In IlFunctionId("lcd_putc"), in block from 29..45, removing repetitive write at 36 because it is the same as at 30: t0 <- 0n987145/0x000f1009u32 
+# In IlFunctionId("lcd_putc"), in block from 29..45, removing repetitive write at 40 because it is the same as at 36: t0 <- 0n987145/0x000f1009u32 
+# In IlFunctionId("lcd_putc"), in block from 29..45, removing repetitive write at 41 because it is the same as at 40: t0 <- 0n987145/0x000f1009u32 
 # In IlFunctionId("lcd_putc"), optimizing round #6
 # In IlFunctionId("lcd_scroll_up"), optimizing round #0
 # In IlFunctionId("lcd_scroll_up"), resolved the constant val `Number(0n987145/0x000f1009u32)` for var `t0`.
@@ -97,18 +97,18 @@ v2.0 raw
 # In IlFunctionId("lcd_scroll_up"), removing no-op goto instruction #56: goto lcd_scroll_up_if_end_9
 # In IlFunctionId("lcd_scroll_up"), removing no-op goto instruction #31: goto lcd_scroll_up_if_end_3
 # In IlFunctionId("lcd_scroll_up"), optimizing round #3
-# In IlFunctionId("lcd_scroll_up"), in block from 46..=55, removing repetitive write at 53 because it is the same as at 50: tdf3b <- 0n32/0x20u8 
+# In IlFunctionId("lcd_scroll_up"), in block from 46..55, removing repetitive write at 53 because it is the same as at 50: tdf3b <- 0n32/0x20u8 
 # In IlFunctionId("lcd_scroll_up"), optimizing round #4
 # In IlFunctionId("lcd_scroll_up"), at #2, replacing reference to t1 with t0 as they share the same const value: Number(0n987145/0x000f1009u32). t5dda <- mem[t1] U8 -> t5dda <- mem[t0] U8
 # In IlFunctionId("lcd_scroll_up"), at #1, replacing reference to t1 with t0 as they share the same const value: Number(0n987145/0x000f1009u32). t1 <- 0n987145/0x000f1009u32  -> t0 <- 0n987145/0x000f1009u32 
 # In IlFunctionId("lcd_scroll_up"), optimizing round #5
 # In IlFunctionId("lcd_scroll_up"), optimizing round #6
-# In IlFunctionId("lcd_scroll_up"), in block from 0..=6, removing repetitive write at 1 because it is the same as at 0: t0 <- 0n987145/0x000f1009u32 
+# In IlFunctionId("lcd_scroll_up"), in block from 0..6, removing repetitive write at 1 because it is the same as at 0: t0 <- 0n987145/0x000f1009u32 
 # In IlFunctionId("lcd_scroll_up"), optimizing round #7
 # In IlFunctionId("main"), optimizing round #0
 # In IlFunctionId("main"), merging duplicate labels at #9 && #10: 'IlLabelId("main_while_end_2")' and 'IlLabelId("function_end_main")' to 'IlLabelId("function_end_main")'
 # In IlFunctionId("main"), optimizing round #1
-# In IlFunctionId("main"), in block from 1..=4, removing repetitive write at 3 because it is the same as at 2: ta97f <- 0n0/0x00u8 
+# In IlFunctionId("main"), in block from 1..5, removing repetitive write at 3 because it is the same as at 2: ta97f <- 0n0/0x00u8 
 # In IlFunctionId("main"), optimizing round #2
 # In IlFunctionId("println"), optimizing round #0
 # In IlFunctionId("putc"), optimizing round #0
@@ -119,7 +119,7 @@ v2.0 raw
 # In IlFunctionId("putc"), removing no-op goto instruction #9: goto putc_if_end_0
 # In IlFunctionId("putc"), optimizing round #3
 # In IlFunctionId("queue_init"), optimizing round #0
-# In IlFunctionId("queue_init"), in block from 0..=9, removing repetitive write at 6 because it is the same as at 2: ta97f <- 0n0/0x00u8 
+# In IlFunctionId("queue_init"), in block from 0..9, removing repetitive write at 6 because it is the same as at 2: ta97f <- 0n0/0x00u8 
 # In IlFunctionId("queue_init"), optimizing round #1
 # In IlFunctionId("queue_pop"), optimizing round #0
 # In IlFunctionId("queue_pop"), `s` is never written to, but is copied to `t565a` - which is also never modified. Replacing refs to latter with the former and deleting the copy: t565a <- s U32
@@ -149,14 +149,14 @@ v2.0 raw
 # In IlFunctionId("queue_push"), optimizing round #7
 # In IlFunctionId("queue_push"), optimizing round #8
 # In IlFunctionId("readline"), optimizing round #0
-# In IlFunctionId("readline"), in block from 0..=3, removing repetitive write at 2 because it is the same as at 1: ta97f <- 0n0/0x00u8 
+# In IlFunctionId("readline"), in block from 0..4, removing repetitive write at 2 because it is the same as at 1: ta97f <- 0n0/0x00u8 
 # In IlFunctionId("readline"), optimizing round #1
 # In IlFunctionId("stdio_init"), optimizing round #0
 # In IlFunctionId("stdio_init"), resolved the constant val `Number(0n987228/0x000f105cu32)` for var `t0`.
 # In IlFunctionId("stdio_init"), resolved the constant val `Number(0n987144/0x000f1008u32)` for var `t1`.
 # In IlFunctionId("stdio_init"), resolved the constant val `Number(0n987392/0x000f1100u32)` for var `tfff6`.
 # In IlFunctionId("stdio_init"), optimizing round #1
-# In IlFunctionId("stdio_init"), in block from 0..=11, removing repetitive write at 4 because it is the same as at 1: ta11a <- 0n1/0x01u8 
+# In IlFunctionId("stdio_init"), in block from 0..11, removing repetitive write at 4 because it is the same as at 1: ta11a <- 0n1/0x01u8 
 # In IlFunctionId("stdio_init"), optimizing round #2
 # In IlFunctionId("test_delay"), optimizing round #0
 # In IlFunctionId("test_delay"), `x` is never written to, but is copied to `tad57` - which is also never modified. Replacing refs to latter with the former and deleting the copy: tad57 <- x U32
@@ -187,16 +187,18 @@ v2.0 raw
 # In IlFunctionId("Keyboard_poll"), optimizing round #7
 # In IlFunctionId("Keyboard_poll"), removing no-op goto instruction #46: goto inline_Keyboard_poll_queue_push_6_function_end_queue_push
 # In IlFunctionId("Keyboard_poll"), optimizing round #8
-# In IlFunctionId("Keyboard_poll"), merging duplicate labels at #46 && #47: 'IlLabelId("inline_Keyboard_poll_queue_push_6_function_end_queue_push")' and 'IlLabelId("Keyboard_poll_if_end_6")' to 'IlLabelId("Keyboard_poll_if_end_6")'
+# In IlFunctionId("Keyboard_poll"), removing unreferenced label: :inline_Keyboard_poll_queue_push_6_function_end_queue_push
 # In IlFunctionId("Keyboard_poll"), optimizing round #9
-# In IlFunctionId("Keyboard_poll"), in block from 32..=46, removing repetitive write at 41 because it is the same as at 36: inline_Keyboard_poll_queue_push_6_tc1ff <- 0n987652/0x000f1204u32 
-# In IlFunctionId("Keyboard_poll"), in block from 32..=46, removing repetitive write at 42 because it is the same as at 41: inline_Keyboard_poll_queue_push_6_tc1ff <- 0n987652/0x000f1204u32 
+# In IlFunctionId("Keyboard_poll"), in block from 32..46, removing repetitive write at 41 because it is the same as at 36: inline_Keyboard_poll_queue_push_6_tc1ff <- 0n987652/0x000f1204u32 
+# In IlFunctionId("Keyboard_poll"), in block from 32..46, removing repetitive write at 42 because it is the same as at 41: inline_Keyboard_poll_queue_push_6_tc1ff <- 0n987652/0x000f1204u32 
 # In IlFunctionId("Keyboard_poll"), optimizing round #10
 # In IlFunctionId("lcd_draw_char"), `i` is never written to, but is copied to `inline_lcd_draw_char_lcd_logical_to_physical_0_i` - which is also never modified. Replacing refs to latter with the former and deleting the copy: inline_lcd_draw_char_lcd_logical_to_physical_0_i <- i U8
 # In IlFunctionId("lcd_draw_char"), optimizing round #0
 # In IlFunctionId("lcd_draw_char"), optimizing round #1
 # In IlFunctionId("lcd_draw_char"), removing no-op goto instruction #14: goto inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical
 # In IlFunctionId("lcd_draw_char"), optimizing round #2
+# In IlFunctionId("lcd_draw_char"), removing unreferenced label: :inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical
+# In IlFunctionId("lcd_draw_char"), optimizing round #3
 # In IlFunctionId("main"), resolved the constant val `Number(0n987392/0x000f1100u32)` for var `inline_main_getchar_8_inline_getchar_queue_pop_5_s`.
 # In IlFunctionId("main"), resolved the constant val `Number(0n987392/0x000f1100u32)` for var `inline_main_getchar_8_inline_getchar_queue_pop_5_t4d4f`.
 # In IlFunctionId("main"), resolved the constant val `Number(0n987648/0x000f1200u32)` for var `inline_main_getchar_8_inline_getchar_queue_pop_5_tb702`.
@@ -252,12 +254,14 @@ v2.0 raw
 # In IlFunctionId("main"), removing no-op goto instruction #63: goto inline_main_getchar_8_inline_getchar_queue_pop_5_function_end_queue_pop
 # In IlFunctionId("main"), removing no-op goto instruction #29: goto inline_main_getchar_8_inline_getchar_queue_push_7_function_end_queue_push
 # In IlFunctionId("main"), optimizing round #15
-# In IlFunctionId("main"), merging duplicate labels at #78 && #79: 'IlLabelId("inline_main_putc_1_putc_if_end_0")' and 'IlLabelId("inline_main_putc_1_function_end_putc")' to 'IlLabelId("inline_main_putc_1_putc_if_end_0")'
+# In IlFunctionId("main"), removing unreferenced label: :inline_main_getchar_8_inline_getchar_queue_push_7_function_end_queue_push
+# In IlFunctionId("main"), removing unreferenced label: :inline_main_getchar_8_function_end_getchar
+# In IlFunctionId("main"), removing unreferenced label: :inline_main_putc_1_function_end_putc
 # In IlFunctionId("main"), optimizing round #16
-# In IlFunctionId("main"), in block from 15..=29, removing repetitive write at 24 because it is the same as at 19: inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff <- 0n987652/0x000f1204u32 
-# In IlFunctionId("main"), in block from 15..=29, removing repetitive write at 25 because it is the same as at 24: inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff <- 0n987652/0x000f1204u32 
-# In IlFunctionId("main"), in block from 49..=62, removing repetitive write at 55 because it is the same as at 50: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32 
-# In IlFunctionId("main"), in block from 49..=62, removing repetitive write at 56 because it is the same as at 55: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32 
+# In IlFunctionId("main"), in block from 15..30, removing repetitive write at 24 because it is the same as at 19: inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff <- 0n987652/0x000f1204u32 
+# In IlFunctionId("main"), in block from 15..30, removing repetitive write at 25 because it is the same as at 24: inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff <- 0n987652/0x000f1204u32 
+# In IlFunctionId("main"), in block from 48..61, removing repetitive write at 54 because it is the same as at 49: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32 
+# In IlFunctionId("main"), in block from 48..61, removing repetitive write at 55 because it is the same as at 54: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32 
 # In IlFunctionId("main"), optimizing round #17
 # In IlFunctionId("main"), at #22, replacing reference to inline_main_getchar_8_inline_getchar_queue_push_7_s with inline_main_getchar_8_inline_getchar_queue_pop_5_s as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_getchar_8_inline_getchar_queue_push_7_t2187 <- inline_main_getchar_8_inline_getchar_queue_push_7_s Add Var(inline_main_getchar_8_inline_getchar_queue_push_7_t5bb7) -> inline_main_getchar_8_inline_getchar_queue_push_7_t2187 <- inline_main_getchar_8_inline_getchar_queue_pop_5_s Add Var(inline_main_getchar_8_inline_getchar_queue_push_7_t5bb7)
 # In IlFunctionId("main"), at #17, replacing reference to inline_main_getchar_8_inline_getchar_queue_push_7_s with inline_main_getchar_8_inline_getchar_queue_pop_5_s as they share the same const value: Number(0n987392/0x000f1100u32). inline_main_getchar_8_inline_getchar_queue_push_7_s <- 0n987392/0x000f1100u32  -> inline_main_getchar_8_inline_getchar_queue_pop_5_s <- 0n987392/0x000f1100u32 
@@ -267,12 +271,12 @@ v2.0 raw
 # In IlFunctionId("main"), at #19, replacing reference to inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff with inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff as they share the same const value: Number(0n987652/0x000f1204u32). inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff <- 0n987652/0x000f1204u32  -> inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff <- 0n987652/0x000f1204u32 
 # In IlFunctionId("main"), at #9, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_tdcd9 == inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_while_body_1' else 'inline_main_getchar_8_getchar_while_end_2' -> if inline_main_getchar_8_tdcd9 == inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_while_body_1' else 'inline_main_getchar_8_getchar_while_end_2'
 # In IlFunctionId("main"), at #14, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_te3c4 != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_0_4' else 'inline_main_getchar_8_getchar_if_else_0_5' -> if inline_main_getchar_8_te3c4 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_0_4' else 'inline_main_getchar_8_getchar_if_else_0_5'
-# In IlFunctionId("main"), at #33, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
+# In IlFunctionId("main"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
 # In IlFunctionId("main"), at #8, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
 # In IlFunctionId("main"), at #13, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
-# In IlFunctionId("main"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
-# In IlFunctionId("main"), at #70, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
-# In IlFunctionId("main"), at #69, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_putc_1_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
+# In IlFunctionId("main"), at #31, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
+# In IlFunctionId("main"), at #68, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
+# In IlFunctionId("main"), at #67, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_putc_1_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
 # In IlFunctionId("main"), at #3, replacing reference to ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if ta97f == ta97f then 'main_while_body_1' else 'function_end_main' -> if inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f == inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'main_while_body_1' else 'function_end_main'
 # In IlFunctionId("main"), at #2, replacing reference to ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
 # In IlFunctionId("main"), optimizing round #18
@@ -301,6 +305,8 @@ v2.0 raw
 # In IlFunctionId("stdio_init"), optimizing round #8
 # In IlFunctionId("stdio_init"), removing no-op goto instruction #10: goto inline_stdio_init_queue_init_4_function_end_queue_init
 # In IlFunctionId("stdio_init"), optimizing round #9
+# In IlFunctionId("stdio_init"), removing unreferenced label: :inline_stdio_init_queue_init_4_function_end_queue_init
+# In IlFunctionId("stdio_init"), optimizing round #10
 # IlFunctionId("KeyBoard_init")()
 # 00: td45b <- 0n987136/0x000f1000u32  # Some('/lutcomp/programs/lib/Keyboard.j':(11,5))
 # 01: ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Keyboard.j':(11,5))
@@ -356,7 +362,7 @@ v2.0 raw
 # 41: inline_Keyboard_poll_queue_push_6_t3ee <- mem[inline_Keyboard_poll_queue_push_6_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 # 42: inline_Keyboard_poll_queue_push_6_tf3c4 <- inline_Keyboard_poll_queue_push_6_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 # 43: mem[inline_Keyboard_poll_queue_push_6_tc1ff] <- inline_Keyboard_poll_queue_push_6_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-# 44: :Keyboard_poll_if_end_6 # None
+# 44: :Keyboard_poll_if_end_6 # Some('/lutcomp/programs/lib/Keyboard.j':(31,5))
 # 45: ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Keyboard.j':(37,5))
 # 46: t4c8b <- const &PS2_SCAN_CODE_TO_ASCII # Some('/lutcomp/programs/lib/Keyboard.j':(37,5))
 # 47: td18e <- index U32 # Some('/lutcomp/programs/lib/Keyboard.j':(37,5))
@@ -451,28 +457,27 @@ v2.0 raw
 # 11: inline_lcd_draw_char_lcd_logical_to_physical_0_tfee9 <- inline_lcd_draw_char_lcd_logical_to_physical_0_col U8 # Some('/lutcomp/programs/lib/lcd.j':(11,5))
 # 12: inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd <- inline_lcd_draw_char_lcd_logical_to_physical_0_t2f80 Add Var(inline_lcd_draw_char_lcd_logical_to_physical_0_tfee9) # Some('/lutcomp/programs/lib/lcd.j':(11,5))
 # 13: pos <- inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd U8 # Some('/lutcomp/programs/lib/lcd.j':(11,5))
-# 14: :inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical # None
-# 15: t136d <- pos U8 # Some('/lutcomp/programs/lib/lcd.j':(17,5))
-# 16: t1730 <- t136d ShiftRight Number(0n4/0x04u8) # Some('/lutcomp/programs/lib/lcd.j':(17,5))
-# 17: t2176 <- t1730 BitwiseOr Number(0n8/0x08u8) # Some('/lutcomp/programs/lib/lcd.j':(17,5))
-# 18: None <= call io_write1(t2176,) # Some('/lutcomp/programs/lib/lcd.j':(17,5))
-# 19: t136d <- pos U8 # Some('/lutcomp/programs/lib/lcd.j':(18,5))
-# 20: t791e <- t136d BitwiseAnd Number(0n15/0x0fu8) # Some('/lutcomp/programs/lib/lcd.j':(18,5))
-# 21: None <= call io_write1(t791e,) # Some('/lutcomp/programs/lib/lcd.j':(18,5))
-# 22: t9498 <- 0n2/0x00000002u32  # Some('/lutcomp/programs/lib/lcd.j':(19,5))
-# 23: None <= call delay(t9498,) # Some('/lutcomp/programs/lib/lcd.j':(19,5))
-# 24: tdcd9 <- ch U8 # Some('/lutcomp/programs/lib/lcd.j':(21,5))
-# 25: t4028 <- tdcd9 ShiftRight Number(0n4/0x04u8) # Some('/lutcomp/programs/lib/lcd.j':(21,5))
-# 26: t3e8f <- t4028 BitwiseOr Number(0n128/0x80u8) # Some('/lutcomp/programs/lib/lcd.j':(21,5))
-# 27: None <= call io_write1(t3e8f,) # Some('/lutcomp/programs/lib/lcd.j':(21,5))
-# 28: tdcd9 <- ch U8 # Some('/lutcomp/programs/lib/lcd.j':(22,5))
-# 29: t6611 <- tdcd9 BitwiseAnd Number(0n15/0x0fu8) # Some('/lutcomp/programs/lib/lcd.j':(22,5))
-# 30: tb5dc <- t6611 BitwiseOr Number(0n128/0x80u8) # Some('/lutcomp/programs/lib/lcd.j':(22,5))
-# 31: None <= call io_write1(tb5dc,) # Some('/lutcomp/programs/lib/lcd.j':(22,5))
-# 32: None <= call delay(t9498,) # Some('/lutcomp/programs/lib/lcd.j':(23,5))
-# 33: return None # None
-# 34: :function_end_lcd_draw_char # None
-# 35: Unreachable # None
+# 14: t136d <- pos U8 # Some('/lutcomp/programs/lib/lcd.j':(17,5))
+# 15: t1730 <- t136d ShiftRight Number(0n4/0x04u8) # Some('/lutcomp/programs/lib/lcd.j':(17,5))
+# 16: t2176 <- t1730 BitwiseOr Number(0n8/0x08u8) # Some('/lutcomp/programs/lib/lcd.j':(17,5))
+# 17: None <= call io_write1(t2176,) # Some('/lutcomp/programs/lib/lcd.j':(17,5))
+# 18: t136d <- pos U8 # Some('/lutcomp/programs/lib/lcd.j':(18,5))
+# 19: t791e <- t136d BitwiseAnd Number(0n15/0x0fu8) # Some('/lutcomp/programs/lib/lcd.j':(18,5))
+# 20: None <= call io_write1(t791e,) # Some('/lutcomp/programs/lib/lcd.j':(18,5))
+# 21: t9498 <- 0n2/0x00000002u32  # Some('/lutcomp/programs/lib/lcd.j':(19,5))
+# 22: None <= call delay(t9498,) # Some('/lutcomp/programs/lib/lcd.j':(19,5))
+# 23: tdcd9 <- ch U8 # Some('/lutcomp/programs/lib/lcd.j':(21,5))
+# 24: t4028 <- tdcd9 ShiftRight Number(0n4/0x04u8) # Some('/lutcomp/programs/lib/lcd.j':(21,5))
+# 25: t3e8f <- t4028 BitwiseOr Number(0n128/0x80u8) # Some('/lutcomp/programs/lib/lcd.j':(21,5))
+# 26: None <= call io_write1(t3e8f,) # Some('/lutcomp/programs/lib/lcd.j':(21,5))
+# 27: tdcd9 <- ch U8 # Some('/lutcomp/programs/lib/lcd.j':(22,5))
+# 28: t6611 <- tdcd9 BitwiseAnd Number(0n15/0x0fu8) # Some('/lutcomp/programs/lib/lcd.j':(22,5))
+# 29: tb5dc <- t6611 BitwiseOr Number(0n128/0x80u8) # Some('/lutcomp/programs/lib/lcd.j':(22,5))
+# 30: None <= call io_write1(tb5dc,) # Some('/lutcomp/programs/lib/lcd.j':(22,5))
+# 31: None <= call delay(t9498,) # Some('/lutcomp/programs/lib/lcd.j':(23,5))
+# 32: return None # None
+# 33: :function_end_lcd_draw_char # None
+# 34: Unreachable # None
 
 # IlFunctionId("lcd_init")()
 # 00: t0 <- 0n987145/0x000f1009u32  # Some('/lutcomp/programs/lib/lcd.j':(69,5))
@@ -666,57 +671,55 @@ v2.0 raw
 # 24: inline_main_getchar_8_inline_getchar_queue_push_7_t3ee <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 # 25: inline_main_getchar_8_inline_getchar_queue_push_7_tf3c4 <- inline_main_getchar_8_inline_getchar_queue_push_7_t3ee Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(26,5))
 # 26: mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff] <- inline_main_getchar_8_inline_getchar_queue_push_7_tf3c4 U8 # Some('/lutcomp/programs/lib/Queue.j':(26,5))
-# 27: :inline_main_getchar_8_inline_getchar_queue_push_7_function_end_queue_push # None
-# 28: goto inline_main_getchar_8_getchar_if_end_3 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 29: :inline_main_getchar_8_getchar_if_else_0_5 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 30: inline_main_getchar_8_t0 <- 0n987144/0x000f1008u32  # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 31: inline_main_getchar_8_teb6e <- mem[inline_main_getchar_8_t0] U8 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 32: inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 33: if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 34: :inline_main_getchar_8_getchar_if_true_1_6 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 35: None <= call Keyboard_poll() # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 36: :inline_main_getchar_8_getchar_if_end_3 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 37: inline_main_getchar_8_inline_getchar_queue_pop_5_s <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 38: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 39: inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 40: inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff <- 0n987652/0x000f1204u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 41: inline_main_getchar_8_inline_getchar_queue_pop_5_t3ee <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 42: if inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd == inline_main_getchar_8_inline_getchar_queue_pop_5_t3ee then 'inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_true_0_1' else 'inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_end_0' # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 43: :inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_true_0_1 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 44: inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 45: inline_main_getchar_8_ch <- inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 46: goto inline_main_getchar_8_inline_getchar_queue_pop_5_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 47: :inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_end_0 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
-# 48: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32  # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 49: inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 50: inline_main_getchar_8_inline_getchar_queue_pop_5_tb469 U32 <- inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 51: inline_main_getchar_8_inline_getchar_queue_pop_5_tae11 <- inline_main_getchar_8_inline_getchar_queue_pop_5_s Add Var(inline_main_getchar_8_inline_getchar_queue_pop_5_tb469) # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 52: inline_main_getchar_8_inline_getchar_queue_pop_5_value <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tae11] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
-# 53: inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 54: inline_main_getchar_8_inline_getchar_queue_pop_5_te468 <- inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 55: mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] <- inline_main_getchar_8_inline_getchar_queue_pop_5_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
-# 56: inline_main_getchar_8_inline_getchar_queue_pop_5_t44ed <- inline_main_getchar_8_inline_getchar_queue_pop_5_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# 57: inline_main_getchar_8_ch <- inline_main_getchar_8_inline_getchar_queue_pop_5_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
-# 58: :inline_main_getchar_8_inline_getchar_queue_pop_5_function_end_queue_pop # None
-# 59: goto inline_main_getchar_8_getchar_while_predicate_0 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 60: :inline_main_getchar_8_getchar_while_end_2 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
-# 61: inline_main_getchar_8_tdcd9 <- inline_main_getchar_8_ch U8 # Some('/lutcomp/programs/lib/stdio.j':(31,5))
-# 62: tbbb3 <- inline_main_getchar_8_tdcd9 U8 # Some('/lutcomp/programs/lib/stdio.j':(31,5))
-# 63: :inline_main_getchar_8_function_end_getchar # None
-# 64: inline_main_putc_1_c <- tbbb3 U8 # Some('programs/test/keyboard_poll.j':(6,5))
-# 65: inline_main_putc_1_tac13 <- inline_main_putc_1_c U8 # Some('/lutcomp/programs/lib/stdio.j':(35,5))
-# 66: None <= call io_write0(inline_main_putc_1_tac13,) # Some('/lutcomp/programs/lib/stdio.j':(35,5))
-# 67: inline_main_putc_1_t0 <- 0n987228/0x000f105cu32  # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 68: inline_main_putc_1_t76c7 <- mem[inline_main_putc_1_t0] U8 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 69: inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 70: if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 71: :inline_main_putc_1_putc_if_true_0_1 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 72: inline_main_putc_1_tac13 <- inline_main_putc_1_c U8 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 73: None <= call lcd_putc(inline_main_putc_1_tac13,) # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 74: :inline_main_putc_1_putc_if_end_0 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
-# 75: goto main_while_predicate_0 # Some('programs/test/keyboard_poll.j':(6,5))
-# 76: :function_end_main # Some('programs/test/keyboard_poll.j':(6,5))
-# 77: Unreachable # None
+# 27: goto inline_main_getchar_8_getchar_if_end_3 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 28: :inline_main_getchar_8_getchar_if_else_0_5 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 29: inline_main_getchar_8_t0 <- 0n987144/0x000f1008u32  # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 30: inline_main_getchar_8_teb6e <- mem[inline_main_getchar_8_t0] U8 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 31: inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 32: if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 33: :inline_main_getchar_8_getchar_if_true_1_6 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 34: None <= call Keyboard_poll() # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 35: :inline_main_getchar_8_getchar_if_end_3 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 36: inline_main_getchar_8_inline_getchar_queue_pop_5_s <- 0n987392/0x000f1100u32  # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 37: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 38: inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 39: inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff <- 0n987652/0x000f1204u32  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 40: inline_main_getchar_8_inline_getchar_queue_pop_5_t3ee <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff] U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 41: if inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd == inline_main_getchar_8_inline_getchar_queue_pop_5_t3ee then 'inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_true_0_1' else 'inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_end_0' # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 42: :inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_true_0_1 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 43: inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 44: inline_main_getchar_8_ch <- inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 45: goto inline_main_getchar_8_inline_getchar_queue_pop_5_function_end_queue_pop # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 46: :inline_main_getchar_8_inline_getchar_queue_pop_5_queue_pop_if_end_0 # Some('/lutcomp/programs/lib/Queue.j':(13,5))
+# 47: inline_main_getchar_8_inline_getchar_queue_pop_5_tb702 <- 0n987648/0x000f1200u32  # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 48: inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 49: inline_main_getchar_8_inline_getchar_queue_pop_5_tb469 U32 <- inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 50: inline_main_getchar_8_inline_getchar_queue_pop_5_tae11 <- inline_main_getchar_8_inline_getchar_queue_pop_5_s Add Var(inline_main_getchar_8_inline_getchar_queue_pop_5_tb469) # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 51: inline_main_getchar_8_inline_getchar_queue_pop_5_value <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tae11] U8 # Some('/lutcomp/programs/lib/Queue.j':(18,5))
+# 52: inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd <- mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 53: inline_main_getchar_8_inline_getchar_queue_pop_5_te468 <- inline_main_getchar_8_inline_getchar_queue_pop_5_tb6dd Add Number(0n1/0x01u8) # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 54: mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tb702] <- inline_main_getchar_8_inline_getchar_queue_pop_5_te468 U8 # Some('/lutcomp/programs/lib/Queue.j':(19,5))
+# 55: inline_main_getchar_8_inline_getchar_queue_pop_5_t44ed <- inline_main_getchar_8_inline_getchar_queue_pop_5_value U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
+# 56: inline_main_getchar_8_ch <- inline_main_getchar_8_inline_getchar_queue_pop_5_t44ed U8 # Some('/lutcomp/programs/lib/Queue.j':(20,5))
+# 57: :inline_main_getchar_8_inline_getchar_queue_pop_5_function_end_queue_pop # None
+# 58: goto inline_main_getchar_8_getchar_while_predicate_0 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 59: :inline_main_getchar_8_getchar_while_end_2 # Some('/lutcomp/programs/lib/stdio.j':(21,5))
+# 60: inline_main_getchar_8_tdcd9 <- inline_main_getchar_8_ch U8 # Some('/lutcomp/programs/lib/stdio.j':(31,5))
+# 61: tbbb3 <- inline_main_getchar_8_tdcd9 U8 # Some('/lutcomp/programs/lib/stdio.j':(31,5))
+# 62: inline_main_putc_1_c <- tbbb3 U8 # Some('programs/test/keyboard_poll.j':(6,5))
+# 63: inline_main_putc_1_tac13 <- inline_main_putc_1_c U8 # Some('/lutcomp/programs/lib/stdio.j':(35,5))
+# 64: None <= call io_write0(inline_main_putc_1_tac13,) # Some('/lutcomp/programs/lib/stdio.j':(35,5))
+# 65: inline_main_putc_1_t0 <- 0n987228/0x000f105cu32  # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 66: inline_main_putc_1_t76c7 <- mem[inline_main_putc_1_t0] U8 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 67: inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 68: if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 69: :inline_main_putc_1_putc_if_true_0_1 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 70: inline_main_putc_1_tac13 <- inline_main_putc_1_c U8 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 71: None <= call lcd_putc(inline_main_putc_1_tac13,) # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 72: :inline_main_putc_1_putc_if_end_0 # Some('/lutcomp/programs/lib/stdio.j':(36,5))
+# 73: goto main_while_predicate_0 # Some('programs/test/keyboard_poll.j':(6,5))
+# 74: :function_end_main # Some('programs/test/keyboard_poll.j':(6,5))
+# 75: Unreachable # None
 
 # IlFunctionId("stdio_init")()
 # 00: t0 <- 0n987228/0x000f105cu32  # Some('/lutcomp/programs/lib/stdio.j':(11,5))
@@ -729,12 +732,11 @@ v2.0 raw
 # 07: mem[inline_stdio_init_queue_init_4_tb702] <- inline_stdio_init_queue_init_4_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(8,5))
 # 08: inline_stdio_init_queue_init_4_tc1ff <- 0n987652/0x000f1204u32  # Some('/lutcomp/programs/lib/Queue.j':(9,5))
 # 09: mem[inline_stdio_init_queue_init_4_tc1ff] <- inline_stdio_init_queue_init_4_ta97f U8 # Some('/lutcomp/programs/lib/Queue.j':(9,5))
-# 10: :inline_stdio_init_queue_init_4_function_end_queue_init # None
-# 11: None <= call lcd_init() # Some('/lutcomp/programs/lib/stdio.j':(14,5))
-# 12: None <= call KeyBoard_init() # Some('/lutcomp/programs/lib/stdio.j':(15,5))
-# 13: return None # None
-# 14: :function_end_stdio_init # None
-# 15: Unreachable # None
+# 10: None <= call lcd_init() # Some('/lutcomp/programs/lib/stdio.j':(14,5))
+# 11: None <= call KeyBoard_init() # Some('/lutcomp/programs/lib/stdio.j':(15,5))
+# 12: return None # None
+# 13: :function_end_stdio_init # None
+# 14: Unreachable # None
 
 
 # ImageBaseAddress=0x00090000
@@ -2435,7 +2437,7 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Arithmetic(Add, PtrFieldDeref("s", "last"), Number(0n1/0x01u8)) }
 06 18 2c 
 
-# :Keyboard_poll_if_end_6 None
+# :Keyboard_poll_if_end_6 Some('/lutcomp/programs/lib/Keyboard.j':(31,5))
 # Keyboard_poll_if_end_6
 # ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/Keyboard.j':(37,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Number(0n0/0x00u8), right: Index("PS2_SCAN_CODE_TO_ASCII", Arithmetic(Add, Ident("index"), Number(0n2/0x00000002u32))) }, [IfElse { if_blocks: [(Comparison { op: NotEquals, left: LocalFieldDeref("keyboard", "release_in_progress"), right: Number(0n0/0x00u8) }, [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(0n0/0x00u8) }])], else_block: [Assign { target: LocalFieldDeref("keyboard", "shift_held"), var_type: None, value: Number(0n1/0x01u8) }] }])], else_block: [] }
@@ -3202,8 +3204,6 @@ ff
 # pos <- inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))
 # Return { value: Some(Arithmetic(Add, Index("lcd_row_start", Ident("row")), Ident("col"))) }
 # optimized away noop copy Instruction { source: "pos <- inline_lcd_draw_char_lcd_logical_to_physical_0_t1acd U8 Some('/lutcomp/programs/lib/lcd.j':(11,5))\nReturn { value: Some(Arithmetic(Add, Index(\"lcd_row_start\", Ident(\"row\")), Ident(\"col\"))) }\n", opcode: Copy8, args: [Register(0x43), Register(0x43)], resolved: None }
-# :inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical None
-# inline_lcd_draw_char_lcd_logical_to_physical_0_function_end_lcd_logical_to_physical
 # t136d <- pos U8 Some('/lutcomp/programs/lib/lcd.j':(17,5))
 # VoidExpression { expression: Call(Call { function: "io_write1", parameters: [Arithmetic(BitwiseOr, Number(0n8/0x08u8), Arithmetic(ShiftRight, Ident("pos"), Number(0n4/0x04u8)))] }) }
 # Call(Call { function: "io_write1", parameters: [Arithmetic(BitwiseOr, Number(0n8/0x08u8), Arithmetic(ShiftRight, Ident("pos"), Number(0n4/0x04u8)))] })
@@ -5608,8 +5608,6 @@ ff
 #       # In IlFunctionId("main"), at #26, replacing reference to inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff with inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff as they share the same const value: Number(0n987652/0x000f1204u32). mem[inline_main_getchar_8_inline_getchar_queue_push_7_tc1ff] <- inline_main_getchar_8_inline_getchar_queue_push_7_tf3c4 U8 -> mem[inline_main_getchar_8_inline_getchar_queue_pop_5_tc1ff] <- inline_main_getchar_8_inline_getchar_queue_push_7_tf3c4 U8
 06 7d 88 
 
-# :inline_main_getchar_8_inline_getchar_queue_push_7_function_end_queue_push None
-# inline_main_getchar_8_inline_getchar_queue_push_7_function_end_queue_push
 # goto inline_main_getchar_8_getchar_if_end_3 Some('/lutcomp/programs/lib/stdio.j':(21,5))
 # 909cb JmpImm [Label24(inline_main_getchar_8_getchar_if_end_3)]
 #       goto inline_main_getchar_8_getchar_if_end_3 Some('/lutcomp/programs/lib/stdio.j':(21,5))
@@ -5638,30 +5636,30 @@ ff
 # inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/stdio.j':(21,5))
 # Comparison { op: NotEquals, left: Ident("keyboard_enable"), right: Number(0n0/0x00u8) }
 # Number(0n0/0x00u8)
-# # In IlFunctionId("main"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
+# # In IlFunctionId("main"), at #31, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
 # 909d8 LoadImm8 [Register(0x84), Constant8(0x00=0)]
 #       inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/stdio.j':(21,5))
 #       Comparison { op: NotEquals, left: Ident("keyboard_enable"), right: Number(0n0/0x00u8) }
 #       Number(0n0/0x00u8)
-#       # In IlFunctionId("main"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
+#       # In IlFunctionId("main"), at #31, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_getchar_8_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
 04 84 00 
 
 # if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' Some('/lutcomp/programs/lib/stdio.j':(21,5))
 # Comparison { op: NotEquals, left: Ident("keyboard_enable"), right: Number(0n0/0x00u8) }
-# # In IlFunctionId("main"), at #33, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
+# # In IlFunctionId("main"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
 # 909db Cmp8 [Register(0x7d), Register(0x84)]
 #       if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' Some('/lutcomp/programs/lib/stdio.j':(21,5))
 #       Comparison { op: NotEquals, left: Ident("keyboard_enable"), right: Number(0n0/0x00u8) }
-#       # In IlFunctionId("main"), at #33, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
+#       # In IlFunctionId("main"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
 15 7d 84 
 
 # 909de JzImm [Label24(inline_main_getchar_8_getchar_if_end_3)]
 #       if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' Some('/lutcomp/programs/lib/stdio.j':(21,5))
 #       Comparison { op: NotEquals, left: Ident("keyboard_enable"), right: Number(0n0/0x00u8) }
-#       # In IlFunctionId("main"), at #33, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
+#       # In IlFunctionId("main"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'
 72 f8 09 09 
 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' Some('/lutcomp/programs/lib/stdio.j':(21,5))\nComparison { op: NotEquals, left: Ident(\"keyboard_enable\"), right: Number(0n0/0x00u8) }\n# In IlFunctionId(\"main\"), at #33, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'\n", opcode: JmpImm, args: [Label24(inline_main_getchar_8_getchar_if_true_1_6)], resolved: None }
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' Some('/lutcomp/programs/lib/stdio.j':(21,5))\nComparison { op: NotEquals, left: Ident(\"keyboard_enable\"), right: Number(0n0/0x00u8) }\n# In IlFunctionId(\"main\"), at #32, replacing reference to inline_main_getchar_8_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_getchar_8_teb6e != inline_main_getchar_8_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3' -> if inline_main_getchar_8_teb6e != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_getchar_8_getchar_if_true_1_6' else 'inline_main_getchar_8_getchar_if_end_3'\n", opcode: JmpImm, args: [Label24(inline_main_getchar_8_getchar_if_true_1_6)], resolved: None }
 # :inline_main_getchar_8_getchar_if_true_1_6 Some('/lutcomp/programs/lib/stdio.j':(21,5))
 # inline_main_getchar_8_getchar_if_true_1_6
 # None <= call Keyboard_poll() Some('/lutcomp/programs/lib/stdio.j':(21,5))
@@ -5967,8 +5965,6 @@ ff
 # tbbb3 <- inline_main_getchar_8_tdcd9 U8 Some('/lutcomp/programs/lib/stdio.j':(31,5))
 # Return { value: Some(Ident("ch")) }
 # optimized away noop copy Instruction { source: "tbbb3 <- inline_main_getchar_8_tdcd9 U8 Some('/lutcomp/programs/lib/stdio.j':(31,5))\nReturn { value: Some(Ident(\"ch\")) }\n", opcode: Copy8, args: [Register(0x7d), Register(0x7d)], resolved: None }
-# :inline_main_getchar_8_function_end_getchar None
-# inline_main_getchar_8_function_end_getchar
 # inline_main_putc_1_c <- tbbb3 U8 Some('programs/test/keyboard_poll.j':(6,5))
 # VoidExpression { expression: Call(Call { function: "putc", parameters: [Call(Call { function: "getchar", parameters: [] })] }) }
 # Call(Call { function: "putc", parameters: [Call(Call { function: "getchar", parameters: [] })] })
@@ -6011,34 +6007,34 @@ ff
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "lcd_putc", parameters: [Ident("c")] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }
 # Number(0n0/0x00u8)
-# # In IlFunctionId("main"), at #69, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_putc_1_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
+# # In IlFunctionId("main"), at #67, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_putc_1_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
 # 90a5f LoadImm8 [Register(0x84), Constant8(0x00=0)]
 #       inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8  Some('/lutcomp/programs/lib/stdio.j':(36,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "lcd_putc", parameters: [Ident("c")] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }
 #       Number(0n0/0x00u8)
-#       # In IlFunctionId("main"), at #69, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_putc_1_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
+#       # In IlFunctionId("main"), at #67, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). inline_main_putc_1_ta97f <- 0n0/0x00u8  -> inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f <- 0n0/0x00u8 
 04 84 00 
 
 # if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' Some('/lutcomp/programs/lib/stdio.j':(36,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "lcd_putc", parameters: [Ident("c")] }) }])], else_block: [] }
 # Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }
-# # In IlFunctionId("main"), at #70, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
+# # In IlFunctionId("main"), at #68, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
 # 90a62 Cmp8 [Register(0x8c), Register(0x84)]
 #       if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' Some('/lutcomp/programs/lib/stdio.j':(36,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "lcd_putc", parameters: [Ident("c")] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }
-#       # In IlFunctionId("main"), at #70, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
+#       # In IlFunctionId("main"), at #68, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
 15 8c 84 
 
 # 90a65 JzImm [Label24(inline_main_putc_1_putc_if_end_0)]
 #       if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' Some('/lutcomp/programs/lib/stdio.j':(36,5))
 #       IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "lcd_putc", parameters: [Ident("c")] }) }])], else_block: [] }
 #       Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }
-#       # In IlFunctionId("main"), at #70, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
+#       # In IlFunctionId("main"), at #68, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'
 72 82 0a 09 
 
-# Optimized away unconditional jump to the next instruction: Instruction { source: "if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' Some('/lutcomp/programs/lib/stdio.j':(36,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"lcd_enable\"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: \"lcd_putc\", parameters: [Ident(\"c\")] }) }])], else_block: [] }\nComparison { op: NotEquals, left: Ident(\"lcd_enable\"), right: Number(0n0/0x00u8) }\n# In IlFunctionId(\"main\"), at #70, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'\n", opcode: JmpImm, args: [Label24(inline_main_putc_1_putc_if_true_0_1)], resolved: None }
+# Optimized away unconditional jump to the next instruction: Instruction { source: "if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' Some('/lutcomp/programs/lib/stdio.j':(36,5))\nIfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident(\"lcd_enable\"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: \"lcd_putc\", parameters: [Ident(\"c\")] }) }])], else_block: [] }\nComparison { op: NotEquals, left: Ident(\"lcd_enable\"), right: Number(0n0/0x00u8) }\n# In IlFunctionId(\"main\"), at #68, replacing reference to inline_main_putc_1_ta97f with inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f as they share the same const value: Number(0n0/0x00u8). if inline_main_putc_1_t76c7 != inline_main_putc_1_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0' -> if inline_main_putc_1_t76c7 != inline_main_getchar_8_inline_getchar_queue_pop_5_ta97f then 'inline_main_putc_1_putc_if_true_0_1' else 'inline_main_putc_1_putc_if_end_0'\n", opcode: JmpImm, args: [Label24(inline_main_putc_1_putc_if_true_0_1)], resolved: None }
 # :inline_main_putc_1_putc_if_true_0_1 Some('/lutcomp/programs/lib/stdio.j':(36,5))
 # IfElse { if_blocks: [(Comparison { op: NotEquals, left: Ident("lcd_enable"), right: Number(0n0/0x00u8) }, [VoidExpression { expression: Call(Call { function: "lcd_putc", parameters: [Ident("c")] }) }])], else_block: [] }
 # inline_main_putc_1_putc_if_true_0_1
@@ -6183,8 +6179,6 @@ ff
 #       Assign { target: PtrFieldDeref("s", "last"), var_type: None, value: Number(0n0/0x00u8) }
 06 95 98 
 
-# :inline_stdio_init_queue_init_4_function_end_queue_init None
-# inline_stdio_init_queue_init_4_function_end_queue_init
 # None <= call lcd_init() Some('/lutcomp/programs/lib/stdio.j':(14,5))
 # VoidExpression { expression: Call(Call { function: "lcd_init", parameters: [] }) }
 # Call(Call { function: "lcd_init", parameters: [] })
