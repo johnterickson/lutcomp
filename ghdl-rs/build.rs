@@ -9,7 +9,7 @@ fn main() {
     let bindings = bindgen::Builder::default()
         .clang_arg("-I.")
         .header("wrapper.h")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         // rust won't cast to u8 as part of const expr...
         .blocklist_type("std_logic_states")
         //u128
