@@ -3,7 +3,43 @@
 
 `picocom /dev/ttyUSB0 --baud 2000000 --imap lfcrlf --omap crlf --echo`
 
-# computer  
+# computer
+The computer operates at two levels.  There is a microcode level and a main level that code compiles to.
+
+## address space
+The address space is common to both the microcode and main levels:
+- ROM: [0x00000, 0x7FFFF]
+- RAM: [0x80000, 0xFFFFF]
+  - [0xF0F00, 0xF0F0F] is reserved for ISRs
+
+The microcode instructions are stored in its own ROM.  Main instructions can be run from either ROM or RAM.
+
+## microcode
+The microcode controls data movement between the the physical registers:
+- General Purpose: W,X,Y,Z
+- ALU First Input: IN1
+- ALU Output: ALU
+- Memory Address: ADDR0, ADDR1, ADDR2
+- Flags: FLAGS
+- IO: RTR, RTW
+
+Each microcode instruction has two phases:
+- Prepare by setting an output values on a bus
+- Clocking so the input can capture the output value from the bus
+
+The microcode has its own program counter: uPC.
+
+Each microcode instruction is resposible for stepping the main PC and reseting the uPC.
+
+## main
+The main ISA presents 256 general-purpose registers.  These are actually the first 256 bytes of RAM.
+
+The main ISA has fairly normal instructions that
+- Operate on the general purpose registers
+- Read or write to memory (RAM or ROM)
+
+
+
 
 ## todo
 - how to handle interrupts not splitting multi-opcode instructions
