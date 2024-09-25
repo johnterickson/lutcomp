@@ -98,7 +98,7 @@ impl Device for Lcd {
 }
 
 fn generate_cgrom() -> [[u8;CHAR_ROWS];256] {
-    use image::io::Reader as ImageReader;
+    use image::ImageReader as ImageReader;
     use az::CheckedCast;
 
     let mut chars = [[0u8;CHAR_ROWS];256];
