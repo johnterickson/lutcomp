@@ -39,7 +39,7 @@ impl FunctionDefinition {
         }
     }
 
-    pub fn find_arg_or_var<'b, 's: 'b, 'p: 'b>(&'s self, ctxt: &'p ProgramContext, name: &str) -> Option<(&Scope, &'b Type)>
+    pub fn find_arg_or_var<'b, 's: 'b, 'p: 'b>(&'s self, ctxt: &'p ProgramContext, name: &str) -> Option<(&'s Scope, &'b Type)>
     {
         if let Some((var_type, _)) = ctxt.consts.get(name) {
             Some((&Scope::Static, var_type))

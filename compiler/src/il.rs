@@ -18,7 +18,7 @@ pub enum IlOperand {
     Var(IlVarId)
 }
 impl IlOperand {
-    fn try_get_const<'a>(&'a self, func: &'a IlFunction) -> Option<Cow<Constant>> {
+    fn try_get_const<'a>(&'a self, func: &'a IlFunction) -> Option<Cow<'a, Constant>> {
         match self {
             IlOperand::Number(n) => Some(Cow::Owned((*n).into())),
             IlOperand::Var(ident) => func.try_get_const_var(ident).map(|c| Cow::Borrowed(c)),
