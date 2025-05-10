@@ -97,7 +97,7 @@
         <entry>
           <string>Testdata</string>
           <testData>
-            <dataString>SIN SCLK Q    OF RST_ EN
+            <dataString>SIN SCLK Q    OF RST  EN
 1   C    X    X  0    1
 0   C    X    X  0    1
 1   C    X    X  0    1
@@ -168,7 +168,7 @@
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>RST_</string>
+          <string>RST</string>
         </entry>
       </elementAttributes>
       <pos x="360" y="560"/>
