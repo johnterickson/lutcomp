@@ -27,3 +27,13 @@ Minimizing wiring by making data bus a serial line
 | 3 | ROM CS_=0, Y -> ROM | 
 | 4 | ROM CS_=0, Z -> ROM | 
 | 5 | ROM CS_=0, ROM -> IR |
+
+
+### Interesting chips ###
+| Model | Description |
+| - | - |
+| 74138 | inverting decoder |
+| 74238 | non-inverting decoder |
+| 74574 | 8-bit register, dedicated in, dedicated out |
+| 74161 | 4-bit counter, dedicated in, dedicated out |
+| 74299 | 8-bit shift register, tri-state |
