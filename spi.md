@@ -11,4 +11,19 @@ Minimizing wiring by making data bus a serial line
 | Chip | Needed Control Lines (excluding global RST) |
 | --- | --- |
 | ROM | CE_ |
-| IR | 
+| IR | |
+
+### Instruction Register ###
+| 7 | 6 | 5 | 4 | 3 2 | 1 0 |
+| - | - | - | - | --- | --- |
+| EOI_ | RAM !CS_ | ALU !CS_ | ALU !HOLD_ | OE_ -,X,Y,Z | CP -,X,Y,Z |
+
+### bootup / jmp: IR == 0 --> ###
+| Byte | Operation |
+| - | - |
+| 0 | ROM CS_=1 |
+| 1 | ROM CS_=0, 0x3 -> ROM | 
+| 2 | ROM CS_=0, X -> ROM |
+| 3 | ROM CS_=0, Y -> ROM | 
+| 4 | ROM CS_=0, Z -> ROM | 
+| 5 | ROM CS_=0, ROM -> IR |
