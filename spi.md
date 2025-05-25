@@ -13,20 +13,40 @@ Minimizing wiring by making data bus a serial line
 | ROM | CE_ |
 | IR | |
 
+### SDATA selector ###
+| Index | Chip |
+| - | - |
+| 0 | ROM |
+| 1 | X |
+| 2 | Y |
+| 3 | Z | 
+| 4 | RAM |
+| 5 | ALU |
+| 6 | IR (in) / CONSTANT (out) |
+| 7 | ? |
+
 ### Instruction Register ###
-| 7 | 6 | 5 | 4 | 3 2 | 1 0 |
+| Bits | Meaning |
+| - | - |
+| 0-2 | IN sdata sel |
+| 3 | ROM CS_ |
+| 4-6 | OUT sdata sel |
+
+
+
+<!-- | 9 | 8 | 7 | 6 | 5 4 3 | 2 1 0 |
 | - | - | - | - | --- | --- |
-| EOI_ | RAM !CS_ | ALU !CS_ | ALU !HOLD_ | OE_ -,X,Y,Z | CP -,X,Y,Z |
+| EOI_ | RAM !CS_ | ALU !CS_ | ALU !HOLD_ | OE_ ROM,X,Y,Z,RAM,ALU |  | -->
 
 ### bootup / jmp: IR == 0 --> ###
-| Byte | Operation |
-| - | - |
-| 0 | ROM CS_=1 |
-| 1 | ROM CS_=0, 0x3 -> ROM | 
-| 2 | ROM CS_=0, X -> ROM |
-| 3 | ROM CS_=0, Y -> ROM | 
-| 4 | ROM CS_=0, Z -> ROM | 
-| 5 | ROM CS_=0, ROM -> IR |
+| Byte | Operation | Effective IR |
+| - | - | - |
+| 0 | ROM CS_=1 | 0x78 | 
+| 1 | ROM CS_=0, 0x3 -> ROM | 0x60 | 
+| 2 | ROM CS_=0, X -> ROM | 0x10 |
+| 3 | ROM CS_=0, Y -> ROM | 0x20 |
+| 4 | ROM CS_=0, Z -> ROM | 0x30 |
+| 5 | ROM CS_=0, ROM -> IR | 0x06 |
 
 
 ### Interesting chips ###
