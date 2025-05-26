@@ -22,15 +22,15 @@ Minimizing wiring by making data bus a serial line
 | 3 | Z | 
 | 4 | RAM |
 | 5 | ALU |
-| 6 | IR (in) / CONSTANT (out) |
+| 6 | IR (W) / CONSTANT (R) |
 | 7 | ? |
 
 ### Instruction Register ###
 | Bits | Meaning |
 | - | - |
-| 0-2 | IN sdata sel |
+| 0-2 | READ sdata sel |
 | 3 | ROM CS_ |
-| 4-6 | OUT sdata sel |
+| 4-6 | WRITE sdata sel |
 
 
 
@@ -41,7 +41,7 @@ Minimizing wiring by making data bus a serial line
 ### bootup / jmp: IR == 0 --> ###
 | Byte | Operation | Effective IR |
 | - | - | - |
-| 0 | ROM CS_=1 | 0x78 | 
+| 0 | ROM CS_=1 | 0x7F | 
 | 1 | ROM CS_=0, 0x3 -> ROM | 0x60 | 
 | 2 | ROM CS_=0, X -> ROM | 0x10 |
 | 3 | ROM CS_=0, Y -> ROM | 0x20 |
