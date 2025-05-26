@@ -16,13 +16,13 @@ Minimizing wiring by making data bus a serial line
 ### SDATA selector ###
 | Index | Chip |
 | - | - |
-| 0 | ROM |
+| 0 | ROM (R) |
 | 1 | X |
 | 2 | Y |
 | 3 | Z | 
 | 4 | RAM |
 | 5 | ALU |
-| 6 | IR (W) / CONSTANT (R) |
+| 6 | CONSTANT (R) |
 | 7 | ? |
 
 ### Instruction Register ###
@@ -31,6 +31,7 @@ Minimizing wiring by making data bus a serial line
 | 0-2 | READ sdata sel |
 | 3 | ROM CS_ |
 | 4-6 | WRITE sdata sel |
+| 7 | IR Read |
 
 
 
@@ -41,12 +42,12 @@ Minimizing wiring by making data bus a serial line
 ### bootup / jmp: IR == 0 --> ###
 | Byte | Operation | Effective IR |
 | - | - | - |
-| 0 | ROM CS_=1 | 0x7F | 
+| 0 | ROM CS_=1 | 0x0F | 
 | 1 | ROM CS_=0, 0x3 -> ROM | 0x60 | 
 | 2 | ROM CS_=0, X -> ROM | 0x10 |
 | 3 | ROM CS_=0, Y -> ROM | 0x20 |
 | 4 | ROM CS_=0, Z -> ROM | 0x30 |
-| 5 | ROM CS_=0, ROM -> IR | 0x06 |
+| 5 | ROM CS_=0, ROM -> IR | 0x87 |
 
 
 ### Interesting chips ###
