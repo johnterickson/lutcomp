@@ -4,7 +4,6 @@ use std::{marker::PhantomPinned, ptr, convert::TryFrom};
 
 use crate::*;
 use ghdl_rs::*;
-use lcd::*;
 
 include!(concat!(env!("OUT_DIR"), "/hd44780u.rs"));
 
@@ -71,7 +70,7 @@ impl HD44780U {
         let mut by_handle = BTreeMap::new();
 
         let iter = ghdl.iterate(vpiNet as i32, scope);
-        let mut net: vpiHandle = ptr::null_mut();
+        let mut net: vpiHandle;
         while ptr::null_mut() != iter
             && ptr::null_mut() != {
                 net = ghdl.scan(iter);

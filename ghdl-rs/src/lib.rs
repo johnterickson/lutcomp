@@ -183,6 +183,7 @@ pub fn build_vhdl(vhdl_path: &str, device: &str) {
       ghdl_main;
       grt_init;
       grt_main_options;
+      grt__modules__register_modules;
       grt_main_elab;
       __ghdl_simulation_init;
       __ghdl_simulation_step;
@@ -261,6 +262,9 @@ impl GhdlDevice {
             let grt_init = grt_init.unwrap();
             let grt_main_options: grt_main_optionsPtr = lib.symbol("grt_main_options").unwrap();
             let grt_main_options = grt_main_options.unwrap();
+            let register_modules: grt_register_modulesPtr =
+                lib.symbol("grt__modules__register_modules").unwrap();
+            let register_modules = register_modules.unwrap();
             let grt_main_elab: grt_main_elabPtr = lib.symbol("grt_main_elab").unwrap();
             let grt_main_elab = grt_main_elab.unwrap();
             let __ghdl_simulation_init: __ghdl_simulation_initPtr =
@@ -282,6 +286,8 @@ impl GhdlDevice {
             ];
 
             grt_main_options(progname.as_ptr(), args.len() as i32, args.as_ptr());
+            // Match ghdl_main: register runtime hooks before elaboration parses run options.
+            register_modules();
             grt_main_elab();
 
             __ghdl_simulation_init();

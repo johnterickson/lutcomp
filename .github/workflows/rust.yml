@@ -28,7 +28,7 @@ jobs:
     - name: check versions
       run: |
         java --version
-        sudo update-alternatives --set java $(update-alternatives --list java | grep 17)
+        sudo update-alternatives --set java $(update-alternatives --list java | grep 21)
         java --version
         mvn --version
     - name: run build script

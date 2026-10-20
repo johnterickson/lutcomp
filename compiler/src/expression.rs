@@ -121,7 +121,7 @@ pub enum Constant {
 }
 
 impl Constant {
-    pub fn as_bytes(&self) -> Cow<Vec<u8>> {
+    pub fn as_bytes(&self) -> Cow<'_, Vec<u8>> {
         match self {
             Constant::Number(n) => Cow::Owned(n.as_bytes()),
             Constant::ByteArray(ba) => Cow::Borrowed(ba),

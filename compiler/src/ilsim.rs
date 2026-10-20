@@ -28,7 +28,7 @@ impl IlProgram {
             program: &self,
             entry_function: &self.entry,
             entry_args: args,
-            stack_pointer: u32::max_value()-4+1,
+            stack_pointer: u32::MAX-4+1,
             mem: BTreeMap::new(),
             tty_in: VecDeque::new(),
         }

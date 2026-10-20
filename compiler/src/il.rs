@@ -1827,7 +1827,7 @@ impl IlInstruction {
         }
     }
 
-    pub fn var_usages(&self) -> IlUsages {
+    pub fn var_usages(&self) -> IlUsages<'_> {
         let (srcs, dest) = match self {
             IlInstruction::Unreachable | IlInstruction::Comment(_) => (vec![], None),
             IlInstruction::AssignNumber { dest, src:_} => 
@@ -1864,7 +1864,7 @@ impl IlInstruction {
         IlUsages { srcs, dest }
     }
 
-    fn var_usages_mut(&mut self) -> IlUsagesMut {
+    fn var_usages_mut(&mut self) -> IlUsagesMut<'_> {
         let (srcs, dest) = match self {
             IlInstruction::Unreachable | IlInstruction::Comment(_) => (vec![], None),
             IlInstruction::AssignNumber { dest, src:_} => 

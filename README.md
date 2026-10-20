@@ -3,6 +3,15 @@
 
 `picocom /dev/ttyUSB0 --baud 2000000 --imap lfcrlf --omap crlf --echo`
 
+## Building
+
+Run `./build.sh` to generate ROM images and run the Rust and Digital tests.
+On Linux, the build requires Rust/Cargo, GHDL with the LLVM backend
+(`ghdl-llvm`), GCC, libclang development files, Maven, and Java 17.
+The LCD simulator embeds the GHDL runtime; it must register GHDL's runtime
+modules before elaboration so that VPI options are recognized, including on
+GHDL 5.
+
 # computer
 The computer operates at two levels.  There is a microcode level and a main level that code compiles to.
 

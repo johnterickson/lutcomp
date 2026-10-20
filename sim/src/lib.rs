@@ -775,7 +775,7 @@ mod tests {
         assert_eq!(c.flags.contains(Flags::ZERO), result == 0);
     }
 
-    fn run(flags: Flags, op: Opcode, args: &[(u8, u8)]) -> Computer {
+    fn run(flags: Flags, op: Opcode, args: &[(u8, u8)]) -> Computer<'_> {
         let mut rom = Vec::new();
         rom.push(op as u8);
         for arg in args {
@@ -1462,7 +1462,7 @@ mod tests {
 
     fn addcarry32_tester(carry_in: bool, in1: u32, in2: u32, reg1: u8, reg2: u8, reg_sum: u8) {
         let sum = in1 as u64 + in2 as u64 + carry_in as u64;
-        let carry_out = sum > u32::max_value() as u64;
+        let carry_out = sum > u32::MAX as u64;
         let sum = (sum & 0xFFFFFFFF) as u32;
 
         println!(
